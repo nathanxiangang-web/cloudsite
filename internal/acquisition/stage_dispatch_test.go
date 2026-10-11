@@ -14,11 +14,14 @@ import (
 
 type dispatchStartDiagnostic struct{}
 
-func (dispatchStartDiagnostic) Error() string                    { return "private upstream response" }
-func (dispatchStartDiagnostic) DiagnosticCategory() string       { return "SOURCE_REJECTED" }
-func (dispatchStartDiagnostic) DiagnosticElapsed() time.Duration { return 321 * time.Millisecond }
-func (dispatchStartDiagnostic) DiagnosticStage() string          { return "OFFLINE_POST_OUTER_JSON" }
-func (dispatchStartDiagnostic) DiagnosticResponseShape() string  { return "HTML" }
+func (dispatchStartDiagnostic) Error() string                         { return "private upstream response" }
+func (dispatchStartDiagnostic) DiagnosticCategory() string            { return "SOURCE_REJECTED" }
+func (dispatchStartDiagnostic) DiagnosticElapsed() time.Duration      { return 321 * time.Millisecond }
+func (dispatchStartDiagnostic) DiagnosticStage() string               { return "OFFLINE_POST_OUTER_JSON" }
+func (dispatchStartDiagnostic) DiagnosticResponseShape() string       { return "HTML" }
+func (dispatchStartDiagnostic) DiagnosticResponseMediaFamily() string { return "TEXT" }
+func (dispatchStartDiagnostic) DiagnosticResponseSizeBucket() string  { return "1-127" }
+func (dispatchStartDiagnostic) DiagnosticOuterJSONValid() string      { return "FALSE" }
 
 type dispatchJobReader struct{ job jobs.Job }
 
@@ -200,6 +203,9 @@ func TestStageDispatcherRetainsRedactedDiagnosticAfterRecoveryCommit(t *testing.
 	if result.Manifest.State != StateRecoveryRequired || result.Job.State != jobs.StateRecoveryRequired ||
 		result.DiagnosticCategory != "SOURCE_REJECTED" || result.DiagnosticElapsedMS != 321 || result.DiagnosticStage != "OFFLINE_POST_OUTER_JSON" || result.DiagnosticResponseShape != "HTML" {
 		t.Fatalf("recovery diagnostic = %#v", result)
+	}
+	if result.DiagnosticResponseMediaFamily != "TEXT" || result.DiagnosticResponseSizeBucket != "1-127" || result.DiagnosticOuterJSONValid != "FALSE" {
+		t.Fatal("response metadata lost after recovery")
 	}
 	fixture.assertCalls(t, 1, 1, 0, 0)
 }

@@ -153,7 +153,8 @@ func TestAcquisitionWorkerNormalEventsAndCadence(t *testing.T) {
 			return RunOnceResult{State: RunOnceStageCompleted,
 				Stage: &acquisition.StageDispatchResult{Stage: acquisition.StageProvider,
 					DiagnosticCategory: "SOURCE_REJECTED", DiagnosticElapsedMS: 321,
-					DiagnosticStage: "OFFLINE_POST_OUTER_JSON", DiagnosticResponseShape: "HTML"}}, nil
+					DiagnosticStage: "OFFLINE_POST_OUTER_JSON", DiagnosticResponseShape: "HTML",
+					DiagnosticResponseMediaFamily: "TEXT", DiagnosticResponseSizeBucket: "1-127", DiagnosticOuterJSONValid: "FALSE"}}, nil
 		}
 	}}
 	worker := newTestWorker(t, runner, WithWorkerWaiter(waiter), WithWorkerEventSink(func(event WorkerEvent) {
@@ -172,6 +173,9 @@ func TestAcquisitionWorkerNormalEventsAndCadence(t *testing.T) {
 		if want == WorkerStage && (event.DiagnosticCategory != "SOURCE_REJECTED" || event.DiagnosticElapsedMS != 321 || event.DiagnosticStage != "OFFLINE_POST_OUTER_JSON" || event.DiagnosticResponseShape != "HTML") {
 			t.Fatalf("stage diagnostic = %#v", event)
 		}
+		if want == WorkerStage && (event.DiagnosticResponseMediaFamily != "TEXT" || event.DiagnosticResponseSizeBucket != "1-127" || event.DiagnosticOuterJSONValid != "FALSE") {
+			t.Fatal("response metadata not propagated")
+		}
 		if want == WorkerIdle || want == WorkerRecoveryOnly {
 			if delay := waitWorkerSignal(t, waiter.called); delay != testWorkerPolicy().Interval {
 				t.Fatalf("wait delay = %s", delay)
@@ -187,6 +191,14 @@ func TestAcquisitionWorkerNormalEventsAndCadence(t *testing.T) {
 	}
 	if calls, _ := runner.snapshot(); calls != 3 {
 		t.Fatalf("tick count = %d", calls)
+	}
+}
+
+func TestWorkerResponseMetadataNeverEmitsArbitraryValues(t *testing.T) {
+	for _, value := range []string{"FAKE-COOKIE-HEADER-TOKEN", "https://private.invalid/source", "", "UNKNOWN"} {
+		if closedResponseMediaFamily(value) != "UNKNOWN" || closedResponseSizeBucket(value) != "UNKNOWN" || closedOuterJSONValid(value) != "UNKNOWN" {
+			t.Fatal("untrusted diagnostic value escaped")
+		}
 	}
 }
 

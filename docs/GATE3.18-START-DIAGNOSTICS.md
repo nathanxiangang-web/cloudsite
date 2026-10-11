@@ -106,3 +106,45 @@ reservations remain intact. Issues #60 and #62 remain OPEN, Phase B remains STOP
 and Gate 3.19 must not start. A precisely observed live POST boundary is still
 required before the architect can accept a root-cause fix and authorize a fresh
 download; historical response bytes cannot be reconstructed from old logs.
+
+## Architect follow-up 6111729335: passive response metadata
+
+The second authorized C3 diagnostic localized the real failure to
+`OFFLINE_POST_OUTER_JSON`, HTTP200, `response_shape=TEXT`, `*json.SyntaxError`.
+This supersedes the historical unknown-operation entries above, but does not
+identify the private response contents or a provider/proxy/login root cause.
+All seven uncertain reservations remain frozen; no new live test is authorized
+by this diagnostic patch.
+
+Pinned `115driver v1.3.5` and inspected upstream main
+`542720cb0034954750454e89f32b4852add6e2a9` use the same sequence:
+optional GetUser -> encrypted JSON in form `data` -> offline-add POST ->
+`DownloadResp` outer JSON -> Base64/crypto decode -> inner JSON -> task reference.
+`ForceContentType("application/json")` forces SDK parsing; it is not evidence
+of the server's actual Content-Type. TEXT is a leading-byte shape, not MIME.
+No demonstrated request/trace behavior bug or upstream upgrade fix was found.
+
+Only the already-recognized exact offline POST gains three passive fields:
+
+- `response_media_family`: JSON (`application/json`, `application/problem+json`),
+  TEXT (`text/plain`), HTML (`text/html`, `application/xhtml+xml`), OTHER or
+  MISSING. MIME parameters and arbitrary header text are discarded.
+- `response_size_bucket`: exclusive byte intervals `0`, `1-127`, `128-1023`,
+  `1024-4095`, `4K-64K` (4096..65536), then OVERSIZE. A read not reaching EOF is
+  INCOMPLETE, even if it also exceeded the cap.
+- `outer_json_valid`: TRUE/FALSE only after complete EOF within 64KiB; otherwise
+  UNKNOWN. JSON syntax validity does not imply a valid DownloadResp schema.
+
+Non-offline operations keep these fields UNKNOWN. Response bytes still reach
+the SDK unchanged, bounded transient buffers are wiped, and incomplete/oversize
+responses retain the existing UNKNOWN stage/shape behavior. Worker emission
+allowlists all three fields. No body/header/source/hash/task-reference content
+is retained in metadata. Optional diagnostic interfaces preserve compatibility
+with other providers and existing mocks; no product state or DB change occurs.
+
+The fake-server suite never has a live transport fallback. It covers text,
+HTML, misleading MIME, valid wrong-schema JSON, malformed JSON, HTTP401/403,
+incomplete/oversize reads, missing/arbitrary MIME, and exclusive size boundaries.
+Planted private body/Cookie/header tokens must not appear in diagnostic logs.
+This is diagnostic preparation only; deployment and another real POST require
+separate architect review and explicit fresh authorization.
