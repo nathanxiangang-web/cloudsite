@@ -20,14 +20,15 @@ import (
 // the submitted URL), so Error never renders the underlying error. Is retains
 // matching against known typed causes without exposing that error via Unwrap.
 type StartDiagnostic struct {
-	category   string
-	elapsed    time.Duration
-	base       error
-	matches    []error
-	causeType  string
-	httpStatus int
-	stage      string
-	shape      string
+	category                           string
+	elapsed                            time.Duration
+	base                               error
+	matches                            []error
+	causeType                          string
+	httpStatus                         int
+	stage                              string
+	shape                              string
+	mediaFamily, sizeBucket, jsonValid string
 }
 
 func (diagnostic *StartDiagnostic) Error() string {
@@ -40,12 +41,20 @@ func (diagnostic *StartDiagnostic) DiagnosticCauseType() string      { return di
 func (diagnostic *StartDiagnostic) DiagnosticHTTPStatus() int        { return diagnostic.httpStatus }
 func (diagnostic *StartDiagnostic) DiagnosticStage() string          { return diagnostic.stage }
 func (diagnostic *StartDiagnostic) DiagnosticResponseShape() string  { return diagnostic.shape }
+func (diagnostic *StartDiagnostic) DiagnosticResponseMediaFamily() string {
+	return diagnostic.mediaFamily
+}
+func (diagnostic *StartDiagnostic) DiagnosticResponseSizeBucket() string {
+	return diagnostic.sizeBucket
+}
+func (diagnostic *StartDiagnostic) DiagnosticOuterJSONValid() string { return diagnostic.jsonValid }
 
 func (diagnostic *StartDiagnostic) locate(cause error, trace *startHTTPTrace) {
 	diagnostic.httpStatus = int(trace.status.Load())
 	trace.mu.Lock()
 	defer trace.mu.Unlock()
 	diagnostic.shape = trace.shape
+	diagnostic.mediaFamily, diagnostic.sizeBucket, diagnostic.jsonValid = "UNKNOWN", "UNKNOWN", "UNKNOWN"
 	diagnostic.stage = "UNKNOWN"
 	if trace.operation == "USER_INFO_GET" {
 		diagnostic.stage = "USER_INFO_GET"
@@ -54,6 +63,7 @@ func (diagnostic *StartDiagnostic) locate(cause error, trace *startHTTPTrace) {
 	if trace.operation != "OFFLINE_POST" {
 		return
 	}
+	diagnostic.mediaFamily, diagnostic.sizeBucket, diagnostic.jsonValid = trace.mediaFamily, trace.sizeBucket, trace.jsonValid
 	if diagnostic.httpStatus == 0 || diagnostic.category == "NETWORK_FAILURE" || diagnostic.category == "TIMEOUT" || diagnostic.category == "CONTEXT_CANCELED" {
 		diagnostic.stage = "OFFLINE_POST_TRANSPORT"
 		return

@@ -49,12 +49,15 @@ type StageDispatchResult struct {
 	Terminal bool
 	// A closed, non-durable diagnostic from the one provider call. No raw
 	// upstream error, source, response body or credential crosses this result.
-	DiagnosticCategory      string
-	DiagnosticElapsedMS     int64
-	DiagnosticCauseType     string
-	DiagnosticHTTPStatus    int
-	DiagnosticStage         string
-	DiagnosticResponseShape string
+	DiagnosticCategory            string
+	DiagnosticElapsedMS           int64
+	DiagnosticCauseType           string
+	DiagnosticHTTPStatus          int
+	DiagnosticStage               string
+	DiagnosticResponseShape       string
+	DiagnosticResponseMediaFamily string
+	DiagnosticResponseSizeBucket  string
+	DiagnosticOuterJSONValid      string
 }
 
 type ProviderStage interface {
@@ -194,6 +197,7 @@ func (dispatcher *StageDispatcher) Dispatch(ctx context.Context, request StageDi
 		var causeType string
 		var httpStatus int
 		var parserStage, responseShape string
+		var mediaFamily, sizeBucket, jsonValid string
 		var diagnostic interface {
 			DiagnosticCategory() string
 			DiagnosticElapsed() time.Duration
@@ -216,12 +220,21 @@ func (dispatcher *StageDispatcher) Dispatch(ctx context.Context, request StageDi
 		if errors.As(stepErr, &boundary) {
 			parserStage, responseShape = boundary.DiagnosticStage(), boundary.DiagnosticResponseShape()
 		}
+		var responseMetadata interface {
+			DiagnosticResponseMediaFamily() string
+			DiagnosticResponseSizeBucket() string
+			DiagnosticOuterJSONValid() string
+		}
+		if errors.As(stepErr, &responseMetadata) {
+			mediaFamily, sizeBucket, jsonValid = responseMetadata.DiagnosticResponseMediaFamily(), responseMetadata.DiagnosticResponseSizeBucket(), responseMetadata.DiagnosticOuterJSONValid()
+		}
 		return StageDispatchResult{Stage: StageProvider, Manifest: committed.Manifest, Job: committed.Job,
 			Changed: committed.Changed, Pending: committed.Job.State == jobs.StateRetryWait,
 			Terminal:           committed.Job.State != jobs.StateRetryWait,
 			DiagnosticCategory: category, DiagnosticElapsedMS: elapsedMS,
 			DiagnosticCauseType: causeType, DiagnosticHTTPStatus: httpStatus,
-			DiagnosticStage: parserStage, DiagnosticResponseShape: responseShape}, nil
+			DiagnosticStage: parserStage, DiagnosticResponseShape: responseShape,
+			DiagnosticResponseMediaFamily: mediaFamily, DiagnosticResponseSizeBucket: sizeBucket, DiagnosticOuterJSONValid: jsonValid}, nil
 	case StateAwaitingVisibility:
 		result, err := dispatcher.visibility.Submit(ctx, RefreshRequest{
 			ManifestID: manifest.ID, JobID: job.ID, Owner: request.Owner,

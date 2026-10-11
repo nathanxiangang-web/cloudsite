@@ -60,19 +60,22 @@ const (
 // WorkerEvent is deliberately free of source links, provider references and
 // credentials. Only durable IDs and closed categories are emitted.
 type WorkerEvent struct {
-	Kind                    WorkerEventKind
-	Owner                   string
-	Recovered               int64
-	JobID                   jobs.JobID
-	ClaimAttempts           int
-	Stage                   acquisition.Stage
-	ErrorKind               RunOnceErrorKind
-	DiagnosticCategory      string
-	DiagnosticElapsedMS     int64
-	DiagnosticCauseType     string
-	DiagnosticHTTPStatus    int
-	DiagnosticStage         string
-	DiagnosticResponseShape string
+	Kind                          WorkerEventKind
+	Owner                         string
+	Recovered                     int64
+	JobID                         jobs.JobID
+	ClaimAttempts                 int
+	Stage                         acquisition.Stage
+	ErrorKind                     RunOnceErrorKind
+	DiagnosticCategory            string
+	DiagnosticElapsedMS           int64
+	DiagnosticCauseType           string
+	DiagnosticHTTPStatus          int
+	DiagnosticStage               string
+	DiagnosticResponseShape       string
+	DiagnosticResponseMediaFamily string
+	DiagnosticResponseSizeBucket  string
+	DiagnosticOuterJSONValid      string
 }
 
 type WorkerEventSink func(WorkerEvent)
@@ -236,6 +239,16 @@ func (worker *AcquisitionWorker) Run(ctx context.Context) error {
 				event.DiagnosticStage = closedParserStage(boundary.DiagnosticStage())
 				event.DiagnosticResponseShape = closedResponseShape(boundary.DiagnosticResponseShape())
 			}
+			var responseMetadata interface {
+				DiagnosticResponseMediaFamily() string
+				DiagnosticResponseSizeBucket() string
+				DiagnosticOuterJSONValid() string
+			}
+			if errors.As(err, &responseMetadata) {
+				event.DiagnosticResponseMediaFamily = closedResponseMediaFamily(responseMetadata.DiagnosticResponseMediaFamily())
+				event.DiagnosticResponseSizeBucket = closedResponseSizeBucket(responseMetadata.DiagnosticResponseSizeBucket())
+				event.DiagnosticOuterJSONValid = closedOuterJSONValid(responseMetadata.DiagnosticOuterJSONValid())
+			}
 			worker.emit(event)
 		} else {
 			switch result.State {
@@ -249,12 +262,15 @@ func (worker *AcquisitionWorker) Run(ctx context.Context) error {
 				}
 				worker.emit(WorkerEvent{Kind: WorkerStage, Recovered: result.Recovered,
 					JobID: result.ClaimedJobID, ClaimAttempts: result.ClaimAttempts, Stage: result.Stage.Stage,
-					DiagnosticCategory:      closedDiagnosticCategory(result.Stage.DiagnosticCategory),
-					DiagnosticElapsedMS:     result.Stage.DiagnosticElapsedMS,
-					DiagnosticCauseType:     closedCauseType(result.Stage.DiagnosticCauseType),
-					DiagnosticHTTPStatus:    result.Stage.DiagnosticHTTPStatus,
-					DiagnosticStage:         closedParserStage(result.Stage.DiagnosticStage),
-					DiagnosticResponseShape: closedResponseShape(result.Stage.DiagnosticResponseShape)})
+					DiagnosticCategory:            closedDiagnosticCategory(result.Stage.DiagnosticCategory),
+					DiagnosticElapsedMS:           result.Stage.DiagnosticElapsedMS,
+					DiagnosticCauseType:           closedCauseType(result.Stage.DiagnosticCauseType),
+					DiagnosticHTTPStatus:          result.Stage.DiagnosticHTTPStatus,
+					DiagnosticStage:               closedParserStage(result.Stage.DiagnosticStage),
+					DiagnosticResponseShape:       closedResponseShape(result.Stage.DiagnosticResponseShape),
+					DiagnosticResponseMediaFamily: closedResponseMediaFamily(result.Stage.DiagnosticResponseMediaFamily),
+					DiagnosticResponseSizeBucket:  closedResponseSizeBucket(result.Stage.DiagnosticResponseSizeBucket),
+					DiagnosticOuterJSONValid:      closedOuterJSONValid(result.Stage.DiagnosticOuterJSONValid)})
 			default:
 				return &WorkerFailure{Kind: WorkerTransientError, Cause: errors.New("unexpected RunOnce result")}
 			}
@@ -287,6 +303,33 @@ func closedResponseShape(shape string) string {
 	switch shape {
 	case "", "UNKNOWN", "OBJECT", "ARRAY", "HTML", "TEXT", "EMPTY":
 		return shape
+	default:
+		return "UNKNOWN"
+	}
+}
+
+func closedResponseMediaFamily(value string) string {
+	switch value {
+	case "JSON", "TEXT", "HTML", "OTHER", "MISSING":
+		return value
+	default:
+		return "UNKNOWN"
+	}
+}
+
+func closedResponseSizeBucket(value string) string {
+	switch value {
+	case "0", "1-127", "128-1023", "1024-4095", "4K-64K", "OVERSIZE", "INCOMPLETE":
+		return value
+	default:
+		return "UNKNOWN"
+	}
+}
+
+func closedOuterJSONValid(value string) string {
+	switch value {
+	case "TRUE", "FALSE":
+		return value
 	default:
 		return "UNKNOWN"
 	}
