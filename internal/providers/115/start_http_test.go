@@ -33,8 +33,8 @@ func TestPinnedStartResponseDecodeDiagnosticHasStatusWithoutBody(t *testing.T) {
 			calls := 0
 			transport := startRoundTripper(func(request *http.Request) (*http.Response, error) {
 				calls++
-				if request.Header.Get("User-Agent") != driver.UADefault {
-					t.Fatalf("wire User-Agent = %q, want pinned driver's default", request.Header.Get("User-Agent"))
+				if request.Header.Get("User-Agent") != driver.UA115Browser {
+					t.Fatalf("wire User-Agent = %q, want pinned 115 Browser identity", request.Header.Get("User-Agent"))
 				}
 				return &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": []string{"application/json"}},
 					Body: io.NopCloser(strings.NewReader(test.body)), Request: request}, nil
@@ -87,6 +87,9 @@ func TestPinnedLazyGetUserSuccessThenOfflineOuterJSONFailure(t *testing.T) {
 	methods := []string{}
 	transport := startRoundTripper(func(request *http.Request) (*http.Response, error) {
 		methods = append(methods, request.Method)
+		if request.Header.Get("User-Agent") != driver.UA115Browser {
+			t.Fatal("lazy user lookup or offline POST lost the 115 Browser identity")
+		}
 		body := `{"state":true,"data":{"user_id":1}}`
 		if request.Method == http.MethodPost {
 			body = "PRIVATE-RESPONSE"

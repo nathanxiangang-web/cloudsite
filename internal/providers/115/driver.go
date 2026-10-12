@@ -171,10 +171,11 @@ func NewAdapterFromCookie(cookie []byte, options Options) (*Adapter, error) {
 }
 
 // SetHttpClient replaces the pinned driver's resty client, including its
-// headers. Install the bounded HTTP client before applying the SDK's default
-// User-Agent, otherwise task submission sends resty's default identity.
+// headers. Install the bounded HTTP client before the explicit 115 Browser
+// identity required by the offline API (upstream 115driver issue #56).
+// Neither resty's default nor driver.UADefault is the offline identity.
 func newDriverClient(client *http.Client) *driver.Pan115Client {
-	return driver.New(driver.WithClient(client), driver.UA())
+	return driver.New(driver.WithClient(client), driver.UA(driver.UA115Browser))
 }
 
 // forgetCredential clears the parsed credential fields so this package does not
