@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/SheltonZhu/115driver/pkg/driver"
 	"io"
+	"log"
 	"mime"
 	"net/http"
 	"strings"
@@ -130,7 +131,17 @@ func (transport statusTransport) RoundTrip(request *http.Request) (*http.Respons
 			transport.trace.operation = "OFFLINE_POST"
 		}
 	}
+	offline := transport.trace.operation == "OFFLINE_POST"
 	transport.trace.mu.Unlock()
+	// Observe only a closed identity family at the actual wire boundary. Never
+	// log the arbitrary header, request URL, cookies or encrypted form values.
+	if offline {
+		family := "OTHER"
+		if request.Header.Get("User-Agent") == driver.UA115Browser {
+			family = "UA115Browser"
+		}
+		log.Printf("event=115_OFFLINE_REQUEST_CONTRACT offline_user_agent_family=%s", family)
+	}
 	response, err := transport.next.RoundTrip(request)
 	if response != nil {
 		transport.trace.status.Store(int32(response.StatusCode))
