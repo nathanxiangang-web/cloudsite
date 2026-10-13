@@ -18,6 +18,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/app"
 	"github.com/nathanxiangang-web/panta/internal/catalog"
 	"github.com/nathanxiangang-web/panta/internal/integrations/indexcore"
+	jobsPackage "github.com/nathanxiangang-web/panta/internal/jobs"
 	"github.com/nathanxiangang-web/panta/internal/platform/config"
 	"github.com/nathanxiangang-web/panta/internal/projector"
 	p115 "github.com/nathanxiangang-web/panta/internal/providers/115"
@@ -46,6 +47,7 @@ type DownloaderFactory func(context.Context, contracts.ProviderID, []byte) (cont
 // neither environment variables nor a static test resolver are used as a
 // production credential backend by this composition.
 type RuntimeDependencies struct {
+	KnownPollScope    *acquisition.KnownPollScope
 	Secrets           contracts.SecretResolver
 	Sessions          []RuntimeSession
 	HintBaseURL       string
@@ -228,7 +230,11 @@ func NewRuntime(ctx context.Context, cfg config.Config, deps RuntimeDependencies
 	if err != nil {
 		return nil, err
 	}
-	execution, err := acquisition.NewExecutionStepService(inputs, manifests, jobs, sessions, tasks)
+	var executionOptions []acquisition.ExecutionOption
+	if deps.KnownPollScope != nil {
+		executionOptions = append(executionOptions, acquisition.WithKnownPollOnly(*deps.KnownPollScope))
+	}
+	execution, err := acquisition.NewExecutionStepService(inputs, manifests, jobs, sessions, tasks, executionOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +263,14 @@ func NewRuntime(ctx context.Context, cfg config.Config, deps RuntimeDependencies
 	if err != nil {
 		return nil, err
 	}
-	runner, err := app.NewAcquisitionRunOnce(jobs, jobs, dispatcher, app.RunOnceLimits{
+	var dispatchPort app.AcquisitionStageDispatch = dispatcher
+	var onlyJobID jobsPackage.JobID
+	if deps.KnownPollScope != nil {
+		onlyJobID = deps.KnownPollScope.JobID
+		dispatchPort = acquisition.KnownScopedDispatcher{Scope: *deps.KnownPollScope, Manifests: manifests, Tasks: tasks, Topology: storageStore, Next: dispatcher}
+	}
+	runner, err := app.NewAcquisitionRunOnce(jobs, jobs, dispatchPort, app.RunOnceLimits{
+		OnlyJobID:             onlyJobID,
 		MinLeaseDuration:      cfg.AcquisitionWorker.TickTimeout + config.AcquisitionLeaseSafetyMargin,
 		MaxLeaseDuration:      config.MaxAcquisitionLeaseDuration,
 		MaxRecoveryLimit:      cfg.AcquisitionWorker.RecoveryLimit,

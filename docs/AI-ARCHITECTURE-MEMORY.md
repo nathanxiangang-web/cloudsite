@@ -2,8 +2,8 @@
 
 > Canonical short-form project memory for Architect/AI sessions.
 >
-> Last architecture-memory synchronization: **2026-10-11**
-> Active Gate: **3.18 / Issue #60 — Phase B STOP; C2-B0 evidence accepted; C2-B admission NO-GO; C3 not authorized**
+> Last architecture-memory synchronization: **2026-10-13**
+> Active Gate: **3.18 / Issues #60/#62 — real creation accepted; known-reference recovery/poll repair authorized for code and isolated tests; live transition awaits independent reviewed merge**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -11,6 +11,19 @@
 > If chat context, an old issue, an old PR description, README text, or an older decision conflicts with this file plus the latest accepted Decision Log / Project State, **Git wins and the newer accepted decision wins**.
 
 ## 1. Source-of-truth order
+
+Current correction: [Architect #6127780405](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6127780405)
+supersedes the historical C2-B/C3 NO-GO snapshots below. Merged PRs #69/#70
+produced a verified UA115Browser request and one real 115 task with durable
+REFERENCE_KNOWN ([actual report](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6127650106)).
+Download/READY is not accepted. The later generic polling fault is unclassified;
+D-035 placed this same pair in RECOVERY_REQUIRED/RECOVERY_REQUIRED. Eight older
+unknown START_RESERVED records are frozen. Only the known-ref paired recovery,
+poll-error atomic handoff and poll-only scoped entry may be implemented/tested
+now ([contract](KNOWN-REFERENCE-RECOVERY.md)). Independent exact-head review and
+merge must precede live transition; no source/UUID/StartDownload budget is added.
+Do not replay old GO, manually requeue live rows, restart unrelated services or
+advance Gate 4/UI. Schema v12, Gate 3.18/#60/#62 remain OPEN.
 
 When reconstructing project truth, read in this order:
 

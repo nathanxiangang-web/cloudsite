@@ -169,7 +169,13 @@ func (adapter *Adapter) StartDownload(ctx context.Context, request contracts.Dow
 // layer can fall back to the request intent. A present but malformed name is a
 // contract violation and fails closed. Only OfflineTask.Name crosses this boundary;
 // FileId and DirId stay provider-private.
-func (adapter *Adapter) DownloadStatus(ctx context.Context, reference contracts.TaskReference) (contracts.TaskStatus, error) {
+func (adapter *Adapter) DownloadStatus(ctx context.Context, reference contracts.TaskReference) (result contracts.TaskStatus, failure error) {
+	started := time.Now()
+	defer func() {
+		if failure != nil {
+			failure = pollDiagnostic(failure, time.Since(started))
+		}
+	}()
 	if err := ctx.Err(); err != nil {
 		return contracts.TaskStatus{}, err
 	}

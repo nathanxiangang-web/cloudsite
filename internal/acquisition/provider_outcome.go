@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/nathanxiangang-web/panta/internal/jobs"
+	"github.com/nathanxiangang-web/panta/internal/providers/contracts"
 )
 
 var (
@@ -30,12 +31,14 @@ const (
 	ProviderOutcomeFailed     ProviderOutcome = "PROVIDER_FAILED"
 	ProviderOutcomeCanceled   ProviderOutcome = "PROVIDER_CANCELED"
 	ProviderOutcomeRecovery   ProviderOutcome = "PROVIDER_RECOVERY_REQUIRED"
+	ProviderOutcomePollRetry  ProviderOutcome = "PROVIDER_POLL_RETRY"
+	ProviderOutcomePollStop   ProviderOutcome = "PROVIDER_POLL_STOP"
 )
 
 func (outcome ProviderOutcome) Valid() bool {
 	switch outcome {
 	case ProviderOutcomeInProgress, ProviderOutcomeSucceeded, ProviderOutcomeFailed,
-		ProviderOutcomeCanceled, ProviderOutcomeRecovery:
+		ProviderOutcomeCanceled, ProviderOutcomeRecovery, ProviderOutcomePollRetry, ProviderOutcomePollStop:
 		return true
 	default:
 		return false
@@ -62,6 +65,10 @@ type ProviderOutcomeTransition struct {
 // queues the same Job for the later visibility stage instead of completing it.
 func ProviderOutcomeTransitionFor(outcome ProviderOutcome) (ProviderOutcomeTransition, error) {
 	switch outcome {
+	case ProviderOutcomePollRetry:
+		return ProviderOutcomeTransition{ManifestState: StateActive, JobState: jobs.StateRetryWait, RequiresError: true}, nil
+	case ProviderOutcomePollStop:
+		return ProviderOutcomeTransition{ManifestState: StateRecoveryRequired, JobState: jobs.StateRecoveryRequired, RequiresError: true}, nil
 	case ProviderOutcomeInProgress:
 		return ProviderOutcomeTransition{
 			ManifestState: StateActive, JobState: jobs.StateRetryWait, RequiresRetryAt: true,
@@ -165,6 +172,10 @@ func (service *ProviderOutcomeService) Commit(ctx context.Context, request Provi
 // and produces its persistence plan. It is exported so tests can prove the
 // PostgreSQL store rejects a tampered plan rather than trusting its caller.
 func BuildProviderOutcomePlan(request ProviderOutcomeRequest) (ProviderOutcomeTransition, ProviderOutcomePlan, error) {
+	if (request.Outcome == ProviderOutcomePollRetry || request.Outcome == ProviderOutcomePollStop) &&
+		(request.ErrorMessage == nil || !contracts.PollCategory(*request.ErrorMessage).Valid()) {
+		return ProviderOutcomeTransition{}, ProviderOutcomePlan{}, ErrInvalidProviderOutcome
+	}
 	transition, err := ProviderOutcomeTransitionFor(request.Outcome)
 	if err != nil {
 		return ProviderOutcomeTransition{}, ProviderOutcomePlan{}, err

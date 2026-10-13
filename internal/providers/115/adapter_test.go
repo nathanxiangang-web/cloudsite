@@ -498,8 +498,8 @@ func TestDownloadStatusAttributesBackendListError(t *testing.T) {
 	if !errors.Is(err, ErrBackendList) {
 		t.Fatalf("error = %v, want ErrBackendList", err)
 	}
-	if !strings.Contains(err.Error(), "upstream list failed") {
-		t.Fatalf("error %v does not attribute the backend failure", err)
+	if strings.Contains(err.Error(), "upstream list failed") {
+		t.Fatalf("error %v exposes an arbitrary backend message", err)
 	}
 }
 

@@ -161,7 +161,7 @@ func NewAdapterFromCookie(cookie []byte, options Options) (*Adapter, error) {
 	// client owns its own cookies from here on.
 	forgetCredential(credential)
 
-	backend, err := NewCookiedBackend(client)
+	backend, err := NewCookiedBackend(readOnlyOfflineClient{client})
 	if err != nil {
 		return nil, err
 	}

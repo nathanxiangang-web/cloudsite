@@ -9,7 +9,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/nathanxiangang-web/panta/internal/acquisition"
 	"github.com/nathanxiangang-web/panta/internal/app"
+	"github.com/nathanxiangang-web/panta/internal/jobs"
 	"github.com/nathanxiangang-web/panta/internal/platform/bootstrap"
 	"github.com/nathanxiangang-web/panta/internal/platform/config"
 	"github.com/nathanxiangang-web/panta/internal/runtime"
@@ -24,6 +26,7 @@ const (
 
 var ErrInvalidAction = errors.New("invalid acquisition operator action or configuration")
 var ErrAlreadyStarting = errors.New("acquisition operator worker already starting or running")
+var ErrKnownContinuationStopped = errors.New("known-reference continuation stopped; inspect durable pair")
 var startGuard atomic.Bool
 
 // Builder is an integration-test seam. The stock command passes nil and always
@@ -34,6 +37,16 @@ type Builder func(context.Context, config.Config, runtime.RuntimeDependencies) (
 // Run bounds bootstrap, constructs exactly one graph, and closes it on every
 // path. Only Start invokes the worker; Preflight cannot ClaimNext or submit Hint.
 func Run(ctx context.Context, action Action, cfg config.Config, bootstrapPath string, builder Builder) error {
+	return runScoped(ctx, action, cfg, bootstrapPath, builder, nil)
+}
+
+func runScoped(ctx context.Context, action Action, cfg config.Config, bootstrapPath string, builder Builder, scope *acquisition.KnownPollScope) error {
+	var stopScoped context.CancelFunc
+	var failedScoped atomic.Bool
+	if scope != nil {
+		ctx, stopScoped = context.WithCancel(ctx)
+		defer stopScoped()
+	}
 	if action != Preflight && action != Start || !cfg.AcquisitionWorker.Enabled ||
 		bootstrapPath == "" {
 		return ErrInvalidAction
@@ -53,14 +66,19 @@ func Run(ctx context.Context, action Action, cfg config.Config, bootstrapPath st
 	if err != nil {
 		return bootstrap.Category(err)
 	}
+	deps.KnownPollScope = scope
 	if action == Start {
 		deps.WorkerOptions = append(deps.WorkerOptions, app.WithWorkerEventSink(func(event app.WorkerEvent) {
+			if scope != nil && knownMustStop(event) {
+				failedScoped.Store(event.JobState != jobs.StateSucceeded)
+				stopScoped()
+			}
 			if event.Kind == app.WorkerTransientError ||
 				(event.Kind == app.WorkerStage && event.DiagnosticCategory != "") {
-				log.Printf("acquisition worker event=%s job_id=%s claim=%d stage=%s error_kind=%s first_error_category=%s elapsed_ms=%d cause_type=%s http_status=%d parser_stage=%s response_shape=%s response_media_family=%s response_size_bucket=%s outer_json_valid=%s",
+				log.Printf("acquisition worker event=%s job_id=%s claim=%d stage=%s error_kind=%s first_error_category=%s elapsed_ms=%d cause_type=%s http_status=%d parser_stage=%s response_shape=%s response_media_family=%s response_size_bucket=%s outer_json_valid=%s poll_handoff=%s",
 					event.Kind, event.JobID, event.ClaimAttempts, event.Stage, event.ErrorKind,
 					event.DiagnosticCategory, event.DiagnosticElapsedMS, event.DiagnosticCauseType, event.DiagnosticHTTPStatus, event.DiagnosticStage, event.DiagnosticResponseShape,
-					event.DiagnosticResponseMediaFamily, event.DiagnosticResponseSizeBucket, event.DiagnosticOuterJSONValid)
+					event.DiagnosticResponseMediaFamily, event.DiagnosticResponseSizeBucket, event.DiagnosticOuterJSONValid, event.PollHandoff)
 			}
 		}))
 	}
@@ -81,5 +99,17 @@ func Run(ctx context.Context, action Action, cfg config.Config, bootstrapPath st
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	return service.Run(ctx)
+	err = service.Run(ctx)
+	if failedScoped.Load() {
+		return ErrKnownContinuationStopped
+	}
+	return err
+}
+
+// A committed retry handoff is NOT FIRST_ERROR_STOP. An uncommitted tick error
+// or a paired recovery outcome is; SUCCEEDED ends this scoped worker normally.
+func knownMustStop(event app.WorkerEvent) bool {
+	return event.Kind == app.WorkerTransientError || event.Kind == app.WorkerFatalRecoveryDebt ||
+		event.Kind == app.WorkerStage && (event.JobState == jobs.StateRecoveryRequired ||
+			event.JobState == jobs.StateSucceeded || event.JobState == jobs.StateFailed || event.JobState == jobs.StateCanceled)
 }

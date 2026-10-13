@@ -32,8 +32,9 @@ SELECT `+jobColumns+`
 FROM jobs
 WHERE job_type = $1 AND state = 'RUNNING'
   AND lease_expires_at <= CURRENT_TIMESTAMP
+	AND ($3::text = '' OR job_id::text = $3)
 ORDER BY lease_expires_at, job_id
-LIMIT $2`, acquisition.JobTypeAcquisition, request.Limit)
+LIMIT $2`, acquisition.JobTypeAcquisition, request.Limit, string(request.OnlyJobID))
 	if err != nil {
 		return 0, fmt.Errorf("find expired acquisition jobs: %w", err)
 	}
