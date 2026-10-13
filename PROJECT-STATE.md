@@ -4,27 +4,31 @@
 
 ## Current phase
 
-**MVP implementation — Gate 3**
+**Gate 3 ACCEPTED / CLOSED — awaiting separate Gate 4 architecture decision**
 
-Gate 0, Gate 1, and Gate 2 are formally accepted and closed. Gate 3.1 through Gate 3.17 are accepted and merged. Gate 3.18 is authorized and in progress.
+Gate 0 through Gate 3 are formally accepted and closed. Gate 3.18 completed the real staging acquisition on 2026-10-13. Gate 4 / UI / product expansion is NOT STARTED and is not authorized by this closeout.
 
-### Current execution correction — 2026-10-13
+### Current final acceptance — 2026-10-13
 
-The [latest accepted Architect decision](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6127780405)
-supersedes the historical C2-B/C3 NO-GO pointers below. PRs #69/#70 are merged;
-the [actual fresh validation](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6127650106)
-proved UA115Browser, one real 115 task creation and durable REFERENCE_KNOWN.
-The task was observed running, not completed; its later generic polling error's
-root cause is unknown. Existing D-035 safely closed the expired pair into
-RECOVERY_REQUIRED/RECOVERY_REQUIRED. Eight older uncertain reservations stay
-frozen. No READY/Job SUCCEEDED acceptance is claimed.
+The [Architect final acceptance](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6143267673)
+supersedes all historical C2-B/C3 NO-GO, polling-repair and OPEN pointers below.
+PR #71 merged at `74e9e69e1dd89944901e1b6a7b2b42c661b897d7`; reviewed exact HEAD
+`3e61483bae28a96a43faacbf9353e2bad7fb82d6`, CI `38374274046` all three groups SUCCESS.
+The same original KNOWN task reached **Manifest READY + same Job SUCCEEDED**
+through the reviewed paired recovery, poll-only provider stage, trusted Hint,
+exact Q5/Q8 and existing Journal Projector. `result_copy_id` identifies the
+PRESENT Copy, and its cursor equals Q8 resource-added sequence 1.
 
-Exactly one next task is authorized: Issue #62 known-reference recovery and
-polling repair, code + isolated tests + independent PR/CI review only. See
-[contract and operator boundaries](docs/KNOWN-REFERENCE-RECOVERY.md). The new
-transition is **not accepted for live use before reviewed merge**. No new
-Manifest/Job/source, download start, historical reservation retry or Gate 4/UI.
-Schema remains v12; Issues #60/#62 remain OPEN.
+One resume and one scoped Worker completed under GO `6142455770`; no new source,
+Manifest, Job, ProviderTask or StartDownload. Claim generation 22 -> 25;
+failure budget remains 0/max1 and the reference is unchanged. Worker joined,
+runnable 0, C3 Binding DISABLED and collector permission 0. Eight older unknown
+reservations stay frozen and other Roots/services are unchanged. Schema v12.
+See [redacted completion evidence](docs/GATE3.18-COMPLETION.md).
+
+No further 115 validation or download is required. The only remaining project
+handoff is a separate Gate 4 architecture decision; no implementation is active.
+Older sections below are retained chronological evidence, not current authority.
 
 ## Accepted baseline
 
@@ -819,7 +823,7 @@ The sequence may be refined by an architect decision, but later tasks must not b
 - Gate 0 — Skeleton & contracts — **ACCEPTED**
 - Gate 1 — Observation plane: OpenList → IndexCore → Catalog — **ACCEPTED / CLOSED**
 - Gate 2 — Resource semantics & direct-path/catalog read flows — **ACCEPTED / CLOSED**
-- Gate 3 — 115 acquisition + fast IndexCore synchronization — **IN PROGRESS**
+- Gate 3 — 115 acquisition + fast IndexCore synchronization — **ACCEPTED / CLOSED**
 - Gate 4 — Login + share/access + usage accounting
 - Gate 5 — Constrained CodeArts agent integration
 - Gate 6 — Provider-replacement proof + MVP closeout
@@ -840,7 +844,9 @@ Until the relevant gate is accepted, do not implement:
 
 ## Next architect action
 
-Review Issue #62 Phase C diagnosis on pinned 115driver v1.3.5 `AddOfflineTaskURIs` response parsing / encrypted payload contract. The new diagnostic proves HTTP 200 + `json.SyntaxError` even after the SDK UA fix, but cannot yet localize the parser failure. Require redacted structural evidence and a synthetic reproducer, then a minimal evidence-based fix and exact-head CI before a new operator-run test using fresh Manifest/Job IDs. Preserve historical START_RESERVED rows. Gate 3.18 / Issue #60 remains OPEN; Gate 3.19 unauthorized.
+Gate 3.18 / D-041 is accepted and closed. Preserve its final evidence and eight
+unknown reservations. Define a bounded Gate 4 task only through a separate
+architecture decision; do not repeat 115 testing or begin UI/product work now.
 
 ## Current bounded task
 
@@ -1117,21 +1123,21 @@ Governing decision: D-040.
 
 ### Gate 3.18 — Human-authorized real 115 + OpenList + IndexCore staging E2E
 
-Status: **PHASE A ACCEPTED / C2-A SYNTHETIC ACCEPTED / C2-B0 EVIDENCE ACCEPTED / C2-B ADMISSION NO-GO / PHASE B STOP**
+Status: **ACCEPTED / CLOSED — REAL PHASE B COMPLETE, 2026-10-13**
 
 Tracking: GitHub Issue #60 / diagnostic and staging Issue #62 / docs synchronization Issue #66
 
-Current checkpoint: C1, C1.5 and C2-A are accepted as preparation/synthetic
-evidence only. C2-B0 read-only evidence is now **ACCEPTED**; C2-B admission is
-**NO-GO / OWNER ACTION REQUIRED**. The next action belongs to the environment
-owner, not another C2-B0 worker run. C2-B real changes and C3 live download are
-**NOT AUTHORIZED**. No real acquisition has reached
-accepted READY. Database remains v12; five historical linked
-RECOVERY_REQUIRED / START_RESERVED pairs remain frozen.
+Current checkpoint: the [real execution report](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6143257082)
+and [Architect final acceptance](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6143267673)
+prove original provider task SUCCESS -> Hint -> Q5 PRESENT -> Q8 sequence 1 ->
+PRESENT Copy/cursor 1 -> `result_copy_id` + READY + same Job SUCCEEDED.
+PR #71 supplies reviewed paired recovery and poll-only continuation; no new
+download was created. Eight historical unknown reservations remain frozen.
+Final Worker/runnable counts are 0, Binding DISABLED, collector permission 0.
+Gate 4/5/6 remain blueprint plans, not implementation permission. No Gate 3.19.
 
-Required order:
-`C2-A accepted -> C2-B0 evidence accepted / admission NO-GO -> resource-specific C2-B owner approval/implementation -> separate C3 one-shot approval -> Gate 3.18 final E2E closeout -> Gate 4`.
-Gate 4/5/6 remain blueprint plans, not implementation permission; no Gate 3.19.
+The following Phase A and preparation/diagnostic snapshots are historical.
+Their old STOP/NO-GO/next-action prose is superseded by the final acceptance above.
 
 Phase A evidence:
 - reviewed exact HEAD `7424e5322fbb061fd14472dc0becde03b9fa6272`;
@@ -1142,7 +1148,8 @@ Phase A evidence:
 - protected human runbook merged; no real 115/OpenList/Hint credentials or mutation were used by CI/AI;
 - schema unchanged at v12.
 
-Gate 3.18 is NOT accepted until the operator completes Phase B on the staging host and returns redacted evidence.
+Historical Phase A acceptance condition: real Phase B evidence was still required.
+It is now satisfied by the 2026-10-13 final report and acceptance linked above.
 
 Live staging operator report (2026-10-09): preflight succeeded, worker claimed one Job, first 115 StartDownload ended without a durable task reference; Manifest+Job RECOVERY_REQUIRED with provider START_RESERVED. Original upstream cause and presence of a remote 115 task are not yet established. Architect opened Issue #62 for narrowly scoped read-only remote-task inspection, error classification, minimal patch if evidenced, and a separately human-started fresh test only after understanding the cause. The old reservation must not be cleared/retried. Do not start Gate 3.19 or close Issue #60 on partial progress.
 
