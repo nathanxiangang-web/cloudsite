@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -60,6 +61,8 @@ const (
 // WorkerEvent is deliberately free of source links, provider references and
 // credentials. Only durable IDs and closed categories are emitted.
 type WorkerEvent struct {
+	JobState                      jobs.State
+	PollHandoff                   string
 	Kind                          WorkerEventKind
 	Owner                         string
 	Recovered                     int64
@@ -261,7 +264,9 @@ func (worker *AcquisitionWorker) Run(ctx context.Context) error {
 					return &WorkerFailure{Kind: WorkerTransientError, Cause: errors.New("stage result missing")}
 				}
 				worker.emit(WorkerEvent{Kind: WorkerStage, Recovered: result.Recovered,
-					JobID: result.ClaimedJobID, ClaimAttempts: result.ClaimAttempts, Stage: result.Stage.Stage,
+					JobState:    result.Stage.Job.State,
+					PollHandoff: committedPollHandoff(result.Stage),
+					JobID:       result.ClaimedJobID, ClaimAttempts: result.ClaimAttempts, Stage: result.Stage.Stage,
 					DiagnosticCategory:            closedDiagnosticCategory(result.Stage.DiagnosticCategory),
 					DiagnosticElapsedMS:           result.Stage.DiagnosticElapsedMS,
 					DiagnosticCauseType:           closedCauseType(result.Stage.DiagnosticCauseType),
@@ -288,6 +293,19 @@ func (worker *AcquisitionWorker) Run(ctx context.Context) error {
 func (worker *AcquisitionWorker) emit(event WorkerEvent) {
 	event.Owner = worker.owner
 	worker.sink(event)
+}
+
+func committedPollHandoff(stage *acquisition.StageDispatchResult) string {
+	if stage == nil || !strings.HasPrefix(stage.DiagnosticCategory, "POLL_") {
+		return ""
+	}
+	if stage.Pending && stage.Manifest.State == acquisition.StateActive && stage.Job.State == jobs.StateRetryWait {
+		return "RETRY_WAIT"
+	}
+	if stage.Manifest.State == acquisition.StateRecoveryRequired && stage.Job.State == jobs.StateRecoveryRequired {
+		return "RECOVERY_REQUIRED"
+	}
+	return ""
 }
 
 func closedParserStage(stage string) string {
@@ -337,6 +355,8 @@ func closedOuterJSONValid(value string) string {
 
 func closedDiagnosticCategory(category string) string {
 	switch category {
+	case "POLL_TRANSPORT_TIMEOUT", "POLL_TRANSPORT_OTHER", "POLL_HTTP_STATUS", "POLL_DECODE", "POLL_PROVIDER_TEMPORARY", "POLL_PERMANENT_OR_UNKNOWN":
+		return category
 	case "CONTEXT_CANCELED", "TIMEOUT", "AUTH_REJECTED", "SOURCE_REJECTED",
 		"TASK_ALREADY_EXISTS", "QUOTA_EXHAUSTED", "REQUEST_REJECTED",
 		"DNS_FAILURE", "TLS_FAILURE", "NETWORK_FAILURE",
@@ -351,6 +371,7 @@ func closedDiagnosticCategory(category string) string {
 func closedCauseType(value string) string {
 	switch value {
 	case "*errors.errorString", "*errors.fundamental", "*poll.DeadlineExceededError",
+		"NET_ERROR", "UNKNOWN",
 		"*http.timeoutError", "*net.DNSError", "*net.OpError", "*url.Error",
 		"http2.StreamError", "http2.ConnectionError", "*json.SyntaxError",
 		"*json.UnmarshalTypeError", "base64.CorruptInputError", "x509.UnknownAuthorityError":

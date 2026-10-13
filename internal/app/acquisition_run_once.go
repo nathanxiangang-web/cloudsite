@@ -55,6 +55,7 @@ func (err *RunOnceError) Unwrap() error { return err.Cause }
 // choose a lease range that covers its bounded provider/observation operations;
 // this Gate does not invent a process cadence or start a timer.
 type RunOnceLimits struct {
+	OnlyJobID             jobs.JobID
 	MinLeaseDuration      time.Duration
 	MaxLeaseDuration      time.Duration
 	MaxRecoveryLimit      int
@@ -126,7 +127,7 @@ func (runner *AcquisitionRunOnce) RunOnce(ctx context.Context, request RunOnceRe
 	}
 	result := RunOnceResult{}
 	recovered, err := runner.recovery.MarkExpiredAcquisitionRecoveryRequired(ctx,
-		jobs.RecoveryRequest{Now: request.Now, Limit: request.RecoveryLimit})
+		jobs.RecoveryRequest{OnlyJobID: runner.limits.OnlyJobID, Now: request.Now, Limit: request.RecoveryLimit})
 	result.Recovered = recovered
 	if err != nil {
 		kind := RunOnceRecoveryError
@@ -142,7 +143,8 @@ func (runner *AcquisitionRunOnce) RunOnce(ctx context.Context, request RunOnceRe
 		return result, &RunOnceError{Kind: RunOnceCanceled, Cause: err}
 	}
 	claimed, err := runner.claims.ClaimNextByType(ctx, acquisition.JobTypeAcquisition, jobs.ClaimRequest{
-		Owner: request.Owner, Now: request.Now, LeaseDuration: request.LeaseDuration,
+		OnlyJobID: runner.limits.OnlyJobID,
+		Owner:     request.Owner, Now: request.Now, LeaseDuration: request.LeaseDuration,
 	})
 	if errors.Is(err, jobs.ErrNoClaimableJob) {
 		if ctx.Err() != nil {

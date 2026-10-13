@@ -122,6 +122,8 @@ WITH candidate AS (
     SELECT job_id
     FROM jobs
     WHERE ($4::text = '' OR job_type = $4)
+	  AND ($5::text = '' OR job_id::text = $5)
+	  AND ($5::text = '' OR state='QUEUED' OR next_attempt_at <= clock_timestamp())
       AND (state = 'QUEUED'
        OR (state = 'RETRY_WAIT' AND next_attempt_at <= $1))
     ORDER BY COALESCE(next_attempt_at, created_at), created_at, job_id
@@ -138,7 +140,7 @@ SET state = 'RUNNING',
     updated_at = $1
 FROM candidate
 WHERE job.job_id = candidate.job_id
-RETURNING `+updatedJobColumns, request.Now, request.Owner, request.LeaseDuration.Microseconds(), jobType)
+RETURNING `+updatedJobColumns, request.Now, request.Owner, request.LeaseDuration.Microseconds(), jobType, string(request.OnlyJobID))
 	job, err := scanJob(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return jobs.Job{}, jobs.ErrNoClaimableJob

@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 
 	"github.com/nathanxiangang-web/panta/internal/acquisition"
 	"github.com/nathanxiangang-web/panta/internal/jobs"
+	"github.com/nathanxiangang-web/panta/internal/providers/contracts"
 )
 
 type providerOutcomeDB interface {
@@ -98,6 +101,28 @@ FOR UPDATE`, string(plan.ManifestID)))
 	}
 	if err := verifyRunningJobFence(manifest, job, plan, expired); err != nil {
 		return acquisition.ProviderOutcomeResult{}, err
+	}
+	if isPollOutcome(plan.Outcome) {
+		// Only a durable KNOWN task may use poll-error transitions. Never turn an
+		// uncertain start reservation into a retry just because a caller says poll.
+		task, taskErr := scanAcquisitionProviderTask(tx.QueryRow(ctx, `SELECT `+acquisitionProviderTaskColumns+` FROM acquisition_provider_tasks WHERE manifest_id=$1 FOR UPDATE`, string(manifest.ID)))
+		var provider string
+		mappingErr := tx.QueryRow(ctx, `SELECT c.provider_type FROM storage_bindings b JOIN storage_connections c ON c.storage_connection_id=b.storage_connection_id WHERE b.storage_binding_id=$1`, string(manifest.TargetStorageBindingID)).Scan(&provider)
+		if taskErr != nil || mappingErr != nil || !task.ReferenceKnown() || !acquisition.ValidProviderTaskRef(task.ProviderTaskRef) || task.JobID != job.ID || string(task.ProviderID) != provider {
+			return acquisition.ProviderOutcomeResult{}, acquisition.ErrProviderOutcomeConflict
+		}
+		if plan.Outcome == acquisition.ProviderOutcomePollRetry && job.FailureCount+1 >= job.MaxAttempts {
+			plan.Outcome, plan.ManifestState, plan.JobState = acquisition.ProviderOutcomePollStop, acquisition.StateRecoveryRequired, jobs.StateRecoveryRequired
+		}
+		var databaseNow time.Time
+		if err := tx.QueryRow(ctx, `SELECT clock_timestamp()`).Scan(&databaseNow); err != nil {
+			return acquisition.ProviderOutcomeResult{}, acquisition.ErrProviderOutcomePersistence
+		}
+		plan.Now = databaseNow
+		if job.LastError != nil && *job.LastError != "" {
+			message := *job.LastError + "\n" + *plan.ErrorMessage
+			plan.ErrorMessage = &message // preserve prior errors, never render them
+		}
 	}
 
 	// Resolve the D-032 durable locator for a provider success from the locked
@@ -205,6 +230,25 @@ func (repository *ProviderOutcomeRepository) isCommittedOutcome(
 	job jobs.Job,
 	plan acquisition.ProviderOutcomePlan,
 ) (bool, error) {
+	if isPollOutcome(plan.Outcome) {
+		if job.ClaimAttempts != plan.ExpectedClaim {
+			return false, acquisition.ErrProviderOutcomeFence
+		}
+		matched := manifest.State == plan.ManifestState && job.State == plan.JobState
+		if plan.Outcome == acquisition.ProviderOutcomePollRetry && manifest.State == acquisition.StateRecoveryRequired && job.State == jobs.StateRecoveryRequired {
+			matched = true
+		}
+		if matched && (job.LastError == nil || !strings.HasSuffix(*job.LastError, *plan.ErrorMessage)) {
+			return false, acquisition.ErrProviderOutcomeConflict
+		}
+		if matched {
+			if acquisition.ValidateLinkedAcquisitionJob(manifest.ID, job) != nil || manifest.JobID == nil || *manifest.JobID != plan.JobID {
+				return false, acquisition.ErrProviderOutcomeJobMismatch
+			}
+			return true, nil
+		}
+		return false, nil
+	}
 	if manifest.ID != plan.ManifestID || manifest.State != plan.ManifestState {
 		return false, nil
 	}
@@ -244,6 +288,14 @@ func verifyCommittedLocator(manifest acquisition.Manifest, plan acquisition.Prov
 // mutateJobForOutcome applies the D-026 Job semantics under the claim-generation
 // fence. Neither the claim generation nor the failure budget is modified here.
 func mutateJobForOutcome(ctx context.Context, tx pgx.Tx, plan acquisition.ProviderOutcomePlan) (jobs.Job, error) {
+	if isPollOutcome(plan.Outcome) {
+		return scanJob(tx.QueryRow(ctx, `UPDATE jobs AS job SET state=$4,
+attempt_count=LEAST(attempt_count+1,max_attempts), lease_owner=NULL,lease_expires_at=NULL,
+next_attempt_at=CASE WHEN $4='RETRY_WAIT' THEN clock_timestamp()+ LEAST(300,5*(1 << LEAST(attempt_count,5)))*interval '1 second' ELSE NULL END,
+last_error=$5,finished_at=NULL,updated_at=clock_timestamp()
+WHERE job_id=$1 AND state='RUNNING' AND lease_owner=$2 AND claim_attempts=$3 AND lease_expires_at>clock_timestamp()
+RETURNING `+updatedJobColumns, string(plan.JobID), plan.Owner, plan.ExpectedClaim, string(plan.JobState), plan.ErrorMessage))
+	}
 	switch plan.JobState {
 	case jobs.StateRetryWait:
 		// RETRY_WAIT here queues the next acquisition stage, so it deliberately
@@ -254,7 +306,7 @@ SET state = 'RETRY_WAIT',
     lease_owner = NULL,
     lease_expires_at = NULL,
     next_attempt_at = $6::timestamptz,
-    last_error = $5,
+    last_error = COALESCE($5,last_error),
     finished_at = NULL,
     updated_at = $4
 WHERE job_id = $1 AND state = 'RUNNING' AND lease_owner = $2
@@ -349,13 +401,16 @@ func verifyRunningJobFence(manifest acquisition.Manifest, job jobs.Job, plan acq
 // as the accepted Job Engine lease mutations do.
 func leaseExpiredByDatabaseTime(ctx context.Context, tx pgx.Tx, job jobs.Job) (bool, error) {
 	var expired bool
-	if err := tx.QueryRow(ctx, `SELECT $1::timestamptz <= CURRENT_TIMESTAMP`, job.LeaseExpiresAt).Scan(&expired); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT $1::timestamptz <= clock_timestamp()`, job.LeaseExpiresAt).Scan(&expired); err != nil {
 		return false, providerOutcomePersistenceError("authorize lease with database time", err)
 	}
 	return expired, nil
 }
 
 func validateProviderOutcomePlan(plan acquisition.ProviderOutcomePlan) error {
+	if isPollOutcome(plan.Outcome) && (plan.ErrorMessage == nil || !contracts.PollCategory(*plan.ErrorMessage).Valid()) {
+		return acquisition.ErrInvalidProviderOutcome
+	}
 	transition, err := acquisition.ProviderOutcomeTransitionFor(plan.Outcome)
 	if err != nil {
 		return err
@@ -373,6 +428,10 @@ func validateProviderOutcomePlan(plan acquisition.ProviderOutcomePlan) error {
 		return acquisition.ErrInvalidProviderOutcome
 	}
 	return nil
+}
+
+func isPollOutcome(outcome acquisition.ProviderOutcome) bool {
+	return outcome == acquisition.ProviderOutcomePollRetry || outcome == acquisition.ProviderOutcomePollStop
 }
 
 func providerOutcomePersistenceError(operation string, err error) error {

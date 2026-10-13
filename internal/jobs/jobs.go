@@ -75,6 +75,8 @@ type CreateRequest struct {
 }
 
 type ClaimRequest struct {
+	// OnlyJobID, when set, must filter the candidate before the atomic claim.
+	OnlyJobID     JobID
 	Owner         string
 	Now           time.Time
 	LeaseDuration time.Duration
@@ -112,8 +114,9 @@ type CancelRequest struct {
 }
 
 type RecoveryRequest struct {
-	Now   time.Time
-	Limit int
+	OnlyJobID JobID
+	Now       time.Time
+	Limit     int
 }
 
 // Repository persists the minimum durable job state machine. Implementations

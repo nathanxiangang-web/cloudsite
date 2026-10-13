@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/nathanxiangang-web/panta/internal/jobs"
+	"github.com/nathanxiangang-web/panta/internal/providers/contracts"
 )
 
 var (
@@ -185,6 +186,14 @@ func (dispatcher *StageDispatcher) Dispatch(ctx context.Context, request StageDi
 			}
 			handoff.ErrorMessage = &message
 		}
+		if outcome == ProviderOutcomePollRetry || outcome == ProviderOutcomePollStop {
+			var poll *contracts.PollError
+			if !errors.As(stepErr, &poll) || !poll.Category.Valid() {
+				return StageDispatchResult{}, ErrInvalidProviderOutcome
+			}
+			message := string(poll.Category)
+			handoff.ErrorMessage = &message
+		}
 		committed, err := dispatcher.outcomes.Commit(ctx, handoff)
 		if err != nil {
 			return StageDispatchResult{}, err
@@ -277,6 +286,13 @@ func (dispatcher *StageDispatcher) Dispatch(ctx context.Context, request StageDi
 
 func providerOutcomeForStep(step StepResult, stepErr error) (ProviderOutcome, error) {
 	if stepErr != nil {
+		var poll *contracts.PollError
+		if errors.As(stepErr, &poll) {
+			if poll.CanRetry() {
+				return ProviderOutcomePollRetry, nil
+			}
+			return ProviderOutcomePollStop, nil
+		}
 		if errors.Is(stepErr, ErrExecutionSideEffectUncertain) {
 			return ProviderOutcomeRecovery, nil
 		}
@@ -297,6 +313,9 @@ func providerOutcomeForStep(step StepResult, stepErr error) (ProviderOutcome, er
 }
 
 func verifyStageResult(manifestID ManifestID, jobID jobs.JobID, manifest Manifest, job jobs.Job, outcome ProviderOutcome) error {
+	if outcome == ProviderOutcomePollRetry && manifest.State == StateRecoveryRequired && job.State == jobs.StateRecoveryRequired {
+		outcome = ProviderOutcomePollStop // the locked failure budget was exhausted
+	}
 	transition, err := ProviderOutcomeTransitionFor(outcome)
 	if err != nil || manifest.ID != manifestID || job.ID != jobID ||
 		manifest.State != transition.ManifestState || job.State != transition.JobState {

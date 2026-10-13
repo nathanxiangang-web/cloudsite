@@ -117,6 +117,7 @@ type ExecutionStepService struct {
 	sessions  DownloaderSessionResolver
 	tasks     ProviderTaskStore
 	now       Clock
+	pollScope *KnownPollScope
 }
 
 func NewExecutionStepService(
@@ -168,6 +169,10 @@ func (service *ExecutionStepService) Execute(ctx context.Context, request StepRe
 	if input.ManifestID != manifest.ID {
 		return StepResult{}, fmt.Errorf("%w: requested Manifest %s, got %s", ErrExecutionIdentityMismatch, manifest.ID, input.ManifestID)
 	}
+	if service.pollScope != nil && (request.JobID != service.pollScope.JobID ||
+		input.ProviderID != service.pollScope.ProviderID || input.ConnectionID != service.pollScope.ConnectionID) {
+		return StepResult{}, ErrKnownRecoveryConflict
+	}
 
 	// Provider identity, connection identity, and the opaque credential reference
 	// together select the downloader. ProviderID alone never does.
@@ -178,6 +183,9 @@ func (service *ExecutionStepService) Execute(ctx context.Context, request StepRe
 
 	task, err := service.tasks.GetProviderTask(ctx, manifest.ID)
 	if errors.Is(err, ErrProviderTaskNotFound) {
+		if service.pollScope != nil {
+			return StepResult{}, ErrKnownRecoveryConflict
+		}
 		return service.claimAndStartProviderTask(ctx, request, input, downloader)
 	}
 	if err != nil {
@@ -192,6 +200,9 @@ func (service *ExecutionStepService) Execute(ctx context.Context, request StepRe
 		// execution is forbidden from starting another task.
 		return StepResult{}, fmt.Errorf("%w: Manifest %s holds a durable start reservation without a task reference",
 			ErrExecutionSideEffectUncertain, manifest.ID)
+	}
+	if service.pollScope != nil && !service.pollScope.Matches(manifest, task) {
+		return StepResult{}, ErrKnownRecoveryConflict
 	}
 	return service.pollProviderTask(ctx, task, downloader)
 }
@@ -370,9 +381,17 @@ func (service *ExecutionStepService) pollProviderTask(
 ) (StepResult, error) {
 	status, err := downloader.DownloadStatus(ctx, contracts.TaskReference{Value: task.ProviderTaskRef})
 	if err != nil {
-		return StepResult{}, fmt.Errorf("provider %s DownloadStatus: %w", task.ProviderID, err)
+		var diagnostic *contracts.PollError
+		if errors.As(err, &diagnostic) {
+			return StepResult{}, diagnostic
+		}
+		return StepResult{}, &contracts.PollError{Category: contracts.PollUnknown, Cause: err}
 	}
-	return mapTaskStatusToResult(status)
+	result, err := mapTaskStatusToResult(status)
+	if err != nil {
+		return StepResult{}, &contracts.PollError{Category: contracts.PollUnknown, Cause: err}
+	}
+	return result, nil
 }
 
 // mapTaskStateToOutcome maps only the externally observable provider task

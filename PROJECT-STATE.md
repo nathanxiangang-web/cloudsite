@@ -8,6 +8,24 @@
 
 Gate 0, Gate 1, and Gate 2 are formally accepted and closed. Gate 3.1 through Gate 3.17 are accepted and merged. Gate 3.18 is authorized and in progress.
 
+### Current execution correction — 2026-10-13
+
+The [latest accepted Architect decision](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6127780405)
+supersedes the historical C2-B/C3 NO-GO pointers below. PRs #69/#70 are merged;
+the [actual fresh validation](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6127650106)
+proved UA115Browser, one real 115 task creation and durable REFERENCE_KNOWN.
+The task was observed running, not completed; its later generic polling error's
+root cause is unknown. Existing D-035 safely closed the expired pair into
+RECOVERY_REQUIRED/RECOVERY_REQUIRED. Eight older uncertain reservations stay
+frozen. No READY/Job SUCCEEDED acceptance is claimed.
+
+Exactly one next task is authorized: Issue #62 known-reference recovery and
+polling repair, code + isolated tests + independent PR/CI review only. See
+[contract and operator boundaries](docs/KNOWN-REFERENCE-RECOVERY.md). The new
+transition is **not accepted for live use before reviewed merge**. No new
+Manifest/Job/source, download start, historical reservation retry or Gate 4/UI.
+Schema remains v12; Issues #60/#62 remain OPEN.
+
 ## Accepted baseline
 
 - Project name: Panta
