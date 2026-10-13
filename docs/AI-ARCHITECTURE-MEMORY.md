@@ -3,7 +3,7 @@
 > Canonical short-form project memory for Architect/AI sessions.
 >
 > Last architecture-memory synchronization: **2026-10-13**
-> Active Gate: **3.18 / Issues #60/#62 — real creation accepted; known-reference recovery/poll repair authorized for code and isolated tests; live transition awaits independent reviewed merge**
+> Current status: **Gate 0 through Gate 3 ACCEPTED / CLOSED; Gate 3.18 real Phase B accepted 2026-10-13. Gate 4/UI NOT STARTED; separate architecture decision required.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -12,18 +12,22 @@
 
 ## 1. Source-of-truth order
 
-Current correction: [Architect #6127780405](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6127780405)
-supersedes the historical C2-B/C3 NO-GO snapshots below. Merged PRs #69/#70
-produced a verified UA115Browser request and one real 115 task with durable
-REFERENCE_KNOWN ([actual report](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6127650106)).
-Download/READY is not accepted. The later generic polling fault is unclassified;
-D-035 placed this same pair in RECOVERY_REQUIRED/RECOVERY_REQUIRED. Eight older
-unknown START_RESERVED records are frozen. Only the known-ref paired recovery,
-poll-error atomic handoff and poll-only scoped entry may be implemented/tested
-now ([contract](KNOWN-REFERENCE-RECOVERY.md)). Independent exact-head review and
-merge must precede live transition; no source/UUID/StartDownload budget is added.
-Do not replay old GO, manually requeue live rows, restart unrelated services or
-advance Gate 4/UI. Schema v12, Gate 3.18/#60/#62 remain OPEN.
+Current acceptance: [Architect #6143267673](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6143267673)
+supersedes all older NO-GO, OPEN and recovery-development pointers below.
+PR #71 merged at `74e9e69` after exact HEAD `3e61483b`, review `5501296768`
+and CI `38374274046` (all three groups SUCCESS). Under GO `6142455770`, the
+original KNOWN task completed reviewed paired recovery and poll-only execution:
+provider SUCCESS -> Hint -> unique Q5 PRESENT -> Q8 resource-added sequence 1
+-> existing Projector PRESENT Copy/cursor 1 -> `result_copy_id` + Manifest READY
++ same Job SUCCEEDED. Claim 22 -> 25; failure 0/max1 and reference preserved.
+Resume 1 / Worker 1; new Submit/Manifest/Job/ProviderTask/StartDownload all 0.
+Final Worker/runnable 0, Binding DISABLED, collector permission 0. Old eight
+unknown reservations and unrelated Root/service records unchanged. Schema v12.
+See [redacted completion artifact](GATE3.18-COMPLETION.md) and
+[recovery contract](KNOWN-REFERENCE-RECOVERY.md). No further real 115 test is
+required; no old GO/unknown reservation replay, manual pair requeue or Gate 4/UI
+implementation. A separate Gate 4 architecture decision is the next boundary.
+Chronological snapshots below retain historical evidence, not current authority.
 
 When reconstructing project truth, read in this order:
 
@@ -337,7 +341,7 @@ Phase A staging harness is accepted and merged:
 - Architect Review `5465144212`;
 - squash `7a507a2411a26f8e36b0abf70271b3a8417942d7`;
 - exact-head CI `37874559508` all green.
-The merged harness is read-only evidence collection only. **Gate 3.18 remains open until the human operator executes Phase B with the real staging 115/OpenList/IndexCore environment and returns redacted evidence.**
+The merged harness is read-only evidence collection only. **Gate 3.18 real Phase B is accepted and closed**, as recorded by the final acceptance and completion artifact above. The following diagnostic/preparation history is preserved; old OPEN/STOP/NO-GO instructions are no longer current authority.
 
 Live Phase B first attempt (operator report, 2026-10-09) passed Panta preflight and Job claim, but the first real 115 StartDownload did not leave a durable task reference: linked Manifest/Job RECOVERY_REQUIRED and provider task START_RESERVED. The upstream failure cause and whether 115 actually created a remote task **remain unknown**. Issue #62 is the bounded diagnostic under Issue #60: read-only remote task inquiry, first error categorization, minimal fix and exact-head CI only if warranted, then a separate human-initiated fresh test with distinct IDs. Never clear the original fence or blindly replay; do not mark Gate 3.18 ACCEPTED or authorize Gate 3.19 on partial evidence.
 
@@ -348,7 +352,7 @@ Live Phase B first attempt (operator report, 2026-10-09) passed Panta preflight 
 - remote task inventory `NOT_FOUND_WITH_LIMITATIONS` does not establish absence of a provider side effect; historical START_RESERVED stays frozen;
 - next: pinpoint pinned SDK outer/encrypted JSON decoding seam with redacted protocol shape and a synthetic reproducer, followed by minimal evidence-based fix; no real retry until then;
 - Issues #62 and #60 stay OPEN; Gate 3.19 not authorized.
-### Current live checkpoint (supersedes earlier diagnostic next-action pointers)
+### Historical live checkpoint (superseded by 2026-10-13 final acceptance)
 
 - PR #64 parser-boundary diagnostics and PR #65 protected single-attempt plan
   are merged. PR #65 main baseline is
@@ -564,17 +568,16 @@ Accepted:
 - Gate 3.15 — fail-closed runtime composition and controlled PostgreSQL+HTTP E2E
 - Gate 3.16 — protected operator bootstrap, read-only preflight and explicit worker startup
 - Gate 3.17 — deterministic Source Resolver and acquisition submission
+- Gate 3.18 — real 115 + OpenList + IndexCore + Panta READY/same Job SUCCEEDED — CLOSED
 
 Authorized now:
-- **Gate 3.18 — Issue #60 — Human-authorized real 115 + OpenList + IndexCore staging E2E**
-- Current developer task only: narrow Issue #66 / PR #67 docs correction to
-  record accepted C2-B0 evidence. Runtime next action belongs to the environment
-  owner; C2-B admission NO-GO and C3 not authorized. No repeated B0 task.
+- No active implementation or real-account testing task. Gate 3.18 is complete.
+- Preserve final evidence; wait for a separate bounded Gate 4 architecture decision.
 
 Not authorized yet:
 - direct Panta OpenList acquisition verifier;
 - direct acquisition Copy creation/upsert;
-- production deployment, public API/UI, or Gate 4+ implementation before Gate 3.18 closeout;
+- production deployment, public API/UI, or Gate 4+ implementation without a separate architecture decision;
 - weakening IndexCore loopback Hint trust to accommodate deployment topology;
 - provider-specific source rewriting/truncation without a new decision;
 - auth/quota/share/access/usage;

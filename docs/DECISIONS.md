@@ -1020,3 +1020,27 @@ Rules:
 
 Gate 3.18 / Issue #60 may add only staging harness/runbook/evidence scaffolding unless the real run exposes a genuine accepted-contract defect. Such a defect must be reviewed explicitly before production code is changed.
 
+### D-041 execution acceptance — 2026-10-13
+
+Gate 3.18 is **ACCEPTED / CLOSED** under
+[Architect final acceptance #6143267673](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6143267673).
+This is an acceptance record, not a new architecture decision or permission to
+repeat live provider mutation. The operator-authorized staging sequence used
+reviewed compatibility fixes and the existing accepted owners:
+
+- IndexCore empty-directory compatibility fix PR #110 at `7ef47217f23ee1ba921f2dcc8378c0a2a9fb84e1`;
+- Panta known-reference recovery PR #71, reviewed HEAD `3e61483bae28a96a43faacbf9353e2bad7fb82d6`,
+  merged `74e9e69e1dd89944901e1b6a7b2b42c661b897d7`, exact-head CI `38374274046` all green;
+- one protected same-pair/reference continuation under GO `6142455770`;
+- provider SUCCESS -> trusted loopback Hint -> unique Q5 PRESENT -> Q8
+  resource-added sequence 1 -> existing Projector Copy/cursor -> result_copy_id
+  + Manifest READY + same Job SUCCEEDED;
+- no new source, Manifest, Job, ProviderTask or StartDownload during recovery;
+- failure budget 0/max1 preserved, eight unknown reservations unchanged,
+  worker joined and C3 Binding/collector permissions restored.
+
+See [redacted completion artifact](GATE3.18-COMPLETION.md). Schema remains v12.
+Gate 4/UI/production deployment remains NOT STARTED and requires a separate
+architecture decision. This acceptance does not authorize unknown-task replay,
+direct SQL pair-state rewriting, direct Copy creation, or relaxed Hint trust.
+
