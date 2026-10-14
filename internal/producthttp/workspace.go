@@ -14,7 +14,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
 
-//go:embed web/index.html web/app.css web/app.js
+//go:embed web/index.html web/app.css web/resource-display.js web/app.js
 var workspaceFiles embed.FS
 
 type DisplayBinding struct {
@@ -90,7 +90,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		}
 		respond(w, 200, info)
 	})))
-	for _, asset := range []struct{ route, file, mime string }{{"GET /{$}", "web/index.html", "text/html; charset=utf-8"}, {"GET /assets/app.css", "web/app.css", "text/css; charset=utf-8"}, {"GET /assets/app.js", "web/app.js", "text/javascript; charset=utf-8"}} {
+	for _, asset := range []struct{ route, file, mime string }{{"GET /{$}", "web/index.html", "text/html; charset=utf-8"}, {"GET /assets/app.css", "web/app.css", "text/css; charset=utf-8"}, {"GET /assets/resource-display.js", "web/resource-display.js", "text/javascript; charset=utf-8"}, {"GET /assets/app.js", "web/app.js", "text/javascript; charset=utf-8"}} {
 		content, err := workspaceFiles.ReadFile(asset.file)
 		if err != nil {
 			return nil, product.ErrUnavailable
