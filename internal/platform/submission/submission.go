@@ -37,7 +37,7 @@ type fileRequest struct {
 	VariantID              *string `json:"variant_id"`
 }
 
-// Run reads one owner-protected request, checks schema v12, and submits intent.
+// Run reads one owner-protected request, checks the supported schema head, and submits intent.
 // It never loads 115 secrets, contacts external services, or starts a worker.
 func Run(ctx context.Context, cfg config.Config, requestPath string) (acquisition.SubmitResult, error) {
 	content, err := bootstrap.ReadProtectedFile(requestPath, maxRequestBytes)
@@ -89,7 +89,7 @@ func Run(ctx context.Context, cfg config.Config, requestPath string) (acquisitio
 		return acquisition.SubmitResult{}, ErrDatabaseUnavailable
 	}
 	status, err := migrator.Status(ctx)
-	if err != nil || !status.Compatible || status.CurrentVersion != 12 || status.LatestVersion != 12 {
+	if err != nil || !status.Compatible || status.CurrentVersion != postgres.CurrentSchemaVersion || status.LatestVersion != postgres.CurrentSchemaVersion {
 		return acquisition.SubmitResult{}, ErrDatabaseUnavailable
 	}
 	bindings, err := postgres.NewStorageRepository(pool)

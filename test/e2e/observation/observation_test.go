@@ -91,8 +91,8 @@ func TestControlledObservation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("apply Panta migrations: %v", err)
 	}
-	if !status.Compatible || status.CurrentVersion != 12 || len(status.Applied) != 12 {
-		t.Fatalf("Panta migration status = %#v, want compatible migrations 0001-0004", status)
+	if !status.Compatible || status.CurrentVersion != postgres.CurrentSchemaVersion || len(status.Applied) != int(postgres.CurrentSchemaVersion) {
+		t.Fatalf("Panta migration status = %#v, want compatible current migration head", status)
 	}
 
 	storageRepository, err := postgres.NewStorageRepository(pantaPool)

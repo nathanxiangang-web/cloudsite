@@ -70,7 +70,7 @@ func newResultNamePgFixture(t *testing.T) (context.Context, *pgxpool.Pool, *Prov
 		t.Fatalf("NewMigrator() error = %v", err)
 	}
 	status, err := migrator.Apply(ctx)
-	if err != nil || !status.Compatible || status.CurrentVersion != 12 {
+	if err != nil || !status.Compatible || status.CurrentVersion != CurrentSchemaVersion {
 		t.Fatalf("Apply() = %#v, %v", status, err)
 	}
 	bindingID := storage.BindingID("39000000-0000-4000-8000-000000000000")
@@ -1158,7 +1158,7 @@ SELECT expected_name, state, updated_at FROM acquisition_manifests WHERE manifes
 	if err != nil {
 		t.Fatalf("apply version 12: %v", err)
 	}
-	if !upgraded.Compatible || upgraded.CurrentVersion != 12 || upgraded.LatestVersion != 12 {
+	if !upgraded.Compatible || upgraded.CurrentVersion != CurrentSchemaVersion || upgraded.LatestVersion != CurrentSchemaVersion {
 		t.Fatalf("upgrade status = %#v", upgraded)
 	}
 

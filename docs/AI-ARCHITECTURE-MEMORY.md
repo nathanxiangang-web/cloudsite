@@ -3,7 +3,7 @@
 > Canonical short-form project memory for Architect/AI sessions.
 >
 > Last architecture-memory synchronization: **2026-10-14**
-> Current status: **Gate 0-3 CLOSED; D-042 delegated dual-role core MVP delivery authorized. Documentation audit first; auth/API/UI/share/usage NOT IMPLEMENTED.**
+> Current status: **Gate 0-3 CLOSED; docs audit PR #76 merged; Issue #77 auth/session implementation under review. Product listener/admission/usage/access/share/UI still missing. D-042 governs continuous scoped delivery.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -15,16 +15,18 @@
 Current authority: D-042 delegates Architect and Developer phases to one agent,
 with contracts, tests, CI and honest same-agent review before each merge. Ordinary
 in-scope work needs no repeated authorization. Start with the
-[documentation audit](DOCUMENTATION-AUDIT.md), Issue #75 / PR #76, then
+[documentation audit](DOCUMENTATION-AUDIT.md), Issue #75 / PR #76 (merged `03719b5`, exact-head CI `38501814871` successful), then
 [core MVP plan](GATE4-IMPLEMENTATION-PLAN.md). The
 [domain model](CONTROL-PLANE-DOMAIN.md) is design, not implemented capability;
 accepted domain/runtime ownership is unchanged.
 Original Gate 4 auth/access/share/usage is not replaced by the PR #73 control
-console or later product/AI guidance. Current source lacks product auth,
-permission/usage/audit persistence and heartbeat/full task-history stores;
+console or later product/AI guidance. Issue #77 now adds product auth/session
+domain, persistence and handlers; [PRODUCT-AUTH](PRODUCT-AUTH.md) records their
+scope/tests/limits. Permission/usage/audit persistence and heartbeat/full task-history stores remain missing;
 proposed entities and ports must not be reported as implemented capabilities.
 Issue #74's vague skeleton is superseded; frozen stage contracts govern coding.
-No such implementation has happened yet. Historical unknown tasks and unrelated
+No product listener/deployment or full MVP acceptance has happened. New migration
+head v13 is tested only in owned disposable PostgreSQL; live Gate 3.18 v12 is not upgraded. Historical unknown tasks and unrelated
 services stay protected. One agent, separate planning/development/review passes.
 
 Current acceptance: [Architect #6143267673](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6143267673)
@@ -40,9 +42,8 @@ Final Worker/runnable 0, Binding DISABLED, collector permission 0. Old eight
 unknown reservations and unrelated Root/service records unchanged. Schema v12.
 See [redacted completion artifact](GATE3.18-COMPLETION.md) and
 [recovery contract](KNOWN-REFERENCE-RECOVERY.md). No further real 115 test is
-required; no old GO/unknown reservation replay, manual pair requeue or Gate 4/UI
-implementation. Architect review of the Gate 4.1 documentation and a separate
-bounded implementation decision are the next boundaries.
+required for auth; no old GO/unknown reservation replay or manual pair requeue.
+D-042 and Issue #77 supersede the former documentation-only handoff.
 Chronological snapshots below retain historical evidence, not current authority.
 
 When reconstructing project truth, read in this order:
