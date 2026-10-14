@@ -4,17 +4,19 @@
 
 ## Current phase
 
-**Gate 3 CLOSED; documentation audit merged; Gate 4.2 auth/session implementation under review**
+**Gate 3 CLOSED; docs audit and auth/session merged; Gate 4.3 read interfaces under review**
 
-Gate 0 through Gate 3 are accepted and closed. Gate 3.18 completed 2026-10-13. D-042 delegates Architect and Developer roles through minimum usable core MVP. Documentation audit PR #76 merged at `03719b5`, reviewed HEAD `c753b37bfb61f062da76acac6f8ea6e3c8140a4e`, CI `38501814871` all three groups successful. Current [Issue #77](https://github.com/nathanxiangang-web/panta/issues/77) implements auth/session domain, PostgreSQL adapter and HTTP handlers; validation is recorded in [PRODUCT-AUTH](docs/PRODUCT-AUTH.md). It does not yet expose a listener or provide the usable product. Product admission/usage/access/share/UI remains missing.
+Gate 0 through Gate 3 are accepted and closed. Gate 3.18 completed 2026-10-13. D-042 delegates Architect and Developer roles through minimum usable core MVP. Documentation audit PR #76 merged at `03719b5`, reviewed HEAD `c753b37bfb61f062da76acac6f8ea6e3c8140a4e`, CI `38501814871` all three groups successful. Auth/session PR #78 is merged; validation is recorded in [PRODUCT-AUTH](docs/PRODUCT-AUTH.md). Current read-interface Issue #79 does not expose a listener or provide the usable product. Product admission/usage/access/share/UI remains missing.
 
 ### Current implementation task - 2026-10-14
+
+Auth Issue #77 / PR #78 ACCEPTED and merged at `eeedd3af242353822c0541cd1e74e48475fe596d`, exact HEAD `95ca01a6cf450b20f4f2e357587cbeb31b84b78a`, CI `38506025321` all three groups successful. Current [Issue #79](https://github.com/nathanxiangang-web/panta/issues/79) implements authenticated owner-only task and allowlisted canonical resource reads, not submission/usage/access/share/UI. [Read contract](docs/PRODUCT-READS.md). Auth provisioning CLI and product listener are still missing; no live database upgrade or download.
 
 [Documentation audit](docs/DOCUMENTATION-AUDIT.md) identifies actual defects and
 recoverable deletions. [Domain ownership](docs/CONTROL-PLANE-DOMAIN.md) and
 [execution plan](docs/GATE4-IMPLEMENTATION-PLAN.md) distinguish current source
 from approved future design. Original Gate 4 auth/access/share/usage remains the
-target. Issue #75 / PR #76 is completed documentation, not product implementation completion. Issue #77 is the current bounded code slice. Its migration head is v13; the real Gate 3.18 database and accepted binary remain v12 and unchanged. No automatic migration or live download occurs in this slice.
+target. Issue #75 / PR #76 is completed documentation, not product implementation completion. Issue #77 is merged; Issue #79 is the current bounded code slice. Migration head is v13; the real Gate 3.18 database and accepted binary remain v12 and unchanged. No automatic migration or live download occurs in this slice.
 D-042 authorizes later bounded implementation without another user approval;
 tests/review/CI remain mandatory. Historical data/runtime invariants are preserved.
 
@@ -37,7 +39,7 @@ reservations stay frozen and other Roots/services are unchanged. Schema v12.
 See [redacted completion evidence](docs/GATE3.18-COMPLETION.md).
 
 No old-task 115 replay or new download is required by the auth slice. D-042
-supersedes the former documentation-only handoff; Issue #77 is active.
+supersedes the former documentation-only handoff; Issue #79 is active.
 Older sections below are retained chronological evidence, not current authority.
 
 ## Accepted baseline

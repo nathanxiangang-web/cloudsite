@@ -1,6 +1,8 @@
 # Product authentication module - Issue #77
 
-Status: implemented code under review; not a running product deployment.
+Status: accepted bounded module, PR #78 merged at `eeedd3af242353822c0541cd1e74e48475fe596d`.
+Reviewed HEAD `95ca01a6cf450b20f4f2e357587cbeb31b84b78a`, CI `38506025321` all three
+groups successful. This is not a running product deployment or full MVP.
 Authority: D-042 / Stage 1 of [the MVP plan](GATE4-IMPLEMENTATION-PLAN.md).
 
 ## Responsibility and dependency direction
