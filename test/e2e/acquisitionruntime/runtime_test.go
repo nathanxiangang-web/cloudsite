@@ -128,7 +128,7 @@ func runtimeFixture(t *testing.T) (fixtureState, acquisition.ManifestID, jobs.Jo
 		t.Fatal(err)
 	}
 	status, err := migrator.Apply(ctx)
-	if err != nil || status.CurrentVersion != 12 || !status.Compatible {
+	if err != nil || status.CurrentVersion != postgres.CurrentSchemaVersion || !status.Compatible {
 		t.Fatalf("migrate test DB: %v", err)
 	}
 	bindingID := storage.BindingID("54000000-0000-4000-8000-000000000001")

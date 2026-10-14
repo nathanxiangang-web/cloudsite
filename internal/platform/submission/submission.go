@@ -89,7 +89,7 @@ func Run(ctx context.Context, cfg config.Config, requestPath string) (acquisitio
 		return acquisition.SubmitResult{}, ErrDatabaseUnavailable
 	}
 	status, err := migrator.Status(ctx)
-	if err != nil || !status.Compatible || status.CurrentVersion != 12 || status.LatestVersion != 12 {
+	if err != nil || !status.Compatible || status.CurrentVersion != postgres.CurrentSchemaVersion || status.LatestVersion != postgres.CurrentSchemaVersion {
 		return acquisition.SubmitResult{}, ErrDatabaseUnavailable
 	}
 	bindings, err := postgres.NewStorageRepository(pool)
