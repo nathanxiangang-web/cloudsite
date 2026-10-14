@@ -20,14 +20,16 @@ original KNOWN task -> Hint -> Q5/Q8 -> PRESENT Copy/cursor -> READY + same Job
 SUCCEEDED, with no additional StartDownload. Preserve the eight historical
 unknown reservations and protected evidence. No further live 115 validation is
 needed. Documentation Issue #75 / PR #76 is merged. Current task:
-[Issue #77 - Gate 4.2 product accounts and sessions](https://github.com/nathanxiangang-web/panta/issues/77).
+auth Issue #77 / PR #78 merged. Current implementation:
+[Issue #79 - Gate 4.3 task and canonical resource reads](https://github.com/nathanxiangang-web/panta/issues/79).
 Current authority is D-042: the human delegates Architect and Developer roles
 to one agent through minimum usable core MVP delivery. Finish the documentation
 audit (complete), then execute [the staged plan](docs/GATE4-IMPLEMENTATION-PLAN.md).
 Each bounded slice follows written contracts, tests, exact-head CI and a separate
 same-agent review pass. Do not call it independent review. Issue #77 implements
 auth domain/store/handlers; [PRODUCT-AUTH](docs/PRODUCT-AUTH.md) records limits.
-No product listener/UI/admission/usage/share is implemented. Schema head v13
+Issue #79 adds owner-only task and allowlisted resource read handlers, with no
+provider mutation. No product listener/UI/admission/usage/share is implemented. Schema head v13
 does not upgrade the existing Gate 3.18 v12 database/binary. Issue #74's vague
 old skeleton is superseded.
 Original MVP auth/access/share/usage remains required; new guidance is not
