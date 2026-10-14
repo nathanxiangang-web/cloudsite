@@ -1079,3 +1079,20 @@ Stage 0 corrects docs; Stage 1 executes the frozen auth/session contract. Later
 slices need actual contracts and evidence recorded by the delegated Architect,
 not another user authorization. A docs commit/partial test is not usable MVP.
 
+## D-043 - Bring the bounded read-only interface forward for user inspection
+
+**Status:** Accepted delegated architecture decision, 2026-10-14.
+
+The human asks to see the UI after auth/read implementation. After PR #78 and
+PR #80 acceptance, execute [PRODUCT-READONLY-UI](PRODUCT-READONLY-UI.md) before
+Stage 2B admission. This changes presentation order, not minimum MVP scope.
+Use embedded Go-served HTML/CSS/JS, existing verified auth/read ports and a new
+explicit loopback-only product composition. No new frontend framework or Job
+engine, provider/Hint mutation, automatic schema migration or global task view.
+Protected operator-only provision, bounded login admission, request/shutdown
+timeouts and safe Origin/Host/CSP are prerequisites for a running page. New
+owned preview environment only; preserve old staging and historical records.
+No fabricated UI progress or real-chain claim from labelled test fixtures.
+Admission/usage/access/share remain required subsequent slices; readonly UI
+must not be called the usable full MVP or a production deployment.
+

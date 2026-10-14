@@ -1,0 +1,136 @@
+package producthttp
+
+import (
+	"context"
+	"embed"
+	"net/http"
+	"strings"
+	"sync"
+	"time"
+	"unicode/utf8"
+
+	"github.com/nathanxiangang-web/panta/internal/auth"
+	"github.com/nathanxiangang-web/panta/internal/product"
+	"github.com/nathanxiangang-web/panta/internal/storage"
+)
+
+//go:embed web/index.html web/app.css web/app.js
+var workspaceFiles embed.FS
+
+type DisplayBinding struct {
+	ID    storage.BindingID `json:"binding_id"`
+	Label string            `json:"label"`
+}
+
+func ValidDisplayLabel(label string) bool {
+	return utf8.ValidString(label) && strings.TrimSpace(label) != "" && utf8.RuneCountInString(label) <= 100 && !strings.ContainsAny(label, "\x00\r\n")
+}
+
+type workspaceInfo struct {
+	Mode          string           `json:"mode"`
+	SchemaVersion int64            `json:"schema_version"`
+	Bindings      []DisplayBinding `json:"bindings"`
+}
+type loginGate struct {
+	mu     sync.Mutex
+	window time.Time
+	used   int
+	slots  chan struct{}
+	now    func() time.Time
+}
+
+func (gate *loginGate) enter() bool {
+	gate.mu.Lock()
+	defer gate.mu.Unlock()
+	now := gate.now()
+	if gate.window.IsZero() || now.Sub(gate.window) >= time.Minute {
+		gate.window = now
+		gate.used = 0
+	}
+	if gate.used >= 8 {
+		return false
+	}
+	select {
+	case gate.slots <- struct{}{}:
+		gate.used++
+		return true
+	default:
+		return false
+	}
+}
+
+type WorkspaceHandler struct {
+	http     *Handler
+	gate     loginGate
+	mu       sync.Mutex
+	stopping bool
+	active   sync.WaitGroup
+}
+
+func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads, bindings []DisplayBinding, version int64) (*WorkspaceHandler, error) {
+	if version < 1 || len(bindings) < 1 || len(bindings) > 64 {
+		return nil, product.ErrInvalid
+	}
+	seen := map[storage.BindingID]bool{}
+	for _, binding := range bindings {
+		if !product.ValidID(string(binding.ID)) || !ValidDisplayLabel(binding.Label) || seen[binding.ID] {
+			return nil, product.ErrInvalid
+		}
+		seen[binding.ID] = true
+	}
+	h, err := NewReadHandler(access, origin, reads)
+	if err != nil {
+		return nil, err
+	}
+	info := workspaceInfo{Mode: "READ_ONLY", SchemaVersion: version, Bindings: append([]DisplayBinding(nil), bindings...)}
+	h.mux.Handle("GET /api/v1/workspace", h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := strictQuery(r); err != nil {
+			readFailure(w, err)
+			return
+		}
+		respond(w, 200, info)
+	})))
+	for _, asset := range []struct{ route, file, mime string }{{"GET /{$}", "web/index.html", "text/html; charset=utf-8"}, {"GET /assets/app.css", "web/app.css", "text/css; charset=utf-8"}, {"GET /assets/app.js", "web/app.js", "text/javascript; charset=utf-8"}} {
+		content, err := workspaceFiles.ReadFile(asset.file)
+		if err != nil {
+			return nil, product.ErrUnavailable
+		}
+		h.mux.HandleFunc(asset.route, func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", asset.mime)
+			_, _ = w.Write(content)
+		})
+	}
+	return &WorkspaceHandler{http: h, gate: loginGate{slots: make(chan struct{}, 2), now: time.Now}}, nil
+}
+func (h *WorkspaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'")
+	w.Header().Set("X-Frame-Options", "DENY")
+	w.Header().Set("Referrer-Policy", "no-referrer")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	h.mu.Lock()
+	if h.stopping {
+		h.mu.Unlock()
+		failure(w, 503, "SERVICE_STOPPING")
+		return
+	}
+	h.active.Add(1)
+	h.mu.Unlock()
+	defer h.active.Done()
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+	defer cancel()
+	r = r.WithContext(ctx)
+	if r.Method == "POST" && r.URL.Path == "/api/v1/auth/login" && h.http.ValidMutationOrigin(r) {
+		if !h.gate.enter() {
+			w.Header().Set("Retry-After", "60")
+			failure(w, 429, "AUTH_BUSY")
+			return
+		}
+		defer func() { <-h.gate.slots }()
+	}
+	h.http.ServeHTTP(w, r)
+}
+
+// Wait seals request admission before joining handlers; a racing HTTP request
+// cannot add backend work after the pool-owning process begins teardown.
+func (h *WorkspaceHandler) Wait() { h.mu.Lock(); h.stopping = true; h.mu.Unlock(); h.active.Wait() }

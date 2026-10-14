@@ -11,6 +11,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/app"
 	"github.com/nathanxiangang-web/panta/internal/platform/config"
 	"github.com/nathanxiangang-web/panta/internal/platform/operator"
+	"github.com/nathanxiangang-web/panta/internal/platform/productserver"
 	"github.com/nathanxiangang-web/panta/internal/platform/submission"
 )
 
@@ -31,7 +32,7 @@ func runWithContext(ctx context.Context, args []string) error {
 	if len(args) > 1 {
 		return operator.ErrInvalidAction
 	}
-	if len(args) == 1 && args[0] != string(operator.Preflight) && args[0] != string(operator.Start) && args[0] != string(operator.ResumeKnown) && args[0] != string(operator.StartKnown) && args[0] != "submit-acquisition" {
+	if len(args) == 1 && args[0] != string(operator.Preflight) && args[0] != string(operator.Start) && args[0] != string(operator.ResumeKnown) && args[0] != string(operator.StartKnown) && args[0] != "submit-acquisition" && args[0] != productserver.ServeAction && args[0] != productserver.ProvisionAction {
 		return operator.ErrInvalidAction
 	}
 	cfg, err := config.Load()
@@ -39,6 +40,12 @@ func runWithContext(ctx context.Context, args []string) error {
 		return errors.New("invalid process configuration")
 	}
 	if len(args) == 1 {
+		if args[0] == productserver.ServeAction || args[0] == productserver.ProvisionAction {
+			if cfg.AcquisitionWorker.Enabled {
+				return productserver.ErrConfig
+			}
+			return productserver.Run(ctx, args[0], os.Getenv("PANTA_PRODUCT_CONFIG_FILE"), os.Getenv("PANTA_PRODUCT_USER_FILE"))
+		}
 		if args[0] == string(operator.ResumeKnown) || args[0] == string(operator.StartKnown) {
 			return operator.RunKnown(ctx, operator.Action(args[0]), cfg, os.Getenv("PANTA_ACQUISITION_BOOTSTRAP_FILE"), os.Getenv("PANTA_KNOWN_RECOVERY_GO_FILE"))
 		}
