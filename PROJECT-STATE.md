@@ -4,9 +4,19 @@
 
 ## Current phase
 
-**Gate 3 ACCEPTED / CLOSED — awaiting separate Gate 4 architecture decision**
+**Gate 3 CLOSED; documentation audit in progress; delegated core MVP delivery authorized**
 
-Gate 0 through Gate 3 are formally accepted and closed. Gate 3.18 completed the real staging acquisition on 2026-10-13. Gate 4 / UI / product expansion is NOT STARTED and is not authorized by this closeout.
+Gate 0 through Gate 3 are accepted and closed. Gate 3.18 completed 2026-10-13. On 2026-10-14 the human delegated Architect and Developer roles through minimum usable core MVP (D-042). Product auth/API/UI/share/usage is still NOT IMPLEMENTED. First merge audited docs, then execute the frozen auth/session slice and staged plan.
+
+### Current documentation task - 2026-10-14
+
+[Documentation audit](docs/DOCUMENTATION-AUDIT.md) identifies actual defects and
+recoverable deletions. [Domain ownership](docs/CONTROL-PLANE-DOMAIN.md) and
+[execution plan](docs/GATE4-IMPLEMENTATION-PLAN.md) distinguish current source
+from approved future design. Original Gate 4 auth/access/share/usage remains the
+target. Issue #75 / PR #76 is documentation, not product implementation completion.
+D-042 authorizes later bounded implementation without another user approval;
+tests/review/CI remain mandatory. Historical data/runtime invariants are preserved.
 
 ### Current final acceptance — 2026-10-13
 
@@ -26,8 +36,8 @@ runnable 0, C3 Binding DISABLED and collector permission 0. Eight older unknown
 reservations stay frozen and other Roots/services are unchanged. Schema v12.
 See [redacted completion evidence](docs/GATE3.18-COMPLETION.md).
 
-No further 115 validation or download is required. The only remaining project
-handoff is a separate Gate 4 architecture decision; no implementation is active.
+No further 115 validation or download is required. The next handoff is Architect
+review of the Gate 4.1 documentation PR; no implementation is active.
 Older sections below are retained chronological evidence, not current authority.
 
 ## Accepted baseline
@@ -844,9 +854,9 @@ Until the relevant gate is accepted, do not implement:
 
 ## Next architect action
 
-Gate 3.18 / D-041 is accepted and closed. Preserve its final evidence and eight
-unknown reservations. Define a bounded Gate 4 task only through a separate
-architecture decision; do not repeat 115 testing or begin UI/product work now.
+Finish the documentation audit and validated merge, then implement the frozen
+Stage 1 auth/session contract under D-042. Record later bounded choices and
+actual evidence before advancing; preserve historical uncertain reservations.
 
 ## Current bounded task
 

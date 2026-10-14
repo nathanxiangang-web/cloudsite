@@ -1044,3 +1044,38 @@ Gate 4/UI/production deployment remains NOT STARTED and requires a separate
 architecture decision. This acceptance does not authorize unknown-task replay,
 direct SQL pair-state rewriting, direct Copy creation, or relaxed Hint trust.
 
+## D-042 - Delegated dual-role delivery of the minimum usable core MVP
+
+**Status:** Accepted architecture/execution decision, 2026-10-14.
+
+The human explicitly delegates Architect and Developer responsibilities to one
+agent, asks it to write plans before implementation, proceed without repeated
+stage authorization, and audit/correct or remove misleading recent documents.
+This supersedes a separate Architect's approval for each new bounded stage;
+it does not remove testing or change runtime truth.
+
+- Use distinct planning, implementation and review passes. Call this same-agent
+  review, not independent review. Keep narrow Issues/PRs and actual tests/CI;
+  ordinary defects/configuration are resolved without another approval round.
+- Original MVP Gate 4 remains auth/access/share/usage; console, premium, favorites
+  and AI entry points cannot substitute for it. Accept the domain ownership in
+  [CONTROL-PLANE-DOMAIN](CONTROL-PLANE-DOMAIN.md) and the staged
+  [core MVP plan](GATE4-IMPLEMENTATION-PLAN.md), not fictional functionality.
+- Auth: operator-provisioned product users, USER/ADMIN, bcrypt passwords,
+  revocable opaque hashed sessions, no Provider/Hint identity substitution.
+  Future product data uses append-only migrations in an isolated MVP DB.
+- Private authenticated Catalog, owner-only task/source views, explicit admin
+  admission; zero-price bounded operation accounting. Exact source values,
+  Job/Manifest/Copy and DB-time fencing remain authoritative.
+- Minimum core MVP defers optional Agent/recommendation/payment/polish; original
+  full Gate 5/6 goals are preserved and not declared complete.
+- Historical eight unknown reservations, staging DB, IndexCore DB, unrelated
+  services and credentials are unchanged. Tests use dedicated non-sensitive
+  resources, one fenced start per new operation, never blind retries.
+- Production/public-network exposure, destructive data cleanup, paid
+  transactions and third-party account provisioning remain outside scope.
+
+Stage 0 corrects docs; Stage 1 executes the frozen auth/session contract. Later
+slices need actual contracts and evidence recorded by the delegated Architect,
+not another user authorization. A docs commit/partial test is not usable MVP.
+
