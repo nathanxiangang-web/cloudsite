@@ -24,7 +24,7 @@ async function signedIn(principal){
  el('binding-select').replaceChildren();
  for(const binding of workspace.bindings){const option=document.createElement('option');option.value=binding.binding_id;option.textContent=binding.label;el('binding-select').append(option);}
  state.binding=workspace.bindings[0].binding_id;state.parent=null;state.parents=[];state.resourceCursor='';state.taskCursor='';
- el('login-view').hidden=true;el('workspace-view').hidden=false;clearError('login-error');selectTab('resources');
+ el('login-view').hidden=true;el('workspace-view').hidden=false;window.scrollTo(0,0);clearError('login-error');selectTab('resources');
 }
 function badge(value,kind=''){const node=document.createElement('span');node.className='badge'+(kind?' '+kind:'');node.textContent=value;return node;}
 function cell(row,text){const node=document.createElement('td');if(text!==undefined)node.textContent=text;row.append(node);return node;}
@@ -35,7 +35,7 @@ function renderResources(page){
  for(const item of page.items){const row=document.createElement('tr');const name=cell(row);let title;
   if(item.directory){title=document.createElement('button');title.type='button';title.className='file-button';title.textContent='▱ '+resourceName(item);title.addEventListener('click',()=>{state.parents.push({parent:state.parent,label:el('directory-label').textContent});state.parent=item.resource_id;state.resourceCursor='';el('directory-label').textContent=item.path||resourceName(item);el('directory-back').disabled=false;loadResources();});}
   else{title=document.createElement('span');title.className='file-name';title.textContent='▧ '+resourceName(item);}name.append(title);if(item.path){const path=document.createElement('small');path.textContent=item.path;name.append(path);}
-  cell(row,item.directory?'目录':(item.directory===false?'文件':'未提供'));cell(row,size(item.size_bytes));cell(row).append(badge(item.presence));cell(row).append(badge(item.copy_id?item.copy_availability:'未投影',item.copy_id?'':'neutral'));el('resource-rows').append(row);
+  cell(row,item.directory?'目录':(item.directory===false?'文件':'未提供'));cell(row,size(item.size_bytes));cell(row).append(badge(item.presence));cell(row).append(badge(item.copy_id?item.copy_availability:'当前库未投影',item.copy_id?'':'neutral'));el('resource-rows').append(row);
  }
  state.resourceNext=page.next_cursor||'';el('more-resources').disabled=!state.resourceNext;el('resources-empty').hidden=page.items.length!==0;el('resource-count').textContent=String(page.items.length);el('resources-footer').textContent='本页 '+page.items.length+' 项 · 规范查询结果';
 }
