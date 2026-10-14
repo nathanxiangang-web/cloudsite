@@ -10,6 +10,25 @@ Gate 0 through Gate 3 are accepted and closed. D-042 delegates Architect and Dev
 
 ### Current implementation task - 2026-10-14
 
+User-prioritized readonly resource presentation Issue #84 / PR #85 is ACCEPTED
+and merged at `0ddf314554cd5b252969e9e1d82a06f9b36469c8`, reviewed HEAD
+`af23cf2746a0fa3f2266a8d7c95f4a0be550ec6d`; CI `38575852403` all three jobs
+successful. [Same-agent review](https://github.com/nathanxiangang-web/panta/pull/85#pullrequestreview-5519125136),
+[display contract](docs/PRODUCT-RESOURCE-DISPLAY.md). The owned .50 readonly UI
+is updated, schema stays v13. Real Markdown Q4/Q5/card/detail, category/search
+empty states, logout/relogin and responsive layout were verified. Software/video
+classification exists; actual current scope has only one document, not the full
+drive. Content preview/playback/download/share remain unavailable.
+
+The VM reboot stopped the prior processes. Only required databases and reviewed
+readonly query/UI processes were restored; original database hashes and other
+service states verified unchanged, no real StartDownload/scan/Hint. Old UI binary
+and configuration remain available for rollback. Admission/usage Issue #83 has
+unfinished contract/code on a separate branch; it has NOT passed review or been
+deployed, and its draft v14 migration has not touched any real database. Resume
+that bounded slice, then Copy projection and authorized real content access;
+metadata presentation must not replace the remaining minimum MVP capabilities.
+
 Issue #81 / PR #82 ACCEPTED and merged at `8b86ae336b8b88b00bb0a9b6ab787695126eb060`; exact HEAD `e82d2fed1fa92ac68702a4189a336f2134f8f61c`, CI `38537678423` all three groups successful. [Acceptance record](https://github.com/nathanxiangang-web/panta/pull/82#issuecomment-6164669005), [readonly module/runbook](docs/PRODUCT-READONLY-UI.md). Browser login, real browse/Q5, owner-only empty tasks and logout/relogin are verified. Next bounded [Issue #83](https://github.com/nathanxiangang-web/panta/issues/83): freeze and implement exact-source admission and zero-price operation usage. It is not implemented yet; download controls remain unavailable.
 
 Prior acceptance: auth Issue #77 / PR #78 merged at `eeedd3af242353822c0541cd1e74e48475fe596d`, exact HEAD `95ca01a6cf450b20f4f2e357587cbeb31b84b78a`, CI `38506025321` successful; reads Issue #79 / PR #80 at `574124aa997464eb3305fcc6ce2d5ddcb9ff28f7`, exact HEAD `f8c0607c73cbe640aeec06be0d39c11cd9296bd1`, CI `38507300691` successful. All are bounded module acceptances, not full MVP completion.
@@ -18,7 +37,7 @@ Prior acceptance: auth Issue #77 / PR #78 merged at `eeedd3af242353822c0541cd1e7
 recoverable deletions. [Domain ownership](docs/CONTROL-PLANE-DOMAIN.md) and
 [execution plan](docs/GATE4-IMPLEMENTATION-PLAN.md) distinguish current source
 from approved future design. Original Gate 4 auth/access/share/usage remains the
-target. Issues #75/#77/#79/#81 are completed; Issue #83 is next. Product migration head is v13; original Gate 3.18 Panta DB/binary remains v12. On explicit human request for real data, the stopped staging PostgreSQL container was restored and an owned IndexCore read-only component entrypoint started. Original table/provider-history hashes are unchanged, with no writer/scan/Hint/provider start; unrelated services unchanged. No automatic migration or real download occurred.
+target. Issues #75/#77/#79/#81/#84 are completed; Issue #83 remains unfinished. Accepted product migration head is v13; original Gate 3.18 Panta DB/binary remains v12. On explicit human request for real data, the stopped staging PostgreSQL container was restored and an owned IndexCore read-only component entrypoint started. Original table/provider-history hashes are unchanged, with no writer/scan/Hint/provider start; unrelated services unchanged. No automatic migration or real download occurred.
 D-042 authorizes later bounded implementation without another user approval;
 tests/review/CI remain mandatory. Historical data/runtime invariants are preserved.
 

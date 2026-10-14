@@ -3,7 +3,7 @@
 > Canonical short-form project memory for Architect/AI sessions.
 >
 > Last architecture-memory synchronization: **2026-10-14**
-> Current status: **Gate 0-3 CLOSED; docs/auth/read/readonly UI PRs #76/#78/#80/#82 merged. UI reads real MCP-Test canonical data through an owned readonly IndexCore component endpoint. Issue #83 admission/usage is next, not implemented. File access/share still missing; no full MVP acceptance. D-042/D-043 govern scoped delivery.**
+> Current status: **Gate 0-3 CLOSED; docs/auth/read/readonly UI PRs #76/#78/#80/#82 and real resource presentation #85 merged. UI reads real MCP-Test canonical data through an owned readonly IndexCore component endpoint. Issue #83 admission/usage has unfinished isolated WIP, not accepted/deployed. Copy projection/content access/playback/share still missing; no full MVP acceptance. D-042/D-043 govern scoped delivery.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -34,6 +34,19 @@ exact HEAD `e82d2fed1fa92ac68702a4189a336f2134f8f61c`, CI `38537678423` all succ
 [PRODUCT-READONLY-UI](PRODUCT-READONLY-UI.md) records actual scope, real-data
 connection and rollback. D-043 brought presentation forward; Issue #83 is next
 for exact-source admission/usage, with contracts before coding. No full MVP.
+
+The user's latest software/video/document display request advanced one bounded
+readonly follow-up: Issue #84 / PR #85, merge `0ddf314554cd5b252969e9e1d82a06f9b36469c8`,
+exact HEAD `af23cf2746a0fa3f2266a8d7c95f4a0be550ec6d`, CI `38575852403` all three
+groups successful, same-agent review `5519125136`. Pure extension hints,
+current-page counts/search, list/cards and structured detail are deployed to
+the owned .50 loopback UI. One real 1955-byte Markdown file was browser-tested;
+software/video have no records in this scoped Root. No whole-drive/content/
+playback claim. [Module contract](PRODUCT-RESOURCE-DISPLAY.md) preserves access
+and Copy boundaries. Preview stays v13; unreviewed admission v14 WIP is separate.
+After the VM reboot, only readonly processes/required databases were resumed,
+original hashes and unrelated service states unchanged. Resume Issue #83, then
+real Copy projection/access rather than continuing metadata-only substitutes.
 
 Readonly UI runs on .50 and the user accesses it via a loopback SSH forward.
 The explicit subsequent request for real data supersedes synthetic preview:

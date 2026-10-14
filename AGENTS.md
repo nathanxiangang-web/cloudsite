@@ -22,6 +22,16 @@ unknown reservations and protected evidence. No further live 115 validation is
 needed. Documentation Issue #75 / PR #76 is merged. Current task:
 auth Issue #77 / PR #78 merged. Current implementation:
 [Issue #79](https://github.com/nathanxiangang-web/panta/issues/79) / PR #80 and Issue #81 / PR #82 are accepted and merged. Read-only UI runs against real designated MCP-Test canonical data. Next bounded [Issue #83](https://github.com/nathanxiangang-web/panta/issues/83): freeze and implement exact-source admission and operation usage. [Read-only UI/runbook](docs/PRODUCT-READONLY-UI.md) remains governed by D-043.
+User-prioritized real resource presentation Issue #84 / PR #85 is accepted and
+deployed after exact-head CI `38575852403`. See [display module](docs/PRODUCT-RESOURCE-DISPLAY.md).
+This is metadata classification/list/cards/detail over the same scoped real
+MCP-Test Root (one document), not whole-drive indexing, content preview/video
+playback or file access. Issue #83 WIP remains isolated on its own branch and
+unreviewed; no v14 migration has been deployed. Do not overwrite that work or
+mix it into readonly deployment. Resume admission/usage and subsequent actual
+Copy/access/share modules; MVP is still incomplete. Preserve restored readonly
+processes and historical data; no new provider download is needed for UI work.
+
 Current authority is D-042: the human delegates Architect and Developer roles
 to one agent through minimum usable core MVP delivery. Finish the documentation
 audit (complete), then execute [the staged plan](docs/GATE4-IMPLEMENTATION-PLAN.md).
