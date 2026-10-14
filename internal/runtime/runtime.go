@@ -133,7 +133,7 @@ func NewRuntime(ctx context.Context, cfg config.Config, deps RuntimeDependencies
 	if err != nil {
 		return nil, fmt.Errorf("read Panta schema: %w", err)
 	}
-	if !status.Compatible || status.CurrentVersion != 12 || status.LatestVersion != 12 {
+	if !status.Compatible || status.CurrentVersion != postgres.CurrentSchemaVersion || status.LatestVersion != postgres.CurrentSchemaVersion {
 		return nil, postgres.ErrIncompatibleSchema
 	}
 	jobs, err := postgres.NewJobRepository(pool)

@@ -7,7 +7,10 @@ Source baseline: `3f6d9cc20dbee8aa7cde02dcbfc89cfcd9071e71`.
 This document describes design, not working auth/API/UI, provider access, audit
 or quota. D-042 authorizes staged implementation under the separate execution
 plan, not fictional capabilities.
-Schema stays v12 and the accepted Gate 3.18 runtime is unchanged.
+The design baseline is schema v12 and the accepted Gate 3.18 runtime is
+unchanged. Issue #77 subsequently implements the [auth module](PRODUCT-AUTH.md)
+with schema head v13 in isolated tests; statements below about missing auth
+describe the pinned design baseline, not this later implementation.
 
 ## 1. Product scope and terminology
 

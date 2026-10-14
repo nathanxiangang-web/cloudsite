@@ -105,7 +105,7 @@ func RunKnown(ctx context.Context, action Action, cfg config.Config, bootstrapPa
 		return ErrInvalidAction
 	}
 	status, err := migrator.Status(startupCtx)
-	if err != nil || !status.Compatible || status.CurrentVersion != 12 || status.LatestVersion != 12 {
+	if err != nil || !status.Compatible || status.CurrentVersion != postgres.CurrentSchemaVersion || status.LatestVersion != postgres.CurrentSchemaVersion {
 		return ErrInvalidAction
 	}
 	var databaseNow time.Time

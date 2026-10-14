@@ -16,6 +16,10 @@ var ErrIncompatibleSchema = errors.New("incompatible Panta database schema")
 
 const migrationLockID int64 = 0x50414e5441
 
+// CurrentSchemaVersion is the supported head of append-only product history.
+// Runtime admission still requires compatible history at this exact head.
+const CurrentSchemaVersion int64 = 13
+
 type MigrationStatus struct {
 	Version  int64  `json:"version"`
 	Name     string `json:"name"`

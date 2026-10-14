@@ -4,17 +4,17 @@
 
 ## Current phase
 
-**Gate 3 CLOSED; documentation audit in progress; delegated core MVP delivery authorized**
+**Gate 3 CLOSED; documentation audit merged; Gate 4.2 auth/session implementation under review**
 
-Gate 0 through Gate 3 are accepted and closed. Gate 3.18 completed 2026-10-13. On 2026-10-14 the human delegated Architect and Developer roles through minimum usable core MVP (D-042). Product auth/API/UI/share/usage is still NOT IMPLEMENTED. First merge audited docs, then execute the frozen auth/session slice and staged plan.
+Gate 0 through Gate 3 are accepted and closed. Gate 3.18 completed 2026-10-13. D-042 delegates Architect and Developer roles through minimum usable core MVP. Documentation audit PR #76 merged at `03719b5`, reviewed HEAD `c753b37bfb61f062da76acac6f8ea6e3c8140a4e`, CI `38501814871` all three groups successful. Current [Issue #77](https://github.com/nathanxiangang-web/panta/issues/77) implements auth/session domain, PostgreSQL adapter and HTTP handlers; validation is recorded in [PRODUCT-AUTH](docs/PRODUCT-AUTH.md). It does not yet expose a listener or provide the usable product. Product admission/usage/access/share/UI remains missing.
 
-### Current documentation task - 2026-10-14
+### Current implementation task - 2026-10-14
 
 [Documentation audit](docs/DOCUMENTATION-AUDIT.md) identifies actual defects and
 recoverable deletions. [Domain ownership](docs/CONTROL-PLANE-DOMAIN.md) and
 [execution plan](docs/GATE4-IMPLEMENTATION-PLAN.md) distinguish current source
 from approved future design. Original Gate 4 auth/access/share/usage remains the
-target. Issue #75 / PR #76 is documentation, not product implementation completion.
+target. Issue #75 / PR #76 is completed documentation, not product implementation completion. Issue #77 is the current bounded code slice. Its migration head is v13; the real Gate 3.18 database and accepted binary remain v12 and unchanged. No automatic migration or live download occurs in this slice.
 D-042 authorizes later bounded implementation without another user approval;
 tests/review/CI remain mandatory. Historical data/runtime invariants are preserved.
 
@@ -36,15 +36,15 @@ runnable 0, C3 Binding DISABLED and collector permission 0. Eight older unknown
 reservations stay frozen and other Roots/services are unchanged. Schema v12.
 See [redacted completion evidence](docs/GATE3.18-COMPLETION.md).
 
-No further 115 validation or download is required. The next handoff is Architect
-review of the Gate 4.1 documentation PR; no implementation is active.
+No old-task 115 replay or new download is required by the auth slice. D-042
+supersedes the former documentation-only handoff; Issue #77 is active.
 Older sections below are retained chronological evidence, not current authority.
 
 ## Accepted baseline
 
 - Project name: Panta
 - MVP-first: functionality before UI polish
-- Team model: 1 Architect + 1 Developer
+- Team model: one agent performs Architect, Developer and a separate same-agent review pass under D-042; not independent review
 - OpenList remains inside the primary observation path as an IndexCore-owned collector dependency
 - Panta acquisition does not directly query OpenList for visibility/canonical truth
 - IndexCore remains an independent canonical physical-resource kernel

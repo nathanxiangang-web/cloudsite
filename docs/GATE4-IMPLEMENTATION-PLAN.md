@@ -13,7 +13,9 @@ PRESENT Copy. Authenticated share create/inspect/revoke and a minimal zero-price
 usage/quota ledger must work. Account identity is independent of 115 credentials.
 
 These are **acceptance targets**, not current functionality. Existing accepted
-code provides Gate 3 acquisition/canonical behavior; product auth, HTTP/UI,
+code provides Gate 3 acquisition/canonical behavior. Issue #77 adds auth/session
+domain, store and handlers; [module evidence](PRODUCT-AUTH.md) is separate from
+startup/operator provisioning and product acceptance. Product listener/UI,
 access integration, concrete share and accounting are still missing.
 
 ## Execution model
@@ -45,8 +47,10 @@ Architect, not silently invented during implementation.
 
 ## Stage 1 frozen product-auth contract
 
-- New `auth` domain/service with narrow user/session store and clock/random
-  injection; PostgreSQL adapter outside domain; HTTP transport outside domain.
+- New `auth` domain/service with narrow user/session store; session randomness
+  uses crypto/rand and PostgreSQL owns expiry time. The store port permits
+  deterministic test fakes without a production clock/random override.
+  PostgreSQL adapter outside domain; HTTP transport outside domain.
 - Account: immutable server-generated UUID, unique normalized login name,
   password hash, `USER` or `ADMIN`, enabled flag and timestamps. No premium tier,
   signup from the public network, Provider identity alias or client-chosen role.

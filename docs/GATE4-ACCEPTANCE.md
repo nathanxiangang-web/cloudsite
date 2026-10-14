@@ -4,7 +4,7 @@ Status: Required acceptance criteria; NOT a completed product acceptance.
 
 | Capability | Required evidence | Current baseline |
 | --- | --- | --- |
-| Product login | Protected provisioning, password verification, enabled-account policy, session expiry/revocation and safe cookies; HTTP + isolated PG tests | Not implemented |
+| Product login | Protected provisioning, password verification, enabled-account policy, session expiry/revocation and safe cookies; HTTP + isolated PG tests | Issue #77 implements domain/store/handlers and tests; no operator CLI/listener/deployment yet; see [PRODUCT-AUTH](PRODUCT-AUTH.md) |
 | Policy | Provider identity cannot impersonate a user; cross-user task/source reads denied; admin/system privileges explicit | Not implemented |
 | Resource browse/access | Authorized Catalog/known-path flow, exact PRESENT Copy, unavailable/removed/ambiguous fail closed, real access result | Read domains exist; product gateway missing |
 | Acquisition | Authenticated exact-source submission, ledger/quota admission, same Job through Hint/Q5/Q8/Copy/READY, no duplicate start | Gate 3 core accepted; product admission missing |

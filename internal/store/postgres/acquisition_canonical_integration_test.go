@@ -77,7 +77,7 @@ func newCanonicalPgFixture(t *testing.T) canonicalPgIntegration {
 		t.Fatalf("NewMigrator() error = %v", err)
 	}
 	status, err := migrator.Apply(ctx)
-	if err != nil || !status.Compatible || status.CurrentVersion != 12 || status.LatestVersion != 12 {
+	if err != nil || !status.Compatible || status.CurrentVersion != CurrentSchemaVersion || status.LatestVersion != CurrentSchemaVersion {
 		t.Fatalf("Apply() = %#v, %v; want a compatible schema at version 12", status, err)
 	}
 
@@ -939,7 +939,7 @@ INSERT INTO acquisition_manifests (
 		t.Fatalf("NewMigrator() error = %v", err)
 	}
 	upgraded, err := migrator.Apply(ctx)
-	if err != nil || !upgraded.Compatible || upgraded.CurrentVersion != 12 {
+	if err != nil || !upgraded.Compatible || upgraded.CurrentVersion != CurrentSchemaVersion {
 		t.Fatalf("apply version 12 = %#v, %v", upgraded, err)
 	}
 
