@@ -12,15 +12,20 @@ Before planning, changing, or reviewing code, **read these files first**:
 
 Chat history is not a source of truth.
 
-## Current execution pointer — 2026-10-13
+## Current execution pointer — 2026-10-14
 
 Gate 0 through Gate 3 are ACCEPTED / CLOSED. Gate 3.18 real Phase B passed
 [Architect final acceptance](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6143267673):
 original KNOWN task -> Hint -> Q5/Q8 -> PRESENT Copy/cursor -> READY + same Job
 SUCCEEDED, with no additional StartDownload. Preserve the eight historical
 unknown reservations and protected evidence. No further live 115 validation is
-needed. Gate 4 / UI / product expansion is NOT STARTED; require a separate
-architecture decision and bounded Issue before implementation.
+needed. Current task: [Issue #75 - Gate 4.1 domain architecture documentation](https://github.com/nathanxiangang-web/panta/issues/75).
+Only the proposed [domain document](docs/CONTROL-PLANE-DOMAIN.md) and execution
+pointers may change; Architect review is pending. Gate 4 code/API/auth/UI is
+NOT STARTED by this task. Do not implement Issue #74, add migration/listener,
+deploy, call providers or change historical reservations under this scope.
+Original MVP auth/access/share/usage remains required; new guidance is not
+implicit permission to replace it or move Agent implementation ahead of Gate 5.
 
 Gate-labelled constraints below describe the scope when each capability was
 introduced, not an instruction to reopen old Gates. The current Project State,

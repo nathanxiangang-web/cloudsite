@@ -4,9 +4,19 @@
 
 ## Current phase
 
-**Gate 3 ACCEPTED / CLOSED — awaiting separate Gate 4 architecture decision**
+**Gate 3 ACCEPTED / CLOSED; Gate 4.1 domain architecture documentation IN PROGRESS**
 
-Gate 0 through Gate 3 are formally accepted and closed. Gate 3.18 completed the real staging acquisition on 2026-10-13. Gate 4 / UI / product expansion is NOT STARTED and is not authorized by this closeout.
+Gate 0 through Gate 3 are formally accepted and closed. Gate 3.18 completed the real staging acquisition on 2026-10-13. The current task is [Issue #75 - Gate 4.1 domain architecture documentation](https://github.com/nathanxiangang-web/panta/issues/75), assigned 2026-10-14. Gate 4 code/API/auth/UI implementation is NOT STARTED by this task.
+
+### Current documentation task - 2026-10-14
+
+[Control Plane domain architecture](docs/CONTROL-PLANE-DOMAIN.md) is a proposed
+module/identity/ownership model pending Architect review, not an accepted
+implementation contract. Original MVP Gate 4 auth/access/share/usage remains
+required; console/AI/other product guidance does not replace those criteria.
+Only documentation and execution-pointer synchronization are in scope.
+Issue #74's access implementation is not executed by Issue #75. No Go/API/UI,
+migration, deployment, provider call or historical reservation change.
 
 ### Current final acceptance — 2026-10-13
 
@@ -26,8 +36,8 @@ runnable 0, C3 Binding DISABLED and collector permission 0. Eight older unknown
 reservations stay frozen and other Roots/services are unchanged. Schema v12.
 See [redacted completion evidence](docs/GATE3.18-COMPLETION.md).
 
-No further 115 validation or download is required. The only remaining project
-handoff is a separate Gate 4 architecture decision; no implementation is active.
+No further 115 validation or download is required. The next handoff is Architect
+review of the Gate 4.1 documentation PR; no implementation is active.
 Older sections below are retained chronological evidence, not current authority.
 
 ## Accepted baseline
@@ -844,9 +854,10 @@ Until the relevant gate is accepted, do not implement:
 
 ## Next architect action
 
-Gate 3.18 / D-041 is accepted and closed. Preserve its final evidence and eight
-unknown reservations. Define a bounded Gate 4 task only through a separate
-architecture decision; do not repeat 115 testing or begin UI/product work now.
+Review the Issue #75 domain documentation against existing ownership and the
+original MVP. Resolve identified policy/identity/usage/audit choices explicitly
+before authorizing a separate bounded implementation Issue. Preserve Gate 3.18
+evidence and eight unknown reservations; no repeated 115 testing or UI work.
 
 ## Current bounded task
 

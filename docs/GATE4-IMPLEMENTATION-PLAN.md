@@ -2,20 +2,36 @@
 
 Status: Architecture Roadmap
 
+## Current bounded task - 2026-10-14
+
+[Issue #75 - Gate 4.1](https://github.com/nathanxiangang-web/panta/issues/75)
+produces [Control Plane domain architecture](CONTROL-PLANE-DOMAIN.md) only.
+The domain proposal and this roadmap await explicit Architect acceptance;
+document presence does not prove a contract, login or implementation is done.
+No code/API/auth/UI, migration, deployment or provider operation is authorized
+by this documentation task. Issue #74 is a separate implementation proposal,
+not the task being executed here.
+
+Original [MVP Gate 4](MVP-BLUEPRINT.md#gate-4--login-access-share-usage)
+auth/access/share/usage is still the product acceptance boundary. Control
+observation supports it; it does not replace it. AI guidance and the phases
+below do not advance Agent implementation from Gate 5 or authorize premium,
+recommendation, favorites or console implementation.
+
 ## Execution Order
 
 ```
-G4-A01 Product Blueprint       DONE
+G4-A01 Product Blueprint       DOCUMENT PRESENT
         |
-G4-A02 User Domain Model       DONE
+G4-A02 User Domain Model       DOCUMENT PRESENT
         |
-G4-A03 API Contract            DONE
+G4-A03 API Contract Guidance   DOCUMENT PRESENT (not a frozen route contract)
         |
-G4-A04 Frontend Architecture
+Gate 4.1 Domain Architecture   PROPOSED / REVIEW PENDING
         |
-G4-A05 Prototype
+Architect acceptance + one separately bounded implementation Issue
         |
-Implementation
+Implementation (not started by this task)
 ```
 
 ## Development Rules
@@ -41,6 +57,11 @@ PR
 Architect Review
 
 ## Phase Planning
+
+The following is historical productization guidance, not the current execution
+order or permission to begin these modules. Architect must reconcile it with
+the original MVP, freeze required contracts and authorize one narrow task at
+a time. Frontend/prototype work must not bypass domain contract acceptance.
 
 ### Phase 1
 
