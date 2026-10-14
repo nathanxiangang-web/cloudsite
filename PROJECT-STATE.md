@@ -4,21 +4,21 @@
 
 ## Current phase
 
-**Gate 3 CLOSED; auth/read modules accepted; Gate 4.4 read-only interface/startup under review**
+**Gate 3 CLOSED; auth/read/readonly UI accepted; real canonical reads connected; minimum MVP still incomplete**
 
-Gate 0 through Gate 3 are accepted and closed. Gate 3.18 completed 2026-10-13. D-042 delegates Architect and Developer roles through minimum usable core MVP. Documentation audit PR #76 merged at `03719b5`, reviewed HEAD `c753b37bfb61f062da76acac6f8ea6e3c8140a4e`, CI `38501814871` all three groups successful. Auth/session PR #78 is merged; validation is recorded in [PRODUCT-AUTH](docs/PRODUCT-AUTH.md). Current read-interface Issue #79 does not expose a listener or provide the usable product. Product admission/usage/access/share/UI remains missing.
+Gate 0 through Gate 3 are accepted and closed. D-042 delegates Architect and Developer roles through minimum usable core MVP. Documentation audit PR #76, auth PR #78, reads PR #80 and readonly UI/startup PR #82 are merged. A protected readonly interface runs on staging host .50, accessed through a local loopback SSH forward. It now reads the existing real 115 MCP-Test canonical Root, not a mock or a fresh rescan. Admission/usage, current-database Copy synchronization, file access and share remain incomplete; this is not full MVP acceptance.
 
 ### Current implementation task - 2026-10-14
 
-Read Issue #79 / PR #80 ACCEPTED and merged at `574124aa997464eb3305fcc6ce2d5ddcb9ff28f7`, exact HEAD `f8c0607c73cbe640aeec06be0d39c11cd9296bd1`, CI `38507300691` all three groups successful. Current Issue #81 implements [the read-only UI/process contract](docs/PRODUCT-READONLY-UI.md) under D-043: bring login/resource/task pages forward for inspection. Protected operator provisioning and an explicit loopback-only listener are implemented in this slice; browser/deployment evidence is still required. Submission/usage/access/share remains missing; readonly UI is not full MVP acceptance.
+Issue #81 / PR #82 ACCEPTED and merged at `8b86ae336b8b88b00bb0a9b6ab787695126eb060`; exact HEAD `e82d2fed1fa92ac68702a4189a336f2134f8f61c`, CI `38537678423` all three groups successful. [Acceptance record](https://github.com/nathanxiangang-web/panta/pull/82#issuecomment-6164669005), [readonly module/runbook](docs/PRODUCT-READONLY-UI.md). Browser login, real browse/Q5, owner-only empty tasks and logout/relogin are verified. Next bounded [Issue #83](https://github.com/nathanxiangang-web/panta/issues/83): freeze and implement exact-source admission and zero-price operation usage. It is not implemented yet; download controls remain unavailable.
 
-Prior acceptance: auth Issue #77 / PR #78 merged at `eeedd3af242353822c0541cd1e74e48475fe596d`, exact HEAD `95ca01a6cf450b20f4f2e357587cbeb31b84b78a`, CI `38506025321` successful. Read Issue #79 / PR #80 is also merged. These are module acceptances, not full MVP completion. Issue #81 is the only current implementation pointer; no old database upgrade or download.
+Prior acceptance: auth Issue #77 / PR #78 merged at `eeedd3af242353822c0541cd1e74e48475fe596d`, exact HEAD `95ca01a6cf450b20f4f2e357587cbeb31b84b78a`, CI `38506025321` successful; reads Issue #79 / PR #80 at `574124aa997464eb3305fcc6ce2d5ddcb9ff28f7`, exact HEAD `f8c0607c73cbe640aeec06be0d39c11cd9296bd1`, CI `38507300691` successful. All are bounded module acceptances, not full MVP completion.
 
 [Documentation audit](docs/DOCUMENTATION-AUDIT.md) identifies actual defects and
 recoverable deletions. [Domain ownership](docs/CONTROL-PLANE-DOMAIN.md) and
 [execution plan](docs/GATE4-IMPLEMENTATION-PLAN.md) distinguish current source
 from approved future design. Original Gate 4 auth/access/share/usage remains the
-target. Issue #75 / PR #76 is completed documentation, not product implementation completion. Issues #77 and #79 are completed; Issue #81 is the current bounded code slice. Migration head is v13; the real Gate 3.18 database and accepted binary remain v12 and unchanged. No automatic migration or live download occurs in this slice.
+target. Issues #75/#77/#79/#81 are completed; Issue #83 is next. Product migration head is v13; original Gate 3.18 Panta DB/binary remains v12. On explicit human request for real data, the stopped staging PostgreSQL container was restored and an owned IndexCore read-only component entrypoint started. Original table/provider-history hashes are unchanged, with no writer/scan/Hint/provider start; unrelated services unchanged. No automatic migration or real download occurred.
 D-042 authorizes later bounded implementation without another user approval;
 tests/review/CI remain mandatory. Historical data/runtime invariants are preserved.
 
@@ -41,7 +41,7 @@ reservations stay frozen and other Roots/services are unchanged. Schema v12.
 See [redacted completion evidence](docs/GATE3.18-COMPLETION.md).
 
 No old-task 115 replay or new download is required by the auth slice. D-042
-supersedes the former documentation-only handoff; Issue #81 is active.
+supersedes the former documentation-only handoff; Issue #83 is next.
 Older sections below are retained chronological evidence, not current authority.
 
 ## Accepted baseline

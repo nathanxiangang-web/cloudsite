@@ -1,6 +1,8 @@
 # Minimum read-only product interface and explicit startup
 
-Status: frozen implementation contract, not yet deployed. D-042 / D-043.
+Status: accepted bounded module, PR #82 merged `8b86ae336b8b88b00bb0a9b6ab787695126eb060`.
+Reviewed HEAD `e82d2fed1fa92ac68702a4189a336f2134f8f61c`, CI `38537678423` all three
+groups successful. Owned readonly interface deployed; full MVP not accepted. D-042 / D-043.
 Read dependency PR #80 merged at `574124aa997464eb3305fcc6ce2d5ddcb9ff28f7`,
 reviewed HEAD `f8c0607c73cbe640aeec06be0d39c11cd9296bd1`, CI `38507300691`
 all three groups successful. This slice brings presentation forward at the
@@ -79,6 +81,27 @@ production fallback or evidence of the real 115 chain.
 
 ## Verification and rollback
 
+### Actual connection - 2026-10-14
+
+The human explicitly requested real disk data after seeing the labelled UI
+fixture. Fixture was stopped. The .50 UI now reads existing real MCP-Test
+canonical data through a loopback IndexCore QueryReader/Readiness/httpapi
+operator composition from pinned `7ef47217`. It forces PostgreSQL sessions
+read-only and builds no writer/collector/Hint/worker. This private operator
+entrypoint is traceable by retained source/hash, not falsely an official release.
+The stopped existing staging PostgreSQL was restored after identity verification;
+no migration or original table/config/task mutation. Before/after hashes of
+IndexCore public tables and original Panta provider history compare unchanged.
+Unrelated CloudSite/OpenList services unchanged; scan/Hint/StartDownload all 0.
+
+Browser verified actual login denial/success, real browse/Q5, owner-only empty
+tasks, logout and relogin. Current data is the existing canonical index, not a
+fresh scan. Independent product DB has not projected that Root yet, so Copy
+shows current-db unprojected; it does not deny the original v12 accepted Copy.
+Downloads/access/share/usage remain unavailable and the UI says so.
+User-facing loopback 8180 is a private SSH forward to .50 loopback 8180, not a
+separate local deployment. No public/LAN plaintext-auth exposure.
+
 HTTP tests for static assets/CSP/404, identity/workspace redaction, login bounds
 and shutdown/cancellation. Protected config/user-file tests including unsafe
 permissions, duplicates/unknown fields, invalid role/origin/listener/Binding and
@@ -88,7 +111,9 @@ login/failure/logout, resource/task states and responsive layout with screenshot
 Full existing tests/race/vet/build/import guards and exact-head CI before merge.
 
 Deploy only a new owned readonly process, protected config and independent MVP
-preview database. Do not migrate/restart the old Gate 3.18 DB/IndexCore/services,
+preview database. The subsequent explicit real-data request permits restoring
+the existing stopped staging DB for readonly queries, not migration or enabling
+the old IndexCore writer/Hint/scanner. Do not mutate old Gate 3.18 DB/services,
 reassign old tasks or touch unknown provider reservations. Rollback stops the
 new PID and local SSH forward; retain the new private data and old binary.
 Stage 2B admission/ledger and access/share remain subsequent bounded work.

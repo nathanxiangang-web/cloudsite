@@ -21,7 +21,7 @@ SUCCEEDED, with no additional StartDownload. Preserve the eight historical
 unknown reservations and protected evidence. No further live 115 validation is
 needed. Documentation Issue #75 / PR #76 is merged. Current task:
 auth Issue #77 / PR #78 merged. Current implementation:
-[Issue #79 - Gate 4.3 task and canonical resource reads](https://github.com/nathanxiangang-web/panta/issues/79) / PR #80 is accepted and merged. Current bounded Issue #81 adds [read-only UI and protected startup](docs/PRODUCT-READONLY-UI.md) under D-043.
+[Issue #79](https://github.com/nathanxiangang-web/panta/issues/79) / PR #80 and Issue #81 / PR #82 are accepted and merged. Read-only UI runs against real designated MCP-Test canonical data. Next bounded [Issue #83](https://github.com/nathanxiangang-web/panta/issues/83): freeze and implement exact-source admission and operation usage. [Read-only UI/runbook](docs/PRODUCT-READONLY-UI.md) remains governed by D-043.
 Current authority is D-042: the human delegates Architect and Developer roles
 to one agent through minimum usable core MVP delivery. Finish the documentation
 audit (complete), then execute [the staged plan](docs/GATE4-IMPLEMENTATION-PLAN.md).
@@ -29,7 +29,7 @@ Each bounded slice follows written contracts, tests, exact-head CI and a separat
 same-agent review pass. Do not call it independent review. Issue #77 implements
 auth domain/store/handlers; [PRODUCT-AUTH](docs/PRODUCT-AUTH.md) records limits.
 Issue #79 adds owner-only task and allowlisted resource read handlers, with no
-provider mutation. Issue #81 implements read-only UI/listener/provisioning;
+provider mutation. Issue #81 implemented read-only UI/listener/provisioning;
 admission/usage/access/share is NOT implemented and full MVP is not accepted. Schema head v13
 does not upgrade the existing Gate 3.18 v12 database/binary. Issue #74's vague
 old skeleton is superseded.

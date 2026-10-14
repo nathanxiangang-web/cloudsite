@@ -3,7 +3,7 @@
 > Canonical short-form project memory for Architect/AI sessions.
 >
 > Last architecture-memory synchronization: **2026-10-14**
-> Current status: **Gate 0-3 CLOSED; docs/auth/read PRs #76/#78/#80 merged; Issue #81 readonly UI/provisioning/listener under review (D-043). Admission/usage/access/share still missing; no full MVP acceptance. D-042 governs scoped delivery.**
+> Current status: **Gate 0-3 CLOSED; docs/auth/read/readonly UI PRs #76/#78/#80/#82 merged. UI reads real MCP-Test canonical data through an owned readonly IndexCore component endpoint. Issue #83 admission/usage is next, not implemented. File access/share still missing; no full MVP acceptance. D-042/D-043 govern scoped delivery.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -29,11 +29,21 @@ Auth acceptance: exact HEAD `95ca01a6cf450b20f4f2e357587cbeb31b84b78a`, CI
 `38506025321` all three groups successful, PR #78 merge `eeedd3af242353822c0541cd1e74e48475fe596d`.
 Read acceptance: PR #80 merge `574124aa997464eb3305fcc6ce2d5ddcb9ff28f7`,
 exact HEAD `f8c0607c73cbe640aeec06be0d39c11cd9296bd1`, CI `38507300691` all successful.
-Current Issue #81 / [PRODUCT-READONLY-UI](PRODUCT-READONLY-UI.md) implements
-loopback-only explicit startup, operator provision and readonly pages over those
-ports. D-043 brings presentation forward, without skipping admission/usage/access/share. No provider mutation.
+Readonly UI acceptance: PR #82 merge `8b86ae336b8b88b00bb0a9b6ab787695126eb060`,
+exact HEAD `e82d2fed1fa92ac68702a4189a336f2134f8f61c`, CI `38537678423` all successful.
+[PRODUCT-READONLY-UI](PRODUCT-READONLY-UI.md) records actual scope, real-data
+connection and rollback. D-043 brought presentation forward; Issue #83 is next
+for exact-source admission/usage, with contracts before coding. No full MVP.
 
-Readonly listener/UI code is under review; no full MVP acceptance has happened. New migration
+Readonly UI runs on .50 and the user accesses it via a loopback SSH forward.
+The explicit subsequent request for real data supersedes synthetic preview:
+fixture stopped, original staging PostgreSQL restored without migration, owned
+IndexCore QueryReader/Readiness/httpapi composition from pinned 7ef47217 with
+DB read-only sessions, no writer/Hint/scanner. Original public-table and provider
+history hashes compare unchanged; unrelated services unchanged. Actual existing
+MCP-Test resource/Q5 verified. New product DB lacks projection so UI does not
+claim file access or that the original accepted Copy disappeared.
+No full MVP acceptance has happened. New migration
 head v13 is tested only in owned disposable PostgreSQL; live Gate 3.18 v12 is not upgraded. Historical unknown tasks and unrelated
 services stay protected. One agent, separate planning/development/review passes.
 
@@ -51,7 +61,7 @@ unknown reservations and unrelated Root/service records unchanged. Schema v12.
 See [redacted completion artifact](GATE3.18-COMPLETION.md) and
 [recovery contract](KNOWN-REFERENCE-RECOVERY.md). No further real 115 test is
 required for auth; no old GO/unknown reservation replay or manual pair requeue.
-D-042 and Issue #79 supersede the former documentation-only handoff.
+D-042 and Issue #83 supersede the former documentation-only handoff.
 Chronological snapshots below retain historical evidence, not current authority.
 
 When reconstructing project truth, read in this order:
