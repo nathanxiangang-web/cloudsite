@@ -3,7 +3,7 @@
 > Canonical short-form project memory for Architect/AI sessions.
 >
 > Last architecture-memory synchronization: **2026-10-14**
-> Current status: **Gate 0-3 CLOSED; docs audit PR #76 and auth/session PR #78 merged; Issue #79 task/resource reads under review. Product listener/admission/usage/access/share/UI still missing. D-042 governs continuous scoped delivery.**
+> Current status: **Gate 0-3 CLOSED; docs/auth/read PRs #76/#78/#80 merged; Issue #81 readonly UI/provisioning/listener under review (D-043). Admission/usage/access/share still missing; no full MVP acceptance. D-042 governs scoped delivery.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -27,10 +27,13 @@ proposed entities and ports must not be reported as implemented capabilities.
 Issue #74's vague skeleton is superseded; frozen stage contracts govern coding.
 Auth acceptance: exact HEAD `95ca01a6cf450b20f4f2e357587cbeb31b84b78a`, CI
 `38506025321` all three groups successful, PR #78 merge `eeedd3af242353822c0541cd1e74e48475fe596d`.
-Current bounded Issue #79 / [PRODUCT-READS](PRODUCT-READS.md) implements verified
-owner-only tasks and allowlisted canonical resources. No provider mutation.
+Read acceptance: PR #80 merge `574124aa997464eb3305fcc6ce2d5ddcb9ff28f7`,
+exact HEAD `f8c0607c73cbe640aeec06be0d39c11cd9296bd1`, CI `38507300691` all successful.
+Current Issue #81 / [PRODUCT-READONLY-UI](PRODUCT-READONLY-UI.md) implements
+loopback-only explicit startup, operator provision and readonly pages over those
+ports. D-043 brings presentation forward, without skipping admission/usage/access/share. No provider mutation.
 
-No product listener/deployment or full MVP acceptance has happened. New migration
+Readonly listener/UI code is under review; no full MVP acceptance has happened. New migration
 head v13 is tested only in owned disposable PostgreSQL; live Gate 3.18 v12 is not upgraded. Historical unknown tasks and unrelated
 services stay protected. One agent, separate planning/development/review passes.
 
