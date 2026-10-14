@@ -25,7 +25,6 @@ domain, persistence and handlers; [PRODUCT-AUTH](PRODUCT-AUTH.md) records their
 scope/tests/limits. Permission/usage/audit persistence and heartbeat/full task-history stores remain missing;
 proposed entities and ports must not be reported as implemented capabilities.
 Issue #74's vague skeleton is superseded; frozen stage contracts govern coding.
-No product listener/deployment or full MVP acceptance has happened. New migration
 Auth acceptance: exact HEAD `95ca01a6cf450b20f4f2e357587cbeb31b84b78a`, CI
 `38506025321` all three groups successful, PR #78 merge `eeedd3af242353822c0541cd1e74e48475fe596d`.
 Current bounded Issue #79 / [PRODUCT-READS](PRODUCT-READS.md) implements verified
