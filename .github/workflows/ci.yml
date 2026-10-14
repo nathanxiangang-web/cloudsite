@@ -23,6 +23,8 @@ jobs:
           cache-dependency-path: go.sum
       - name: Unit and contract tests
         run: go test ./... -count=1
+      - name: Pure resource presentation tests
+        run: node --test test/resource-display.test.cjs
       - name: Race tests
         run: go test -race ./... -count=1
       - name: Architecture import guard
