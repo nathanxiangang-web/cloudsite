@@ -1,95 +1,37 @@
-# Gate 4 Control Plane Blueprint
+# Gate 4 - Product Control Layer
 
-Status: ARCHITECTURE REVIEW DRAFT
+Status: Architecture direction accepted under D-042; product implementation incomplete.
 
-## 1. Objective
+Original MVP Gate 4 is login, access, share and usage/quota. The previous
+observation-console blueprint did not define those product capabilities and is
+superseded by this correction; a dashboard is not Gate 4 completion.
 
-Gate 4 builds a safe control plane on top of the validated Gate 3 runtime. It does not replace acquisition, Job, Manifest, Worker, IndexCore or Copy semantics.
+Read [domain ownership](CONTROL-PLANE-DOMAIN.md),
+[execution plan](GATE4-IMPLEMENTATION-PLAN.md) and
+[acceptance evidence rules](GATE4-ACCEPTANCE.md).
 
-Primary goal:
-
-```
-User / Operator
+```text
+Verified product user
         |
-        v
-Control Plane
+Product application + policy/usage/audit
         |
-        v
-Existing Runtime
-(Job / Manifest / Worker / IndexCore / Copy)
+Existing Catalog / Acquisition / Job services
+        |
+Existing adapter boundaries / separately accepted access and share adapters
 ```
 
-## 2. Boundary
+IndexCore owns physical truth. Journal Projector owns Copy availability.
+Existing transactions own paired Manifest/Job writes and READY/result_copy_id.
+Product auth/permission/usage never substitutes for DB-time lease authority.
+Product identity never equals provider identity. UI/HTTP/Agent cannot directly
+write a Job/Copy, invoke SDK side effects or verify acquisition via OpenList.
 
-Included:
+The initial product is private and authenticated, with operator-provisioned
+USER/ADMIN accounts, owner-only task/source views and explicit shared Catalog
+policy. No public signup, premium tier, recommendation or payment. Minimal UI
+comes only after actual product contracts and adapters pass their tests.
 
-- runtime observation
-- task visibility
-- execution timeline
-- worker health visibility
-- audit events
-- safe operator workflows
-
-Excluded:
-
-- new provider implementation
-- new download workflow
-- schema redesign
-- bypassing state machines
-- direct database mutation from UI
-- public product launch
-
-## 3. Core Principles
-
-1. Runtime remains the source of truth.
-2. UI never writes directly to storage.
-3. All mutations must pass existing service boundaries.
-4. Read-only observation precedes control actions.
-5. Every operator action requires auditability.
-
-## 4. Initial Modules
-
-### Control API
-
-Provides controlled access to:
-
-- tasks
-- jobs
-- manifests
-- workers
-- execution events
-
-### Console
-
-Provides:
-
-- dashboard
-- task detail
-- state visualization
-- worker status
-
-### Audit Plane
-
-Records:
-
-- actor
-- operation
-- timestamp
-- target object
-- result
-
-## 5. Development Order
-
-Phase 0: ADR and contracts
-
-Phase 1: Read-only Control API
-
-Phase 2: Console visualization
-
-Phase 3: Restricted operator actions
-
-Each phase requires independent review.
-
-## 6. Acceptance
-
-Gate 4 is not started until this blueprint receives architecture approval and a bounded implementation issue is created.
+No persistent heartbeat registry or complete event timeline exists today.
+Lease and in-process events must not be presented as those capabilities. No
+auth/usage/share module is declared implemented by this blueprint. Each stage
+needs written contracts, real diff/tests, exact-head CI and a review record.

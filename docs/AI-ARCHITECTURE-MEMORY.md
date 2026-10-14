@@ -3,7 +3,7 @@
 > Canonical short-form project memory for Architect/AI sessions.
 >
 > Last architecture-memory synchronization: **2026-10-14**
-> Current status: **Gate 0 through Gate 3 ACCEPTED / CLOSED; Gate 4.1 / Issue #75 domain architecture documentation IN PROGRESS. Gate 4 code/API/auth/UI NOT STARTED by this task.**
+> Current status: **Gate 0-3 CLOSED; D-042 delegated dual-role core MVP delivery authorized. Documentation audit first; auth/API/UI/share/usage NOT IMPLEMENTED.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -12,16 +12,20 @@
 
 ## 1. Source-of-truth order
 
-Current task: [Issue #75](https://github.com/nathanxiangang-web/panta/issues/75),
-user-assigned Gate 4.1 documentation only. The
-[Control Plane domain model](CONTROL-PLANE-DOMAIN.md) is PROPOSED, pending
-Architect review; existing accepted domain/runtime ownership is unchanged.
+Current authority: D-042 delegates Architect and Developer phases to one agent,
+with contracts, tests, CI and honest same-agent review before each merge. Ordinary
+in-scope work needs no repeated authorization. Start with the
+[documentation audit](DOCUMENTATION-AUDIT.md), Issue #75 / PR #76, then
+[core MVP plan](GATE4-IMPLEMENTATION-PLAN.md). The
+[domain model](CONTROL-PLANE-DOMAIN.md) is design, not implemented capability;
+accepted domain/runtime ownership is unchanged.
 Original Gate 4 auth/access/share/usage is not replaced by the PR #73 control
 console or later product/AI guidance. Current source lacks product auth,
 permission/usage/audit persistence and heartbeat/full task-history stores;
 proposed entities and ports must not be reported as implemented capabilities.
-No implementation of Issue #74 or any transport/auth/UI, migration, deployment
-or provider side effect is part of this task. One Architect + one Developer.
+Issue #74's vague skeleton is superseded; frozen stage contracts govern coding.
+No such implementation has happened yet. Historical unknown tasks and unrelated
+services stay protected. One agent, separate planning/development/review passes.
 
 Current acceptance: [Architect #6143267673](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6143267673)
 supersedes all older NO-GO, OPEN and recovery-development pointers below.
@@ -583,8 +587,8 @@ Accepted:
 - Gate 3.18 — real 115 + OpenList + IndexCore + Panta READY/same Job SUCCEEDED — CLOSED
 
 Authorized now:
-- Gate 4.1 / Issue #75: domain architecture documentation and narrow execution-pointer synchronization only; proposals await review.
-- No active code implementation or real-account testing task. Preserve Gate 3.18 evidence; later implementation requires its own explicit decision.
+- D-042: audit docs, then bounded core MVP slices after written contracts and validated prior merges, without repeated user approval.
+- Frozen Stage 1: product accounts/revocable sessions, not yet complete. Preserve Gate 3.18 evidence and historical unknown reservations.
 
 Not authorized yet:
 - direct Panta OpenList acquisition verifier;

@@ -1,6 +1,6 @@
 # ADR — Gate 4 Product Control Layer Scope
 
-Status: Proposed
+Status: Accepted direction under D-042; implementation incomplete.
 
 ## Context
 
@@ -47,9 +47,9 @@ These may be considered in future gates after product control foundations are st
 ## Non Goals
 
 - no new acquisition architecture;
-- no provider changes;
+- no replacement of the accepted downloader or provider-neutral contracts;
 - no direct IndexCore database writes;
-- no schema migration authorized by this ADR;
+- no schema migration solely from this ADR; D-042 stage contracts govern append-only product migrations;
 - no UI implementation authorization.
 
 ## Security
@@ -63,5 +63,6 @@ The product control layer must:
 
 ## Consequence
 
-Future Gate 4 implementation must start from this bounded product-control scope
-and receive a separate implementation plan before runtime changes.
+Gate 4 implementation follows this bounded scope and the D-042 staged plan.
+The human has delegated Architect/Developer execution without repeated approval;
+contracts, tests, exact-head CI and review records still precede each advance.

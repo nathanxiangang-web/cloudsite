@@ -1,11 +1,12 @@
 # Gate 4.1 - Control Plane Domain Architecture
 
-Status: **PROPOSED / ARCHITECT REVIEW REQUIRED**
+Status: **DOMAIN OWNERSHIP ACCEPTED under D-042; implementation incomplete**
 
 Tracking: [Issue #75](https://github.com/nathanxiangang-web/panta/issues/75).
 Source baseline: `3f6d9cc20dbee8aa7cde02dcbfc89cfcd9071e71`.
-This task delivers documentation, not working authentication, APIs, UI,
-provider access, audit persistence, quota accounting or an implementation GO.
+This document describes design, not working auth/API/UI, provider access, audit
+or quota. D-042 authorizes staged implementation under the separate execution
+plan, not fictional capabilities.
 Schema stays v12 and the accepted Gate 3.18 runtime is unchanged.
 
 ## 1. Product scope and terminology
@@ -21,12 +22,11 @@ means protected, redacted reads of existing facts; **operator mutation** means
 separately authorized application-service commands. None owns physical truth.
 These are modules in the existing modular monolith, not new microservices.
 
-Other Gate 4 guidance files discuss premium roles, favorites, consoles and AI.
-They remain design candidates, not implemented models or an accepted change to
-the MVP sequence. Agent implementation stays at the separately authorized
-Gate 5 boundary. Recommendations, payment and polished UI remain deferred.
-Issue #74 proposes an access implementation; it is not this documentation task
-and its existence does not authorize coding under Issue #75.
+Misleading duplicated product/AI roadmaps were removed by the documentation
+audit. Premium, favorites, recommendations, payment and polish are deferred.
+Agent remains optional in the core MVP; never call it implemented without
+evidence. Issue #74's vague skeleton is superseded by the Stage 1 contract,
+not implemented by this documentation PR.
 
 ## 2. Verified baseline and missing capabilities
 
@@ -210,5 +210,6 @@ Before implementation authorize one slice and settle its required choices:
 - snapshot/list read ports and DTOs, without claiming missing runtime evidence;
 - exact product Gate 4 sequencing versus optional console/AI guidance.
 
-There is no Worker-chosen answer to these gaps in this PR. Acceptance of this
-document alone does not implement the modules or start the next coding phase.
+The delegated Architect resolves these choices per slice in
+[the MVP plan](GATE4-IMPLEMENTATION-PLAN.md), starting with the frozen auth/session
+contract. This domain document does not itself implement any module.

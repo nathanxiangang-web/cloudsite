@@ -20,10 +20,12 @@ original KNOWN task -> Hint -> Q5/Q8 -> PRESENT Copy/cursor -> READY + same Job
 SUCCEEDED, with no additional StartDownload. Preserve the eight historical
 unknown reservations and protected evidence. No further live 115 validation is
 needed. Current task: [Issue #75 - Gate 4.1 domain architecture documentation](https://github.com/nathanxiangang-web/panta/issues/75).
-Only the proposed [domain document](docs/CONTROL-PLANE-DOMAIN.md) and execution
-pointers may change; Architect review is pending. Gate 4 code/API/auth/UI is
-NOT STARTED by this task. Do not implement Issue #74, add migration/listener,
-deploy, call providers or change historical reservations under this scope.
+Current authority is D-042: the human delegates Architect and Developer roles
+to one agent through minimum usable core MVP delivery. Finish the documentation
+audit, then execute [the staged plan](docs/GATE4-IMPLEMENTATION-PLAN.md).
+Each bounded slice follows written contracts, tests, exact-head CI and a separate
+same-agent review pass. Do not call it independent review. Current auth/API/UI
+is not yet implemented. Issue #74's vague old skeleton is superseded.
 Original MVP auth/access/share/usage remains required; new guidance is not
 implicit permission to replace it or move Agent implementation ahead of Gate 5.
 
@@ -225,13 +227,13 @@ Secrets never enter Manifest, Job payload, provider-task persistence, logs, or A
 
 ## Team / scope
 
-Exactly:
-- 1 Architect
-- 1 Developer
+One agent performs Architect and Developer roles in separate phases under
+D-042. No imaginary parallel Worker team.
 
 The Developer implements only the currently authorized bounded Gate.
 
-Do not start the next Gate until the current Gate is accepted and merged.
+Validate and merge each bounded stage before advancing. Ordinary in-scope stages
+need no repeated user authorization; preserve D-042 risk limits.
 
 ## Conflict rule
 

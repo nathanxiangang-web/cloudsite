@@ -2,6 +2,12 @@
 
 ## 1. Team model
 
+Current D-042 exception (human delegation, 2026-10-14): one agent performs
+Architect planning, Developer implementation and a separate same-agent review
+pass. Do not call it independent review. Narrow stages, written contracts,
+tests/CI and honest evidence remain mandatory; ordinary in-scope work does not
+need another user authorization. D-042 risk boundaries remain in force.
+
 Panta MVP uses two roles.
 
 ### Architect

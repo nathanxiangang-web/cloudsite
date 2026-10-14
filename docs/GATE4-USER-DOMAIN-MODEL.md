@@ -1,67 +1,22 @@
-# Panta Gate4 User Domain Model
+# Product identity: verified facts and approved target
 
-Status: Architecture Guidance
+Status: Design index, NOT implemented user persistence.
 
-## Goal
+Verified baseline: [Manifest](../internal/acquisition/manifest.go) has nullable
+UserID attribution; [StorageConnection](../internal/storage/storage.go) and
+[provider sessions](../internal/providers/session/registry.go) identify integration
+credentials. Neither supplies product accounts, password checks or user sessions.
+The twelve current migrations contain no product users/session/usage/audit store.
 
-Define product user ownership without changing existing Catalog, IndexCore or Acquisition boundaries.
+The D-042 Stage 1 target is operator-provisioned product accounts with immutable
+UUID, USER/ADMIN roles, bcrypt passwords, enabled status and revocable hashed
+opaque sessions. Read [the frozen contract](GATE4-IMPLEMENTATION-PLAN.md#stage-1-frozen-product-auth-contract)
+before coding. These are design choices, not existing tables or permissions.
 
-## Domain Boundary
+Catalog continues to own Asset/Release/Variant/Copy; IndexCore owns physical
+truth. Product ownership and authorization cannot be guessed from storage paths,
+Provider accounts, connection IDs, client role headers or historic nil UserID.
 
-```
-User Product Domain
-        |
-        +-- Account
-        +-- Permission
-        +-- Preference
-        +-- Favorite
-        +-- AI Session
-        +-- Acquisition History
-```
-
-## Ownership
-
-Panta Product DB owns:
-
-- users
-- accounts
-- permissions
-- preferences
-- favorites
-- AI conversation metadata
-- product history
-
-Catalog owns:
-
-- Asset
-- Release
-- Variant
-- Copy
-
-IndexCore owns:
-
-- physical resource truth
-- canonical identity
-- Journal observation
-
-## Rules
-
-1. User state never enters IndexCore.
-2. AI session state never becomes resource truth.
-3. Favorites reference Catalog identity, not physical paths.
-4. Acquisition history references Job/Manifest results.
-
-## Future Entities
-
-```
-User
- |
- +-- Account
- +-- Role
- +-- Preference
- +-- Favorite
- +-- AIConversation
- +-- AcquisitionRecord
-```
-
-No implementation is authorized by this document.
+Premium, favorites, AI conversation storage and product-history tables are not
+current MVP models. Proposed domain relationships and later policy choices live
+in [CONTROL-PLANE-DOMAIN](CONTROL-PLANE-DOMAIN.md), not a parallel invented schema.
