@@ -37,7 +37,7 @@ type fileRequest struct {
 	VariantID              *string `json:"variant_id"`
 }
 
-// Run reads one owner-protected request, checks schema v12, and submits intent.
+// Run reads one owner-protected request, checks the supported schema head, and submits intent.
 // It never loads 115 secrets, contacts external services, or starts a worker.
 func Run(ctx context.Context, cfg config.Config, requestPath string) (acquisition.SubmitResult, error) {
 	content, err := bootstrap.ReadProtectedFile(requestPath, maxRequestBytes)

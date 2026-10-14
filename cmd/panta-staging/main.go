@@ -117,7 +117,7 @@ func run(ctx context.Context, args []string, output io.Writer) error {
 		return errObservation
 	}
 	status, err := migrator.Status(ctx)
-	if err != nil || !status.Compatible || status.CurrentVersion != 12 || status.LatestVersion != 12 {
+	if err != nil || !status.Compatible || status.CurrentVersion != postgres.CurrentSchemaVersion || status.LatestVersion != postgres.CurrentSchemaVersion {
 		return errObservation
 	}
 	client, err := indexcore.NewClient(cfg.readURL, indexcore.WithTimeout(10*time.Second))
