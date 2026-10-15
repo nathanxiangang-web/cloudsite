@@ -109,7 +109,7 @@ func registerContent(h *Handler, service *fileaccess.Service, previews *fileacce
 				failure(w, 400, "INVALID_REQUEST")
 				return
 			}
-			input := fileaccess.Request{BindingID: storage.BindingID(query.Get("binding_id")), ResourceID: query.Get("resource_id"), Path: query.Get("path"), Range: requestedRange, Head: r.Method == http.MethodHead}
+			input := fileaccess.Request{BindingID: storage.BindingID(query.Get("binding_id")), ResourceID: query.Get("resource_id"), Path: query.Get("path"), Range: requestedRange, Head: r.Method == http.MethodHead, UserAgent: r.UserAgent()}
 			if mode == "preview" {
 				if previews == nil {
 					failure(w, 503, "CONTENT_UNAVAILABLE")
@@ -136,7 +136,7 @@ func registerContent(h *Handler, service *fileaccess.Service, previews *fileacce
 				respond(w, 200, result)
 				return
 			}
-			file, err := service.Open(r.Context(), p, input)
+			file, err := service.Deliver(r.Context(), p, input)
 			if err != nil {
 				if errors.Is(err, fileaccess.ErrRange) {
 					w.Header().Set("Content-Range", fmt.Sprintf("bytes */%d", file.Size))
@@ -152,6 +152,13 @@ func registerContent(h *Handler, service *fileaccess.Service, previews *fileacce
 	}
 }
 func writeFile(w http.ResponseWriter, r *http.Request, file fileaccess.File, disposition string) {
+	if file.DirectURL != "" {
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Referrer-Policy", "no-referrer")
+		w.Header().Set("Location", file.DirectURL)
+		w.WriteHeader(http.StatusFound)
+		return
+	}
 	defer file.Content.Body.Close()
 	media := inlineType(file.Extension)
 	if disposition != "inline" || media == "" {

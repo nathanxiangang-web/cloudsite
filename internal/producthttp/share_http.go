@@ -184,7 +184,7 @@ func registerSharing(h *Handler, shares *fileshare.Service) {
 			failure(w, 416, "RANGE_NOT_SATISFIABLE")
 			return
 		}
-		file, err := shares.Open(r.Context(), r.PathValue("share_id"), token, r.Header.Get("Range"), r.Method == http.MethodHead)
+		file, err := shares.Open(r.Context(), r.PathValue("share_id"), token, r.Header.Get("Range"), r.Method == http.MethodHead, r.UserAgent())
 		if err != nil {
 			if errors.Is(err, fileaccess.ErrRange) {
 				w.Header().Set("Content-Range", "bytes */"+strconv.FormatInt(file.Size, 10))

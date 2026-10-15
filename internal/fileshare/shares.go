@@ -41,7 +41,7 @@ type Grant struct {
 }
 type Files interface {
 	Describe(context.Context, auth.Principal, fileaccess.Request) (fileaccess.File, error)
-	Open(context.Context, auth.Principal, fileaccess.Request) (fileaccess.File, error)
+	Deliver(context.Context, auth.Principal, fileaccess.Request) (fileaccess.File, error)
 }
 type Store interface {
 	Create(context.Context, Record, time.Duration) (Record, error)
@@ -177,7 +177,7 @@ func (s *Service) Redeem(ctx context.Context, token, code string) (Grant, error)
 	}
 	return Grant{Record: record, Token: grant}, nil
 }
-func (s *Service) Open(ctx context.Context, id, token, byteRange string, head bool) (fileaccess.File, error) {
+func (s *Service) Open(ctx context.Context, id, token, byteRange string, head bool, userAgent ...string) (fileaccess.File, error) {
 	if !product.ValidID(id) || !validSecret(token) {
 		return fileaccess.File{}, ErrDenied
 	}
@@ -188,12 +188,17 @@ func (s *Service) Open(ctx context.Context, id, token, byteRange string, head bo
 	target := record.Target
 	target.Range = byteRange
 	target.Head = head
-	file, err := s.files.Open(ctx, principal, target)
+	if len(userAgent) > 0 {
+		target.UserAgent = userAgent[0]
+	}
+	file, err := s.files.Deliver(ctx, principal, target)
 	if err != nil {
 		return file, err
 	}
 	if file.Size != record.Size || file.Name != record.Name {
-		file.Content.Body.Close()
+		if file.Content.Body != nil {
+			file.Content.Body.Close()
+		}
 		return fileaccess.File{}, ErrDenied
 	}
 	return file, nil

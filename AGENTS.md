@@ -14,6 +14,14 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-15
 
+Issue105 / D-052 is the current human-authorized correction: diagnose local versus
+public delivery and implement authenticated302 after exact IndexCore validation.
+See [direct-delivery contract](docs/PRODUCT-DIRECT-DELIVERY.md). Source URL hiding
+and same-origin-only byte proxy rules below are superseded ONLY for explicitly
+configured direct delivery. Private one-hour document preview/cache stays intact.
+No IndexCore truth/DB/schema/scan/Hint/Worker/provider-history changes. Current
+fix must pass exact-head CI and same-agent review before product-only cutover.
+
 Release closeout: PR99/100/102 accepted;6-character public registration/login
 verified. Public server root compose now runs OpenList v4.2.6 using protected local
 configuration/app credentials; AList container removed, its data/rollback retained.

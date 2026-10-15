@@ -4,6 +4,12 @@
 
 ## Current phase
 
+Current authorized follow-up: Issue105 / D-052, local/public delivery correction
+IN PROGRESS. Both old local and public code proxy bytes rather than302. Add an
+explicit protected HTTPS CDN host allowlist, preserve IndexCore canonical checks,
+guest grants and one-hour private document previews. No data/index/provider
+mutation. [Contract](docs/PRODUCT-DIRECT-DELIVERY.md). Deployment not yet accepted.
+
 **cloudsiteV1.0.0alpha is deployed at https://cloud.netioi.com. Open registration
 with6-character minimum is verified. Public storage is now OpenList v4.2.6 at
 https://pan.netioi.com, reusing local config/login; AList container removed.**

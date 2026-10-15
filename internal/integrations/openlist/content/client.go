@@ -115,22 +115,22 @@ func defaultPort(u *url.URL) string {
 	}
 	return "80"
 }
-func (c *ContentClient) Open(ctx context.Context, r fileaccess.SourceRequest) (fileaccess.Content, error) {
+func (c *ContentClient) resolveURL(ctx context.Context, r fileaccess.SourceRequest, userAgent string) (*url.URL, error) {
 	token, err := c.token(ctx)
 	if err != nil || !validToken(token) {
-		return fileaccess.Content{}, fileaccess.ErrUnavailable
+		return nil, fileaccess.ErrUnavailable
 	}
 	raw, _ := json.Marshal(map[string]string{"path": r.Path, "password": ""})
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, c.base.String()+"/api/fs/get", bytes.NewReader(raw))
 	if err != nil {
-		return fileaccess.Content{}, fileaccess.ErrUnavailable
+		return nil, fileaccess.ErrUnavailable
 	}
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Authorization", token)
-	request.Header.Set("User-Agent", contentUA)
+	request.Header.Set("User-Agent", userAgent)
 	response, err := c.api.Do(request)
 	if err != nil {
-		return fileaccess.Content{}, fileaccess.ErrUnavailable
+		return nil, fileaccess.ErrUnavailable
 	}
 	payload, readErr := io.ReadAll(io.LimitReader(response.Body, (1<<20)+1))
 	response.Body.Close()
@@ -143,21 +143,45 @@ func (c *ContentClient) Open(ctx context.Context, r fileaccess.SourceRequest) (f
 		} `json:"data"`
 	}
 	if readErr != nil || response.StatusCode != 200 || len(payload) > 1<<20 || json.Unmarshal(payload, &result) != nil || result.Code != 200 || result.Data == nil || result.Data.Directory == nil || *result.Data.Directory || result.Data.Size == nil || *result.Data.Size != r.Size {
-		return fileaccess.Content{}, fileaccess.ErrUnavailable
+		return nil, fileaccess.ErrUnavailable
 	}
 	target, err := url.Parse(result.Data.URL)
 	if err != nil {
-		return fileaccess.Content{}, fileaccess.ErrUnavailable
+		return nil, fileaccess.ErrUnavailable
 	}
 	target = c.base.ResolveReference(target)
 	if !c.safeTarget(target) {
-		return fileaccess.Content{}, fileaccess.ErrUnavailable
+		return nil, fileaccess.ErrUnavailable
+	}
+	return target, nil
+}
+
+// ResolveLink only reads OpenList metadata; it never GETs the target file.
+func (c *ContentClient) ResolveLink(ctx context.Context, r fileaccess.SourceRequest) (string, error) {
+	ua := r.UserAgent
+	if ua == "" {
+		ua = contentUA
+	}
+	if len(ua) > 2048 || strings.ContainsAny(ua, "\x00\r\n") {
+		return "", fileaccess.ErrUnavailable
+	}
+	target, err := c.resolveURL(ctx, r, ua)
+	if err != nil {
+		return "", fileaccess.ErrUnavailable
+	}
+	return target.String(), nil
+}
+
+func (c *ContentClient) Open(ctx context.Context, r fileaccess.SourceRequest) (fileaccess.Content, error) {
+	target, err := c.resolveURL(ctx, r, contentUA)
+	if err != nil {
+		return fileaccess.Content{}, err
 	}
 	method := http.MethodGet
 	if r.Head {
 		method = http.MethodHead
 	}
-	request, err = http.NewRequestWithContext(ctx, method, target.String(), nil)
+	request, err := http.NewRequestWithContext(ctx, method, target.String(), nil)
 	if err != nil {
 		return fileaccess.Content{}, fileaccess.ErrUnavailable
 	}
@@ -166,7 +190,7 @@ func (c *ContentClient) Open(ctx context.Context, r fileaccess.SourceRequest) (f
 	if r.Range != "" {
 		request.Header.Set("Range", r.Range)
 	}
-	response, err = c.stream.Do(request)
+	response, err := c.stream.Do(request)
 	if err != nil {
 		return fileaccess.Content{}, fileaccess.ErrUnavailable
 	}

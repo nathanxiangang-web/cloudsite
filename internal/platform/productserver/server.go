@@ -153,9 +153,10 @@ func Run(ctx context.Context, action, configFile, userFile string) error {
 	}
 	if cfg.FileAccessConfigFile != "" {
 		var accessConfig struct {
-			BaseURL        string `json:"base_url"`
-			TokenFile      string `json:"token_file"`
-			CacheDirectory string `json:"cache_directory"`
+			BaseURL         string   `json:"base_url"`
+			TokenFile       string   `json:"token_file"`
+			CacheDirectory  string   `json:"cache_directory"`
+			DirectLinkHosts []string `json:"direct_link_hosts,omitempty"`
 		}
 		if load(startupCtx, cfg.FileAccessConfigFile, &accessConfig, 4096) != nil {
 			cancel()
@@ -181,6 +182,10 @@ func Run(ctx context.Context, action, configFile, userFile string) error {
 		if filesErr != nil {
 			cancel()
 			return ErrStartup
+		}
+		if files.EnableDirectLinks(accessConfig.DirectLinkHosts) != nil {
+			cancel()
+			return ErrConfig
 		}
 		cache, cacheErr := filecache.New(accessConfig.CacheDirectory)
 		if cacheErr != nil {

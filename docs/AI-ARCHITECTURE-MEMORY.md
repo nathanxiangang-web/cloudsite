@@ -12,6 +12,14 @@
 
 ## 1. Source-of-truth order
 
+Current Issue105 / D-052 supersedes server-byte-proxy-only delivery, not IndexCore
+truth: protected direct_link_hosts opt in to authorized302 for ordinary/guest
+content; document previews remain private streamed/cache/rendered. Existing
+local and public code both proxied bytes; local functional acceptance was not
+public302 acceptance. No silent fallback or bypass of auth/Q5/grants. Issued
+upstream bearer URLs remain usable until upstream expiry after product revoke.
+See [module contract](PRODUCT-DIRECT-DELIVERY.md). Fix in progress, not deployed.
+
 Current superseding runtime: PR102 reviewed22705d031adc, CI38748673995 all3
 SUCCESS, review5534538189, merge68d945793b8f, merge CI38749342436 SUCCESS.
 Minimum6-character public registration/login verified;5 rejected; old hashes
