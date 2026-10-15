@@ -2,10 +2,17 @@
 
 Current release: **cloudsiteV1.0.0alpha**. The HTTPS deployment enables website
 registration for ordinary USER accounts. Use the login page's registration
-action; passwords are12-72 bytes, account names3-64 ASCII letters/digits/._-.
+action; passwords require at least6 characters and at most72 UTF-8 bytes,
+account names3-64 ASCII letters/digits/._-.
 Existing local product credentials are preserved on the remote deployment;
 registration cannot choose ADMIN or reset an existing account. Storage/115
 credentials remain operator-managed, separate from website accounts.
+
+Deployed site: [cloud.netioi.com](https://cloud.netioi.com/). Public HTTPS,
+existing local account login, registration,283-file inventory, real document
+preview/download, video Range and protected/no-code sharing have been verified.
+This is an alpha with an imported canonical snapshot, not automatic continuous
+drive indexing or completed admission/usage/native115 sharing.
 
 Current release: **`cloudsiteV1.0.0alpha`**. This is the renamed Panta repository,
 not the deleted legacy CloudSite Python/Next.js project. GitHub repository ID and

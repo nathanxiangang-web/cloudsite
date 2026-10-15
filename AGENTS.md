@@ -20,8 +20,12 @@ Freeze [release contract](docs/CLOUDSITE-V1-ALPHA.md): public name cloudsite,
 version/tag cloudsiteV1.0.0alpha, preserve Go/config/cookie/schema compatibility.
 Replace only cloudsite1.0.yml workload at the verified target; new isolated
 databases, protected config and existing HTTPS route. Backups and rollback before
-cutover, exact-head CI and same-agent review required. Deployment is NOT yet
-accepted merely because repository rename or branding tests passed.
+cutover, exact-head CI and same-agent review required. PR99/100 accepted and
+deployed to https://cloud.netioi.com; original local account/password reused,
+USER-only registration and283 real files verified over public HTTPS. See the
+alpha contract for actual evidence and limits. Issue101 now applies the human's
+6-character password minimum consistently, preserving existing hashes. Final
+release manifest identifies code; no fabricated full MVP acceptance.
 
 Latest reliability fix Issue #96 / PR #97 accepted/deployed. Reviewed HEAD
 `d5d056b0e1e2`, CI `38736852134` all3 SUCCESS, same-agent review `5533296802`,

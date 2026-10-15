@@ -48,7 +48,7 @@ func NormalizeLogin(value string) (string, error) {
 	return value, nil
 }
 func ValidPassword(value string) bool {
-	return len(value) >= 12 && len(value) <= 72 && utf8.ValidString(value) && !strings.ContainsRune(value, 0)
+	return utf8.ValidString(value) && utf8.RuneCountInString(value) >= 6 && len(value) <= 72 && !strings.ContainsRune(value, 0)
 }
 
 type User struct {

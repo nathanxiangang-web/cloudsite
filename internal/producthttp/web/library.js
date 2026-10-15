@@ -149,7 +149,7 @@ node('auth-toggle').addEventListener('click',()=>authMode(!registering));
 node('login-form').addEventListener('submit',async event=>{
  event.preventDefault();clearError('login-error');node('auth-notice').hidden=true;
  if(registering&&node('account-password').value!==node('account-confirm').value){node('login-error').textContent='两次密码输入不一致。';node('login-error').hidden=false;return;}
- if(new TextEncoder().encode(node('account-password').value).length>72){node('login-error').textContent='密码最多 72 字节。';node('login-error').hidden=false;return;}
+ if(Array.from(node('account-password').value).length<6||new TextEncoder().encode(node('account-password').value).length>72){node('login-error').textContent='密码至少 6 个字符，最多 72 字节。';node('login-error').hidden=false;return;}
  node('login-submit').disabled=true;node('auth-toggle').disabled=true;
  try{
   const credentials={login:node('account-name').value,password:node('account-password').value};

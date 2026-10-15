@@ -10,6 +10,14 @@ test('all public HTML surfaces use cloudsite and the exact release version',()=>
 });
 const page=(items=[],next_cursor='')=>({items,next_cursor});
 
+test('six-character password reaches registration; five characters do not',async()=>{
+ const app=workspace();app.run('authMode(true)');app.elements.get('account-name').value='six.user';
+ const submit=app.elements.get('login-form').listeners.submit[0];
+ for(const password of ['abcde','中文密码短']){app.elements.get('account-password').value=password;app.elements.get('account-confirm').value=password;await submit({preventDefault(){}});assert.equal(app.requests.filter(r=>r.url==='/api/v1/auth/register').length,0);assert.ok(app.elements.get('login-error').textContent.includes('6'));}
+ app.elements.get('account-password').value='abcdef';app.elements.get('account-confirm').value='abcdef';const pending=submit({preventDefault(){}});const req=app.requests.find(r=>r.url==='/api/v1/auth/register');assert.ok(req);assert.equal(JSON.parse(req.options.body).password,'abcdef');req.resolve({ok:true,status:201,json:async()=>({role:'USER'})});await pending;
+ for(const file of ['library.html','index.html']){const html=fs.readFileSync(path.join(web,file),'utf8');assert.ok(!html.includes('minlength="12"'));assert.ok(html.includes('minlength="6"'));}
+});
+
 test('registration mode validates confirmation, clears secrets and never requests roles',async()=>{
  const app=workspace();app.run('authMode(true)');assert.equal(app.elements.get('confirm-field').hidden,false);
  app.elements.get('account-name').value='new.user';app.elements.get('account-password').value='test-only-password-123';app.elements.get('account-confirm').value='different-password';

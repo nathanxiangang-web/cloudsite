@@ -4,15 +4,30 @@
 
 ## Current phase
 
-**Current authorized release: Issue #98 — cloudsiteV1.0.0alpha rebrand and scoped
-HTTPS deployment. Repository rename completed; code/runtime acceptance pending.**
+**cloudsiteV1.0.0alpha is deployed at https://cloud.netioi.com — PR #99/#100
+accepted. Issue #101 authorizes the human-requested6-character password minimum.**
+
+Initial deployed code `841c4d14fb54882856267e2359c20f5075075a24`; merge CI
+`38746768026` all3 SUCCESS. PR99 reviewed HEAD `93606e67ccf2`, CI `38745269165`,
+same-agent review `5534142444`, merge `7368671aa0af`. PR100 reviewed HEAD
+`7a8ab8fe1694`, CI `38746403395`, same-agent review `5534272835`, merge
+`841c4d14fb54`. Reviews are separate same-agent passes, not independent review.
+
+Public HTTPS acceptance: original local product USER/password preserved; open
+registration creates USER, duplicate rejected, login succeeds, admin API denied.
+283 canonical files, real15423-byte DOCX download/text preview, video206 Range,
+code/no-code guest downloads verified. Test shares revoked. No native115
+acquisition/Worker/Hint/scanner. A protected application-token timer renews only
+the existing restricted storage user. See [deployment evidence](docs/CLOUDSITE-V1-ALPHA.md).
+The subsequent Issue101 password policy requires its own CI/review/deployment;
+current release artifact BUILD-MANIFEST and GitHub acceptance identify final code.
 
 The human deleted legacy CloudSite. This repository ID1391307332 is the former
 panta repository, now cloudsite; accepted history is preserved. Website/docs use
 cloudsite, exact alpha label cloudsiteV1.0.0alpha. Internal import/config/cookie/
 schema identifiers remain compatible. See [contract](docs/CLOUDSITE-V1-ALPHA.md).
-Only the cloudsite1.0.yml workload may be replaced; existing service/data/rollback
-protection remains. Do not infer completed production deployment or full MVP.
+Only the legacy CloudSite workload is replaced; existing service/data/rollback
+protection remains. Alpha deployment does not mean full MVP acceptance.
 
 **Gate 3 CLOSED; auth/read/readonly UI accepted; real canonical reads connected; minimum MVP still incomplete**
 

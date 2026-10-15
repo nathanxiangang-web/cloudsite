@@ -3,7 +3,7 @@
 > Canonical short-form project memory for Architect/AI sessions.
 >
 > Last architecture-memory synchronization: **2026-10-15**
-> Current status: **Gate 0-3 CLOSED. PR #97 accepted/deployed: native download clicks and explicit media play/pause; actual Chrome corrected from stale8182 to formal8180. PR #95 complete CloudSite283 files/Other/random4-character codes remains. Product schema14 unchanged; original staging12 unchanged. D-048 complete CloudSite, D-047 product shares, D-046 content, D-045 dual UI, D-044 no deletion. Native115 share/Copy projection/admission/usage unfinished. Issue83 WIP preserved but draft14 needs rebase. No full MVP acceptance.**
+> Current status: **cloudsiteV1.0.0alpha deployed over public HTTPS at cloud.netioi.com; PR99/100 accepted, schema14. Original local product credentials preserved; USER-only registration and283 real files/download/preview/Range/shares verified. Issue101 lowers password minimum to6 characters; separate follow-up relocates local OpenList configuration/credentials into an isolated public-server instance. Existing AList and original histories must remain unchanged. No full MVP/realtime-index/all-codec claim.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -11,6 +11,20 @@
 > If chat context, an old issue, an old PR description, README text, or an older decision conflicts with this file plus the latest accepted Decision Log / Project State, **Git wins and the newer accepted decision wins**.
 
 ## 1. Source-of-truth order
+
+Latest deployment: Issue98 / PR99 reviewed93606e67ccf2, CI38745269165 all3 SUCCESS,
+same-agent review5534142444, merge7368671aa0af. PR100 quoted tmpfs fix reviewed
+7a8ab8fe1694, CI38746403395 all3 SUCCESS, review5534272835, merge841c4d14fb54;
+merge CI38746768026 all3 SUCCESS. Candidate/public TLS and real-byte acceptance
+passed. Local USER hashes/password unchanged; new public USER registration,
+duplicate rejection and ordinary admin denial verified.283 canonical files,
+DOCX15423-byte download/text preview, video206 Range, both share-code modes pass;
+temporary shares revoked. Original four public-server services untouched.
+Human then requests minimum6-character passwords and a local-OpenList credential/
+configuration migration to independent remote OpenList. Preserve public AList,
+credentials and8 historical reservations; no provider/Worker/Hint/scanner.
+Final accepted release code is identified by GitHub release BUILD-MANIFEST, not
+inferred from the earlier initial-deployment SHA. [Alpha contract](CLOUDSITE-V1-ALPHA.md).
 
 Latest: Issue #96 / PR #97 reviewed HEAD `d5d056b0e1e2`, CI `38736852134`
 all3 SUCCESS, same-agent review `5533296802`, merge `57a9d626cd62`, merge CI
