@@ -15,6 +15,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/fileaccess"
 	"github.com/nathanxiangang-web/panta/internal/filecache"
 	"github.com/nathanxiangang-web/panta/internal/filepreview"
+	"github.com/nathanxiangang-web/panta/internal/fileshare"
 	"github.com/nathanxiangang-web/panta/internal/integrations/indexcore"
 	openlistcontent "github.com/nathanxiangang-web/panta/internal/integrations/openlist/content"
 	"github.com/nathanxiangang-web/panta/internal/platform/bootstrap"
@@ -144,6 +145,10 @@ func Run(ctx context.Context, action, configFile, userFile string) error {
 		return ErrStartup
 	}
 	var options []producthttp.WorkspaceOption
+	if cfg.SharingEnabled && cfg.FileAccessConfigFile == "" {
+		cancel()
+		return ErrConfig
+	}
 	if cfg.FileAccessConfigFile != "" {
 		var accessConfig struct {
 			BaseURL        string `json:"base_url"`
@@ -190,6 +195,19 @@ func Run(ctx context.Context, action, configFile, userFile string) error {
 		go func() { defer close(cacheDone); cache.Run(cacheCtx) }()
 		defer func() { stopCache(); <-cacheDone }()
 		options = append(options, producthttp.WithFileAccess(files, previews))
+		if cfg.SharingEnabled {
+			shareStore, storeErr := postgres.NewShareRepository(pool)
+			if storeErr != nil {
+				cancel()
+				return ErrStartup
+			}
+			shares, shareErr := fileshare.New(shareStore, files)
+			if shareErr != nil {
+				cancel()
+				return ErrStartup
+			}
+			options = append(options, producthttp.WithSharing(shares))
+		}
 	}
 	handler, err := producthttp.NewWorkspaceHandler(accounts, cfg.Origin, reads, cfg.Bindings, postgres.CurrentSchemaVersion, options...)
 	if err != nil {

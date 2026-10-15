@@ -27,6 +27,7 @@ var ErrConfig = errors.New("invalid protected product configuration")
 var ErrStartup = errors.New("product process unavailable")
 
 type Config struct {
+	SharingEnabled       bool                         `json:"sharing_enabled,omitempty"`
 	FileAccessConfigFile string                       `json:"file_access_config_file,omitempty"`
 	DatabaseURLFile      string                       `json:"database_url_file"`
 	ListenAddress        string                       `json:"listen_address"`

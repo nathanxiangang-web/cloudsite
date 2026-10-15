@@ -74,6 +74,12 @@ func (s *Service) Open(ctx context.Context, p auth.Principal, r Request) (File, 
 	file.Content = body
 	return file, nil
 }
+
+// Describe validates the same canonical identity as Open without fetching bytes.
+func (s *Service) Describe(ctx context.Context, p auth.Principal, r Request) (File, error) {
+	file, _, err := s.describe(ctx, p, r)
+	return file, err
+}
 func (s *Service) describe(ctx context.Context, p auth.Principal, r Request) (File, SourceRequest, error) {
 	if !p.Valid() {
 		return File{}, SourceRequest{}, auth.ErrUnauthorized

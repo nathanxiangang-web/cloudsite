@@ -1165,3 +1165,35 @@ CloudSite sharing is a reference, NOT implemented or accepted here. Preserve
 Issue #83 WIP, existing schemas, historical provider tasks and unrelated services.
 See [content module contract](PRODUCT-FILE-CONTENT.md).
 
+## D-047 - Expiring Panta single-file sharing and download UX
+
+**Status:** Accepted delegated architecture decision, 2026-10-15; Issue #92.
+
+The human prioritizes download and sharing after D-046. Implement bounded
+Panta-hosted single-file shares, referencing inspected CloudSite expiry/code/
+revoke UX, not its database or provider integration. This is NOT native 115
+sharing; original ShareProvider create/inspect/revoke remains a distinct future
+capability and must not be declared complete from product links.
+
+Keep domain fileshare + Store port, PostgreSQL adapter, HTTP boundary and frontend
+separate. Exact fileaccess canonical authorization before creation/download;
+immutable target and current enabled owner's identity, never fabricated users or
+provider IDs. Hash-only 256-bit link token, optional bcrypt code, separate random
+hashed grant cookie; link secret alone cannot bypass a configured code. DB-time
+expiry/revoke and owner-only management. Cap active shares/grants and redemption.
+No permanent default, directory sharing, file deletion or native provider calls.
+
+Append migration14 only to owned product DB after exact-head CI/review; original
+v12 histories/IndexCore unchanged. Preserve Issue83's separate WIP; its unmerged
+draft14 needs later renumber/rebase. No automatic startup migration. Back up and
+stop only owned product before explicit reviewed migration. Strict-v13 binary
+cannot run on v14; rollback uses reviewed v14-compatible content-only mode,
+not a false promise of blindly restoring the old receipt. No public exposure.
+
+Consumer provides stream-based downloads, file-specific share creation/copy,
+owner list/revoke, and guest single-file redemption/download page. Do not buffer
+entire large downloads into browser Blobs. Existing localhost-only deployment
+means links require reachable Panta; it is not public internet distribution.
+Revocation denies new requests, not bytes already sent. No full MVP claim.
+See [module/deployment contract](PRODUCT-FILE-SHARING.md).
+

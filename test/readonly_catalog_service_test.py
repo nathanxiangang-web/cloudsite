@@ -61,6 +61,21 @@ class ReadonlyServiceTests(unittest.TestCase):
         self.write("access.json", json.dumps(access))
         with self.assertRaises(service.Refused): self.load()
 
+    def test_sharing_flag_must_be_boolean_and_content_scoped(self):
+        self.config["sharing_enabled"] = True
+        self.write("product.json", json.dumps(self.config))
+        with self.assertRaises(service.Refused): self.load()
+        self.write("content.token", "test-only-token")
+        cache = self.private / "preview-cache"
+        cache.mkdir(mode=0o700)
+        self.write("access.json", json.dumps({"base_url":"http://127.0.0.1:5244", "token_file":str(self.private / "content.token"), "cache_directory":str(cache)}))
+        self.config["file_access_config_file"] = str(self.private / "access.json")
+        self.write("product.json", json.dumps(self.config))
+        self.load()
+        self.config["sharing_enabled"] = "true"
+        self.write("product.json", json.dumps(self.config))
+        with self.assertRaises(service.Refused): self.load()
+
     def test_reject_permissions_symlink_duplicate_and_unknown_fields(self):
         path = self.private / "receipt.json"
         path.chmod(0o644)

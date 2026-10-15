@@ -13,6 +13,7 @@ async function request(path,method='GET',body){
  return data;
 }
 function closeDetail(restore=false){
+ if(typeof closeShare==='function')closeShare();library.selected=null;library.downloading=false;node('download-status').textContent='';node('file-share').hidden=true;
  library.pdfRequest++;
  if(library.player){library.player.pause();library.player.removeAttribute('src');library.player.load();library.player=null;}
  library.detail++;node('file-preview').replaceChildren();node('preview-status').textContent='';node('file-download').removeAttribute('href');node('file-download').hidden=true;
@@ -27,13 +28,14 @@ function clearFiles(){
  node('collection-status').textContent='正在整理你的文件…';node('load-status').textContent='';clearError('library-error');
 }
 function signOut(){
+ if(typeof clearSharing==='function')clearSharing();node('my-shares').hidden=true;library.sharing=false;
  library.session++;library.request++;library.controller.abort();library.controller=new AbortController();clearFiles();library.bindings=[];library.content=false;library.category='all';library.layout='cards';
  node('login-name').textContent='';node('file-search').value='';node('account-password').value='';node('account').hidden=true;node('admin-link').hidden=true;node('library-view').hidden=true;node('login-view').hidden=false;
 }
 async function signIn(principal){
  const generation=++library.session;
  const info=await request('/api/v1/workspace');if(generation!==library.session)return;
- library.bindings=info.bindings;library.content=info.content_access_enabled===true;node('login-name').textContent=principal.login;node('admin-link').hidden=principal.role!=='ADMIN';node('account').hidden=false;node('login-view').hidden=true;node('library-view').hidden=false;clearError('login-error');
+ library.bindings=info.bindings;library.content=info.content_access_enabled===true;library.sharing=info.sharing_enabled===true;node('my-shares').hidden=!library.sharing;node('login-name').textContent=principal.login;node('admin-link').hidden=principal.role!=='ADMIN';node('account').hidden=false;node('login-view').hidden=true;node('library-view').hidden=false;clearError('login-error');
  await refreshFiles();
 }
 function visibleFiles(){
@@ -42,6 +44,7 @@ function visibleFiles(){
 }
 function fileDetail(item,opener){
  closeDetail();
+ library.selected=item;node('file-share').hidden=!library.sharing;
  const kind=ResourceDisplay.classify(item);library.opener=opener;
  node('detail-title').textContent=ResourceDisplay.name(item);node('detail-format').textContent=kind.extension.toUpperCase()||'FILE';node('detail-type').textContent=kind.label;node('detail-size').textContent=ResourceDisplay.size(item.size_bytes);
  node('detail-note').textContent=({software:'安装包不在网页内运行，请下载后自行核实来源与安全性。',video:'播放取决于浏览器对该文件编码的支持；可以拖动进度条跳转。',document:'文档预览只用于阅读，不修改网盘原文件。'})[kind.key]||'文件保留在网盘中，不进行修改。';

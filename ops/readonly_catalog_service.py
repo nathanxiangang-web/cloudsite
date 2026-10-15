@@ -75,7 +75,8 @@ def load_receipt(receipt_path):
     config_path = inside(root, receipt["product_config"], "private")
     config = json.loads(protected(config_path), object_pairs_hook=unique_object)
     legacy = {"database_url_file", "listen_address", "origin", "indexcore_base_url", "bindings"}
-    if (set(config) not in (legacy, legacy | {"file_access_config_file"})
+    if (set(config) not in (legacy, legacy | {"file_access_config_file"}, legacy | {"file_access_config_file", "sharing_enabled"})
+            or "sharing_enabled" in config and not isinstance(config["sharing_enabled"], bool)
             or config["listen_address"] != "127.0.0.1:8180"
             or config["origin"] != "http://127.0.0.1:8180"
             or config["indexcore_base_url"] != "http://127.0.0.1:48892"
