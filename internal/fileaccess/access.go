@@ -22,11 +22,13 @@ type Request struct {
 	BindingID               storage.BindingID
 	ResourceID, Path, Range string
 	Head                    bool
+	UserAgent               string
 }
 type SourceRequest struct {
 	Mount, Path, Range string
 	Size               int64
 	Head               bool
+	UserAgent          string
 }
 type Content struct {
 	Body         io.ReadCloser
@@ -41,18 +43,20 @@ type File struct {
 	Name, Extension string
 	Size            int64
 	Content         Content
+	DirectURL       string
 }
 type Service struct {
-	reads    product.Reads
-	topology product.TopologyReader
-	source   Source
+	reads       product.Reads
+	topology    product.TopologyReader
+	source      Source
+	directHosts []string
 }
 
 func New(reads product.Reads, topology product.TopologyReader, source Source) (*Service, error) {
 	if reads == nil || topology == nil || source == nil {
 		return nil, product.ErrInvalid
 	}
-	return &Service{reads, topology, source}, nil
+	return &Service{reads: reads, topology: topology, source: source}, nil
 }
 func (s *Service) Open(ctx context.Context, p auth.Principal, r Request) (File, error) {
 	file, source, err := s.describe(ctx, p, r)

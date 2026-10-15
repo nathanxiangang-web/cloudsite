@@ -1,5 +1,13 @@
 # Authenticated file content: preview, download and playback
 
+## Superseding delivery correction - Issue105 / D-052
+
+[Direct delivery](PRODUCT-DIRECT-DELIVERY.md) adds explicitly configured302 after
+existing canonical authorization. Older same-origin-only/source-URL-hidden rules
+below describe legacy proxy mode, NOT direct delivery. One-hour private document
+preview/cache/rendering is unchanged. Both original local and public builds used
+200/206 byte proxy; previous local functional success did not prove302.
+
 ## Download/media reliability correction - 2026-10-15
 
 Consumer and redeemed guest downloads use the actual clicked same-origin link,

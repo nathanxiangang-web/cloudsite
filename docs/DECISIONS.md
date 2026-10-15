@@ -1292,3 +1292,21 @@ existing scope/permission retained, app token renewed by actual login and the
 reviewed identity-bound timer. Public real-file regression passes. See latest
 alpha contract; historical initial preserve-AList instructions are superseded.
 
+## D-052 - Authorized direct file delivery, separate from private previews
+
+Accepted direct human correction,2026-10-15, Issue105. Both local and public
+implementations currently proxy file bytes; prior local functional tests did not
+prove302. Public delivery adds an avoidable server-to-client data hop. A Windows
+client can read the existing115 URL from public OpenList directly with matching
+Range/hash; this evidence supports an explicit redirect path, not kernel changes.
+
+Use protected exact HTTPS CDN host allowlist, product auth/guest grant validation,
+exact IndexCore Q5/PRESENT identity then known-file OpenList metadata resolution
+and302. No file-byte GET on direct delivery, no secret/token/cookie forwarding,
+no unsafe target, no silent proxy fallback. Bounded caller UA and narrowly scoped
+media CSP. Empty list preserves legacy proxy rollback. Private one-hour document
+preview/cache/rendering remains streamed on the server. Issued upstream URLs are
+bearer capabilities until upstream expiry; product revoke cannot invalidate them.
+No schema/IndexCore scan/Hint/Worker/native115 acquisition/historical mutation.
+See [contract](PRODUCT-DIRECT-DELIVERY.md); same-agent review/CI before deployment.
+

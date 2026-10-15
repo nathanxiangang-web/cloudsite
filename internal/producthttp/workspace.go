@@ -63,11 +63,12 @@ func (gate *loginGate) enter() bool {
 }
 
 type WorkspaceHandler struct {
-	http     *Handler
-	gate     loginGate
-	mu       sync.Mutex
-	stopping bool
-	active   sync.WaitGroup
+	mediaSources string
+	http         *Handler
+	gate         loginGate
+	mu           sync.Mutex
+	stopping     bool
+	active       sync.WaitGroup
 }
 
 func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads, bindings []DisplayBinding, version int64, options ...WorkspaceOption) (*WorkspaceHandler, error) {
@@ -159,10 +160,14 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 			_, _ = w.Write(content)
 		})
 	}
-	return &WorkspaceHandler{http: h, gate: loginGate{slots: make(chan struct{}, 2), now: time.Now}}, nil
+	mediaSources := ""
+	if settings.files != nil {
+		mediaSources = strings.Join(settings.files.MediaSources(), " ")
+	}
+	return &WorkspaceHandler{http: h, mediaSources: mediaSources, gate: loginGate{slots: make(chan struct{}, 2), now: time.Now}}, nil
 }
 func (h *WorkspaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; media-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'")
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; media-src 'self' "+h.mediaSources+"; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'")
 	w.Header().Set("X-Frame-Options", "DENY")
 	w.Header().Set("Referrer-Policy", "no-referrer")
 	w.Header().Set("Cache-Control", "no-store")
