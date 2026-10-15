@@ -1,0 +1,18 @@
+[Unit]
+Description=Panta owned readonly IndexCore catalog query
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %h/panta-mvp-preview-20261014/private/readonly_catalog_service.py catalog %h/panta-mvp-preview-20261014/private/readonly-service-receipt.json
+WorkingDirectory=%h/panta-mvp-preview-20261014
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=90
+TimeoutStopSec=10
+UMask=0077
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target

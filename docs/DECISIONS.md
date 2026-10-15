@@ -1096,3 +1096,17 @@ No fabricated UI progress or real-chain claim from labelled test fixtures.
 Admission/usage/access/share remain required subsequent slices; readonly UI
 must not be called the usable full MVP or a production deployment.
 
+## D-044 - File deletion stays outside the product UI and API
+
+**Status:** Accepted human scope correction, recorded 2026-10-15.
+
+The human explicitly excludes UI file deletion and will remove files directly
+in the network drive. Do not implement a file-delete button, product deletion
+API or composed native file-removal capability as part of this MVP. Do not
+remove Canonical/Copy rows directly to simulate a physical delete.
+
+IndexCore still owns observation and its conservative missing/removal rules;
+absence in a partial scan is not deletion. This does not imply instant UI
+convergence or authorize a scanner/safety-rule bypass. Share revocation and
+session logout remain distinct requirements and must preserve source files.
+

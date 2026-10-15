@@ -25,6 +25,8 @@ jobs:
         run: go test ./... -count=1
       - name: Pure resource presentation tests
         run: node --test test/resource-display.test.cjs
+      - name: Owned readonly service safety tests
+        run: python3 -m unittest discover -s test -p 'readonly_catalog_service_test.py' -v
       - name: Race tests
         run: go test -race ./... -count=1
       - name: Architecture import guard
