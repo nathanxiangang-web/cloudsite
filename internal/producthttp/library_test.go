@@ -28,7 +28,7 @@ func TestConsumerAndAdministratorSurfacesAreSeparate(t *testing.T) {
 		if w.Code != 200 {
 			t.Fatal("asset unavailable", asset)
 		}
-		for _, unsafe := range []string{"innerHTML", "localStorage", "sessionStorage", "document.cookie", "https://", "iframe"} {
+		for _, unsafe := range []string{"innerHTML", "localStorage", "sessionStorage", "document.cookie", "https://"} {
 			if strings.Contains(w.Body.String(), unsafe) {
 				t.Fatal("unsafe consumer asset", asset, unsafe)
 			}

@@ -45,6 +45,22 @@ class ReadonlyServiceTests(unittest.TestCase):
         self.binary.write_bytes(b"changed")
         with self.assertRaises(service.Refused): self.load()
 
+    def test_optional_protected_content_config(self):
+        self.write("content.token", "test-only-token")
+        cache = self.private / "content-cache"
+        cache.mkdir(mode=0o700)
+        access = {"base_url": "http://127.0.0.1:5244", "token_file": str(self.private / "content.token"), "cache_directory": str(cache)}
+        self.write("access.json", json.dumps(access))
+        self.config["file_access_config_file"] = str(self.private / "access.json")
+        self.write("product.json", json.dumps(self.config))
+        self.load()
+        (self.private / "content.token").chmod(0o644)
+        with self.assertRaises(service.Refused): self.load()
+        (self.private / "content.token").chmod(0o600)
+        access["base_url"] = "http://169.254.169.254"
+        self.write("access.json", json.dumps(access))
+        with self.assertRaises(service.Refused): self.load()
+
     def test_reject_permissions_symlink_duplicate_and_unknown_fields(self):
         path = self.private / "receipt.json"
         path.chmod(0o644)

@@ -74,12 +74,24 @@ def load_receipt(receipt_path):
     catalog = verified_binary(root, receipt["catalog_binary"], receipt["catalog_sha256"])
     config_path = inside(root, receipt["product_config"], "private")
     config = json.loads(protected(config_path), object_pairs_hook=unique_object)
-    if (set(config) != {"database_url_file", "listen_address", "origin", "indexcore_base_url", "bindings"}
+    legacy = {"database_url_file", "listen_address", "origin", "indexcore_base_url", "bindings"}
+    if (set(config) not in (legacy, legacy | {"file_access_config_file"})
             or config["listen_address"] != "127.0.0.1:8180"
             or config["origin"] != "http://127.0.0.1:8180"
             or config["indexcore_base_url"] != "http://127.0.0.1:48892"
             or not isinstance(config["bindings"], list) or len(config["bindings"]) != 3):
         raise Refused("readonly product scope rejected")
+    if "file_access_config_file" in config:
+        access = json.loads(protected(inside(root, config["file_access_config_file"], "private")), object_pairs_hook=unique_object)
+        if set(access) != {"base_url", "token_file", "cache_directory"} or access["base_url"] != "http://127.0.0.1:5244":
+            raise Refused("file content endpoint rejected")
+        token = protected(inside(root, access["token_file"], "private"), 8192).strip()
+        if not token or "\r" in token or "\n" in token:
+            raise Refused("file content credential rejected")
+        cache = inside(root, access["cache_directory"], "private")
+        info = cache.stat()
+        if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o700:
+            raise Refused("preview cache directory rejected")
     product_dsn = protected(inside(root, config["database_url_file"], "private"), 4096).strip()
     catalog_dsn = protected(inside(root, receipt["catalog_database_url_file"], "private"), 4096).strip()
     for dsn, port, database in [(product_dsn, 55440, "panta_mvp_preview"),

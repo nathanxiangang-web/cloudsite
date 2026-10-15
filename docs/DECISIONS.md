@@ -1131,3 +1131,37 @@ or unknown-type entries from file cards. No direct OpenList calls, new provider
 download or schema migration. No fabricated covers, content access or playback.
 See [module contract](PRODUCT-FILE-LIBRARY.md) for bounds, testing and rollback.
 
+## D-046 - Authenticated file bytes and one-hour server preview cache
+
+**Status:** Accepted delegated architecture and human preview correction,
+2026-10-15; Issue #90. Implementation acceptance still requires exact-head CI.
+
+Advance the consumer content slice without changing the IndexCore observation
+owner or enabling Acquisition. Existing product login and configured canonical
+read scopes authorize exact binding/resource/path Q5 PRESENT files; no per-file
+approval or invented Copy is required for existing physical files. An existing
+REMOVED Copy refuses access. Observation-only DISABLED does not become an ACTIVE
+provider Binding. No directory/delete/source submission/native provider capability.
+
+The dedicated OpenList content adapter fetches only authorized known-file bytes,
+never acquisition visibility. No client URL/token/cookie forwarding, raw URL
+disclosure or third-party Office viewer. Single Range/HEAD enables native media
+playback and attachments; HTML/SVG/executable formats never execute inline.
+
+At the human's request, document preview first downloads to a private server
+cache for one hour, then renders/parses on the server. Revalidate canonical
+identity on EVERY hit; do not extend TTL on reads. Hash-keyed original files,
+atomic bounded writes, per-minute owned-file cleanup, <=128MiB/file and <=1GiB
+total. No drive originals are removed. Same-size edits may remain cached until
+TTL; this is not a freshness guarantee. PDF returns bounded PNG pages through
+Poppler processes with time/memory/output limits; this is not a complete OS
+sandbox. Office currently returns safe labelled text, not original-layout slides
+or spreadsheets. Video stays Range-streamed rather than fully cached.
+
+Separate fileaccess/filecache/filepreview/HTTP/composition modules are replaceable
+and independently tested; the parent OpenList port remains contract-only. This
+supersedes D-045's metadata-only restriction only for this bounded content slice.
+CloudSite sharing is a reference, NOT implemented or accepted here. Preserve
+Issue #83 WIP, existing schemas, historical provider tasks and unrelated services.
+See [content module contract](PRODUCT-FILE-CONTENT.md).
+
