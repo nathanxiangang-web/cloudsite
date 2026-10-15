@@ -21,7 +21,7 @@ func TestResourcePresentationServesSafeAssetsWithoutWritableRoutes(t *testing.T)
 			}
 		}
 	}
-	page := request(h, "GET", "/", "", "", "").Body.String()
+	page := request(h, "GET", "/admin/", "", "", "").Body.String()
 	for _, id := range []string{"category-software", "category-video", "category-document", "resource-search", "view-cards", "file-detail", "file-note"} {
 		if !strings.Contains(page, `id="`+id+`"`) {
 			t.Fatal("missing presentation", id)
