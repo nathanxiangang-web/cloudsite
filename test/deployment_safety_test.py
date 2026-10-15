@@ -13,4 +13,5 @@ class DeploymentSafety(unittest.TestCase):
   raw=(DEPLOY/'cloudsiteV1.0.0alpha.yml').read_text()
   self.assertNotIn('ports:',raw);self.assertIn('${CLOUDSITE_TRAEFIK_ENABLED:-false}',raw);self.assertEqual(raw.count('network_mode: service:edge'),2)
   self.assertIn('PANTA_ACQUISITION_WORKER_ENABLED: "false"',raw);self.assertIn('data: {internal: true}',raw)
+  self.assertIn('tmpfs: ["/tmp:size=64m,mode=1777"]',raw)
   for name in ['catalog-entrypoint.py','refresh-storage-token.py']:compile((DEPLOY/name).read_text(),name,'exec')
