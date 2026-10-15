@@ -3,7 +3,7 @@
 > Canonical short-form project memory for Architect/AI sessions.
 >
 > Last architecture-memory synchronization: **2026-10-15**
-> Current status: **Gate 0-3 CLOSED. PR #89 accepted/deployed: separate consumer file library `/` and ADMIN workspace `/admin/`, directly using PR #87 real IndexCore catalog without per-file approval. Six actual file cards (five documents/one MP4), directories hidden from frontend. D-045 dual UI and D-044 no file deletion. Issue #83 remains isolated unreviewed WIP. Copy projection/content access/playback/share still missing; no full MVP acceptance.**
+> Current status: **Gate 0-3 CLOSED. PR #91 accepted/deployed: authenticated download/media, one-hour private server document cache and PDF PNG pages, Office/text previews. D-046 content access, D-045 dual UI and D-044 no file deletion. PR #87 real scopes remain, not whole-drive. Issue #83 isolated unreviewed WIP; Copy projection/admission/usage/sharing incomplete. No full MVP acceptance.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -12,7 +12,23 @@
 
 ## 1. Source-of-truth order
 
-Latest accepted slice: Issue #88 / PR #89, reviewed HEAD
+Latest accepted content slice: Issue #90 / PR #91, exact reviewed HEAD
+`34863813a53f8b1be187bfb9ceaecafbab4cb886`, CI `38699810879` all three SUCCESS,
+same-agent review `5529707246`, merge `e5783b5fcef27f3a6f520b08d5773819d3f6aea5`.
+D-046: known-file bytes may use the server-only OpenList content adapter AFTER
+exact Q5/PRESENT/size/directory authorization; acquisition visibility remains
+IndexCore-owned. Every one-hour private document cache hit revalidates identity.
+PDF server-rendered PNG pages, Office/text safe text-only, native Range video and
+attachments; no raw URL/Token or third-party viewer. Formal8180 real downloads,
+three-page PDF/paging, Office/text, MP4 playback/seek verified. Binary
+`34863813a53f` SHA256 `3625b49c028962faacd492642385b6e760897946dced92d3ab3ad700c3116c2c`.
+Only product restarted; query PID/generations/original DB hashes/unrelated
+services unchanged. No provider start/native login/scan/Hint/migration/role change.
+Rollback receipt/launcher/binary retained. [Contract](PRODUCT-FILE-CONTENT.md).
+Sharing is reference-only; preserved Issue #83 and current-DB Copy work remain.
+The previous file-library slice below is historical, not a ban on accepted content.
+
+Previous accepted slice: Issue #88 / PR #89, reviewed HEAD
 `8b7d1c23feabc0a76100d975b1ae9ebe1b4ec16b`, CI `38673309830` all three SUCCESS,
 same-agent review `5529290784`, merge `963c66d9c0d7735fbf8ae0a8ab0c7a4000d6bb1d`
 and merge CI `38695548823` SUCCESS. D-045: retain two UIs, file-first `/` with no

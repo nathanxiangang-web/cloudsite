@@ -6,9 +6,40 @@
 
 **Gate 3 CLOSED; auth/read/readonly UI accepted; real canonical reads connected; minimum MVP still incomplete**
 
-Gate 0 through Gate 3 are accepted and closed. D-042 delegates Architect and Developer roles through minimum usable core MVP. Docs/auth/reads/readonly UI and real catalog slices are merged. Owned product UI runs on staging host .50 through a loopback SSH forward, reading the isolated real IndexCore catalog introduced by PR #87. PR #89 separates consumer file library from administrator workspace. Admission/usage, current-database Copy synchronization, file access and share remain incomplete; this is not full MVP acceptance.
+Gate 0 through Gate 3 are accepted and closed. D-042 delegates Architect and Developer roles through minimum usable core MVP. Docs/auth/reads/UI, real catalog and authenticated file content slices are merged. Owned product UI runs on staging host .50 through a loopback SSH forward, reading the isolated real IndexCore catalog introduced by PR #87. PR #89 separates consumer file library from administrator workspace. PR #91 adds real content and server document previews. Admission/usage, current-database Copy synchronization and sharing remain incomplete; this is not full MVP acceptance.
 
-### Current implementation task - 2026-10-15
+### Current content acceptance and deployment - 2026-10-15
+
+Issue #90 / PR #91 ACCEPTED, merged and deployed. Reviewed exact HEAD
+`34863813a53f8b1be187bfb9ceaecafbab4cb886`, CI `38699810879` all three jobs
+SUCCESS, separate same-agent review `5529707246` (not independent review), merge
+`e5783b5fcef27f3a6f520b08d5773819d3f6aea5`; merge CI `38700142744` SUCCESS. D-046 and the
+[content module contract](docs/PRODUCT-FILE-CONTENT.md) supersede prior metadata-only
+content restrictions, not IndexCore's ownership of physical truth.
+
+Formal .50 loopback 8180 now serves authenticated same-origin downloads/media.
+Document originals are cached privately for one hour, server-rendered PDF PNG
+pages or safe Office/text content returned to the browser. Cache hit revalidates
+Q5 identity/presence; TTL does not slide. Max128MiB/file, 1GiB total; expired owned
+cache cleanup every minute, never drive originals. Office remains TEXT ONLY,
+not original-layout rendering. Video uses Range streaming, not a full-file cache.
+
+Five real full-file downloads, DOCX/XLSX/PPTX/Markdown previews and PDF pages
+1 -> 2 -> 1 were successful on formal8180. Three-page PDF PNG signatures/stable
+page1 and unchanged cache mtimes verified. Actual browser PDF image 990x1400,
+browser original PDF download, real MP4 playback/seek and Range/HEAD verified.
+Local Go/race/architecture/vet/build, 20 Node and nine Python tests pass.
+
+Only owned product service restarted. Clean reviewed binary
+`panta-content-34863813a53f`, SHA-256
+`3625b49c028962faacd492642385b6e760897946dced92d3ab3ad700c3116c2c`.
+Old binary/config/launcher receipt retained for rollback. Query PID, generations
+0/1/1, original staging table hashes and unrelated containers unchanged.
+Schema13, zero new provider starts/native login/scan/Hint/migration/role changes.
+Issue #83 WIP untouched. CloudSite sharing reviewed as reference only; not built.
+Source scope is still three configured real read scopes, NOT whole-drive access.
+
+### Previous file-library acceptance - 2026-10-15
 
 Issue #88 / PR #89 ACCEPTED and deployed. Reviewed HEAD
 `8b7d1c23feabc0a76100d975b1ae9ebe1b4ec16b`, exact-head CI `38673309830` all

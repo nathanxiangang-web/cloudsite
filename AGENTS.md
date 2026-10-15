@@ -14,7 +14,21 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-15
 
-Latest accepted/deployed UI is Issue #88 / PR #89, exact HEAD `8b7d1c23feab`,
+Latest accepted/deployed content is Issue #90 / PR #91, exact HEAD
+`34863813a53f`, CI `38699810879` all three SUCCESS, same-agent review
+`5529707246`, merge `e5783b5fcef27`. D-046 and
+[content contract](docs/PRODUCT-FILE-CONTENT.md) govern server-only known-file
+OpenList bytes AFTER IndexCore exact Q5 authorization, every cache hit included.
+One-hour private original-document cache -> server PDF PNG pages or Office/text;
+Office TEXT ONLY, not original layout. Range media and attachments verified with
+real files. Product binary SHA256 `3625b49c028962faacd492642385b6e760897946dced92d3ab3ad700c3116c2c`.
+Only owned product restarted; query/generations/original histories/services
+unchanged. No new source/Job/Manifest/ProviderTask/download/scan/Hint/migration.
+Sharing is NOT implemented; Issue #83 WIP and current-DB Copy remain separate.
+Older metadata-only statements below are historical and superseded for this
+bounded content slice. D-044 no deletion and dual UI remain in force.
+
+Previous accepted/deployed UI is Issue #88 / PR #89, exact HEAD `8b7d1c23feab`,
 CI `38673309830` all three SUCCESS, review `5529290784`, merge `963c66d9c0d7`.
 D-045 requires TWO UIs: file-first consumer `/`, ADMIN `/admin/` retaining the
 operational workspace. Frontend directly reads configured real IndexCore files,

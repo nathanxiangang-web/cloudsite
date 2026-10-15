@@ -117,3 +117,12 @@ All Go unit/architecture/race, vet/build checks, 20 Node tests and nine owned
 service guard tests pass locally. PostgreSQL and exact-head CI must still pass
 before acceptance. No native 115 login, acquisition StartDownload, metadata scan,
 Hint, schema migration, role escalation or share creation was performed.
+
+Accepted/deployed: PR #91 reviewed HEAD `34863813a53f8b1be187bfb9ceaecafbab4cb886`,
+CI `38699810879` all three SUCCESS, same-agent review `5529707246`, merge
+`e5783b5fcef27f3a6f520b08d5773819d3f6aea5`, merge CI `38700142744` SUCCESS.
+Formal8180 repeated all file checks, including PDF page 1 -> 2 -> 1 and unchanged
+cache mtimes. Only owned product service restarted, clean binary SHA256
+`3625b49c028962faacd492642385b6e760897946dced92d3ab3ad700c3116c2c`.
+Catalog PID/generations 0/1/1, original staging table hashes and unrelated services
+unchanged; old receipt/config/launcher/binary retained. No full MVP or share claim.
