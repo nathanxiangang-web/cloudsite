@@ -14,7 +14,25 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-15
 
-Latest accepted/deployed Issue #92 / PR #93, exact HEAD `d98f79a2d39f`,
+Latest accepted/deployed Issue #94 / PR #95, exact HEAD `e5961f8fe060`,
+CI `38733576527` all three SUCCESS, same-agent acceptance `5533047604`, merge
+`9c902a3650df`; merge CI `38734637547` all three SUCCESS. D-048 and
+[complete CloudSite contract](docs/PRODUCT-CLOUDSITE-LIBRARY.md): all283 actual
+files (software42/video188/document6/Other47) through one new isolated Q6 Root.
+474 directories remain metadata, not consumer cards. One consumer Binding,
+four backend read Bindings so old shares survive. Observation-only mapping is
+DISABLED, no provider_scope/credential_ref. Old three root generations0/1/1 and
+original staging DB histories unchanged. One explicit initial scan, no daemon.
+New forms auto-fill crypto-random4 A-Z/a-z/0-9; clearing means no code. Legacy
+longer-code share from old binary/Binding verified against candidate AND formal.
+UI pagination120/120/43, all counts and both redemption modes verified. Test
+shares revoked; candidate stopped. Schema14 unchanged. Product-only cutover,
+query PID/unrelated services unchanged; rollback old14 receipt/config/binary.
+Deployed SHA256 `983e10735db46b94cfd5d404372e8e97c788bfd05ff8aa58d832e4348d287f67`.
+Three-subtree-only/six-file defaults below are historical, NOT current limits.
+Issue83 WIP unchanged. No native115 share/download/login or full MVP claim.
+
+Previous accepted/deployed Issue #92 / PR #93, exact HEAD `d98f79a2d39f`,
 CI `38702187329` all three SUCCESS, same-agent review `5529930361`, merge
 `49b98b21bff0`; merge CI `38702621096` SUCCESS. D-047 and
 [sharing contract](docs/PRODUCT-FILE-SHARING.md): Panta-hosted single-file links,

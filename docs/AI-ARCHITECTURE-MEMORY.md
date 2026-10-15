@@ -3,7 +3,7 @@
 > Canonical short-form project memory for Architect/AI sessions.
 >
 > Last architecture-memory synchronization: **2026-10-15**
-> Current status: **Gate 0-3 CLOSED. PR #93 accepted/deployed: Panta-hosted expiring/code-protected single-file sharing, owner revoke and download UX. Product schema14; original staging12 unchanged. Prior content/cache/media remain. D-047 product shares, D-046 content, D-045 dual UI, D-044 no deletion. Native115 share/Copy projection/admission/usage unfinished. Issue83 WIP preserved but draft14 needs rebase. No full MVP acceptance.**
+> Current status: **Gate 0-3 CLOSED. PR #95 accepted/deployed: complete CloudSite283 files, Other fallback, four-character random code autofill/clear=no-code, old shares preserved. Product schema14 unchanged; original staging12 unchanged. D-048 complete CloudSite, D-047 product shares, D-046 content, D-045 dual UI, D-044 no deletion. Native115 share/Copy projection/admission/usage unfinished. Issue83 WIP preserved but draft14 needs rebase. No full MVP acceptance.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -12,7 +12,25 @@
 
 ## 1. Source-of-truth order
 
-Latest: Issue #92 / PR #93, exact HEAD `d98f79a2d39f6add0e6d7d4bb98126516623bfa7`,
+Latest: Issue #94 / PR #95, exact HEAD `e5961f8fe0603eb8e2ee0c862abfbdd68d79c6b2`,
+CI `38733576527` all three SUCCESS, same-agent review `5533047604`, merge
+`9c902a3650df17c8202e3d04985a20c562389087`, merge CI `38734637547` all three SUCCESS.
+D-048 [contract](PRODUCT-CLOUDSITE-LIBRARY.md): full CloudSite logical root,
+one new isolated IndexCore Root and one explicit scan;283 files/474 directories,
+42software/188video/6document/47Other. All16 Q6 pages verified; UI120/120/43,
+all files reachable and directories hidden. Four backend read Bindings preserve
+old shares, consumer selects only new observation-only DISABLED Binding.
+Random4-character A-Z/a-z/0-9 on new form; clearing keeps empty/no code. Browser
+and formal API verify both modes, copied code, old longer-code share and original
+DOCX download hash. All test shares revoked/candidate stopped. Product-only
+cutover, schema14 unchanged; old14 binary/config/launcher retained for rollback.
+Deployed SHA256 `983e10735db46b94cfd5d404372e8e97c788bfd05ff8aa58d832e4348d287f67`.
+Original DB histories/query PID/old root generations/unrelated services unchanged.
+No source mutations/native115 download/share/login/scheduled scan/Hint. Issue83
+WIP preserved; no full MVP claim. Old six-file/three-subtree defaults below are
+historical, not current constraints.
+
+Previous: Issue #92 / PR #93, exact HEAD `d98f79a2d39f6add0e6d7d4bb98126516623bfa7`,
 CI `38702187329` all three SUCCESS, same-agent review `5529930361`, merge
 `49b98b21bff0c6be3e11f05a6292ba6c383da3af`, merge CI `38702621096` SUCCESS.
 D-047 [product sharing contract](PRODUCT-FILE-SHARING.md): Panta-hosted single

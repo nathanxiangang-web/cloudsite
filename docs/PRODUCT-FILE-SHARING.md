@@ -20,7 +20,10 @@ a separate future adapter. No source/Job/Manifest/ProviderTask or StartDownload.
 Create validates exact binding/resource/path via Q5 PRESENT (including any Copy
 availability), then stores immutable target/name/size. Share token 256-bit random,
 SHA256 stored, returned once in URL fragment (not query/server request logs).
-Optional 6-32 ASCII code is bcrypt hashed. Expirations 5m/1h/6h/24h/7d, no permanent
+Optional code is bcrypt hashed. PR #95 / D-048 supersedes the old6-32 ASCII
+creation rule: new codes are exactly4 A-Z/a-z/0-9, browser-random on form open;
+clearing means no code and is not refilled on submit. Existing longer hashed
+codes still redeem. Expirations 5m/1h/6h/24h/7d, no permanent
 default. Link must be presented with code to get a separate 256-bit hashed grant;
 knowing the link token alone cannot forge a code-verified grant cookie.
 
@@ -56,7 +59,17 @@ guest redemption/download and revoke -> denied. No 115 native share is created.
 CloudSite service.py is the inspected primary reference for expiry/code/revoke
 UX only, not copied storage/CAPTCHA/permanent-link/unsafe preview behavior.
 
-## Acceptance/deployment evidence
+## Current code/scope extension
+
+PR #95, exact HEAD `e5961f8fe060`, CI `38733576527` and merge CI `38734637547`
+all three SUCCESS, same-agent review `5533047604`, merge `9c902a3650df`.
+Four-character/empty code and a real legacy old-Binding share passed against
+candidate and formal service; copied result keeps its original code even if
+the input later changes. All test links revoked. Product schema14 unchanged.
+Complete CloudSite283 files now selected in consumer; old three backend read
+Bindings remain for old shares. [Current contract](PRODUCT-CLOUDSITE-LIBRARY.md).
+
+## Original sharing acceptance/deployment evidence
 
 PR #93 reviewed `d98f79a2d39f6add0e6d7d4bb98126516623bfa7`, exact CI
 `38702187329` all three SUCCESS, same-agent review `5529930361`, merge

@@ -6,9 +6,42 @@
 
 **Gate 3 CLOSED; auth/read/readonly UI accepted; real canonical reads connected; minimum MVP still incomplete**
 
-Gate 0 through Gate 3 are accepted and closed. D-042 delegates Architect and Developer roles through minimum usable core MVP. Docs/auth/reads/UI, real catalog, file content and Panta-hosted single-file sharing are merged. Owned product UI runs on staging host .50 through a loopback SSH forward, reading the isolated real IndexCore catalog introduced by PR #87. PR #89 separates consumer and admin UI; PR #91 adds content/server previews; PR #93 adds product shares/download UX. Admission/usage, current-database Copy synchronization and native115 ShareProvider remain incomplete; this is not full MVP acceptance.
+Gate 0 through Gate 3 are accepted and closed. D-042 delegates Architect and Developer roles through minimum usable core MVP. Docs/auth/reads/UI, real catalog, file content and Panta-hosted single-file sharing are merged. Owned product UI runs on staging host .50 through a loopback SSH forward, reading the isolated real IndexCore catalog introduced by PR #87 and expanded to complete CloudSite by PR #95. PR #89 separates consumer and admin UI; PR #91 adds content/server previews; PR #93 adds product shares/download UX; PR #95 adds random4-character codes and full CloudSite file inventory. Admission/usage, current-database Copy synchronization and native115 ShareProvider remain incomplete; this is not full MVP acceptance.
 
-### Current sharing acceptance and deployment - 2026-10-15
+### Current complete CloudSite acceptance and deployment - 2026-10-15
+
+Issue #94 / PR #95 ACCEPTED, merged and deployed. Reviewed exact HEAD
+`e5961f8fe0603eb8e2ee0c862abfbdd68d79c6b2`, CI `38733576527` all three SUCCESS;
+separate same-agent review `5533047604` (not independent review), squash merge
+`9c902a3650df17c8202e3d04985a20c562389087`, merge CI `38734637547` all three SUCCESS.
+D-048 and [contract](docs/PRODUCT-CLOUDSITE-LIBRARY.md) supersede old subtree and
+code-length defaults. Existing OpenList user's logical root is CloudSite only,
+not the whole115 drive. One new isolated Root, one existing-CLI full scan at
+refresh=false: generation1,283 files plus474 directories. No source mutation.
+Software42, video188, document6, Other47. Actual Q5/Q8 evidence private.
+
+One selected consumer Binding uses authenticated Q6; all four backend read
+Bindings remain so old shares keep working. All16 API pages matched IndexCore
+IDs; UI loads all283 then renders120/120/43 cards, directories never shown.
+Other includes image/audio/archive/unrecognized extensions; no format dropped.
+Candidate and formal API passed real DOCX four-character/empty-code downloads,
+wrong-code/revoke rejection and a legacy eight-character share created with the
+old deployed binary/Binding. Browser verified random-code autofill, clear ->
+no-code redemption, protected redemption and copied original code. All temporary
+shares revoked; candidate stopped. Formal doc text preview also verified.
+
+27 Node,11 Python, fullGo/unit/architecture/race/vet/build and isolated real PG
+sharing regression pass. Product schema14 unchanged, original staging12 table
+hashes unchanged. New Connection/Binding DISABLED, no provider_scope/credential_ref.
+Only product restarted; query PID, all root generations and unrelated containers
+unchanged during cutover. Eight historical unknown reservations preserved by
+original whole-table hash checks. Deployed binary SHA256
+`983e10735db46b94cfd5d404372e8e97c788bfd05ff8aa58d832e4348d287f67`.
+Old v14 binary/config/launcher retained for rollback; no new migration. Zero
+native115 provider/share/download/login calls, no scheduled scanner/Hint.
+Issue83 WIP remains untouched; no full MVP claim.
+
+### Previous sharing acceptance and deployment - 2026-10-15
 
 Issue #92 / PR #93 ACCEPTED and deployed. Reviewed HEAD
 `d98f79a2d39f6add0e6d7d4bb98126516623bfa7`, exact-head CI `38702187329` all
