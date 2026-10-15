@@ -94,6 +94,9 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 	if settings.files != nil {
 		registerContent(h, settings.files, settings.previews)
 	}
+	if err := registerAccounts(h, access, settings.registration); err != nil {
+		return nil, err
+	}
 	if settings.shares != nil {
 		registerSharing(h, settings.shares)
 	}
@@ -183,7 +186,7 @@ func (h *WorkspaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), lifetime)
 	defer cancel()
 	r = r.WithContext(ctx)
-	if r.Method == "POST" && r.URL.Path == "/api/v1/auth/login" && h.http.ValidMutationOrigin(r) {
+	if r.Method == "POST" && (r.URL.Path == "/api/v1/auth/login" || r.URL.Path == "/api/v1/auth/register") && h.http.ValidMutationOrigin(r) {
 		if !h.gate.enter() {
 			w.Header().Set("Retry-After", "60")
 			failure(w, 429, "AUTH_BUSY")

@@ -145,6 +145,7 @@ func Run(ctx context.Context, action, configFile, userFile string) error {
 		return ErrStartup
 	}
 	var options []producthttp.WorkspaceOption
+	options = append(options, producthttp.WithRegistration(cfg.RegistrationEnabled))
 	options = append(options, producthttp.WithLibraryScope(cfg.LibraryBindingIDs, cfg.WholeRootLibrary))
 	if cfg.SharingEnabled && cfg.FileAccessConfigFile == "" {
 		cancel()

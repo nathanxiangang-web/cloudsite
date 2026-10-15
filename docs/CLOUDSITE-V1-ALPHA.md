@@ -17,6 +17,23 @@ stars/fork relationships or release assets exactly.
 - Alpha naming does not imply unfinished admission/usage/native115 shares,
   current-DB Copy projection or all codecs are complete. No full MVP claim.
 
+## Public registration and reused credentials
+
+The human explicitly requests open website registration and reuse of local
+credentials on the remote deployment. Restore the existing product accounts and
+password hashes unchanged; do not reset passwords, elevate roles or invent a new
+administrator credential. Product credentials are separate from storage and115
+credentials. Transfer protected files/dumps privately; never include them in Git.
+
+Enable `registration_enabled=true` in the new protected deployment config.
+Legacy compositions default to disabled. Public capability discovery drives the
+consumer login/register UI. Registration accepts only login/password, always
+creates USER, rejects duplicate/unknown fields and uses the existing unique login
+constraint/bcrypt policy (12-72 password bytes). No public role provisioning or
+provider credentials. Host/Origin, request size, shared8-per-minute auth budget
+and2 concurrent hashing requests apply. Registration issues no session: users
+log in normally afterwards. Administrator rights remain operator-only.
+
 ## Runtime modules and dependency direction
 
 ```text

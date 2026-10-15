@@ -1,5 +1,12 @@
 # cloudsite
 
+Current release: **cloudsiteV1.0.0alpha**. The HTTPS deployment enables website
+registration for ordinary USER accounts. Use the login page's registration
+action; passwords are12-72 bytes, account names3-64 ASCII letters/digits/._-.
+Existing local product credentials are preserved on the remote deployment;
+registration cannot choose ADMIN or reset an existing account. Storage/115
+credentials remain operator-managed, separate from website accounts.
+
 Current release: **`cloudsiteV1.0.0alpha`**. This is the renamed Panta repository,
 not the deleted legacy CloudSite Python/Next.js project. GitHub repository ID and
 all accepted Issue/PR history are preserved. Public product branding is cloudsite.

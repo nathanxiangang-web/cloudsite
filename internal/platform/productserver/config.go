@@ -28,6 +28,7 @@ var ErrConfig = errors.New("invalid protected product configuration")
 var ErrStartup = errors.New("product process unavailable")
 
 type Config struct {
+	RegistrationEnabled  bool                         `json:"registration_enabled,omitempty"`
 	HTTPSProxy           bool                         `json:"https_proxy,omitempty"`
 	LibraryBindingIDs    []storage.BindingID          `json:"library_binding_ids,omitempty"`
 	WholeRootLibrary     bool                         `json:"whole_root_library,omitempty"`

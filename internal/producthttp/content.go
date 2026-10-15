@@ -18,11 +18,16 @@ import (
 
 type WorkspaceOption func(*workspaceOptions)
 type workspaceOptions struct {
-	libraryIDs []storage.BindingID
-	wholeRoot  bool
-	shares     *fileshare.Service
-	files      *fileaccess.Service
-	previews   *fileaccess.PreviewService
+	registration bool
+	libraryIDs   []storage.BindingID
+	wholeRoot    bool
+	shares       *fileshare.Service
+	files        *fileaccess.Service
+	previews     *fileaccess.PreviewService
+}
+
+func WithRegistration(enabled bool) WorkspaceOption {
+	return func(o *workspaceOptions) { o.registration = enabled }
 }
 
 func WithLibraryScope(ids []storage.BindingID, wholeRoot bool) WorkspaceOption {

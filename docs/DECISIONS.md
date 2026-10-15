@@ -1229,6 +1229,13 @@ See [contract and evidence](PRODUCT-CLOUDSITE-LIBRARY.md). No full MVP claim.
 
 **Status:** Accepted direct human authorization, 2026-10-15; Issue #98.
 
+Additional direct human requirements: open website registration in the protected
+HTTPS deployment and reuse local product credentials on the remote instance.
+Import password hashes/roles unchanged; no reset or privilege escalation. Public
+registration is a separate Registrar port fixed to USER, explicit default-off
+composition flag, strict login/password-only input and existing shared bounded
+auth admission. No public operator Provision capability or schema migration.
+
 The human deleted the legacy CloudSite repository. Rename the existing panta
 repository (same ID/history) to cloudsite; exact release/tag cloudsiteV1.0.0alpha.
 Update consumer/admin/guest branding and Markdown documentation without renaming

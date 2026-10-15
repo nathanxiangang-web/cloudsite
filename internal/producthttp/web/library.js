@@ -2,7 +2,7 @@
 const node=id=>document.getElementById(id);
 const library={session:0,request:0,detail:0,pdfRequest:0,content:false,player:null,catalog:null,bindings:[],category:'all',layout:'cards',busy:false,failed:false,opener:null,controller:new AbortController()};
 const categories=['all','software','video','document','other'];
-function failureText(error){return ({AUTH_REQUIRED:'登录已失效，请重新登录。',AUTH_BUSY:'登录请求过多，请稍候再试。',READ_UNAVAILABLE:'暂时无法获取更多文件，已展示的结果可能不完整。',INVALID_REQUEST:'请检查输入后重试。',ORIGIN_REJECTED:'当前入口不可用。'})[error.code]||'连接暂时不可用，请刷新重试。';}
+function failureText(error){return ({ACCOUNT_EXISTS:'此账号已注册，请登录或更换账号。',AUTH_REQUIRED:'登录已失效，请重新登录。',AUTH_BUSY:'登录或注册请求过多，请一分钟后再试。',READ_UNAVAILABLE:'暂时无法获取更多文件，已展示的结果可能不完整。',INVALID_REQUEST:'请检查输入后重试。',ORIGIN_REJECTED:'当前入口不可用。'})[error.code]||'连接暂时不可用，请刷新重试。';}
 function errorAt(id,error){node(id).textContent=failureText(error);node(id).hidden=false;}
 function clearError(id){node(id).textContent='';node(id).hidden=true;}
 async function request(path,method='GET',body){
@@ -143,7 +143,22 @@ async function refreshFiles(){
  library.request++;library.controller.abort();library.controller=new AbortController();clearFiles();
  try{library.catalog=new FileCatalog.Catalog(library.bindings,library.wholeRoot);if(library.wholeRoot)await loadWholeLibrary();else await loadRound();}catch(error){library.failed=true;errorAt('library-error',error);node('collection-status').textContent='文件尚未加载';}
 }
-node('login-form').addEventListener('submit',async event=>{event.preventDefault();clearError('login-error');node('login-submit').disabled=true;try{const principal=await request('/api/v1/auth/login','POST',{login:node('account-name').value,password:node('account-password').value});await signIn(principal);}catch(error){errorAt('login-error',error);if(error.code==='AUTH_REQUIRED')node('login-error').textContent='账号或密码不正确。';}finally{node('account-password').value='';node('login-submit').disabled=false;}});
+let registering=false;
+function authMode(value){registering=value;node('auth-title').textContent=value?'创建你的账号':'登录文件库';node('login-submit').textContent=value?'注册账号':'进入文件库';node('auth-toggle').textContent=value?'已有账号？返回登录':'没有账号？立即注册';node('account-password').autocomplete=value?'new-password':'current-password';node('confirm-field').hidden=!value;node('account-confirm').required=value;node('auth-help').hidden=!value;node('account-password').value='';node('account-confirm').value='';node('auth-notice').hidden=true;clearError('login-error');}
+node('auth-toggle').addEventListener('click',()=>authMode(!registering));
+node('login-form').addEventListener('submit',async event=>{
+ event.preventDefault();clearError('login-error');node('auth-notice').hidden=true;
+ if(registering&&node('account-password').value!==node('account-confirm').value){node('login-error').textContent='两次密码输入不一致。';node('login-error').hidden=false;return;}
+ if(new TextEncoder().encode(node('account-password').value).length>72){node('login-error').textContent='密码最多 72 字节。';node('login-error').hidden=false;return;}
+ node('login-submit').disabled=true;node('auth-toggle').disabled=true;
+ try{
+  const credentials={login:node('account-name').value,password:node('account-password').value};
+  if(registering){await request('/api/v1/auth/register','POST',credentials);authMode(false);node('auth-notice').textContent='账号已创建，请使用刚才的密码登录。';node('auth-notice').hidden=false;node('account-password').focus();}
+  else{await signIn(await request('/api/v1/auth/login','POST',credentials));}
+  credentials.password='';
+ }catch(error){errorAt('login-error',error);if(error.code==='AUTH_REQUIRED')node('login-error').textContent='账号或密码不正确。';}
+ finally{node('account-password').value='';node('account-confirm').value='';node('login-submit').disabled=false;node('auth-toggle').disabled=false;}
+});
 node('logout').addEventListener('click',async()=>{node('logout').disabled=true;try{await request('/api/v1/auth/logout','POST');signOut();}catch(error){errorAt('library-error',error);}finally{node('logout').disabled=false;}});
 node('refresh').addEventListener('click',refreshFiles);node('load-more').addEventListener('click',()=>library.wholeRoot?loadWholeLibrary():loadRound());node('load-pause').addEventListener('click',()=>{library.autoLoad=false;node('load-pause').hidden=true;});
 for(const category of categories)node('category-'+category).addEventListener('click',()=>{library.category=category;library.filePage=0;drawFiles();});
@@ -151,4 +166,4 @@ for(const layout of ['cards','list'])node('view-'+layout).addEventListener('clic
 node('file-search').addEventListener('input',()=>{library.filePage=0;drawFiles();});node('detail-close').addEventListener('click',()=>closeDetail(true));
 node('file-page-prev').addEventListener('click',()=>{library.filePage=Math.max(0,(library.filePage||0)-1);drawFiles();});node('file-page-next').addEventListener('click',()=>{library.filePage=(library.filePage||0)+1;drawFiles();});
 node('file-detail').addEventListener('keydown',event=>{if(event.key==='Escape')closeDetail(true);});
-(async()=>{try{await signIn(await request('/api/v1/auth/me'));}catch(error){if(error.code!=='AUTH_REQUIRED')errorAt('login-error',error);}})();
+(async()=>{try{const capabilities=await request('/api/v1/auth/capabilities');node('auth-toggle').hidden=capabilities.registration_enabled!==true;}catch(error){node('auth-toggle').hidden=true;}try{await signIn(await request('/api/v1/auth/me'));}catch(error){if(error.code!=='AUTH_REQUIRED')errorAt('login-error',error);}})();
