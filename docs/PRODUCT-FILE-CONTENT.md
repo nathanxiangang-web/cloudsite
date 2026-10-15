@@ -1,5 +1,24 @@
 # Authenticated file content: preview, download and playback
 
+## Download/media reliability correction - 2026-10-15
+
+Consumer and redeemed guest downloads use the actual clicked same-origin link,
+native attachment navigation, target=_blank/rel=noopener. Server success-only
+Content-Disposition determines filename. No async HEAD-to-synthetic-click chain,
+whole-file Blob, direct CDN URL or fake completion claim. A server failure stays
+visible in the target instead of replacing the library or silently saving an
+error body under a fabricated download filename.
+
+An explicit play/pause button supplements native media controls. User gesture
+invokes play; loading/ready/playing/buffering/error messages reflect media events.
+Detail changes/logout invalidate old callbacks and release the previous stream.
+No transcoding or guarantee for unsupported browser codecs is introduced.
+
+Real incident: user Chrome retained stopped candidate8182, not formal8180. On
+formal8180 the reported MP4 and another MKV loaded metadata with no decoder error;
+HEAD/206 Range were healthy. Do not misdiagnose that as SDK/cookie failure. Formal
+entry is8180 via existing SSH forward. No backend/schema/source/provider mutation.
+
 ## Frozen contract - 2026-10-15
 
 Human requests real document previews, downloads and video playback and asks

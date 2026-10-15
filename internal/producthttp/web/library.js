@@ -56,11 +56,10 @@ function fileURL(item,mode,disposition='inline'){const q=new URLSearchParams({bi
 async function previewFile(item,kind){
  const generation=library.detail;const session=library.session;
  if(!library.content){node('preview-status').textContent='文件访问尚未启用。';return;}
- const download=node('file-download');download.href=fileURL(item,'content','attachment');download.hidden=false;
+ const download=node('file-download');download.href=fileURL(item,'content','attachment');download.target='_blank';download.rel='noopener';download.hidden=false;
  const target=node('file-preview');node('preview-status').textContent='';
  if(kind.key==='video'||kind.key==='audio'){
-  const player=document.createElement(kind.key==='video'?'video':'audio');library.player=player;player.controls=true;player.preload='metadata';player.setAttribute('aria-label',ResourceDisplay.name(item));
-  player.src=fileURL(item,'content');player.addEventListener('error',()=>{if(session===library.session&&generation===library.detail)node('preview-status').textContent='当前浏览器无法播放此文件，请尝试下载后播放。';});target.append(player);return;
+  previewMedia(item,kind,generation,session,target);return;
  }
  if(kind.extension==='pdf'){
   previewPDF(item,generation,session,1);return;
@@ -75,6 +74,21 @@ async function previewFile(item,kind){
   return;
  }
  node('preview-status').textContent='此格式支持下载，不在网页内运行或预览。';
+}
+function previewMedia(item,kind,generation,session,target){
+ const player=document.createElement(kind.key==='video'?'video':'audio');library.player=player;player.controls=true;player.preload='metadata';player.setAttribute('aria-label',ResourceDisplay.name(item));
+ const toggle=document.createElement('button');toggle.type='button';toggle.className='secondary';toggle.textContent=kind.key==='video'?'播放视频':'播放音频';toggle.setAttribute('aria-label',toggle.textContent);
+ const current=()=>session===library.session&&generation===library.detail&&library.player===player;
+ const idle=kind.key==='video'?'播放视频':'播放音频';
+ function paused(){toggle.textContent=idle;toggle.setAttribute('aria-label',idle);}
+ toggle.addEventListener('click',async()=>{if(!current())return;try{if(player.paused){await player.play();}else{player.pause();}}catch(error){if(current())node('preview-status').textContent=error.name==='NotAllowedError'?'浏览器未允许播放，请再次点击播放按钮。':'无法播放：请检查本站连接或下载后使用本地播放器。';}});
+ player.addEventListener('loadedmetadata',()=>{if(current())node('preview-status').textContent='媒体已就绪，点击播放按钮开始；可用播放器进度条跳转。';});
+ player.addEventListener('playing',()=>{if(current()){toggle.textContent='暂停播放';toggle.setAttribute('aria-label','暂停播放');node('preview-status').textContent='正在播放';}});
+ player.addEventListener('pause',()=>{if(current()){paused();node('preview-status').textContent='已暂停';}});
+ player.addEventListener('ended',()=>{if(current()){paused();node('preview-status').textContent='播放结束';}});
+ player.addEventListener('waiting',()=>{if(current())node('preview-status').textContent='正在缓冲，请稍候…';});
+ player.addEventListener('error',()=>{if(current()){paused();node('preview-status').textContent=player.error&&player.error.code===3?'浏览器无法解码该文件，可下载后使用本地播放器。':'无法读取或播放媒体，请检查本站连接；也可能是浏览器不支持该格式，可下载后播放。';}});
+ node('preview-status').textContent='正在连接媒体…';player.src=fileURL(item,'content');target.append(toggle,player);
 }
 async function previewPDF(item,generation,session,page){
  const requestGeneration=++library.pdfRequest;node('file-preview').replaceChildren();node('preview-status').textContent='服务器正在渲染 PDF 第 '+page+' 页…';

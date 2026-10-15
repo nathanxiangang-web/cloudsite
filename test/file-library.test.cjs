@@ -58,7 +58,7 @@ function workspace(){
   constructor(){this.children=[];this.attrs={};this.listeners={};this.value='';this.hidden=false;this.disabled=false;this.isConnected=true;this._text='';}
   set textContent(value){this._text=String(value);this.children=[];}get textContent(){return this._text;}
   append(...nodes){this.children.push(...nodes);}replaceChildren(...nodes){this._text='';this.children=nodes;}
-  addEventListener(type,fn){(this.listeners[type]||=[]).push(fn);}setAttribute(k,v){this.attrs[k]=v;}removeAttribute(k){delete this.attrs[k];delete this[k];}scrollIntoView(){}focus(){this.focused=true;}pause(){this.paused=true;}load(){this.loaded=true;}click(){this.clicked=true;}select(){this.selected=true;}
+  addEventListener(type,fn){(this.listeners[type]||=[]).push(fn);}setAttribute(k,v){this.attrs[k]=v;}removeAttribute(k){delete this.attrs[k];delete this[k];}scrollIntoView(){}focus(){this.focused=true;}async play(){this.paused=false;this.played=true;}pause(){this.paused=true;}load(){this.loaded=true;}click(){this.clicked=true;}select(){this.selected=true;}
  }
  const elements=new Map(Array.from(ids,id=>[id,new Element()]));const requests=[],created=[],copied=[];
  const ctx=vm.createContext({AbortController,URLSearchParams,setTimeout,crypto:require('node:crypto').webcrypto,navigator:{clipboard:{async writeText(value){copied.push(value);}}},document:{getElementById(id){assert.ok(elements.has(id),'Unknown id '+id);return elements.get(id);},createElement(){const e=new Element();created.push(e);return e;}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
@@ -136,15 +136,17 @@ test('share link is one-file only and cleared on logout; late create is ignored'
  const late=app.elements.get('share-form').listeners.submit[0]({preventDefault(){}});const last=app.requests.filter(r=>r.url==='/api/v1/shares').at(-1);app.run('closeDetail();');last.resolve({ok:true,status:201,json:async()=>({url:'SECRET',expires_at:'2026-10-16T00:00:00Z'})});await late;assert.equal(app.elements.get('share-url').value,'');
 });
 
-test('download probes HEAD then hands native download to browser without Blob buffering',async()=>{
+test('download keeps real native attachment click without asynchronous HEAD or synthetic anchor',()=>{
  const app=workspace();app.ctx.item=file('doc',{name:'file.md',path:'/docs/file.md'});app.run('library.content=true;fileDetail(item,null);');
- const pending=app.elements.get('file-download').listeners.click[0]({preventDefault(){}});const head=app.requests.find(r=>r.options.method==='HEAD');assert.ok(head);head.resolve({ok:true,status:200});await pending;
- assert.ok(app.created.some(e=>e.clicked&&e.download==='file.md'));assert.ok(app.elements.get('download-status').textContent.includes('浏览器'));
+ let prevented=false;app.elements.get('file-download').listeners.click[0]({preventDefault(){prevented=true;}});assert.equal(prevented,false);
+ const link=app.elements.get('file-download');assert.equal(link.target,'_blank');assert.equal(link.rel,'noopener');assert.ok(link.href.includes('disposition=attachment'));
+ assert.ok(!app.requests.some(r=>r.options.method==='HEAD'));assert.ok(!app.created.some(e=>e.clicked));assert.ok(app.elements.get('download-status').textContent.includes('已请求'));
+ assert.ok(!app.elements.get('download-status').textContent.includes('已完成'));app.run('closeDetail();');app.elements.get('file-download').listeners.click[0]({preventDefault(){prevented=true;}});assert.equal(prevented,true);
 });
 
-test('failed download does not navigate away and owner revoke uses protected POST',async()=>{
+test('native download retains library in its own tab and owner revoke uses protected POST',async()=>{
  const app=workspace();app.ctx.item=file('doc',{name:'file.md',path:'/docs/file.md'});app.run('library.content=true;fileDetail(item,null);');
- const pending=app.elements.get('file-download').listeners.click[0]({preventDefault(){}});app.requests.find(r=>r.options.method==='HEAD').resolve({ok:false,status:503});await pending;assert.ok(!app.created.some(e=>e.clicked));assert.ok(app.elements.get('download-status').textContent.includes('无法下载'));
+ assert.equal(app.elements.get('file-download').target,'_blank');assert.equal(app.elements.get('file-download').rel,'noopener');
  const listing=app.run('loadShares()');const request=app.requests.find(r=>r.url==='/api/v1/shares');request.resolve({ok:true,status:200,json:async()=>({items:[{id:'one',name:'<script>secret</script>',active:true,expires_at:'2026-10-16T00:00:00Z'}]})});await listing;
  const row=app.elements.get('owned-shares').children[0];assert.ok(row.children[0].textContent.includes('<script>'));
  const revoke=row.children[1].listeners.click[0]();const write=app.requests.find(r=>r.url==='/api/v1/shares/one/revoke');assert.equal(write.options.method,'POST');write.resolve({ok:true,status:204});await new Promise(resolve=>setImmediate(resolve));const refresh=app.requests.filter(r=>r.url==='/api/v1/shares').at(-1);refresh.resolve({ok:true,status:200,json:async()=>({items:[]})});await revoke;assert.equal(app.elements.get('owned-shares').children.length,0);
@@ -157,6 +159,17 @@ test('guest share page uses fragment token and verified single-file route, never
  const pending=elements.get('redeem-form').listeners.submit({preventDefault(){}});assert.equal(requests[0].url,'/api/v1/shares/redeem');assert.equal(JSON.parse(requests[0].options.body).token,'A'.repeat(43));
  requests[0].resolve({ok:true,json:async()=>({name:'<script>file</script>',size_bytes:4,expires_at:'2026-10-16T00:00:00Z',download_url:'/api/v1/shared/95000000-0000-4000-8000-000000000001/content'})});await pending;
  assert.equal(elements.get('shared-name').textContent,'<script>file</script>');assert.equal(elements.get('shared-file').hidden,false);
+ let prevented=false;elements.get('shared-download').listeners.click({preventDefault(){prevented=true;}});assert.equal(prevented,false);assert.equal(requests.length,1);assert.equal(elements.get('shared-download').target,'_blank');assert.equal(elements.get('shared-download').rel,'noopener');
+});
+
+test('explicit media play pause and errors follow actual events; old callbacks cannot alter new detail',async()=>{
+ const app=workspace();app.ctx.item=file('movie',{name:'movie.mp4',path:'/movie.mp4'});app.run('library.content=true;fileDetail(item,null);');
+ const [toggle,player]=app.elements.get('file-preview').children;player.paused=true;assert.equal(toggle.textContent,'播放视频');
+ await toggle.listeners.click[0]();assert.equal(player.played,true);player.listeners.playing[0]();assert.equal(toggle.textContent,'暂停播放');assert.equal(app.elements.get('preview-status').textContent,'正在播放');
+ await toggle.listeners.click[0]();assert.equal(player.paused,true);player.listeners.pause[0]();assert.equal(toggle.textContent,'播放视频');
+ player.play=async()=>{const e=new Error();e.name='NotAllowedError';throw e;};await toggle.listeners.click[0]();assert.ok(app.elements.get('preview-status').textContent.includes('未允许'));
+ player.error={code:3};player.listeners.error[0]();assert.ok(app.elements.get('preview-status').textContent.includes('解码'));
+ app.run('closeDetail();');player.listeners.playing[0]();player.listeners.error[0]();assert.equal(app.elements.get('preview-status').textContent,'');
 });
 
 test('four-character code is random on open, clearing stays empty and copying preserves created code',async()=>{

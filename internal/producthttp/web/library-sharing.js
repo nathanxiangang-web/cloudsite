@@ -23,12 +23,9 @@ async function loadShares(){
  }catch(error){if(session===library.session)node('shares-status').textContent=shareErrorText(error);}
 }
 node('my-shares').addEventListener('click',loadShares);node('shares-close').addEventListener('click',()=>{node('my-shares-panel').hidden=true;});
-node('file-download').addEventListener('click',async event=>{
- if(event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;event.preventDefault();if(library.downloading||!library.selected)return;
- const generation=library.detail,session=library.session,href=node('file-download').href,name=ResourceDisplay.name(library.selected);library.downloading=true;node('download-status').textContent='正在检查文件下载…';
- try{const result=await fetch(href,{method:'HEAD',credentials:'same-origin',cache:'no-store',signal:library.controller.signal});if(generation!==library.detail||session!==library.session)return;
-  if(!result.ok){if(result.status===401){signOut();return;}throw new Error('Download refused');}
-  const link=document.createElement('a');link.href=href;link.download=name;link.click();node('download-status').textContent='已交给浏览器下载；保存位置与进度请查看浏览器下载列表。';
- }catch(error){if(generation===library.detail&&session===library.session)node('download-status').textContent='暂时无法下载，请稍后重试。';}
- finally{if(generation===library.detail&&session===library.session)library.downloading=false;}
+node('file-download').addEventListener('click',event=>{
+ if(!library.selected||!library.content){event.preventDefault();return;}
+ // Keep the real trusted click and native attachment navigation. Do not wait
+ // for HEAD or manufacture a second detached-anchor click after it completes.
+ node('download-status').textContent='已请求下载；请在浏览器下载列表查看进度。若出现错误页，请检查本站连接后重试。';
 });
