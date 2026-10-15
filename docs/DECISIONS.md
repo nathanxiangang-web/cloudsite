@@ -1284,3 +1284,11 @@ new native115 login or download. Application-token renewal must match the actual
 OpenList identity, not assume the previous AList user ID5. No new acquisition,
 Worker, Hint, scan or original historical-database mutation.
 
+Final human clarification abandons AList credential migration and uses only the
+local OpenList config/existing app login. Runtime replacement completed: v4.2.6
+pinned image, old alist container removed, original data/image/YAML preserved.
+Cloudsite bytes now use OpenList, not the local VM or former AList. Local user3's
+existing scope/permission retained, app token renewed by actual login and the
+reviewed identity-bound timer. Public real-file regression passes. See latest
+alpha contract; historical initial preserve-AList instructions are superseded.
+

@@ -14,6 +14,12 @@ preview/download, video Range and protected/no-code sharing have been verified.
 This is an alpha with an imported canonical snapshot, not automatic continuous
 drive indexing or completed admission/usage/native115 sharing.
 
+Storage service: [OpenList](https://pan.netioi.com/), version4.2.6 pinned by digest,
+installed on the same public server using local OpenList configuration/login.
+The previous AList container is removed; its data and rollback backups remain.
+Website and storage accounts are different domains. Existing local website
+passwords are unchanged; new website passwords require at least6 characters.
+
 Current release: **`cloudsiteV1.0.0alpha`**. This is the renamed Panta repository,
 not the deleted legacy CloudSite Python/Next.js project. GitHub repository ID and
 all accepted Issue/PR history are preserved. Public product branding is cloudsite.
