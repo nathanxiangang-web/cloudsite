@@ -15,7 +15,9 @@ are not a production login fallback.
 
 - [Domain/service](../internal/auth/auth.go): product UUID, normalized ASCII
   login, USER/ADMIN, enabled account; operator-only Provision application method.
-  Passwords are 12-72 UTF-8 bytes without NUL and use bcrypt DefaultCost.
+  Passwords require at least6 Unicode characters, at most72 UTF-8 bytes, without
+  NUL; no case/digit/symbol complexity requirement. bcrypt DefaultCost is unchanged.
+  This supersedes the original12-byte minimum at the human's explicit request.
   Duplicate provision fails rather than resetting an account.
 - [Store](../internal/store/postgres/auth_repository.go): DB-time expiry,
   revocation, current account role/enabled checks. Session creation locks the

@@ -1258,3 +1258,29 @@ auth/Q5/Range/guest-grant checks. Data restores only new owned databases; no old
 history deletion. Exact-head CI, separate same-agent review and actual HTTPS/
 real-file acceptance precede cutover. See [release contract](CLOUDSITE-V1-ALPHA.md).
 
+## D-050 - Six-character product password minimum
+
+Accepted direct human request,2026-10-15, Issue101. Replace the12-byte minimum
+with at least6 Unicode characters; retain valid UTF-8, no NUL and bcrypt's72-byte
+maximum. No uppercase/digit/symbol composition requirement. Domain registration,
+login and operator provisioning share this policy; consumer/admin input and
+documentation must agree. Existing password hashes/roles are not reset.
+
+## D-051 - Replace public-server AList with local-config OpenList
+
+Accepted direct human request,2026-10-15. Reuse the local OpenList configuration
+and credentials, migrate them privately to the verified public server. Replace
+ONLY the alist service in /opt/my-servers/docker-compose.yml with OpenList, retaining
+the HTTPS storage route and existing network compatibility. Back up the exact
+compose and consistent storage database/config before changing it. Stop/remove
+the old alist container only after protected backups; do not delete its data,
+volumes or rollback image. No whole-stack down/recreation; Traefik/Portainer/
+backup services remain untouched. Pin the reused OpenList image by digest.
+
+Do not publish config/driver cookies/JWT/passwords or copy them into Git. Preserve
+logical CloudSite paths and product/index identities; validate API identity,
+namespace and real bytes before product cutover. Source login is reused, not a
+new native115 login or download. Application-token renewal must match the actual
+OpenList identity, not assume the previous AList user ID5. No new acquisition,
+Worker, Hint, scan or original historical-database mutation.
+

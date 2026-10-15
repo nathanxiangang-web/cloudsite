@@ -99,10 +99,15 @@ func TestProductAuthRealHashLoginSessionRevocation(t *testing.T) {
 	}
 }
 func TestAuthBoundsUnwiredAndFailure(t *testing.T) {
+	for _, v := range []string{"abcdef", "123456", "中文密码六字", strings.Repeat("x", 72)} {
+		if !ValidPassword(v) {
+			t.Fatal("valid six-character policy input rejected")
+		}
+	}
 	if _, err := NewService(nil); !errors.Is(err, ErrUnavailable) {
 		t.Fatal(err)
 	}
-	for _, v := range []string{"", strings.Repeat("x", 11), strings.Repeat("x", 73), "valid-password\x00", string([]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff})} {
+	for _, v := range []string{"", strings.Repeat("x", 5), strings.Repeat("x", 73), "valid-password\x00", "中文密码短", strings.Repeat("中", 25), string([]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff})} {
 		if ValidPassword(v) {
 			t.Fatal("invalid password accepted")
 		}

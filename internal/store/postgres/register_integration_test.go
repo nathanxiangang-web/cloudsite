@@ -27,7 +27,7 @@ func TestPostgresRegistrationConcurrentUniqueUserAndExistingPassword(t *testing.
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_, err := service.Register(ctx, "New.User", "test-only-password-123")
+			_, err := service.Register(ctx, "New.User", "abcdef")
 			results <- err
 		}()
 	}
@@ -49,7 +49,7 @@ func TestPostgresRegistrationConcurrentUniqueUserAndExistingPassword(t *testing.
 	if _, err = service.Register(ctx, "new.user", "another-password-123"); !errors.Is(err, auth.ErrConflict) {
 		t.Fatal("duplicate reset")
 	}
-	result, err := service.Login(ctx, "new.user", "test-only-password-123")
+	result, err := service.Login(ctx, "new.user", "abcdef")
 	if err != nil || result.Principal.Role != auth.RoleUser {
 		t.Fatal("registered ordinary user login failed")
 	}
