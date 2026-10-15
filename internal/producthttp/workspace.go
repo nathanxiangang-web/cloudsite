@@ -27,6 +27,7 @@ func ValidDisplayLabel(label string) bool {
 }
 
 type workspaceInfo struct {
+	ContentAccess bool             `json:"content_access_enabled"`
 	Mode          string           `json:"mode"`
 	SchemaVersion int64            `json:"schema_version"`
 	Bindings      []DisplayBinding `json:"bindings"`
@@ -67,7 +68,7 @@ type WorkspaceHandler struct {
 	active   sync.WaitGroup
 }
 
-func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads, bindings []DisplayBinding, version int64) (*WorkspaceHandler, error) {
+func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads, bindings []DisplayBinding, version int64, options ...WorkspaceOption) (*WorkspaceHandler, error) {
 	if version < 1 || len(bindings) < 1 || len(bindings) > 64 {
 		return nil, product.ErrInvalid
 	}
@@ -82,7 +83,16 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 	if err != nil {
 		return nil, err
 	}
-	info := workspaceInfo{Mode: "READ_ONLY", SchemaVersion: version, Bindings: append([]DisplayBinding(nil), bindings...)}
+	settings := workspaceOptions{}
+	for _, option := range options {
+		if option != nil {
+			option(&settings)
+		}
+	}
+	if settings.files != nil {
+		registerContent(h, settings.files, settings.previews)
+	}
+	info := workspaceInfo{ContentAccess: settings.files != nil, Mode: "READ_ONLY", SchemaVersion: version, Bindings: append([]DisplayBinding(nil), bindings...)}
 	h.mux.Handle("GET /api/v1/workspace", h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, err := strictQuery(r); err != nil {
 			readFailure(w, err)
@@ -124,7 +134,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 	return &WorkspaceHandler{http: h, gate: loginGate{slots: make(chan struct{}, 2), now: time.Now}}, nil
 }
 func (h *WorkspaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'")
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; media-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'")
 	w.Header().Set("X-Frame-Options", "DENY")
 	w.Header().Set("Referrer-Policy", "no-referrer")
 	w.Header().Set("Cache-Control", "no-store")
@@ -138,7 +148,14 @@ func (h *WorkspaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.active.Add(1)
 	h.mu.Unlock()
 	defer h.active.Done()
-	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+	lifetime := 15 * time.Second
+	if (r.Method == "GET" || r.Method == "HEAD") && r.URL.Path == "/api/v1/files/content" {
+		lifetime = 30 * time.Minute
+	}
+	if r.Method == "GET" && r.URL.Path == "/api/v1/files/preview" {
+		lifetime = 75 * time.Second
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), lifetime)
 	defer cancel()
 	r = r.WithContext(ctx)
 	if r.Method == "POST" && r.URL.Path == "/api/v1/auth/login" && h.http.ValidMutationOrigin(r) {

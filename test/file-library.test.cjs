@@ -52,7 +52,7 @@ function workspace(){
   constructor(){this.children=[];this.attrs={};this.listeners={};this.value='';this.hidden=false;this.disabled=false;this.isConnected=true;this._text='';}
   set textContent(value){this._text=String(value);this.children=[];}get textContent(){return this._text;}
   append(...nodes){this.children.push(...nodes);}replaceChildren(...nodes){this._text='';this.children=nodes;}
-  addEventListener(type,fn){(this.listeners[type]||=[]).push(fn);}setAttribute(k,v){this.attrs[k]=v;}scrollIntoView(){}focus(){this.focused=true;}
+  addEventListener(type,fn){(this.listeners[type]||=[]).push(fn);}setAttribute(k,v){this.attrs[k]=v;}removeAttribute(k){delete this.attrs[k];delete this[k];}scrollIntoView(){}focus(){this.focused=true;}pause(){this.paused=true;}load(){this.loaded=true;}
  }
  const elements=new Map(Array.from(ids,id=>[id,new Element()]));const requests=[];
  const ctx=vm.createContext({AbortController,URLSearchParams,document:{getElementById(id){assert.ok(elements.has(id),'Unknown id '+id);return elements.get(id);},createElement(){return new Element();}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
@@ -84,4 +84,38 @@ test('detail close restores focus; admin link follows authenticated role only',a
  const app=workspace();app.ctx.item=file('name');app.run("fileDetail(item,node('refresh'));closeDetail(true);");assert.equal(app.elements.get('refresh').focused,true);
  const pending=app.run("signIn({login:'test',role:'USER'});");const read=app.requests.find(r=>r.url==='/api/v1/workspace');read.resolve({ok:true,status:200,json:async()=>({bindings:[{binding_id:'one'}]})});
  await new Promise(resolve=>setImmediate(resolve));const files=app.requests.find(r=>r.url.startsWith('/api/v1/resources?'));files.resolve({ok:true,status:200,json:async()=>page()});await pending;assert.equal(app.elements.get('admin-link').hidden,true);
+});
+
+test('real content actions use only same-origin identity URLs and stop media on close',()=>{
+ const app=workspace();app.ctx.item=file('video',{name:'real.mp4',path:'/videos/real.mp4'});
+ app.run('library.content=true;fileDetail(item,null);');
+ assert.ok(app.elements.get('file-download').href.startsWith('/api/v1/files/content?'));
+ assert.ok(app.elements.get('file-download').href.includes('disposition=attachment'));
+ const player=app.run('library.player');assert.ok(player.src.startsWith('/api/v1/files/content?'));assert.equal(player.controls,true);
+ app.run('closeDetail();');assert.equal(player.paused,true);assert.equal(player.loaded,true);assert.equal(player.src,undefined);assert.equal(app.elements.get('file-preview').children.length,0);
+});
+test('late text preview never crosses detail change or logout; text stays literal',async()=>{
+ const app=workspace();app.ctx.item=file('text',{name:'real.md',path:'/docs/real.md'});
+ app.run('library.content=true;fileDetail(item,null);');const read=app.requests.find(r=>r.url.startsWith('/api/v1/files/preview?'));assert.ok(read);
+ app.run('closeDetail();');read.resolve({ok:true,status:200,json:async()=>({text:'SECRET <script>alert(1)</script>'})});await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(app.elements.get('file-preview').children.length,0);
+ app.run('fileDetail(item,null);');const next=app.requests.filter(r=>r.url.startsWith('/api/v1/files/preview?'))[1];next.resolve({ok:true,status:200,json:async()=>({text:'<script>alert(1)</script>'})});await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(app.elements.get('file-preview').children[0].textContent,'<script>alert(1)</script>');
+ app.run('signOut();');assert.equal(app.elements.get('file-preview').children.length,0);assert.equal(app.elements.get('file-download').hidden,true);
+});
+
+test('PDF uses server PNG pages, bounded navigation and discards late pages',async()=>{
+ const app=workspace();app.ctx.item=file('pdf',{name:'real.pdf',path:'/docs/real.pdf'});
+ app.run('library.content=true;fileDetail(item,null);');
+ const first=app.requests.find(r=>r.url.includes('/files/preview?'));
+ assert.ok(first.url.endsWith('&page=1'));
+ first.resolve({ok:true,status:200,json:async()=>({format:'pdf',image_base64:'iVBORw0KGgoAAA',pages:2,page:1})});
+ await new Promise(resolve=>setImmediate(resolve));
+ const [tools,image]=app.elements.get('file-preview').children;
+ assert.equal(image.src,'data:image/png;base64,iVBORw0KGgoAAA');
+ assert.equal(tools.children[0].disabled,true);assert.equal(tools.children[2].disabled,false);
+ tools.children[2].listeners.click[0]();
+ const next=app.requests.filter(r=>r.url.includes('/files/preview?'))[1];assert.ok(next.url.endsWith('&page=2'));
+ app.run('closeDetail();');next.resolve({ok:true,status:200,json:async()=>({format:'pdf',image_base64:'iVBORw0KGgoAAA',pages:2,page:2})});
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(app.elements.get('file-preview').children.length,0);
 });

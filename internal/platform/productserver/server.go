@@ -12,7 +12,11 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nathanxiangang-web/panta/internal/auth"
+	"github.com/nathanxiangang-web/panta/internal/fileaccess"
+	"github.com/nathanxiangang-web/panta/internal/filecache"
+	"github.com/nathanxiangang-web/panta/internal/filepreview"
 	"github.com/nathanxiangang-web/panta/internal/integrations/indexcore"
+	openlistcontent "github.com/nathanxiangang-web/panta/internal/integrations/openlist/content"
 	"github.com/nathanxiangang-web/panta/internal/platform/bootstrap"
 	"github.com/nathanxiangang-web/panta/internal/product"
 	"github.com/nathanxiangang-web/panta/internal/producthttp"
@@ -139,7 +143,55 @@ func Run(ctx context.Context, action, configFile, userFile string) error {
 		cancel()
 		return ErrStartup
 	}
-	handler, err := producthttp.NewWorkspaceHandler(accounts, cfg.Origin, reads, cfg.Bindings, postgres.CurrentSchemaVersion)
+	var options []producthttp.WorkspaceOption
+	if cfg.FileAccessConfigFile != "" {
+		var accessConfig struct {
+			BaseURL        string `json:"base_url"`
+			TokenFile      string `json:"token_file"`
+			CacheDirectory string `json:"cache_directory"`
+		}
+		if load(startupCtx, cfg.FileAccessConfigFile, &accessConfig, 4096) != nil {
+			cancel()
+			return ErrConfig
+		}
+		token, secretErr := bootstrap.ReadProtectedFile(accessConfig.TokenFile, 8192)
+		if secretErr != nil {
+			cancel()
+			return ErrConfig
+		}
+		source, sourceErr := openlistcontent.NewContentClient(accessConfig.BaseURL, strings.TrimSpace(string(token)))
+		clear(token)
+		if sourceErr != nil {
+			cancel()
+			return ErrConfig
+		}
+		files, filesErr := fileaccess.New(reads, topology, source)
+		if filesErr != nil {
+			cancel()
+			return ErrStartup
+		}
+		cache, cacheErr := filecache.New(accessConfig.CacheDirectory)
+		if cacheErr != nil {
+			cancel()
+			return ErrConfig
+		}
+		renderer, renderErr := filepreview.New()
+		if renderErr != nil {
+			cancel()
+			return ErrStartup
+		}
+		previews, previewErr := fileaccess.NewPreviewService(files, cache, renderer)
+		if previewErr != nil {
+			cancel()
+			return ErrStartup
+		}
+		cacheCtx, stopCache := context.WithCancel(ctx)
+		cacheDone := make(chan struct{})
+		go func() { defer close(cacheDone); cache.Run(cacheCtx) }()
+		defer func() { stopCache(); <-cacheDone }()
+		options = append(options, producthttp.WithFileAccess(files, previews))
+	}
+	handler, err := producthttp.NewWorkspaceHandler(accounts, cfg.Origin, reads, cfg.Bindings, postgres.CurrentSchemaVersion, options...)
 	if err != nil {
 		cancel()
 		return ErrStartup
@@ -182,7 +234,8 @@ func serve(ctx context.Context, listener net.Listener, handler http.Handler) err
 			_ = server.Close()
 		}
 		<-done
-		// Every request has <=15s application lifetime. Join outstanding handlers
+		// Normal reads are short; content/preview requests have separate bounded
+		// lifetimes and inherit forced-shutdown cancellation. Join all handlers
 		// before the caller closes the pool, including a forced connection close.
 		if active, ok := handler.(interface{ Wait() }); ok {
 			active.Wait()
