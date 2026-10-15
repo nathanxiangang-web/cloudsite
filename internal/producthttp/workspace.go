@@ -14,7 +14,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
 
-//go:embed web/index.html web/app.css web/resource-display.js web/app.js
+//go:embed web/index.html web/app.css web/resource-display.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js
 var workspaceFiles embed.FS
 
 type DisplayBinding struct {
@@ -90,7 +90,28 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		}
 		respond(w, 200, info)
 	})))
-	for _, asset := range []struct{ route, file, mime string }{{"GET /{$}", "web/index.html", "text/html; charset=utf-8"}, {"GET /assets/app.css", "web/app.css", "text/css; charset=utf-8"}, {"GET /assets/resource-display.js", "web/resource-display.js", "text/javascript; charset=utf-8"}, {"GET /assets/app.js", "web/app.js", "text/javascript; charset=utf-8"}} {
+	h.mux.Handle("GET /api/v1/admin/workspace", h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		p, _ := Principal(r.Context())
+		if p.Role != auth.RoleAdmin {
+			failure(w, http.StatusForbidden, "ADMIN_REQUIRED")
+			return
+		}
+		if _, err := strictQuery(r); err != nil {
+			readFailure(w, err)
+			return
+		}
+		respond(w, 200, info)
+	})))
+	for _, asset := range []struct{ route, file, mime string }{
+		{"GET /{$}", "web/library.html", "text/html; charset=utf-8"},
+		{"GET /admin/{$}", "web/index.html", "text/html; charset=utf-8"},
+		{"GET /assets/library.css", "web/library.css", "text/css; charset=utf-8"},
+		{"GET /assets/library.js", "web/library.js", "text/javascript; charset=utf-8"},
+		{"GET /assets/file-catalog.js", "web/file-catalog.js", "text/javascript; charset=utf-8"},
+		{"GET /assets/app.css", "web/app.css", "text/css; charset=utf-8"},
+		{"GET /assets/resource-display.js", "web/resource-display.js", "text/javascript; charset=utf-8"},
+		{"GET /assets/app.js", "web/app.js", "text/javascript; charset=utf-8"},
+	} {
 		content, err := workspaceFiles.ReadFile(asset.file)
 		if err != nil {
 			return nil, product.ErrUnavailable

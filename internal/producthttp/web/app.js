@@ -2,7 +2,7 @@
 const el = id => document.getElementById(id);
 const state = {session:0, tab:'resources', binding:'', parent:null, parents:[], resourceCursor:'', resourceNext:'', taskCursor:'', taskNext:'', resourceRequest:0, taskRequest:0, detailRequest:0, resources:[], resourcesLoaded:false, category:'all', layout:'list', controller:new AbortController()};
 const messages = {AUTH_REQUIRED:'登录已失效，请重新登录。', INVALID_REQUEST:'输入不符合要求，请检查后再试。', ORIGIN_REJECTED:'当前页面来源未获允许。', AUTH_UNAVAILABLE:'登录服务暂时不可用。', AUTH_BUSY:'登录请求过多，请稍候一分钟。', NOT_FOUND:'未找到可见资源或属于你的任务。', RESOURCE_AMBIGUOUS:'资源存在多个匹配，系统不会猜选。', READ_UNAVAILABLE:'查询服务暂时不可用，未确认任何成功结果。', SERVICE_STOPPING:'服务正在安全关闭。'};
-function errorText(error){return error.name==='AbortError'?'请求已取消。':(messages[error.code]||'连接失败，请检查服务状态后重试。');}
+function errorText(error){return error.code==='ADMIN_REQUIRED'?'此入口仅供管理员使用，请返回前台文件库。':error.name==='AbortError'?'请求已取消。':(messages[error.code]||'连接失败，请检查服务状态后重试。');}
 function showError(id,error){const node=el(id);node.textContent=errorText(error);node.hidden=false;}
 function clearError(id){el(id).textContent='';el(id).hidden=true;}
 async function api(path,method='GET',body){
@@ -20,7 +20,7 @@ function signedOut(){
 }
 async function signedIn(principal){
  state.session++;const generation=state.session;
- const workspace=await api('/api/v1/workspace');if(generation!==state.session)return;
+ const workspace=await api('/api/v1/admin/workspace');if(generation!==state.session)return;
  el('user-login').textContent=principal.login;el('user-role').textContent=principal.role==='ADMIN'?'管理员 · 只读':'产品用户 · 只读';el('avatar').textContent=principal.login.charAt(0).toUpperCase();el('schema').textContent='Schema v'+workspace.schema_version;
  el('binding-select').replaceChildren();
  for(const binding of workspace.bindings){const option=document.createElement('option');option.value=binding.binding_id;option.textContent=binding.label;el('binding-select').append(option);}

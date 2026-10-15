@@ -24,7 +24,7 @@ jobs:
       - name: Unit and contract tests
         run: go test ./... -count=1
       - name: Pure resource presentation tests
-        run: node --test test/resource-display.test.cjs
+        run: node --test test/resource-display.test.cjs test/file-library.test.cjs
       - name: Owned readonly service safety tests
         run: python3 -m unittest discover -s test -p 'readonly_catalog_service_test.py' -v
       - name: Race tests

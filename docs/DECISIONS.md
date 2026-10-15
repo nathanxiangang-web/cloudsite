@@ -1110,3 +1110,24 @@ absence in a partial scan is not deletion. This does not imply instant UI
 convergence or authorize a scanner/safety-rule bypass. Share revocation and
 session logout remain distinct requirements and must preserve source files.
 
+## D-045 - Separate file-first consumer UI from administrator UI
+
+**Status:** Accepted human product correction, 2026-10-15; Issue #88.
+
+Keep two interfaces: `/` is the authenticated consumer file library; `/admin/`
+retains directory, canonical/Copy diagnostics and owner-only task inspection.
+The admin workspace configuration is ADMIN-only server-side, not just a hidden
+link. No role change or new credential grant is implied. Directory configuration
+belongs to operators, not consumers. Do not delete backend functionality merely
+to simplify the frontend, and do not manufacture management mutations that do
+not exist yet.
+
+Frontend directly composes real files from existing configured IndexCore read
+scopes, without a per-file approval workflow. Existing product login and source
+authorization remain. Bounded Q4 directory/pagination traversal is metadata
+querying, not a drive scan; disclose incomplete loading/errors rather than claim
+whole-drive coverage. Preserve binding+resource identity and exclude directory
+or unknown-type entries from file cards. No direct OpenList calls, new provider
+download or schema migration. No fabricated covers, content access or playback.
+See [module contract](PRODUCT-FILE-LIBRARY.md) for bounds, testing and rollback.
+
