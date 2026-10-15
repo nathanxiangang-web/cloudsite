@@ -89,11 +89,11 @@ func identifier() (string, error) {
 	return fmt.Sprintf("%x-%x-%x-%x-%x", b[:4], b[4:6], b[6:8], b[8:10], b[10:]), nil
 }
 func ValidCode(code string) bool {
-	if len(code) < 6 || len(code) > 32 {
+	if len(code) != 4 {
 		return false
 	}
 	for _, c := range code {
-		if c < 33 || c > 126 {
+		if !(c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9') {
 			return false
 		}
 	}

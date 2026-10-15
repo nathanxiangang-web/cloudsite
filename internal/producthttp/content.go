@@ -18,9 +18,18 @@ import (
 
 type WorkspaceOption func(*workspaceOptions)
 type workspaceOptions struct {
-	shares   *fileshare.Service
-	files    *fileaccess.Service
-	previews *fileaccess.PreviewService
+	libraryIDs []storage.BindingID
+	wholeRoot  bool
+	shares     *fileshare.Service
+	files      *fileaccess.Service
+	previews   *fileaccess.PreviewService
+}
+
+func WithLibraryScope(ids []storage.BindingID, wholeRoot bool) WorkspaceOption {
+	return func(o *workspaceOptions) {
+		o.libraryIDs = append([]storage.BindingID(nil), ids...)
+		o.wholeRoot = wholeRoot
+	}
 }
 
 func WithSharing(shares *fileshare.Service) WorkspaceOption {

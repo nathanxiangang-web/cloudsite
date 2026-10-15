@@ -75,13 +75,22 @@ def load_receipt(receipt_path):
     config_path = inside(root, receipt["product_config"], "private")
     config = json.loads(protected(config_path), object_pairs_hook=unique_object)
     legacy = {"database_url_file", "listen_address", "origin", "indexcore_base_url", "bindings"}
-    if (set(config) not in (legacy, legacy | {"file_access_config_file"}, legacy | {"file_access_config_file", "sharing_enabled"})
+    extra = {"file_access_config_file", "sharing_enabled", "library_binding_ids", "whole_root_library"}
+    if (not legacy.issubset(config) or not set(config).issubset(legacy | extra)
             or "sharing_enabled" in config and not isinstance(config["sharing_enabled"], bool)
             or config["listen_address"] != "127.0.0.1:8180"
             or config["origin"] != "http://127.0.0.1:8180"
             or config["indexcore_base_url"] != "http://127.0.0.1:48892"
-            or not isinstance(config["bindings"], list) or len(config["bindings"]) != 3):
+            or not isinstance(config["bindings"], list) or len(config["bindings"]) not in (3,4)
+            or "sharing_enabled" in config and "file_access_config_file" not in config):
         raise Refused("readonly product scope rejected")
+    if "library_binding_ids" in config or "whole_root_library" in config:
+        selected = config.get("library_binding_ids")
+        available = [b.get("binding_id") for b in config["bindings"]]
+        if (len(available)!=len(set(available)) or not isinstance(selected,list) or not selected
+                or len(selected)!=len(set(selected)) or any(i not in available for i in selected)
+                or not isinstance(config.get("whole_root_library"),bool)):
+            raise Refused("consumer library scope rejected")
     if "file_access_config_file" in config:
         access = json.loads(protected(inside(root, config["file_access_config_file"], "private")), object_pairs_hook=unique_object)
         if set(access) != {"base_url", "token_file", "cache_directory"} or access["base_url"] != "http://127.0.0.1:5244":

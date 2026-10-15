@@ -56,7 +56,7 @@ func NewReadHandler(access auth.Access, origin string, reads product.Reads) (*Ha
 		respond(w, 200, item)
 	})))
 	h.mux.Handle("GET /api/v1/resources", h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		query, err := strictQuery(r, "binding_id", "parent_resource_id", "cursor", "limit")
+		query, err := strictQuery(r, "binding_id", "parent_resource_id", "cursor", "limit", "whole_root")
 		if err != nil {
 			readFailure(w, err)
 			return
@@ -66,7 +66,11 @@ func NewReadHandler(access auth.Access, origin string, reads product.Reads) (*Ha
 			readFailure(w, err)
 			return
 		}
-		request := product.BrowseRequest{BindingID: storage.BindingID(query.Get("binding_id")), Cursor: query.Get("cursor"), Limit: limit}
+		if query.Has("whole_root") && query.Get("whole_root") != "true" {
+			readFailure(w, product.ErrInvalid)
+			return
+		}
+		request := product.BrowseRequest{WholeRoot: query.Get("whole_root") == "true", BindingID: storage.BindingID(query.Get("binding_id")), Cursor: query.Get("cursor"), Limit: limit}
 		if query.Has("parent_resource_id") {
 			parent := query.Get("parent_resource_id")
 			request.ParentResourceID = &parent

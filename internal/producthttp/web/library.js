@@ -23,6 +23,7 @@ function closeDetail(restore=false){
  library.opener=null;
 }
 function clearFiles(){
+ library.filePage=0;library.autoLoad=false;library.loadingAll=null;node('load-pause').hidden=true;node('file-page-status').textContent='';node('file-page-prev').disabled=true;node('file-page-next').disabled=true;
  library.catalog=null;library.failed=false;library.busy=false;closeDetail();node('file-grid').replaceChildren();node('file-rows').replaceChildren();node('files-empty').hidden=true;node('load-more').hidden=true;
  for(const kind of categories)node('count-'+kind).textContent='';
  node('collection-status').textContent='正在整理你的文件…';node('load-status').textContent='';clearError('library-error');
@@ -35,7 +36,7 @@ function signOut(){
 async function signIn(principal){
  const generation=++library.session;
  const info=await request('/api/v1/workspace');if(generation!==library.session)return;
- library.bindings=info.bindings;library.content=info.content_access_enabled===true;library.sharing=info.sharing_enabled===true;node('my-shares').hidden=!library.sharing;node('login-name').textContent=principal.login;node('admin-link').hidden=principal.role!=='ADMIN';node('account').hidden=false;node('login-view').hidden=true;node('library-view').hidden=false;clearError('login-error');
+ library.bindings=info.bindings;library.wholeRoot=info.whole_root_library===true;node('library-scope').textContent=library.wholeRoot?'展示 CloudSite 目录已完成索引的文件；不包含目录外的网盘内容。':'当前展示已接入的真实文件，不代表整个网盘。';library.content=info.content_access_enabled===true;library.sharing=info.sharing_enabled===true;node('my-shares').hidden=!library.sharing;node('login-name').textContent=principal.login;node('admin-link').hidden=principal.role!=='ADMIN';node('account').hidden=false;node('login-view').hidden=true;node('library-view').hidden=false;clearError('login-error');
  await refreshFiles();
 }
 function visibleFiles(){
@@ -46,7 +47,7 @@ function fileDetail(item,opener){
  closeDetail();
  library.selected=item;node('file-share').hidden=!library.sharing;
  const kind=ResourceDisplay.classify(item);library.opener=opener;
- node('detail-title').textContent=ResourceDisplay.name(item);node('detail-format').textContent=kind.extension.toUpperCase()||'FILE';node('detail-type').textContent=kind.label;node('detail-size').textContent=ResourceDisplay.size(item.size_bytes);
+ node('detail-title').textContent=ResourceDisplay.name(item);node('detail-format').textContent=kind.extension.toUpperCase()||'FILE';node('detail-type').textContent=ResourceDisplay.category(item)==='other'?'其他':kind.label;node('detail-size').textContent=ResourceDisplay.size(item.size_bytes);
  node('detail-note').textContent=({software:'安装包不在网页内运行，请下载后自行核实来源与安全性。',video:'播放取决于浏览器对该文件编码的支持；可以拖动进度条跳转。',document:'文档预览只用于阅读，不修改网盘原文件。'})[kind.key]||'文件保留在网盘中，不进行修改。';
  node('file-detail').hidden=false;node('file-detail').focus();node('file-detail').scrollIntoView({block:'nearest'});
  previewFile(item,kind);
@@ -86,19 +87,21 @@ async function previewPDF(item,generation,session,page){
   const image=document.createElement('img');image.className='pdf-page';image.alt='PDF 第 '+page+' 页';image.src='data:image/png;base64,'+result.image_base64;node('file-preview').append(tools,image);node('preview-status').textContent='服务器渲染预览 · 原文件缓存一小时后自动清理。';
  }catch(error){if(current())node('preview-status').textContent='暂时无法渲染 PDF，可下载原文件查看。';}
 }
-function drawFiles(){
+function drawFiles(preserveDetail=false){
  const catalog=library.catalog;if(!catalog)return;
  const files=visibleFiles();const counts=ResourceDisplay.counts(catalog.files);
  for(const kind of categories){node('count-'+kind).textContent=String(counts[kind]);node('category-'+kind).setAttribute('aria-pressed',String(kind===library.category));}
- closeDetail();node('file-grid').replaceChildren();node('file-rows').replaceChildren();
- for(const item of files){
+ if(!preserveDetail)closeDetail();node('file-grid').replaceChildren();node('file-rows').replaceChildren();
+ const pages=Math.max(1,Math.ceil(files.length/120));library.filePage=Math.min(library.filePage||0,pages-1);const offset=library.filePage*120;
+ node('file-page-prev').disabled=library.filePage===0;node('file-page-next').disabled=library.filePage>=pages-1;node('file-page-status').textContent=files.length?'第 '+(library.filePage+1)+' / '+pages+' 页 · 文件 '+(offset+1)+'–'+Math.min(offset+120,files.length):'';
+ for(const item of files.slice(offset,offset+120)){
   const kind=ResourceDisplay.classify(item);
   const button=document.createElement('button');button.type='button';button.className='file-card '+ResourceDisplay.category(item);
   const format=document.createElement('span');format.className='format';format.textContent=kind.extension.toUpperCase()||'FILE';
-  const name=document.createElement('strong');name.textContent=ResourceDisplay.name(item);const meta=document.createElement('small');meta.textContent=kind.label+' · '+ResourceDisplay.size(item.size_bytes);
+  const name=document.createElement('strong');name.textContent=ResourceDisplay.name(item);const meta=document.createElement('small');meta.textContent=(ResourceDisplay.category(item)==='other'?'其他':kind.label)+' · '+ResourceDisplay.size(item.size_bytes);
   button.append(format,name,meta);button.addEventListener('click',()=>fileDetail(item,button));node('file-grid').append(button);
   const row=document.createElement('tr');const title=document.createElement('td');const link=document.createElement('button');link.type='button';link.textContent=ResourceDisplay.name(item);link.addEventListener('click',()=>fileDetail(item,link));title.append(link);row.append(title);
-  for(const text of [kind.label,ResourceDisplay.size(item.size_bytes)]){const cell=document.createElement('td');cell.textContent=text;row.append(cell);}node('file-rows').append(row);
+  for(const text of [ResourceDisplay.category(item)==='other'?'其他':kind.label,ResourceDisplay.size(item.size_bytes)]){const cell=document.createElement('td');cell.textContent=text;row.append(cell);}node('file-rows').append(row);
  }
  node('file-grid').hidden=library.layout!=='cards';node('file-list').hidden=library.layout!=='list';
  for(const layout of ['cards','list'])node('view-'+layout).setAttribute('aria-pressed',String(layout===library.layout));
@@ -106,29 +109,32 @@ function drawFiles(){
  node('empty-title').textContent=node('file-search').value?'没有匹配的文件':library.category==='all'?'还没有找到文件':'暂时没有这类文件';
  node('empty-description').textContent=catalog.complete?'当前已接入文件中没有匹配结果。':'更多文件尚未加载，可继续加载后再找找。';
  node('collection-status').textContent='已加载 '+catalog.files.length+' 个文件'+(files.length!==catalog.files.length?' · 当前显示 '+files.length+' 个':'');
- node('load-status').textContent=library.busy?'正在加载文件…':library.failed?'加载中断，当前结果可能不完整。':catalog.limited?'已达到本次加载上限，当前结果并非完整文件库。':catalog.complete?'已载入当前接入范围的文件，不是整个网盘。':'还有文件待加载，搜索与分类仅针对已加载文件。';
+ node('load-status').textContent=library.busy?'正在加载文件…':library.failed?'加载中断，当前结果可能不完整。':catalog.limited?'已达到本次加载上限，当前结果并非完整文件库。':catalog.complete?(library.wholeRoot?'CloudSite 全部已索引文件加载完成。':'已载入当前接入范围的文件，不是整个网盘。'):'还有文件待加载，搜索与分类仅针对已加载文件。';
  if(catalog.unknown)node('load-status').textContent+=' '+catalog.unknown+' 项类型未明确，未当作文件显示。';
  node('load-more').hidden=catalog.complete||catalog.limited||library.failed;node('load-more').disabled=library.busy;
+ node('load-pause').hidden=!library.wholeRoot||!library.autoLoad||catalog.complete||library.failed;
 }
 async function loadRound(){
  if(library.busy||!library.catalog)return;
- library.busy=true;library.failed=false;closeDetail();clearError('library-error');drawFiles();node('refresh').disabled=true;
+ library.busy=true;library.failed=false;clearError('library-error');drawFiles(true);node('refresh').disabled=true;
  const session=library.session;const generation=++library.request;const catalog=library.catalog;
  const current=()=>session===library.session&&generation===library.request&&catalog===library.catalog;
  try{
-  await catalog.round(scope=>{const query=new URLSearchParams({binding_id:scope.binding,limit:'50'});if(scope.parent)query.set('parent_resource_id',scope.parent);if(scope.cursor)query.set('cursor',scope.cursor);return request('/api/v1/resources?'+query);},current);
+  await catalog.round(scope=>{const query=new URLSearchParams({binding_id:scope.binding,limit:'50'});if(catalog.wholeRoot)query.set('whole_root','true');if(scope.parent)query.set('parent_resource_id',scope.parent);if(scope.cursor)query.set('cursor',scope.cursor);return request('/api/v1/resources?'+query);},current);
  }catch(error){if(current()){library.failed=true;errorAt('library-error',error);}}
- finally{if(current()){library.busy=false;node('refresh').disabled=false;drawFiles();}}
+ finally{if(current()){library.busy=false;node('refresh').disabled=false;drawFiles(true);}}
 }
+async function loadWholeLibrary(){const catalog=library.catalog;if(!catalog||library.loadingAll===catalog)return;library.loadingAll=catalog;library.autoLoad=true;try{while(library.catalog===catalog&&library.autoLoad&&!catalog.complete&&!catalog.limited&&!library.failed){await loadRound();await new Promise(resolve=>setTimeout(resolve,0));}}finally{if(library.catalog===catalog){library.loadingAll=null;library.autoLoad=false;drawFiles(true);}}}
 async function refreshFiles(){
  library.request++;library.controller.abort();library.controller=new AbortController();clearFiles();
- try{library.catalog=new FileCatalog.Catalog(library.bindings);await loadRound();}catch(error){library.failed=true;errorAt('library-error',error);node('collection-status').textContent='文件尚未加载';}
+ try{library.catalog=new FileCatalog.Catalog(library.bindings,library.wholeRoot);if(library.wholeRoot)await loadWholeLibrary();else await loadRound();}catch(error){library.failed=true;errorAt('library-error',error);node('collection-status').textContent='文件尚未加载';}
 }
 node('login-form').addEventListener('submit',async event=>{event.preventDefault();clearError('login-error');node('login-submit').disabled=true;try{const principal=await request('/api/v1/auth/login','POST',{login:node('account-name').value,password:node('account-password').value});await signIn(principal);}catch(error){errorAt('login-error',error);if(error.code==='AUTH_REQUIRED')node('login-error').textContent='账号或密码不正确。';}finally{node('account-password').value='';node('login-submit').disabled=false;}});
 node('logout').addEventListener('click',async()=>{node('logout').disabled=true;try{await request('/api/v1/auth/logout','POST');signOut();}catch(error){errorAt('library-error',error);}finally{node('logout').disabled=false;}});
-node('refresh').addEventListener('click',refreshFiles);node('load-more').addEventListener('click',loadRound);
-for(const category of categories)node('category-'+category).addEventListener('click',()=>{library.category=category;drawFiles();});
+node('refresh').addEventListener('click',refreshFiles);node('load-more').addEventListener('click',()=>library.wholeRoot?loadWholeLibrary():loadRound());node('load-pause').addEventListener('click',()=>{library.autoLoad=false;node('load-pause').hidden=true;});
+for(const category of categories)node('category-'+category).addEventListener('click',()=>{library.category=category;library.filePage=0;drawFiles();});
 for(const layout of ['cards','list'])node('view-'+layout).addEventListener('click',()=>{library.layout=layout;drawFiles();});
-node('file-search').addEventListener('input',drawFiles);node('detail-close').addEventListener('click',()=>closeDetail(true));
+node('file-search').addEventListener('input',()=>{library.filePage=0;drawFiles();});node('detail-close').addEventListener('click',()=>closeDetail(true));
+node('file-page-prev').addEventListener('click',()=>{library.filePage=Math.max(0,(library.filePage||0)-1);drawFiles();});node('file-page-next').addEventListener('click',()=>{library.filePage=(library.filePage||0)+1;drawFiles();});
 node('file-detail').addEventListener('keydown',event=>{if(event.key==='Escape')closeDetail(true);});
 (async()=>{try{await signIn(await request('/api/v1/auth/me'));}catch(error){if(error.code!=='AUTH_REQUIRED')errorAt('login-error',error);}})();
