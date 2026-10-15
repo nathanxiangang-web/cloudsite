@@ -20,13 +20,23 @@ const contentUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 
 
 type ContentClient struct {
 	base        *url.URL
-	token       string
+	token       func(context.Context) (string, error)
 	api, stream *http.Client
 }
 
 func NewContentClient(base, token string) (*ContentClient, error) {
+	return NewContentClientWithTokenSource(base, func(context.Context) (string, error) { return token, nil })
+}
+
+// NewContentClientWithTokenSource supports protected application-token rotation
+// without retaining a stale token or constructing a provider/login session.
+func NewContentClientWithTokenSource(base string, token func(context.Context) (string, error)) (*ContentClient, error) {
+	if token == nil {
+		return nil, fileaccess.ErrUnavailable
+	}
+	initial, secretErr := token(context.Background())
 	u, err := url.Parse(base)
-	if err != nil || u.Host == "" || u.Path != "" || u.RawQuery != "" || u.Fragment != "" || u.User != nil || (u.Scheme != "http" && u.Scheme != "https") || strings.TrimSpace(token) == "" || len(token) > 8192 || strings.ContainsAny(token, "\r\n") {
+	if err != nil || u.Host == "" || u.Path != "" || u.RawQuery != "" || u.Fragment != "" || u.User != nil || (u.Scheme != "http" && u.Scheme != "https") || secretErr != nil || !validToken(initial) {
 		return nil, fileaccess.ErrUnavailable
 	}
 	c := &ContentClient{base: u, token: token}
@@ -43,6 +53,9 @@ func NewContentClient(base, token string) (*ContentClient, error) {
 		return nil
 	}}
 	return c, nil
+}
+func validToken(token string) bool {
+	return strings.TrimSpace(token) != "" && len(token) <= 8192 && !strings.ContainsAny(token, "\r\n")
 }
 func publicIP(ip netip.Addr) bool {
 	ip = ip.Unmap()
@@ -103,13 +116,17 @@ func defaultPort(u *url.URL) string {
 	return "80"
 }
 func (c *ContentClient) Open(ctx context.Context, r fileaccess.SourceRequest) (fileaccess.Content, error) {
+	token, err := c.token(ctx)
+	if err != nil || !validToken(token) {
+		return fileaccess.Content{}, fileaccess.ErrUnavailable
+	}
 	raw, _ := json.Marshal(map[string]string{"path": r.Path, "password": ""})
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, c.base.String()+"/api/fs/get", bytes.NewReader(raw))
 	if err != nil {
 		return fileaccess.Content{}, fileaccess.ErrUnavailable
 	}
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", c.token)
+	request.Header.Set("Authorization", token)
 	request.Header.Set("User-Agent", contentUA)
 	response, err := c.api.Do(request)
 	if err != nil {

@@ -1,0 +1,11 @@
+[Unit]
+Description=Renew cloudsite restricted storage application token before expiry
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=12h
+Persistent=true
+Unit=cloudsite-alpha-storage-token.service
+
+[Install]
+WantedBy=timers.target

@@ -1,4 +1,4 @@
-# Panta — AI Architecture Memory
+# cloudsite — AI Architecture Memory
 
 > Canonical short-form project memory for Architect/AI sessions.
 >
@@ -46,7 +46,7 @@ historical, not current constraints.
 Previous: Issue #92 / PR #93, exact HEAD `d98f79a2d39f6add0e6d7d4bb98126516623bfa7`,
 CI `38702187329` all three SUCCESS, same-agent review `5529930361`, merge
 `49b98b21bff0c6be3e11f05a6292ba6c383da3af`, merge CI `38702621096` SUCCESS.
-D-047 [product sharing contract](PRODUCT-FILE-SHARING.md): Panta-hosted single
+D-047 [product sharing contract](PRODUCT-FILE-SHARING.md): cloudsite-hosted single
 canonical file, hash-only link/grant tokens, optional bcrypt code, DB-time expiry,
 owner management/revoke, guest grants/downloads. Not native115 ShareProvider or
 public internet distribution; current localhost service must be reachable.
@@ -152,7 +152,7 @@ No full MVP acceptance has happened. New migration
 head v13 is tested only in owned disposable PostgreSQL; live Gate 3.18 v12 is not upgraded. Historical unknown tasks and unrelated
 services stay protected. One agent, separate planning/development/review passes.
 
-Current acceptance: [Architect #6143267673](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6143267673)
+Current acceptance: [Architect #6143267673](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6143267673)
 supersedes all older NO-GO, OPEN and recovery-development pointers below.
 PR #71 merged at `74e9e69` after exact HEAD `3e61483b`, review `5501296768`
 and CI `38374274046` (all three groups SUCCESS). Under GO `6142455770`, the
@@ -183,7 +183,7 @@ Do **not** infer current architecture from chat memory alone.
 
 ## 2. Project identity
 
-Panta is a provider-neutral resource acquisition + logical catalog platform.
+cloudsite is a provider-neutral resource acquisition + logical catalog platform.
 
 115 is the first provider, not the product architecture.
 
@@ -216,26 +216,26 @@ IndexCore OpenList Collector
     ↓
 IndexCore Canonical + Journal
     ↓
-Panta IndexCore Query / Journal consumer
+cloudsite IndexCore Query / Journal consumer
     ↓
-Panta Catalog Projector / Copy
+cloudsite Catalog Projector / Copy
 ```
 
 **IndexCore owns physical truth.**
 
-Panta does not:
+cloudsite does not:
 - scan OpenList;
 - query OpenList to decide canonical visibility during acquisition;
 - read OpenList DB;
 - read/write IndexCore DB;
 - invent physical presence independently of IndexCore.
 
-OpenList is an upstream dependency of IndexCore's observation pipeline, not a Panta acquisition truth source.
+OpenList is an upstream dependency of IndexCore's observation pipeline, not a cloudsite acquisition truth source.
 
 ### Control plane
 
 ```text
-Panta command
+cloudsite command
     ↓
 Job Engine
     ↓
@@ -268,7 +268,7 @@ durable Manifest.result_name
     ↓
 Manifest AWAITING_VISIBILITY
     ↓
-Panta sends trusted IndexCore Mutation Hint
+cloudsite sends trusted IndexCore Mutation Hint
     root_id   = StorageBinding.indexcore_root_id
     scope_key = Manifest.target_path
     reason    = POSSIBLE_CHANGE
@@ -279,7 +279,7 @@ IndexCore OpenList scoped verification
     ↓
 IndexCore Canonical + Journal
     ↓
-Panta canonical confirmation / projector
+cloudsite canonical confirmation / projector
     ↓
 Copy becomes PRESENT / READY workflow completes
 ```
@@ -289,7 +289,7 @@ Critical meanings:
 - `PROVIDER_SUCCEEDED` != Job `SUCCEEDED`.
 - `PROVIDER_SUCCEEDED` != Manifest `READY`.
 - IndexCore Hint `202 Accepted` != canonical confirmation.
-- Panta does **not** add a direct OpenList visibility verifier.
+- cloudsite does **not** add a direct OpenList visibility verifier.
 - Same ACQUISITION Job spans provider, observation-handoff, and canonical stages.
 
 ## 5. Coordinate separation
@@ -322,7 +322,7 @@ Do not use `openlist_mount_path` or `provider_scope` to build the Hint.
 
 ## 5.1 Deterministic acquisition result locator
 
-Before provider success may advance automatically beyond the provider stage, Panta must durably resolve one top-level locator:
+Before provider success may advance automatically beyond the provider stage, cloudsite must durably resolve one top-level locator:
 
 ```text
 valid provider-observed TaskStatus.ResultName
@@ -361,7 +361,7 @@ indexcore_root_id + target_path + result_name
         ↓ Q5
 one PRESENT IndexCore resource
         ↓ Q8 Journal / existing Projector
-one PRESENT Panta Copy
+one PRESENT cloudsite Copy
         ↓ optional monotonic Variant bind
 Manifest.result_copy_id = Copy.ID
 Manifest READY
@@ -437,17 +437,17 @@ Do not claim enabled production service until real PostgreSQL, IndexCore and 115
 
 ## 5.7 Runtime composition boundary
 
-D-038 / Gate 3.15 may compose one accepted runtime graph of Panta PostgreSQL stores, IndexCore Q5/Q8 read client plus distinct trusted Hint port, exact provider-session registry, D-017 Journal Projector, D-036 RunOnce and D-037 serial Worker.
+D-038 / Gate 3.15 may compose one accepted runtime graph of cloudsite PostgreSQL stores, IndexCore Q5/Q8 read client plus distinct trusted Hint port, exact provider-session registry, D-017 Journal Projector, D-036 RunOnce and D-037 serial Worker.
 
-Require validated schema v12, complete mandatory clients, injected secrets and exact ProviderID/ConnectionID/CredentialRef match *before* enabling worker; no fallback to mocked integrations. The main Panta DB is never IndexCore's DB. Hint acceptance never implies READY; only D-033 canonical Copy confirmation may finalize.
+Require validated schema v12, complete mandatory clients, injected secrets and exact ProviderID/ConnectionID/CredentialRef match *before* enabling worker; no fallback to mocked integrations. The main cloudsite DB is never IndexCore's DB. Hint acceptance never implies READY; only D-033 canonical Copy confirmation may finalize.
 
-Default disabled process must remain side-effect-free. Controlled PostgreSQL+HTTP-fake E2E is in scope; real 115 account secrets and live deployment are not yet authorized. No direct Panta OpenList verification, Job Engine duplication, or new schema is allowed.
+Default disabled process must remain side-effect-free. Controlled PostgreSQL+HTTP-fake E2E is in scope; real 115 account secrets and live deployment are not yet authorized. No direct cloudsite OpenList verification, Job Engine duplication, or new schema is allowed.
 
 ## 5.8 Protected operator bootstrap
 
 D-039 / Gate 3.16 is accepted: stock CLI remains disabled and side-effect-free; an explicit read-only preflight validates externally protected credentials, trusted Hint configuration, schema v12 and exact active ProviderID/ConnectionID/CredentialRef coverage **without** claiming Jobs, submitting hints, migrating, contacting 115, or mutating any data.
 
-Explicit operator worker start reuses exactly one accepted D-038 runtime graph with a restricted external SecretResolver, D-037 serial Worker and SIGINT/SIGTERM cancellation. No raw cookie/token in CLI process args, logs, Git or Panta tables; no silent credential fallback.
+Explicit operator worker start reuses exactly one accepted D-038 runtime graph with a restricted external SecretResolver, D-037 serial Worker and SIGINT/SIGTERM cancellation. No raw cookie/token in CLI process args, logs, Git or cloudsite tables; no silent credential fallback.
 
 Gate 3.16 does not authorize AI to run a real 115 account download or deploy to production. Only local controlled PostgreSQL/HTTP fakes were accepted as evidence.
 
@@ -483,7 +483,7 @@ Phase A staging harness is accepted and merged:
 - exact-head CI `37874559508` all green.
 The merged harness is read-only evidence collection only. **Gate 3.18 real Phase B is accepted and closed**, as recorded by the final acceptance and completion artifact above. The following diagnostic/preparation history is preserved; old OPEN/STOP/NO-GO instructions are no longer current authority.
 
-Live Phase B first attempt (operator report, 2026-10-09) passed Panta preflight and Job claim, but the first real 115 StartDownload did not leave a durable task reference: linked Manifest/Job RECOVERY_REQUIRED and provider task START_RESERVED. The upstream failure cause and whether 115 actually created a remote task **remain unknown**. Issue #62 is the bounded diagnostic under Issue #60: read-only remote task inquiry, first error categorization, minimal fix and exact-head CI only if warranted, then a separate human-initiated fresh test with distinct IDs. Never clear the original fence or blindly replay; do not mark Gate 3.18 ACCEPTED or authorize Gate 3.19 on partial evidence.
+Live Phase B first attempt (operator report, 2026-10-09) passed cloudsite preflight and Job claim, but the first real 115 StartDownload did not leave a durable task reference: linked Manifest/Job RECOVERY_REQUIRED and provider task START_RESERVED. The upstream failure cause and whether 115 actually created a remote task **remain unknown**. Issue #62 is the bounded diagnostic under Issue #60: read-only remote task inquiry, first error categorization, minimal fix and exact-head CI only if warranted, then a separate human-initiated fresh test with distinct IDs. Never clear the original fence or blindly replay; do not mark Gate 3.18 ACCEPTED or authorize Gate 3.19 on partial evidence.
 
 **Issue #62 diagnostics PR #63 ACCEPTED / MERGED (Gate 3.18 still BLOCKED):**
 - exact reviewed HEAD `39a3e02751f1fdcb9384c8fef04fc00085f22f1a`, Architect Review `5477994000`, squash `b0b91701e15409e7ff5cd573def5883e14b29052`, CI `38031086983` green;
@@ -498,19 +498,19 @@ Live Phase B first attempt (operator report, 2026-10-09) passed Panta preflight 
   are merged. PR #65 main baseline is
   `f28f3a05759a6e4a9c7f01895e58df8db9829f33`. Diagnostic/plan acceptance is not
   actual download or terminal acquisition acceptance.
-- [C1 acceptance](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6096681761):
-  isolated clean Panta candidate built, not deployed; prepared Hint address
+- [C1 acceptance](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6096681761):
+  isolated clean cloudsite candidate built, not deployed; prepared Hint address
   inactive; historical five recovery/reservation pairs preserved.
-- [C1.5 acceptance](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6097060575):
+- [C1.5 acceptance](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6097060575):
   configuration-first investigation selected. Current non-root OpenList
   collector prefixes canonical Q5 paths, while Hint interprets target_path as
   root-relative. Simply setting target_path to the prefix duplicates the Hint
   prefix and is forbidden. Conditional remedy: a genuinely restricted view
   exposing only the approved destination as virtual `/`, with a NEW approved
-  IndexCore Root collector path `/` and NEW Panta Binding. Independently verify
+  IndexCore Root collector path `/` and NEW cloudsite Binding. Independently verify
   provider scope, OpenList view, Root ID and Manifest target_path; never infer IDs.
-- [C2-A report](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6097687709)
-  and [architect acceptance](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6098683022):
+- [C2-A report](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6097687709)
+  and [architect acceptance](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6098683022):
   independent synthetic-only Local OpenList instance actually runs on
   `127.0.0.1:5248`, restart=no, fresh 0700/0600 state, pinned v4.2.6. No real 115
   credentials/mount, new canonical Root/Binding, real Hint or acquisition.
@@ -520,9 +520,9 @@ Live Phase B first attempt (operator report, 2026-10-09) passed Panta preflight 
 - **Actual synthetic PASS; real 115 / Hint / Q5 / E2E NOT TESTED in C2-A.**
   Full live restricted-view isolation is still unproven. Five historical
   RECOVERY_REQUIRED / START_RESERVED pairs stay frozen; schema v12.
-- Historical [C2-B0 instruction](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6098855717)
-  is completed: [actual report](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6098957134)
-  and [architect acceptance](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6099065863).
+- Historical [C2-B0 instruction](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6098855717)
+  is completed: [actual report](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6098957134)
+  and [architect acceptance](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6099065863).
   **READ-ONLY EVIDENCE ACCEPTED / C2-B ADMISSION NO-GO**. In measured scope,
   synthetic instance `127.0.0.1:5248`, original nine containers, pinned single
   IndexCore writer, schema v12 and five recovery/reservation pairs stayed
@@ -540,7 +540,7 @@ Live Phase B first attempt (operator report, 2026-10-09) passed Panta preflight 
   pinned existing single-writer Hint enable/restart, sentinel lifecycle,
   baseline/scan and diagnostic Hint require concrete owner approval and a
   verified outage/freeze/rollback boundary. OpenList remains IndexCore-owned;
-  no direct Panta visibility verifier or speculative prefix patch.
+  no direct cloudsite visibility verifier or speculative prefix patch.
 - **C3 NOT AUTHORIZED:** separate exact-source UTF-8 SHA-256 (no rewriting),
   protected request, fresh IDs, verified empty destination/four coordinates,
   executable provenance, single Worker and bounded human-start window required.
@@ -562,19 +562,19 @@ v0.4.0-alpha.1
 The staging path is:
 
 ```text
-Panta protected submission
+cloudsite protected submission
   -> real 115 provider mutation
   -> provider result_name
   -> trusted loopback IndexCore Mutation Hint
   -> IndexCore hybrid incremental runtime
   -> IndexCore OpenList collector
   -> Canonical + Journal
-  -> Panta Q5/Q8 Projector
+  -> cloudsite Q5/Q8 Projector
   -> exact PRESENT Copy
   -> READY + result_copy_id + Job SUCCEEDED
 ```
 
-Panta still never queries OpenList for acquisition truth. Provider success and Hint 202 remain non-terminal. Because IndexCore's accepted Hint listener is literal-loopback-only, Panta and IndexCore share one host/network namespace for this acceptance rather than weakening trust for separate containers.
+cloudsite still never queries OpenList for acquisition truth. Provider success and Hint 202 remain non-terminal. Because IndexCore's accepted Hint listener is literal-loopback-only, cloudsite and IndexCore share one host/network namespace for this acceptance rather than weakening trust for separate containers.
 
 Real secrets stay outside Git/chat/reporting. CI/AI must not use the real account. A human explicitly starts the worker. If START_RESERVED becomes uncertain, stop and preserve evidence; never force another StartDownload.
 
@@ -653,7 +653,7 @@ Frozen mapping:
 ProviderID             = "115"
 Source.Value           = exact URI
 Target.Scope           = 115 saveDirID / provider scope
-Target.Path            = Panta observation scope only
+Target.Path            = cloudsite observation scope only
 TaskReference.Value    = 115 info_hash
 ```
 
@@ -708,14 +708,14 @@ Accepted:
 - Gate 3.15 — fail-closed runtime composition and controlled PostgreSQL+HTTP E2E
 - Gate 3.16 — protected operator bootstrap, read-only preflight and explicit worker startup
 - Gate 3.17 — deterministic Source Resolver and acquisition submission
-- Gate 3.18 — real 115 + OpenList + IndexCore + Panta READY/same Job SUCCEEDED — CLOSED
+- Gate 3.18 — real 115 + OpenList + IndexCore + cloudsite READY/same Job SUCCEEDED — CLOSED
 
 Authorized now:
 - D-042: audit docs, then bounded core MVP slices after written contracts and validated prior merges, without repeated user approval.
 - Frozen Stage 1: product accounts/revocable sessions, not yet complete. Preserve Gate 3.18 evidence and historical unknown reservations.
 
 Not authorized yet:
-- direct Panta OpenList acquisition verifier;
+- direct cloudsite OpenList acquisition verifier;
 - direct acquisition Copy creation/upsert;
 - production deployment, public API/UI, or Gate 4+ implementation without a separate architecture decision;
 - weakening IndexCore loopback Hint trust to accommodate deployment topology;
@@ -726,7 +726,7 @@ Not authorized yet:
 
 ## 10A. Acquisition result locator
 
-Before provider success may advance to observation, Panta must durably know one top-level result basename.
+Before provider success may advance to observation, cloudsite must durably know one top-level result basename.
 
 ```text
 provider-observed TaskStatus.ResultName
@@ -751,21 +751,21 @@ These statements may still appear in old issues/commits and must NOT be revived:
 
 ### Superseded
 ```text
-"Panta verifies OpenList visibility directly after provider success."
+"cloudsite verifies OpenList visibility directly after provider success."
 ```
 
 Superseded by D-029.
 
 ### Wrong
 ```text
-"Panta should call /api/fs/get during acquisition."
+"cloudsite should call /api/fs/get during acquisition."
 ```
 
 Wrong for production acquisition architecture.
 
 ### Wrong
 ```text
-"OpenList is Panta's canonical physical truth."
+"OpenList is cloudsite's canonical physical truth."
 ```
 
 IndexCore is canonical truth.

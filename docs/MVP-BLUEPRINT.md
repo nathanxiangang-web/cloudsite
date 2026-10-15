@@ -1,10 +1,10 @@
-# Panta MVP Blueprint v0.1
+# cloudsite MVP Blueprint v0.1
 
 > First implementation blueprint. Intentionally bounded: enough architecture to support modular staged development without prebuilding the final product.
 
 ## 1. MVP objective
 
-Panta v0.1 proves an end-to-end resource lifecycle on top of existing mature infrastructure.
+cloudsite v0.1 proves an end-to-end resource lifecycle on top of existing mature infrastructure.
 
 The MVP is successful when a user can:
 - browse/resolve an existing resource by known directory/path without using search;
@@ -13,7 +13,7 @@ The MVP is successful when a user can:
 - let 115 cloud download acquire it;
 - notify IndexCore of the affected root/scope after provider completion;
 - let the IndexCore-owned OpenList collector perform bounded scoped verification;
-- see canonical IndexCore/Journal evidence make the resulting Copy available in Panta;
+- see canonical IndexCore/Journal evidence make the resulting Copy available in cloudsite;
 - create a provider share while logged in;
 - use the same product domain with provider-specific code isolated behind contracts.
 
@@ -23,7 +23,7 @@ UI polish is not an MVP acceptance criterion.
 
 ```text
                    ┌────────────────────────────┐
-                   │        Panta API           │
+                   │        cloudsite API           │
                    │ application + jobs + auth  │
                    └─────────────┬──────────────┘
                                  │
@@ -64,7 +64,7 @@ Used to decide what physically exists.
 ### Control plane
 
 ```text
-Panta command → Job Engine → Provider Contract → Provider Adapter → Storage
+cloudsite command → Job Engine → Provider Contract → Provider Adapter → Storage
 ```
 
 Used to request side effects.
@@ -136,7 +136,7 @@ Minimum fields:
 - availability
 - created_at / updated_at
 
-A physical IndexCore Resource may exist before Panta can identify its Asset/Release/Variant.
+A physical IndexCore Resource may exist before cloudsite can identify its Asset/Release/Variant.
 
 That must not prevent browse/path access.
 
@@ -144,7 +144,7 @@ That must not prevent browse/path access.
 
 Search is not mandatory.
 
-Panta must support at least these independent inputs:
+cloudsite must support at least these independent inputs:
 
 ```text
 A. Known root/path
@@ -196,7 +196,7 @@ Use cases:
 
 ### 5.2 Logical resource view
 
-Backed by Panta Catalog:
+Backed by cloudsite Catalog:
 - Asset;
 - Releases;
 - Variants;
@@ -215,7 +215,7 @@ The two views can link to each other but neither replaces the other.
 
 OpenList is required in the MVP observation path.
 
-Panta does not implement another 115 scanner.
+cloudsite does not implement another 115 scanner.
 
 Initial flow:
 
@@ -230,21 +230,21 @@ Canonical Inventory
    ↓
 Journal
    ↓
-Panta Catalog Projector
+cloudsite Catalog Projector
 ```
 
-Panta must not:
+cloudsite must not:
 - read OpenList DB directly;
 - call OpenList directly to decide acquisition visibility/canonical presence;
 - create a second production OpenList scanner or known-path verification lane;
 - read IndexCore DB directly;
 - infer physical deletion merely because a product record is absent.
 
-For acquisition synchronization, Panta sends a trusted Mutation Hint to IndexCore. IndexCore then owns OpenList scoped verification and Canonical/Journal production.
+For acquisition synchronization, cloudsite sends a trusted Mutation Hint to IndexCore. IndexCore then owns OpenList scoped verification and Canonical/Journal production.
 
 ## 7. Storage bindings
 
-Panta needs a mapping between product storage connections and IndexCore roots.
+cloudsite needs a mapping between product storage connections and IndexCore roots.
 
 Minimum concept:
 
@@ -287,7 +287,7 @@ Needed MVP operations:
 - cancel task if supported;
 - capabilities.
 
-Retry/recreate policy belongs to the Panta application/Job Engine. A concrete Downloader adapter must not blindly recreate an external task on its own.
+Retry/recreate policy belongs to the cloudsite application/Job Engine. A concrete Downloader adapter must not blindly recreate an external task on its own.
 
 ### 8.3 ShareProvider
 
@@ -321,7 +321,7 @@ durable result_name
       ↓
 Manifest AWAITING_VISIBILITY
       ↓
-Panta → trusted IndexCore Mutation Hint
+cloudsite → trusted IndexCore Mutation Hint
   root_id   = StorageBinding.indexcore_root_id
   scope_key = Manifest.target_path
   reason    = POSSIBLE_CHANGE
@@ -343,11 +343,11 @@ Copy READY
 
 IndexCore Hint `202 Accepted` is not canonical confirmation and is not `READY`.
 
-Panta does not directly call OpenList to verify acquisition visibility. OpenList remains inside the IndexCore-owned observation pipeline.
+cloudsite does not directly call OpenList to verify acquisition visibility. OpenList remains inside the IndexCore-owned observation pipeline.
 
-Before provider success may advance to observation, Panta must have one durable top-level `result_name`. It must never guess the acquired object by listing the target directory. The future exact canonical candidate path is `Join(target_path, result_name)`.
+Before provider success may advance to observation, cloudsite must have one durable top-level `result_name`. It must never guess the acquired object by listing the target directory. The future exact canonical candidate path is `Join(target_path, result_name)`.
 
-READY requires canonical confirmation from IndexCore Query/Journal plus the corresponding Panta Copy projection/association.
+READY requires canonical confirmation from IndexCore Query/Journal plus the corresponding cloudsite Copy projection/association.
 
 ### No blind sleep
 
@@ -355,7 +355,7 @@ A short delay may be part of scheduling/retry policy, but the success criterion 
 
 ## 10. Acquisition Manifest
 
-For Panta-created acquisitions, capture enough identity before download so the result does not need to be guessed again.
+For cloudsite-created acquisitions, capture enough identity before download so the result does not need to be guessed again.
 
 Minimum:
 - manifest_id
@@ -395,7 +395,7 @@ Must work without Catalog search:
 ```text
 user selects root/path
       ↓
-Panta IndexCore adapter
+cloudsite IndexCore adapter
       ↓
 Q4 hierarchy or Q5 resolve
       ↓
@@ -442,7 +442,7 @@ MVP requires product login for:
 
 Read/browse policy can remain more permissive.
 
-Panta user identity must not equal 115 identity.
+cloudsite user identity must not equal 115 identity.
 
 A minimal usage ledger should exist for:
 - CLOUD_DOWNLOAD;
@@ -457,7 +457,7 @@ MVP may set effective price to zero.
 
 The access gateway may use OpenList 302 or provider direct URL when supported.
 
-Panta should expose one product-level access operation; provider-specific URLs remain behind the adapter/gateway.
+cloudsite should expose one product-level access operation; provider-specific URLs remain behind the adapter/gateway.
 
 ### Share
 
@@ -466,7 +466,7 @@ Share is not “reuse the temporary 302 URL.”
 ```text
 logged-in user
     ↓
-Panta Share Service
+cloudsite Share Service
     ↓
 ShareProvider
     ↓
@@ -561,7 +561,7 @@ Build:
 Accept when:
 - real or controlled OpenList resources become IndexCore resources;
 - journal replay is idempotent;
-- Panta can browse/resolve a known path;
+- cloudsite can browse/resolve a known path;
 - no Catalog search is required.
 
 ### Gate 2 — Resource semantics
@@ -594,7 +594,7 @@ Build:
 Accept when:
 - supported source creates a real 115 cloud-download task;
 - provider completion queues the affected `indexcore_root_id + target_path` through the trusted IndexCore Hint contract;
-- Panta performs no direct acquisition-time OpenList verification;
+- cloudsite performs no direct acquisition-time OpenList verification;
 - IndexCore performs the bounded OpenList-backed scoped verification;
 - Canonical/Journal evidence causes the expected Copy to become READY;
 - no normal full-root scan is required;
@@ -660,13 +660,13 @@ Accept when:
 
 ## 20. MVP architectural acceptance
 
-Panta MVP is architecturally acceptable only if all are true:
+cloudsite MVP is architecturally acceptable only if all are true:
 
 1. Known-path resource access works with search disabled.
 2. Existing storage is observed through OpenList and canonically confirmed by IndexCore.
 3. Product logical identity is Asset/Release/Variant/Copy, not raw path.
 4. 115-specific implementation is isolated behind provider contracts.
-5. Cloud-download completion is handed to the IndexCore-owned OpenList observation pipeline and canonically confirmed by IndexCore before READY. Panta does not directly verify OpenList during acquisition.
+5. Cloud-download completion is handed to the IndexCore-owned OpenList observation pipeline and canonically confirmed by IndexCore before READY. cloudsite does not directly verify OpenList during acquisition.
 6. Product DB never becomes a second physical-resource truth.
 7. Agent can be removed without breaking deterministic resource flows.
 8. A second provider can be added without rewriting product domain modules.

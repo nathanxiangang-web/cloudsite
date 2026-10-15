@@ -77,6 +77,30 @@ func TestConfigValidateAndProtectedInputs(t *testing.T) {
 		t.Fatal("cancelled config read proceeded")
 	}
 }
+func TestExplicitHTTPSProxyRetainsLoopbackAndRejectsInsecureOrigins(t *testing.T) {
+	cfg := validConfig()
+	cfg.HTTPSProxy = true
+	cfg.Origin = "https://cloud.example.test"
+	if cfg.Validate() != nil {
+		t.Fatal("explicit HTTPS proxy refused")
+	}
+	for _, origin := range []string{"http://cloud.example.test", "https://", "https://user:secret@cloud.example.test", "https://cloud.example.test/path", "https://cloud.example.test?token=secret", "https://cloud.example.test#fragment"} {
+		c := cfg
+		c.Origin = origin
+		if c.Validate() == nil {
+			t.Fatal("unsafe proxy origin accepted")
+		}
+	}
+	cfg.ListenAddress = "0.0.0.0:8180"
+	if cfg.Validate() == nil {
+		t.Fatal("proxy mode widened listener")
+	}
+	cfg = validConfig()
+	cfg.Origin = "https://cloud.example.test"
+	if cfg.Validate() == nil {
+		t.Fatal("public origin implicitly enabled")
+	}
+}
 func TestServeGracefulCancellation(t *testing.T) {
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {

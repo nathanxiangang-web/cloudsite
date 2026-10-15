@@ -109,7 +109,7 @@ Verified current CloudSite primary source via its GitHub contents API:
 Reuse product interaction ideas: single-file target, expiring link (5m/1h/6h/24h/
 7d), optional share code, inspect and revoke, revocation preserving the file.
 Do NOT copy its database, source mapping, permanent-link defaults, placeholder
-CAPTCHA check or unsigned public Office-cache behavior. Panta sharing needs its
+CAPTCHA check or unsigned public Office-cache behavior. cloudsite sharing needs its
 own persisted owner/expiry/revocation contract and original ShareProvider goal
 remains distinct; no share is created while implementing content reads.
 

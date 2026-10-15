@@ -91,7 +91,7 @@ read-only and builds no writer/collector/Hint/worker. This private operator
 entrypoint is traceable by retained source/hash, not falsely an official release.
 The stopped existing staging PostgreSQL was restored after identity verification;
 no migration or original table/config/task mutation. Before/after hashes of
-IndexCore public tables and original Panta provider history compare unchanged.
+IndexCore public tables and original cloudsite provider history compare unchanged.
 Unrelated CloudSite/OpenList services unchanged; scan/Hint/StartDownload all 0.
 
 Browser verified actual login denial/success, real browse/Q5, owner-only empty

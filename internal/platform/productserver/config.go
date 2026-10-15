@@ -28,6 +28,8 @@ var ErrConfig = errors.New("invalid protected product configuration")
 var ErrStartup = errors.New("product process unavailable")
 
 type Config struct {
+	RegistrationEnabled  bool                         `json:"registration_enabled,omitempty"`
+	HTTPSProxy           bool                         `json:"https_proxy,omitempty"`
 	LibraryBindingIDs    []storage.BindingID          `json:"library_binding_ids,omitempty"`
 	WholeRootLibrary     bool                         `json:"whole_root_library,omitempty"`
 	SharingEnabled       bool                         `json:"sharing_enabled,omitempty"`
@@ -135,7 +137,14 @@ func (cfg Config) Validate() error {
 		return ErrConfig
 	}
 	origin, err := url.Parse(cfg.Origin)
-	if err != nil || origin.Scheme != "http" || origin.Host != cfg.ListenAddress || origin.Path != "" || origin.User != nil || origin.RawQuery != "" || origin.Fragment != "" || origin.Opaque != "" {
+	if err != nil || origin.Host == "" || origin.Path != "" || origin.User != nil || origin.RawQuery != "" || origin.Fragment != "" || origin.Opaque != "" {
+		return ErrConfig
+	}
+	if cfg.HTTPSProxy {
+		if origin.Scheme != "https" || origin.Hostname() == "" {
+			return ErrConfig
+		}
+	} else if origin.Scheme != "http" || origin.Host != cfg.ListenAddress {
 		return ErrConfig
 	}
 	endpoint, err := url.Parse(cfg.IndexCoreBaseURL)

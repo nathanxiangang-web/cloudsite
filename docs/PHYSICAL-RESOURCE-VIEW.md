@@ -1,7 +1,7 @@
 # Physical resource view
 
 Gate 2.2 adds a physical-first, known-path read flow. It starts with IndexCore
-Q5 and treats the returned physical resources as useful even when Panta has no
+Q5 and treats the returned physical resources as useful even when cloudsite has no
 Catalog Copy for them.
 
 ```text
@@ -36,7 +36,7 @@ The dependency direction is:
 IndexCore Q5 port -> resourceview -> Catalog read port <- PostgreSQL adapter
 ```
 
-No IndexCore implementation or database type crosses the Panta-owned port.
+No IndexCore implementation or database type crosses the cloudsite-owned port.
 Gate 2.2 adds no migration because the required identity and uniqueness already
 exist in the accepted Catalog schema.
 

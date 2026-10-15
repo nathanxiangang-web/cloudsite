@@ -3,7 +3,7 @@
 ## Status and authority
 
 Frozen before execution, 2026-10-14. The human prioritizes real software, video
-and document display and reiterates Panta's IndexCore boundary. D-042 delegated
+and document display and reiterates cloudsite's IndexCore boundary. D-042 delegated
 delivery and D-043 readonly presentation remain governing. Issue #83 admission
 WIP is preserved separately; no draft v14 migration or provider task is deployed.
 This is source configuration/controlled indexing plus owned readonly process
@@ -15,8 +15,8 @@ unchanged; share revocation must not delete source files either.
 ## Module responsibility and dependency direction
 
 Operator configures existing IndexCore CLI/Collector/Kernel. OpenList is the
-Collector source; Panta's runtime only uses IndexCore HTTP Query and its product
-storage metadata. Browser uses authenticated Panta read routes. No Panta direct
+Collector source; cloudsite's runtime only uses IndexCore HTTP Query and its product
+storage metadata. Browser uses authenticated cloudsite read routes. No cloudsite direct
 OpenList query, direct IndexCore DB read, alternate resource truth or Copy writer.
 Source inventory is private operator discovery, never a UI response or Copy.
 
@@ -27,7 +27,7 @@ one new `indexcore_panta_mvp_catalog_20261014` database in the existing staging
 PostgreSQL 18 instance; refuse if already present. Explicit IndexCore migrations
 apply only to this new database. New Roots have generated immutable UUIDs and
 existing root/config/adapter administration. No old Root policy or generation
-changes and no original v12 Panta migration.
+changes and no original v12 cloudsite migration.
 
 Three individually identified scopes: a software subtree, a single MP4 source
 directory and a tutorials/documents subtree. Paths and complete source evidence
@@ -101,7 +101,7 @@ Readiness timeout refuses startup; it never grants acquisition authority.
 Install the reviewed launcher in the owner-private deployment directory, with
 the private receipt and `product-real-catalog.json`; install the two unit files
 under the user's `.config/systemd/user`, then daemon-reload/enable/start them.
-Verify loopback readiness, authenticated Panta scope and graceful stop/start.
+Verify loopback readiness, authenticated cloudsite scope and graceful stop/start.
 Do not reboot the entire VM just to test this; other running services must not
 be interrupted. Rollback stops/disables these two owned units and restarts the
 prior retained readonly UI/query composition. Do not delete databases or files.

@@ -1,6 +1,29 @@
-# Panta
+# cloudsite
 
-Panta is a provider-neutral resource acquisition and catalog platform.
+Current release: **cloudsiteV1.0.0alpha**. The HTTPS deployment enables website
+registration for ordinary USER accounts. Use the login page's registration
+action; passwords are12-72 bytes, account names3-64 ASCII letters/digits/._-.
+Existing local product credentials are preserved on the remote deployment;
+registration cannot choose ADMIN or reset an existing account. Storage/115
+credentials remain operator-managed, separate from website accounts.
+
+Current release: **`cloudsiteV1.0.0alpha`**. This is the renamed Panta repository,
+not the deleted legacy CloudSite Python/Next.js project. GitHub repository ID and
+all accepted Issue/PR history are preserved. Public product branding is cloudsite.
+
+Available: authenticated consumer/admin UI, complete CloudSite file inventory,
+document previews, native downloads, browser-supported media playback and
+expiring single-file links with optional random4-character codes. Alpha naming
+does not complete admission/usage, native115 shares or all-codec transcoding.
+The current catalog is an explicitly imported canonical snapshot; automatic
+rescanning/production acquisition is not enabled by this release.
+
+Deployment/version/rollback: [cloudsiteV1.0.0alpha contract](docs/CLOUDSITE-V1-ALPHA.md).
+Internal Go imports, `cmd/panta`, `PANTA_*` settings, cookies and schema14 database
+names intentionally retain compatibility; do not rename durable identifiers or
+credentials as a cosmetic migration.
+
+cloudsite is a provider-neutral resource acquisition and catalog platform.
 
 The MVP focuses on proving the resource lifecycle end to end before investing in UI polish:
 
@@ -11,31 +34,31 @@ Storage Provider
       ↓
    IndexCore
       ↓
-Panta Catalog
+cloudsite Catalog
       ↑
 Acquisition / Agent / Product API
 ```
 
 ## MVP goals
 
-Panta v0.1 must prove five things:
+The lifecycle MVP must prove five things, separately from the alpha version label:
 
-1. Existing resources can be observed through **OpenList → IndexCore → Panta Catalog**.
+1. Existing resources can be observed through **OpenList → IndexCore → cloudsite Catalog**.
 2. A user who already knows a path can browse/resolve it directly; **search is optional, not mandatory**.
 3. Logical resource identity is separated from physical files through **Asset → Release → Variant → Copy**.
-4. A logged-in user can submit a supported source to the **115 cloud-download provider**, after which Panta sends a trusted scoped Mutation Hint to IndexCore; IndexCore performs the OpenList-backed scoped verification and Panta waits for canonical Query/Journal evidence before the new Copy becomes READY.
-5. Provider-specific logic is replaceable. Panta domain modules must not depend directly on 115 semantics.
+4. A logged-in user can submit a supported source to the **115 cloud-download provider**, after which cloudsite sends a trusted scoped Mutation Hint to IndexCore; IndexCore performs the OpenList-backed scoped verification and cloudsite waits for canonical Query/Journal evidence before the new Copy becomes READY.
+5. Provider-specific logic is replaceable. cloudsite domain modules must not depend directly on 115 semantics.
 
 ## Architecture rules
 
 - OpenList is the upstream storage observation/access layer used by IndexCore, not the product database.
 - IndexCore is the canonical physical-resource truth, not the product catalog or search engine.
-- Panta acquisition does not directly query OpenList to decide visibility; it sends trusted Mutation Hints to IndexCore and consumes IndexCore Query/Journal truth.
-- Panta Catalog owns Asset / Release / Variant / Copy semantics.
+- cloudsite acquisition does not directly query OpenList to decide visibility; it sends trusted Mutation Hints to IndexCore and consumes IndexCore Query/Journal truth.
+- cloudsite Catalog owns Asset / Release / Variant / Copy semantics.
 - Provider actions go through provider contracts and the Job Engine.
 - Agent output is advisory/structured input; agents do not own product state.
 - Cloud download and share require product login.
-- Panta product account is independent from storage-provider accounts.
+- cloudsite product account is independent from storage-provider accounts.
 - Git is the project memory. Architecture, decisions, current state and acceptance evidence must live in this repository.
 
 ## Project documents
@@ -53,7 +76,7 @@ Panta v0.1 must prove five things:
 
 ## Collaboration model
 
-Panta MVP uses a deliberately small team model:
+cloudsite MVP uses a deliberately small team model:
 
 - **Architect:** owns boundaries, contracts, gate acceptance and scope.
 - **Developer:** implements one accepted stage at a time, with tests and evidence.
@@ -76,7 +99,7 @@ required to build or start it.
 Package dependencies follow the modular-monolith boundary:
 
 ```text
-cmd/panta → internal/app → modules and Panta-owned ports
+cmd/panta → internal/app → modules and cloudsite-owned ports
                                   ↑
                     future adapters/integrations
 ```
@@ -87,14 +110,14 @@ cmd/panta → internal/app → modules and Panta-owned ports
 - `integrations/indexcore` is the production physical-truth integration boundary.
   Any `integrations/openlist` port is access-layer/future capability only unless a
   separate Gate explicitly authorizes it; acquisition observation remains owned by
-  IndexCore and must not grow a second Panta → OpenList verification lane.
+  IndexCore and must not grow a second cloudsite → OpenList verification lane.
 - In-memory doubles live only in tests. There is no real provider, persistence,
   network integration, search, agent, authentication, HTTP API, or UI in Gate
   0.1.
 
 ## Gate 0.2 product database
 
-Panta product state uses a PostgreSQL database that is configured independently
+cloudsite product state uses a PostgreSQL database that is configured independently
 through `PANTA_DATABASE_URL`. It is never shared with or inferred from an
 IndexCore database setting.
 
@@ -153,10 +176,10 @@ the production application.
 The Gate 0 dependency and test boundaries are:
 
 ```text
-core domains → Panta-owned ports ← production adapters (future gates)
+core domains → cloudsite-owned ports ← production adapters (future gates)
                               ↖ testprovider + contracttest (tests only)
 
-catalog/jobs ← internal/store/postgres → Panta PostgreSQL
+catalog/jobs ← internal/store/postgres → cloudsite PostgreSQL
 ```
 
 - Provider conformance covers descriptor consistency, storage stat/access,
@@ -226,8 +249,8 @@ provider-task tables.
 
 Gate 3.6 adds the first concrete provider: `internal/providers/115` implements
 `contracts.DownloaderProvider` on the pinned `github.com/SheltonZhu/115driver`
-`v1.3.5`, mapping Panta's `Source.Value` to the exact 115 offline URI and
-`Target.Scope` to the 115 destination directory ID. `Target.Path` is Panta's
+`v1.3.5`, mapping cloudsite's `Source.Value` to the exact 115 offline URI and
+`Target.Scope` to the 115 destination directory ID. `Target.Path` is cloudsite's
 observation path only and is never translated into provider scope. The adapter is
 provider-isolated: it imports only `internal/providers/contracts`, the pinned
 upstream driver package, and the standard library, so no 115 type reaches the

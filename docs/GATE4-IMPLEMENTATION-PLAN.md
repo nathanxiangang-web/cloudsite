@@ -94,7 +94,7 @@ Authenticated users may view the operator-designated shared Catalog; task/source
 details are owner-only. Admin access is explicit and redacted; no implicit
 ownership of legacy unattributed tasks. No external/public signup or payment.
 
-Product user data goes to Panta PostgreSQL only. Use an isolated MVP database
+Product user data goes to cloudsite PostgreSQL only. Use an isolated MVP database
 and owned process; keep `panta_gate318`, IndexCore DB, old services and the eight
 unknown provider reservations unchanged. Source strings remain byte-exact.
 Access may use an OpenList access adapter as allowed by the original MVP;

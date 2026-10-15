@@ -14,7 +14,7 @@ cmd/panta submit-acquisition
        -> ResolveSource (pure classification)
        -> existing Service.CreateManifest (topology/catalog validation)
        -> existing ActivationService (atomic Job + ACTIVE transition)
-  -> Panta PostgreSQL repositories only
+  -> cloudsite PostgreSQL repositories only
 ```
 
 `acquisition` owns the provider-neutral ports and does not import SQL, the
@@ -35,7 +35,7 @@ Place the JSON file under an absolute owner-only (`0700`) Linux directory.
 The file must be owner-readable, regular and mode `0600` or stricter; symlinks,
 traversal, excessive size and group/world access fail closed. The source is
 file content, **not a process argument, environment value, log field or Job
-payload**. The command needs `PANTA_DATABASE_URL` for the Panta product DB and
+payload**. The command needs `PANTA_DATABASE_URL` for the cloudsite product DB and
 `PANTA_ACQUISITION_SUBMISSION_FILE` pointing to this file. It does not require
 `PANTA_ACQUISITION_WORKER_ENABLED=true`, provider credentials, a Hint token or
 an IndexCore URL.
@@ -63,7 +63,7 @@ guess topology, catalog identities, target paths or provider save directories.
 panta submit-acquisition
 ```
 
-It checks the Panta schema-v12 status but does not migrate. A successful first
+It checks the cloudsite schema-v12 status but does not migrate. A successful first
 submit prints only `CREATED` and the stable Manifest/Job IDs. Exact same-ID
 replay prints `REPLAY`; a conflicting source, target, lineage or Job ID fails
 closed. If activation fails after Manifest creation, the command reports

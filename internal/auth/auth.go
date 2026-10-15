@@ -90,6 +90,11 @@ type Access interface {
 	Authenticate(context.Context, string) (Principal, error)
 	Logout(context.Context, string) error
 }
+
+// Registrar cannot choose roles: self-service accounts are always ordinary users.
+type Registrar interface {
+	Register(context.Context, string, string) (Principal, error)
+}
 type Service struct {
 	store     Store
 	dummyHash []byte
@@ -116,6 +121,10 @@ func NewUserID() (UserID, error) {
 	value[8] = (value[8] & 0x3f) | 0x80
 	h := hex.EncodeToString(value[:])
 	return UserID(h[:8] + "-" + h[8:12] + "-" + h[12:16] + "-" + h[16:20] + "-" + h[20:]), nil
+}
+
+func (service *Service) Register(ctx context.Context, login, password string) (Principal, error) {
+	return service.Provision(ctx, login, password, RoleUser)
 }
 
 // Provision is an operator application action. No public route exposes it.

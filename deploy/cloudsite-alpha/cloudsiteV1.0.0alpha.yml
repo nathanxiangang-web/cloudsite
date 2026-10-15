@@ -1,0 +1,106 @@
+name: cloudsite-v100-alpha
+services:
+  edge:
+    image: nginx:alpine
+    container_name: cloudsite-alpha-edge
+    restart: unless-stopped
+    volumes:
+      - ./cloudsiteV1.0.0alpha/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks: [proxy, storage, data]
+    labels:
+      traefik.enable: "${CLOUDSITE_TRAEFIK_ENABLED:-false}"
+      traefik.docker.network: my-servers_app-net
+      traefik.http.routers.cloudsite-alpha.entrypoints: websecure
+      traefik.http.routers.cloudsite-alpha.rule: Host(`cloud.netioi.com`)
+      traefik.http.routers.cloudsite-alpha.tls: "true"
+      traefik.http.routers.cloudsite-alpha.tls.certresolver: myresolver
+      traefik.http.services.cloudsite-alpha.loadbalancer.server.port: "8080"
+  cloudsite:
+    image: cloudsite:cloudsiteV1.0.0alpha
+    container_name: cloudsite-alpha-product
+    network_mode: service:edge
+    depends_on:
+      edge: {condition: service_started}
+      product-db: {condition: service_healthy}
+      catalog: {condition: service_healthy}
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    mem_limit: 512m
+    tmpfs: [/tmp:size=64m,mode=1777]
+    environment:
+      PANTA_PRODUCT_CONFIG_FILE: /run/cloudsite/config.json
+      PANTA_ACQUISITION_WORKER_ENABLED: "false"
+    volumes:
+      - ./cloudsiteV1.0.0alpha/private/product:/run/cloudsite:ro
+      - ./cloudsiteV1.0.0alpha/cache:/var/cache/cloudsite
+    healthcheck:
+      test: [CMD, curl, -fsS, -H, "Host: cloud.netioi.com", "http://127.0.0.1:8180/"]
+      interval: 10s
+      timeout: 4s
+      retries: 6
+  catalog:
+    image: cloudsite:cloudsiteV1.0.0alpha
+    container_name: cloudsite-alpha-catalog
+    entrypoint: [python3, /usr/local/lib/cloudsite/catalog-entrypoint.py]
+    network_mode: service:edge
+    depends_on:
+      edge: {condition: service_started}
+      catalog-db: {condition: service_healthy}
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 64
+    mem_limit: 256m
+    volumes:
+      - ./cloudsiteV1.0.0alpha/private/catalog:/run/catalog:ro
+    healthcheck:
+      test: [CMD, curl, -fsS, "http://127.0.0.1:48892/readyz"]
+      interval: 10s
+      timeout: 4s
+      retries: 6
+  product-db:
+    image: postgres:16-alpine
+    container_name: cloudsite-alpha-product-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cloudsite
+      POSTGRES_DB: panta_mvp_preview
+      POSTGRES_PASSWORD_FILE: /run/secrets/product_db_password
+    secrets: [product_db_password]
+    volumes: [product-data:/var/lib/postgresql/data]
+    networks: [data]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U cloudsite -d panta_mvp_preview"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+  catalog-db:
+    image: postgres:18-alpine
+    container_name: cloudsite-alpha-catalog-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cloudsite
+      POSTGRES_DB: indexcore_panta_mvp_catalog_20261014
+      POSTGRES_PASSWORD_FILE: /run/secrets/catalog_db_password
+    secrets: [catalog_db_password]
+    volumes: [catalog-data:/var/lib/postgresql]
+    networks: [data]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U cloudsite -d indexcore_panta_mvp_catalog_20261014"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+secrets:
+  product_db_password: {file: ./cloudsiteV1.0.0alpha/private/product-db.password}
+  catalog_db_password: {file: ./cloudsiteV1.0.0alpha/private/catalog-db.password}
+networks:
+  proxy: {external: true, name: my-servers_app-net}
+  storage: {external: true, name: app-net}
+  data: {internal: true}
+volumes:
+  product-data:
+  catalog-data:

@@ -4,7 +4,23 @@ const web=path.join(__dirname,'../internal/producthttp/web');
 const catalogCode=fs.readFileSync(path.join(web,'file-catalog.js'),'utf8');
 const {Catalog}=vm.runInNewContext(catalogCode+'\nFileCatalog;',{});
 const file=(id,extra={})=>({binding_id:'one',resource_id:id,name:id+'.pdf',directory:false,presence:'PRESENT',size_bytes:123,...extra});
+test('all public HTML surfaces use cloudsite and the exact release version',()=>{
+ const version=fs.readFileSync(path.join(__dirname,'..','VERSION'),'utf8').trim();assert.equal(version,'cloudsiteV1.0.0alpha');
+ for(const name of ['library.html','index.html','share.html']){const html=fs.readFileSync(path.join(web,name),'utf8');assert.ok(html.includes(version),name);assert.ok(html.includes('cloudsite'),name);assert.ok(!/panta/i.test(html),name);}
+});
 const page=(items=[],next_cursor='')=>({items,next_cursor});
+
+test('registration mode validates confirmation, clears secrets and never requests roles',async()=>{
+ const app=workspace();app.run('authMode(true)');assert.equal(app.elements.get('confirm-field').hidden,false);
+ app.elements.get('account-name').value='new.user';app.elements.get('account-password').value='test-only-password-123';app.elements.get('account-confirm').value='different-password';
+ const submit=app.elements.get('login-form').listeners.submit[0];await submit({preventDefault(){}});assert.ok(app.elements.get('login-error').textContent.includes('不一致'));assert.equal(app.requests.filter(r=>r.url.includes('/register')).length,0);
+ app.elements.get('account-confirm').value='test-only-password-123';const pending=submit({preventDefault(){}});const req=app.requests.find(r=>r.url==='/api/v1/auth/register');assert.ok(req);assert.deepEqual(Object.keys(JSON.parse(req.options.body)).sort(),['login','password']);
+ req.resolve({ok:true,status:201,json:async()=>({login:'new.user',role:'USER'})});await pending;assert.equal(app.run('registering'),false);assert.ok(app.elements.get('auth-notice').textContent.includes('已创建'));assert.equal(app.elements.get('account-password').value,'');assert.equal(app.elements.get('account-confirm').value,'');assert.equal(app.requests.filter(r=>r.url==='/api/v1/auth/login').length,0);
+});
+
+test('registration link is controlled by the public server capability',async()=>{
+ for(const enabled of [false,true]){const app=workspace();const req=app.requests.find(r=>r.url==='/api/v1/auth/capabilities');req.resolve({ok:true,status:200,json:async()=>({registration_enabled:enabled})});await new Promise(resolve=>setImmediate(resolve));assert.equal(app.elements.get('auth-toggle').hidden,!enabled);}
+});
 
 test('whole-root Q6 inventory continues beyond32 pages without directory traversal',async()=>{
  const c=new Catalog([{binding_id:'one'}],true);let n=0;
@@ -61,7 +77,7 @@ function workspace(){
   addEventListener(type,fn){(this.listeners[type]||=[]).push(fn);}setAttribute(k,v){this.attrs[k]=v;}removeAttribute(k){delete this.attrs[k];delete this[k];}scrollIntoView(){}focus(){this.focused=true;}async play(){this.paused=false;this.played=true;}pause(){this.paused=true;}load(){this.loaded=true;}click(){this.clicked=true;}select(){this.selected=true;}
  }
  const elements=new Map(Array.from(ids,id=>[id,new Element()]));const requests=[],created=[],copied=[];
- const ctx=vm.createContext({AbortController,URLSearchParams,setTimeout,crypto:require('node:crypto').webcrypto,navigator:{clipboard:{async writeText(value){copied.push(value);}}},document:{getElementById(id){assert.ok(elements.has(id),'Unknown id '+id);return elements.get(id);},createElement(){const e=new Element();created.push(e);return e;}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
+ const ctx=vm.createContext({AbortController,URLSearchParams,TextEncoder,setTimeout,crypto:require('node:crypto').webcrypto,navigator:{clipboard:{async writeText(value){copied.push(value);}}},document:{getElementById(id){assert.ok(elements.has(id),'Unknown id '+id);return elements.get(id);},createElement(){const e=new Element();created.push(e);return e;}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
  for(const script of ['resource-display.js','file-catalog.js','library.js','library-sharing.js'])vm.runInContext(fs.readFileSync(path.join(web,script),'utf8'),ctx);
  return {ctx,elements,requests,created,copied,run:s=>vm.runInContext(s,ctx)};
 }

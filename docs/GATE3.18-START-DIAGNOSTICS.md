@@ -52,7 +52,7 @@ classify shape and test the pinned DownloadResp envelope, clears the buffer,
 and retains only closed metadata. It records status zero when no
 HTTP response is available.
 
-The pinned SDK's `SetHttpClient` replaces its resty client and headers. Panta now
+The pinned SDK's `SetHttpClient` replaces its resty client and headers. cloudsite now
 installs the HTTP client before applying `driver.UA()`. A fake wire transport
 asserts the actual SDK default header. The live parser failure persists after
 this correction, so it is not claimed as the resolution of the staging blocker.
