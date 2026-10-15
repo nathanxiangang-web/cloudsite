@@ -14,7 +14,19 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-15
 
-Latest accepted/deployed Issue #94 / PR #95, exact HEAD `e5961f8fe060`,
+Latest reliability fix Issue #96 / PR #97 accepted/deployed. Reviewed HEAD
+`d5d056b0e1e2`, CI `38736852134` all3 SUCCESS, same-agent review `5533296802`,
+merge `57a9d626cd62`, merge CI `38737121369` all3 SUCCESS. Native real-link
+attachment actions replace async HEAD/synthetic click in consumer and guest.
+Explicit play/pause and accurate media event states added. Actual user Chrome
+had stale stopped8182; corrected to formal8180. Human confirmed download/save
+dialog; automated download event was NOT observed. Server full DOCX hash matches;
+actual video played beyond37s with advancing timeline/error=null, pause works.
+Only product restarted, schema14/config/source/catalog/original DB unchanged.
+Binary SHA256 `84b5c2cda9b5778433c87ec4a9b84e9d026d7b03828d1e5799a9185b3e19c194`.
+Old14 receipt/binary retained. All PR95 scope/count/code rules below remain.
+
+Previous accepted/deployed Issue #94 / PR #95, exact HEAD `e5961f8fe060`,
 CI `38733576527` all three SUCCESS, same-agent acceptance `5533047604`, merge
 `9c902a3650df`; merge CI `38734637547` all three SUCCESS. D-048 and
 [complete CloudSite contract](docs/PRODUCT-CLOUDSITE-LIBRARY.md): all283 actual

@@ -3,7 +3,7 @@
 > Canonical short-form project memory for Architect/AI sessions.
 >
 > Last architecture-memory synchronization: **2026-10-15**
-> Current status: **Gate 0-3 CLOSED. PR #95 accepted/deployed: complete CloudSite283 files, Other fallback, four-character random code autofill/clear=no-code, old shares preserved. Product schema14 unchanged; original staging12 unchanged. D-048 complete CloudSite, D-047 product shares, D-046 content, D-045 dual UI, D-044 no deletion. Native115 share/Copy projection/admission/usage unfinished. Issue83 WIP preserved but draft14 needs rebase. No full MVP acceptance.**
+> Current status: **Gate 0-3 CLOSED. PR #97 accepted/deployed: native download clicks and explicit media play/pause; actual Chrome corrected from stale8182 to formal8180. PR #95 complete CloudSite283 files/Other/random4-character codes remains. Product schema14 unchanged; original staging12 unchanged. D-048 complete CloudSite, D-047 product shares, D-046 content, D-045 dual UI, D-044 no deletion. Native115 share/Copy projection/admission/usage unfinished. Issue83 WIP preserved but draft14 needs rebase. No full MVP acceptance.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -12,7 +12,20 @@
 
 ## 1. Source-of-truth order
 
-Latest: Issue #94 / PR #95, exact HEAD `e5961f8fe0603eb8e2ee0c862abfbdd68d79c6b2`,
+Latest: Issue #96 / PR #97 reviewed HEAD `d5d056b0e1e2`, CI `38736852134`
+all3 SUCCESS, same-agent review `5533296802`, merge `57a9d626cd62`, merge CI
+`38737121369` all3 SUCCESS. Real-link native attachments replace asynchronous
+HEAD/synthetic clicks, no fake completion claims. Explicit media controls and
+event-based state. Actual user Chrome had stopped candidate8182; formal8180
+restored MP4/MKV metadata, native download human-confirmed and reference video
+playback beyond37s/pause verified. Automated download event NOT observed; full
+formal DOCX bytes/hash and HEAD200/Range206 independently verified.28 Node tests
+and full CI pass. Only product replaced; schema14/source/original DB/catalog/
+services unchanged. Binary SHA256
+`84b5c2cda9b5778433c87ec4a9b84e9d026d7b03828d1e5799a9185b3e19c194`.
+Old14 receipt/binary retained; no provider/scan/Hint/session or codec guarantees.
+
+Previous: Issue #94 / PR #95, exact HEAD `e5961f8fe0603eb8e2ee0c862abfbdd68d79c6b2`,
 CI `38733576527` all three SUCCESS, same-agent review `5533047604`, merge
 `9c902a3650df17c8202e3d04985a20c562389087`, merge CI `38734637547` all three SUCCESS.
 D-048 [contract](PRODUCT-CLOUDSITE-LIBRARY.md): full CloudSite logical root,

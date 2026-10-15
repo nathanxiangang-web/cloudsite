@@ -19,6 +19,18 @@ formal8180 the reported MP4 and another MKV loaded metadata with no decoder erro
 HEAD/206 Range were healthy. Do not misdiagnose that as SDK/cookie failure. Formal
 entry is8180 via existing SSH forward. No backend/schema/source/provider mutation.
 
+Issue #96 / PR #97 accepted/deployed at reviewed HEAD `d5d056b0e1e2`, CI
+`38736852134` all3 SUCCESS; same-agent review `5533296802`, merge `57a9d626cd62`,
+merge CI `38737121369` all3 SUCCESS.28 Node tests and focused Go tests pass.
+Actual Chrome native download initiation/save dialog human-confirmed (automated
+download event was NOT observed). Full formal DOCX15423 bytes hash-match prior
+acceptance; HEAD200/Range206 for document/two videos verified. New explicit
+play button produced advancing playback beyond37s, readyState4/error=null; pause
+works. Reported MP4 and MKV metadata decode normally, not all codecs guaranteed.
+Only owned product restarted, schema14 and protected histories/catalog unchanged.
+Binary SHA256 `84b5c2cda9b5778433c87ec4a9b84e9d026d7b03828d1e5799a9185b3e19c194`;
+old14 receipt/binary retained for rollback. No new native provider calls.
+
 ## Frozen contract - 2026-10-15
 
 Human requests real document previews, downloads and video playback and asks

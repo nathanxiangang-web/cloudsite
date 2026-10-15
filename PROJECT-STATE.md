@@ -8,7 +8,31 @@
 
 Gate 0 through Gate 3 are accepted and closed. D-042 delegates Architect and Developer roles through minimum usable core MVP. Docs/auth/reads/UI, real catalog, file content and Panta-hosted single-file sharing are merged. Owned product UI runs on staging host .50 through a loopback SSH forward, reading the isolated real IndexCore catalog introduced by PR #87 and expanded to complete CloudSite by PR #95. PR #89 separates consumer and admin UI; PR #91 adds content/server previews; PR #93 adds product shares/download UX; PR #95 adds random4-character codes and full CloudSite file inventory. Admission/usage, current-database Copy synchronization and native115 ShareProvider remain incomplete; this is not full MVP acceptance.
 
-### Current complete CloudSite acceptance and deployment - 2026-10-15
+### Current download/playback reliability fix - 2026-10-15
+
+Issue #96 / PR #97 accepted/deployed. Exact HEAD
+`d5d056b0e1e2e3e58302e9c67e96bed7b42844ca`, CI `38736852134` all3 SUCCESS,
+separate same-agent review `5533296802` (not independent), merge
+`57a9d626cd623fb910d78ca1daf1f8ac28023d4d`, merge CI `38737121369` all3 SUCCESS.
+Native real-link attachment navigation replaces HEAD then synthetic click for
+consumer/guest; server disposition controls filename, library remains open.
+Explicit media play/pause and event-based states added. No backend/auth/Range,
+schema14, provider, source or catalog change. Whole CloudSite283/counts and
+four-character optional codes remain.28 Node tests plus full existing CI pass.
+
+Real Chrome incident first traced to stopped candidate8182; user tab corrected
+to formal8180. Human explicitly confirmed download started/save dialog appeared;
+automation did not observe a download event, so do NOT claim automated completion.
+Formal full DOCX15423-byte download hash matches prior evidence, HEAD200 and
+Range206 for real document and two videos. Reported MP4 and MKV metadata decode
+normally. Reference video played beyond37s with readyState4/error=null and
+advancing currentTime; pause verified. No universal codec compatibility claim.
+Only owned product restarted; original table hashes, unrelated services, catalog
+PID/all generations unchanged. Old14 receipt/binary retained for rollback.
+Deployed binary SHA256
+`84b5c2cda9b5778433c87ec4a9b84e9d026d7b03828d1e5799a9185b3e19c194`.
+
+### Previous complete CloudSite acceptance and deployment - 2026-10-15
 
 Issue #94 / PR #95 ACCEPTED, merged and deployed. Reviewed exact HEAD
 `e5961f8fe0603eb8e2ee0c862abfbdd68d79c6b2`, CI `38733576527` all three SUCCESS;
