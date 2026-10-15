@@ -1,0 +1,20 @@
+[Unit]
+Description=Panta owned authenticated readonly resource UI
+Requires=panta-mvp-catalog-readonly.service
+After=panta-mvp-catalog-readonly.service
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %h/panta-mvp-preview-20261014/private/readonly_catalog_service.py product %h/panta-mvp-preview-20261014/private/readonly-service-receipt.json
+WorkingDirectory=%h/panta-mvp-preview-20261014
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=90
+TimeoutStopSec=10
+UMask=0077
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target
