@@ -2,8 +2,8 @@
 
 > Canonical short-form project memory for Architect/AI sessions.
 >
-> Last architecture-memory synchronization: **2026-10-14**
-> Current status: **Gate 0-3 CLOSED; docs/auth/read/readonly UI PRs #76/#78/#80/#82 and real resource presentation #85 merged. UI reads real MCP-Test canonical data through an owned readonly IndexCore component endpoint. Issue #83 admission/usage has unfinished isolated WIP, not accepted/deployed. Copy projection/content access/playback/share still missing; no full MVP acceptance. D-042/D-043 govern scoped delivery.**
+> Last architecture-memory synchronization: **2026-10-15**
+> Current status: **Gate 0-3 CLOSED; docs/auth/read/readonly UI and presentation PR #85 merged. Real catalog/lifecycle PR #87 accepted and deployed: five document files, three directories, one MP4, confirmed empty software scope; not whole-drive coverage. Panta reads IndexCore HTTP only. D-044 excludes file-delete UI/API. Issue #83 admission/usage remains isolated unreviewed WIP. Copy projection/content access/playback/share still missing; no full MVP acceptance.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -11,6 +11,19 @@
 > If chat context, an old issue, an old PR description, README text, or an older decision conflicts with this file plus the latest accepted Decision Log / Project State, **Git wins and the newer accepted decision wins**.
 
 ## 1. Source-of-truth order
+
+Latest accepted slice: Issue #86 / PR #87, exact HEAD
+`d693878c7791b592fa21668a920abd322df9aa37`, CI `38669580171` all three jobs
+successful, same-agent review `5527219011`, merge
+`ddecd51c19b7431d9ca3611add3304eea725240a`. The formal 8180 scope now uses three
+new observation-only DISABLED Bindings in an isolated IndexCore catalog; this
+supersedes the previous one-document default described below. Five real document
+files/three directories and one MP4 are visible; selected software directory is
+empty, not fabricated. See [actual evidence](PRODUCT-REAL-CATALOG.md). Two enabled
+owned user-systemd services had a controlled graceful restart test, not a full VM
+reboot test. No new provider start, content read or scheduled scan. Deployed product
+binary remains PR #85, schema v13; preserve separate Issue #83 WIP. D-044 forbids
+file delete UI/API; drive deletion does not bypass conservative canonical rules.
 
 Current authority: D-042 delegates Architect and Developer phases to one agent,
 with contracts, tests, CI and honest same-agent review before each merge. Ordinary
@@ -35,7 +48,8 @@ exact HEAD `e82d2fed1fa92ac68702a4189a336f2134f8f61c`, CI `38537678423` all succ
 connection and rollback. D-043 brought presentation forward; Issue #83 is next
 for exact-source admission/usage, with contracts before coding. No full MVP.
 
-The user's latest software/video/document display request advanced one bounded
+Historical PR #85 presentation baseline, superseded in source scope by PR #87:
+the user's software/video/document display request advanced one bounded
 readonly follow-up: Issue #84 / PR #85, merge `0ddf314554cd5b252969e9e1d82a06f9b36469c8`,
 exact HEAD `af23cf2746a0fa3f2266a8d7c95f4a0be550ec6d`, CI `38575852403` all three
 groups successful, same-agent review `5519125136`. Pure extension hints,
@@ -49,7 +63,8 @@ original hashes and unrelated service states unchanged. Resume Issue #83, then
 real Copy projection/access rather than continuing metadata-only substitutes.
 
 Readonly UI runs on .50 and the user accesses it via a loopback SSH forward.
-The explicit subsequent request for real data supersedes synthetic preview:
+Historical initial real-data hookup (the selected source is now the isolated
+PR #87 catalog above): the explicit real-data request superseded synthetic preview:
 fixture stopped, original staging PostgreSQL restored without migration, owned
 IndexCore QueryReader/Readiness/httpapi composition from pinned 7ef47217 with
 DB read-only sessions, no writer/Hint/scanner. Original public-table and provider

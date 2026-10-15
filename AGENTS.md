@@ -12,7 +12,20 @@ Before planning, changing, or reviewing code, **read these files first**:
 
 Chat history is not a source of truth.
 
-## Current execution pointer — 2026-10-14
+## Current execution pointer — 2026-10-15
+
+Latest accepted/deployed slice is Issue #86 / PR #87: exact HEAD `d693878c7791`,
+CI `38669580171` all three successful, merge `ddecd51c19b7`, same-agent review
+`5527219011`. [Real catalog contract](docs/PRODUCT-REAL-CATALOG.md) governs the
+three new isolated observation-only DISABLED Bindings. Formal .50 loopback 8180
+now shows five real document files/three directories, one MP4 and an empty
+software scope, superseding the old one-document default described below.
+Two owned readonly user-systemd services are enabled; controlled restart tested,
+full VM reboot untested. Panta uses IndexCore HTTP, never direct OpenList reads.
+D-044: DO NOT implement file-delete UI/API; users delete directly in their drive.
+No playback/content/access/Copy projection or full MVP acceptance is implied.
+Resume isolated Issue #83 admission/usage WIP without overwriting it; no v14
+migration has been deployed. No acquisition, Hint or scheduled scan is enabled.
 
 Gate 0 through Gate 3 are ACCEPTED / CLOSED. Gate 3.18 real Phase B passed
 [Architect final acceptance](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6143267673):
@@ -21,10 +34,10 @@ SUCCEEDED, with no additional StartDownload. Preserve the eight historical
 unknown reservations and protected evidence. No further live 115 validation is
 needed. Documentation Issue #75 / PR #76 is merged. Current task:
 auth Issue #77 / PR #78 merged. Current implementation:
-[Issue #79](https://github.com/nathanxiangang-web/panta/issues/79) / PR #80 and Issue #81 / PR #82 are accepted and merged. Read-only UI runs against real designated MCP-Test canonical data. Next bounded [Issue #83](https://github.com/nathanxiangang-web/panta/issues/83): freeze and implement exact-source admission and operation usage. [Read-only UI/runbook](docs/PRODUCT-READONLY-UI.md) remains governed by D-043.
+[Issue #79](https://github.com/nathanxiangang-web/panta/issues/79) / PR #80 and Issue #81 / PR #82 are accepted and merged. Initial readonly UI used real MCP-Test data; PR #87's isolated catalog now supersedes that default scope. Next bounded [Issue #83](https://github.com/nathanxiangang-web/panta/issues/83): freeze and implement exact-source admission and operation usage. [Read-only UI/runbook](docs/PRODUCT-READONLY-UI.md) remains governed by D-043.
 User-prioritized real resource presentation Issue #84 / PR #85 is accepted and
 deployed after exact-head CI `38575852403`. See [display module](docs/PRODUCT-RESOURCE-DISPLAY.md).
-This is metadata classification/list/cards/detail over the same scoped real
+That PR #85 baseline was metadata classification/list/cards/detail over the
 MCP-Test Root (one document), not whole-drive indexing, content preview/video
 playback or file access. Issue #83 WIP remains isolated on its own branch and
 unreviewed; no v14 migration has been deployed. Do not overwrite that work or

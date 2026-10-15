@@ -8,7 +8,30 @@
 
 Gate 0 through Gate 3 are accepted and closed. D-042 delegates Architect and Developer roles through minimum usable core MVP. Documentation audit PR #76, auth PR #78, reads PR #80 and readonly UI/startup PR #82 are merged. A protected readonly interface runs on staging host .50, accessed through a local loopback SSH forward. It now reads the existing real 115 MCP-Test canonical Root, not a mock or a fresh rescan. Admission/usage, current-database Copy synchronization, file access and share remain incomplete; this is not full MVP acceptance.
 
-### Current implementation task - 2026-10-14
+### Current implementation task - 2026-10-15
+
+Real catalog configuration and owned readonly lifecycle Issue #86 / PR #87 are
+ACCEPTED: reviewed HEAD `d693878c7791b592fa21668a920abd322df9aa37`, CI
+`38669580171` all three jobs successful, same-agent review `5527219011`, squash
+merge `ddecd51c19b7431d9ca3611add3304eea725240a`. See
+[source/lifecycle contract and actual evidence](docs/PRODUCT-REAL-CATALOG.md).
+The formal .50 loopback 8180 UI now selects three NEW observation-only DISABLED
+Bindings over an isolated IndexCore catalog: documents/tutorials (five real files
+and three directories), one video directory (one real MP4), software (confirmed
+empty). Browser category/cards/video detail verified on 2026-10-15. These replace
+the previous one-document default scope; this is not whole-drive coverage.
+Panta queries IndexCore HTTP only, not OpenList or its DB. D-044 excludes file
+delete UI/API: users delete in their drive, conservative IndexCore rules unchanged.
+
+Two enabled user-systemd readonly services survived a controlled graceful
+restart; full VM reboot recovery has NOT been tested. Pinned original database
+hashes and unrelated services remain unchanged. Product binary is still reviewed
+PR #85 `af23cf2746a0`, schema v13; deployment adds reviewed process management and
+configuration, not new playback/content/access or Copy projection. No provider
+download, Hint or scheduled scanning is enabled. Admission Issue #83 WIP remains
+separate and unreviewed; resume that slice before Copy/access/share implementation.
+
+### Previous presentation acceptance - 2026-10-14
 
 User-prioritized readonly resource presentation Issue #84 / PR #85 is ACCEPTED
 and merged at `0ddf314554cd5b252969e9e1d82a06f9b36469c8`, reviewed HEAD
