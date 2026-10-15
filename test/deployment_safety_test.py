@@ -9,6 +9,9 @@ class DeploymentSafety(unittest.TestCase):
   for bad in ['',token+'\n','a.b.c','secret','a.'+base64.urlsafe_b64encode(b'{"exp":true}').decode()+'.b']:self.assertFalse(refresh.valid_token(bad,now))
   me={'id':5,'base_path':'/115网盘/CloudSite','permission':0,'disabled':False};self.assertTrue(refresh.validate_identity(me))
   for change in [{'id':2},{'base_path':'/'},{'permission':65535},{'disabled':True}]:self.assertFalse(refresh.validate_identity(dict(me,**change)))
+  local={'id':3,'base_path':'/115open/CloudSite','permission':65341,'disabled':False}
+  expected={k:local[k] for k in ['id','base_path','permission']}
+  self.assertTrue(refresh.validate_identity(local,expected));self.assertFalse(refresh.validate_identity(local));self.assertFalse(refresh.validate_identity(dict(local,base_path='/'),expected))
  def test_private_deployment_has_no_host_ports_and_defaults_route_off(self):
   raw=(DEPLOY/'cloudsiteV1.0.0alpha.yml').read_text()
   self.assertNotIn('ports:',raw);self.assertIn('${CLOUDSITE_TRAEFIK_ENABLED:-false}',raw);self.assertEqual(raw.count('network_mode: service:edge'),2)
