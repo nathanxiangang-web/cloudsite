@@ -85,8 +85,12 @@ def load_receipt(receipt_path):
     for dsn, port, database in [(product_dsn, 55440, "panta_mvp_preview"),
                                (catalog_dsn, 55433, "indexcore_panta_mvp_catalog_20261014")]:
         parsed = urllib.parse.urlparse(dsn)
+        # libpq/pgx accept host/port/dbname options in the query string. Reject
+        # such overrides instead of checking only the URL authority/path.
+        options = urllib.parse.parse_qsl(parsed.query, strict_parsing=True)
         if (parsed.scheme not in ("postgres", "postgresql") or parsed.hostname != "127.0.0.1"
-                or parsed.port != port or parsed.path != "/" + database):
+                or parsed.port != port or parsed.path != "/" + database or parsed.fragment
+                or len(options) > 1 or any(key != "sslmode" for key, _ in options)):
             raise Refused("database scope rejected")
     return root, receipt, product, catalog, config_path, catalog_dsn
 
