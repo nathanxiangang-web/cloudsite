@@ -14,7 +14,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
 
-//go:embed web/index.html web/app.css web/resource-display.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js
+//go:embed web/index.html web/app.css web/resource-display.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js web/library-sharing.js web/share.html web/share.js
 var workspaceFiles embed.FS
 
 type DisplayBinding struct {
@@ -27,10 +27,11 @@ func ValidDisplayLabel(label string) bool {
 }
 
 type workspaceInfo struct {
-	ContentAccess bool             `json:"content_access_enabled"`
-	Mode          string           `json:"mode"`
-	SchemaVersion int64            `json:"schema_version"`
-	Bindings      []DisplayBinding `json:"bindings"`
+	SharingEnabled bool             `json:"sharing_enabled"`
+	ContentAccess  bool             `json:"content_access_enabled"`
+	Mode           string           `json:"mode"`
+	SchemaVersion  int64            `json:"schema_version"`
+	Bindings       []DisplayBinding `json:"bindings"`
 }
 type loginGate struct {
 	mu     sync.Mutex
@@ -92,7 +93,10 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 	if settings.files != nil {
 		registerContent(h, settings.files, settings.previews)
 	}
-	info := workspaceInfo{ContentAccess: settings.files != nil, Mode: "READ_ONLY", SchemaVersion: version, Bindings: append([]DisplayBinding(nil), bindings...)}
+	if settings.shares != nil {
+		registerSharing(h, settings.shares)
+	}
+	info := workspaceInfo{SharingEnabled: settings.shares != nil, ContentAccess: settings.files != nil, Mode: "READ_ONLY", SchemaVersion: version, Bindings: append([]DisplayBinding(nil), bindings...)}
 	h.mux.Handle("GET /api/v1/workspace", h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, err := strictQuery(r); err != nil {
 			readFailure(w, err)
@@ -117,6 +121,9 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		{"GET /admin/{$}", "web/index.html", "text/html; charset=utf-8"},
 		{"GET /assets/library.css", "web/library.css", "text/css; charset=utf-8"},
 		{"GET /assets/library.js", "web/library.js", "text/javascript; charset=utf-8"},
+		{"GET /assets/library-sharing.js", "web/library-sharing.js", "text/javascript; charset=utf-8"},
+		{"GET /s/{$}", "web/share.html", "text/html; charset=utf-8"},
+		{"GET /assets/share.js", "web/share.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/file-catalog.js", "web/file-catalog.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/app.css", "web/app.css", "text/css; charset=utf-8"},
 		{"GET /assets/resource-display.js", "web/resource-display.js", "text/javascript; charset=utf-8"},
@@ -149,7 +156,7 @@ func (h *WorkspaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.mu.Unlock()
 	defer h.active.Done()
 	lifetime := 15 * time.Second
-	if (r.Method == "GET" || r.Method == "HEAD") && r.URL.Path == "/api/v1/files/content" {
+	if (r.Method == "GET" || r.Method == "HEAD") && (r.URL.Path == "/api/v1/files/content" || strings.HasPrefix(r.URL.Path, "/api/v1/shared/")) {
 		lifetime = 30 * time.Minute
 	}
 	if r.Method == "GET" && r.URL.Path == "/api/v1/files/preview" {

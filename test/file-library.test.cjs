@@ -52,12 +52,12 @@ function workspace(){
   constructor(){this.children=[];this.attrs={};this.listeners={};this.value='';this.hidden=false;this.disabled=false;this.isConnected=true;this._text='';}
   set textContent(value){this._text=String(value);this.children=[];}get textContent(){return this._text;}
   append(...nodes){this.children.push(...nodes);}replaceChildren(...nodes){this._text='';this.children=nodes;}
-  addEventListener(type,fn){(this.listeners[type]||=[]).push(fn);}setAttribute(k,v){this.attrs[k]=v;}removeAttribute(k){delete this.attrs[k];delete this[k];}scrollIntoView(){}focus(){this.focused=true;}pause(){this.paused=true;}load(){this.loaded=true;}
+  addEventListener(type,fn){(this.listeners[type]||=[]).push(fn);}setAttribute(k,v){this.attrs[k]=v;}removeAttribute(k){delete this.attrs[k];delete this[k];}scrollIntoView(){}focus(){this.focused=true;}pause(){this.paused=true;}load(){this.loaded=true;}click(){this.clicked=true;}select(){this.selected=true;}
  }
- const elements=new Map(Array.from(ids,id=>[id,new Element()]));const requests=[];
- const ctx=vm.createContext({AbortController,URLSearchParams,document:{getElementById(id){assert.ok(elements.has(id),'Unknown id '+id);return elements.get(id);},createElement(){return new Element();}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
- for(const script of ['resource-display.js','file-catalog.js','library.js'])vm.runInContext(fs.readFileSync(path.join(web,script),'utf8'),ctx);
- return {ctx,elements,requests,run:s=>vm.runInContext(s,ctx)};
+ const elements=new Map(Array.from(ids,id=>[id,new Element()]));const requests=[],created=[];
+ const ctx=vm.createContext({AbortController,URLSearchParams,document:{getElementById(id){assert.ok(elements.has(id),'Unknown id '+id);return elements.get(id);},createElement(){const e=new Element();created.push(e);return e;}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
+ for(const script of ['resource-display.js','file-catalog.js','library.js','library-sharing.js'])vm.runInContext(fs.readFileSync(path.join(web,script),'utf8'),ctx);
+ return {ctx,elements,requests,created,run:s=>vm.runInContext(s,ctx)};
 }
 test('consumer DOM has literal file cards and no operational topology controls',()=>{
  const app=workspace();app.ctx.item=file('evil',{name:'<img src=x onerror=alert(1)>.pdf',path:'/PRIVATE/path'});
@@ -118,4 +118,37 @@ test('PDF uses server PNG pages, bounded navigation and discards late pages',asy
  const next=app.requests.filter(r=>r.url.includes('/files/preview?'))[1];assert.ok(next.url.endsWith('&page=2'));
  app.run('closeDetail();');next.resolve({ok:true,status:200,json:async()=>({format:'pdf',image_base64:'iVBORw0KGgoAAA',pages:2,page:2})});
  await new Promise(resolve=>setImmediate(resolve));assert.equal(app.elements.get('file-preview').children.length,0);
+});
+
+test('share link is one-file only and cleared on logout; late create is ignored',async()=>{
+ const app=workspace();app.ctx.item=file('doc',{name:'file.md',path:'/docs/file.md'});app.run('library.content=true;library.sharing=true;fileDetail(item,null);');
+ app.elements.get('share-duration').value='1h';app.elements.get('share-code').value='code123';
+ const pending=app.elements.get('share-form').listeners.submit[0]({preventDefault(){}});const read=app.requests.find(r=>r.url==='/api/v1/shares');assert.equal(JSON.parse(read.options.body).resource_id,'doc');assert.equal(app.elements.get('share-create').disabled,true);
+ read.resolve({ok:true,status:201,json:async()=>({url:'http://127.0.0.1:8180/s/#opaque',expires_at:'2026-10-16T00:00:00Z'})});await pending;assert.ok(app.elements.get('share-url').value.endsWith('#opaque'));
+ app.run('signOut();');assert.equal(app.elements.get('share-url').value,'');assert.equal(app.elements.get('share-code').value,'');assert.equal(app.elements.get('my-shares-panel').hidden,true);
+ app.run('library.content=true;library.sharing=true;fileDetail(item,null);');app.elements.get('share-duration').value='1h';
+ const late=app.elements.get('share-form').listeners.submit[0]({preventDefault(){}});const last=app.requests.filter(r=>r.url==='/api/v1/shares').at(-1);app.run('closeDetail();');last.resolve({ok:true,status:201,json:async()=>({url:'SECRET',expires_at:'2026-10-16T00:00:00Z'})});await late;assert.equal(app.elements.get('share-url').value,'');
+});
+
+test('download probes HEAD then hands native download to browser without Blob buffering',async()=>{
+ const app=workspace();app.ctx.item=file('doc',{name:'file.md',path:'/docs/file.md'});app.run('library.content=true;fileDetail(item,null);');
+ const pending=app.elements.get('file-download').listeners.click[0]({preventDefault(){}});const head=app.requests.find(r=>r.options.method==='HEAD');assert.ok(head);head.resolve({ok:true,status:200});await pending;
+ assert.ok(app.created.some(e=>e.clicked&&e.download==='file.md'));assert.ok(app.elements.get('download-status').textContent.includes('浏览器'));
+});
+
+test('failed download does not navigate away and owner revoke uses protected POST',async()=>{
+ const app=workspace();app.ctx.item=file('doc',{name:'file.md',path:'/docs/file.md'});app.run('library.content=true;fileDetail(item,null);');
+ const pending=app.elements.get('file-download').listeners.click[0]({preventDefault(){}});app.requests.find(r=>r.options.method==='HEAD').resolve({ok:false,status:503});await pending;assert.ok(!app.created.some(e=>e.clicked));assert.ok(app.elements.get('download-status').textContent.includes('无法下载'));
+ const listing=app.run('loadShares()');const request=app.requests.find(r=>r.url==='/api/v1/shares');request.resolve({ok:true,status:200,json:async()=>({items:[{id:'one',name:'<script>secret</script>',active:true,expires_at:'2026-10-16T00:00:00Z'}]})});await listing;
+ const row=app.elements.get('owned-shares').children[0];assert.ok(row.children[0].textContent.includes('<script>'));
+ const revoke=row.children[1].listeners.click[0]();const write=app.requests.find(r=>r.url==='/api/v1/shares/one/revoke');assert.equal(write.options.method,'POST');write.resolve({ok:true,status:204});await new Promise(resolve=>setImmediate(resolve));const refresh=app.requests.filter(r=>r.url==='/api/v1/shares').at(-1);refresh.resolve({ok:true,status:200,json:async()=>({items:[]})});await revoke;assert.equal(app.elements.get('owned-shares').children.length,0);
+});
+
+test('guest share page uses fragment token and verified single-file route, never markup',async()=>{
+ const ids=Array.from(fs.readFileSync(path.join(web,'share.html'),'utf8').matchAll(/id="([^"]+)"/g),m=>m[1]);
+ const elements=new Map(ids.map(id=>[id,{value:'',listeners:{},textContent:'',addEventListener(k,v){this.listeners[k]=v;},removeAttribute(k){delete this[k];}}]));const requests=[];
+ const ctx=vm.createContext({location:{hash:'#'+'A'.repeat(43)},document:{getElementById:id=>elements.get(id)},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});vm.runInContext(fs.readFileSync(path.join(web,'share.js'),'utf8'),ctx);
+ const pending=elements.get('redeem-form').listeners.submit({preventDefault(){}});assert.equal(requests[0].url,'/api/v1/shares/redeem');assert.equal(JSON.parse(requests[0].options.body).token,'A'.repeat(43));
+ requests[0].resolve({ok:true,json:async()=>({name:'<script>file</script>',size_bytes:4,expires_at:'2026-10-16T00:00:00Z',download_url:'/api/v1/shared/95000000-0000-4000-8000-000000000001/content'})});await pending;
+ assert.equal(elements.get('shared-name').textContent,'<script>file</script>');assert.equal(elements.get('shared-file').hidden,false);
 });

@@ -12,13 +12,19 @@ import (
 
 	"github.com/nathanxiangang-web/panta/internal/auth"
 	"github.com/nathanxiangang-web/panta/internal/fileaccess"
+	"github.com/nathanxiangang-web/panta/internal/fileshare"
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
 
 type WorkspaceOption func(*workspaceOptions)
 type workspaceOptions struct {
+	shares   *fileshare.Service
 	files    *fileaccess.Service
 	previews *fileaccess.PreviewService
+}
+
+func WithSharing(shares *fileshare.Service) WorkspaceOption {
+	return func(o *workspaceOptions) { o.shares = shares }
 }
 
 func WithFileAccess(service *fileaccess.Service, previews ...*fileaccess.PreviewService) WorkspaceOption {
@@ -126,28 +132,31 @@ func registerContent(h *Handler, service *fileaccess.Service, previews *fileacce
 				}
 				return
 			}
-			defer file.Content.Body.Close()
-			media := inlineType(file.Extension)
-			if disposition != "inline" || media == "" {
-				disposition = "attachment"
-				media = "application/octet-stream"
-			}
-			w.Header().Set("Content-Type", media)
-			w.Header().Set("Content-Disposition", mime.FormatMediaType(disposition, map[string]string{"filename": file.Name}))
-			w.Header().Set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'")
-			w.Header().Set("X-Frame-Options", "SAMEORIGIN")
-			w.Header().Set("Accept-Ranges", "bytes")
-			w.Header().Set("Content-Length", fmt.Sprint(file.Content.Length))
-			if file.Content.ContentRange != "" {
-				w.Header().Set("Content-Range", file.Content.ContentRange)
-			}
-			_ = http.NewResponseController(w).SetWriteDeadline(time.Now().Add(30 * time.Minute))
-			w.WriteHeader(file.Content.Status)
-			if r.Method != http.MethodHead {
-				_, _ = io.CopyN(w, file.Content.Body, file.Content.Length)
-			}
+			writeFile(w, r, file, disposition)
 		}))
 		h.mux.Handle("GET /api/v1/files/"+mode, handler)
+	}
+}
+func writeFile(w http.ResponseWriter, r *http.Request, file fileaccess.File, disposition string) {
+	defer file.Content.Body.Close()
+	media := inlineType(file.Extension)
+	if disposition != "inline" || media == "" {
+		disposition = "attachment"
+		media = "application/octet-stream"
+	}
+	w.Header().Set("Content-Type", media)
+	w.Header().Set("Content-Disposition", mime.FormatMediaType(disposition, map[string]string{"filename": file.Name}))
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'")
+	w.Header().Set("X-Frame-Options", "SAMEORIGIN")
+	w.Header().Set("Accept-Ranges", "bytes")
+	w.Header().Set("Content-Length", fmt.Sprint(file.Content.Length))
+	if file.Content.ContentRange != "" {
+		w.Header().Set("Content-Range", file.Content.ContentRange)
+	}
+	_ = http.NewResponseController(w).SetWriteDeadline(time.Now().Add(30 * time.Minute))
+	w.WriteHeader(file.Content.Status)
+	if r.Method != http.MethodHead {
+		_, _ = io.CopyN(w, file.Content.Body, file.Content.Length)
 	}
 }
 func contentFailure(w http.ResponseWriter, err error) {
