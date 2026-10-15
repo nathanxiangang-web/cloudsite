@@ -14,7 +14,22 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-15
 
-Latest accepted/deployed content is Issue #90 / PR #91, exact HEAD
+Latest accepted/deployed Issue #92 / PR #93, exact HEAD `d98f79a2d39f`,
+CI `38702187329` all three SUCCESS, same-agent review `5529930361`, merge
+`49b98b21bff0`; merge CI `38702621096` SUCCESS. D-047 and
+[sharing contract](docs/PRODUCT-FILE-SHARING.md): Panta-hosted single-file links,
+expiry/code/grant/owner revoke and streamed download UX. Not native115 shares or
+public exposure. Real ordinary/guest downloads hash-match; anonymous grant,
+wrong-code rejection and revoke-denial verified. Temporary test shares revoked.
+Owned product DB14 only, protected13 backup, reviewed14 sharing-disabled fallback
+started and verified. Old13 binary is incompatible with14: do not use old receipt
+blindly. Binary SHA256 `38d8f0c5c75053b263c98c8cd0e0997f9c7be074b2eaa8584583d6e5f2eb951c`.
+Original staging12/query/generations/services unchanged; zero native provider
+calls/scan/Hint. Issue83 WIP preserved; unmerged draft14 needs later renumbering.
+Older no-v14/sharing-not-implemented pointers below are historical; native115
+ShareProvider, admission/usage/current-DB Copy still remain. No full MVP claim.
+
+Previous accepted/deployed content is Issue #90 / PR #91, exact HEAD
 `34863813a53f`, CI `38699810879` all three SUCCESS, same-agent review
 `5529707246`, merge `e5783b5fcef27`. D-046 and
 [content contract](docs/PRODUCT-FILE-CONTENT.md) govern server-only known-file

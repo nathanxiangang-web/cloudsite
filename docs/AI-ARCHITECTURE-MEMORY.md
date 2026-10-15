@@ -3,7 +3,7 @@
 > Canonical short-form project memory for Architect/AI sessions.
 >
 > Last architecture-memory synchronization: **2026-10-15**
-> Current status: **Gate 0-3 CLOSED. PR #91 accepted/deployed: authenticated download/media, one-hour private server document cache and PDF PNG pages, Office/text previews. D-046 content access, D-045 dual UI and D-044 no file deletion. PR #87 real scopes remain, not whole-drive. Issue #83 isolated unreviewed WIP; Copy projection/admission/usage/sharing incomplete. No full MVP acceptance.**
+> Current status: **Gate 0-3 CLOSED. PR #93 accepted/deployed: Panta-hosted expiring/code-protected single-file sharing, owner revoke and download UX. Product schema14; original staging12 unchanged. Prior content/cache/media remain. D-047 product shares, D-046 content, D-045 dual UI, D-044 no deletion. Native115 share/Copy projection/admission/usage unfinished. Issue83 WIP preserved but draft14 needs rebase. No full MVP acceptance.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -12,7 +12,24 @@
 
 ## 1. Source-of-truth order
 
-Latest accepted content slice: Issue #90 / PR #91, exact reviewed HEAD
+Latest: Issue #92 / PR #93, exact HEAD `d98f79a2d39f6add0e6d7d4bb98126516623bfa7`,
+CI `38702187329` all three SUCCESS, same-agent review `5529930361`, merge
+`49b98b21bff0c6be3e11f05a6292ba6c383da3af`, merge CI `38702621096` SUCCESS.
+D-047 [product sharing contract](PRODUCT-FILE-SHARING.md): Panta-hosted single
+canonical file, hash-only link/grant tokens, optional bcrypt code, DB-time expiry,
+owner management/revoke, guest grants/downloads. Not native115 ShareProvider or
+public internet distribution; current localhost service must be reachable.
+Ordinary/guest browser downloads hash-match; wrong code and revoked link denied.
+Separate anonymous formal client has no product session; download/HEAD/Range
+and revoked redemption denied. Test shares revoked. Content regression passed.
+Owned product DB14 only, protected13 backup. Reviewed14 content-only disabled-
+sharing fallback started/verified; NEVER point strict13 binary at14. Binary
+SHA256 `38d8f0c5c75053b263c98c8cd0e0997f9c7be074b2eaa8584583d6e5f2eb951c`.
+Original staging12 histories/query/generations/services unchanged; zero native
+provider/share/download/login/scan/Hint. Issue83 WIP unchanged, draft14 must be
+renumbered later. Its older 'no v14 deployed' pointers below are now historical.
+
+Previous accepted content slice: Issue #90 / PR #91, exact reviewed HEAD
 `34863813a53f8b1be187bfb9ceaecafbab4cb886`, CI `38699810879` all three SUCCESS,
 same-agent review `5529707246`, merge `e5783b5fcef27f3a6f520b08d5773819d3f6aea5`.
 D-046: known-file bytes may use the server-only OpenList content adapter AFTER

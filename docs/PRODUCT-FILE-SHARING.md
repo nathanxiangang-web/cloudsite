@@ -55,3 +55,22 @@ Staging acceptance uses a real small file, one temporary product share, separate
 guest redemption/download and revoke -> denied. No 115 native share is created.
 CloudSite service.py is the inspected primary reference for expiry/code/revoke
 UX only, not copied storage/CAPTCHA/permanent-link/unsafe preview behavior.
+
+## Acceptance/deployment evidence
+
+PR #93 reviewed `d98f79a2d39f6add0e6d7d4bb98126516623bfa7`, exact CI
+`38702187329` all three SUCCESS, same-agent review `5529930361`, merge
+`49b98b21bff0c6be3e11f05a6292ba6c383da3af`, merge CI `38702621096` SUCCESS.
+Actual candidate browser: normal/guest DOCX downloads15423 bytes, same SHA256
+`2bc8090eca36718b3c682ba66f9b3f1a97b88be0d850a1f7c55f1ffedf298925`;
+wrong code denied, UI revoke then download denied. Formal8180 separate guest
+client has no product session; download/HEAD/206 Range and revoke/denied redeem
+pass. Formal UI download also checked. Test shares revoked, originals unchanged.
+
+Go/race/architecture/vet/build, 24 Node, ten Python and isolated real PG tests
+pass. Product-only explicit13->14 migration with protected backup; reviewed14
+sharing-disabled content-only fallback started/verified before feature enable.
+Binary SHA256 `38d8f0c5c75053b263c98c8cd0e0997f9c7be074b2eaa8584583d6e5f2eb951c`.
+Query PID/generations0/1/1, original staging table hashes and unrelated services
+unchanged. No native115 share/download/login, scans/Hint, role changes or file
+deletion. Existing PDF/Office/video/content regressions pass. No full MVP claim.

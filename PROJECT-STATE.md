@@ -6,9 +6,41 @@
 
 **Gate 3 CLOSED; auth/read/readonly UI accepted; real canonical reads connected; minimum MVP still incomplete**
 
-Gate 0 through Gate 3 are accepted and closed. D-042 delegates Architect and Developer roles through minimum usable core MVP. Docs/auth/reads/UI, real catalog and authenticated file content slices are merged. Owned product UI runs on staging host .50 through a loopback SSH forward, reading the isolated real IndexCore catalog introduced by PR #87. PR #89 separates consumer file library from administrator workspace. PR #91 adds real content and server document previews. Admission/usage, current-database Copy synchronization and sharing remain incomplete; this is not full MVP acceptance.
+Gate 0 through Gate 3 are accepted and closed. D-042 delegates Architect and Developer roles through minimum usable core MVP. Docs/auth/reads/UI, real catalog, file content and Panta-hosted single-file sharing are merged. Owned product UI runs on staging host .50 through a loopback SSH forward, reading the isolated real IndexCore catalog introduced by PR #87. PR #89 separates consumer and admin UI; PR #91 adds content/server previews; PR #93 adds product shares/download UX. Admission/usage, current-database Copy synchronization and native115 ShareProvider remain incomplete; this is not full MVP acceptance.
 
-### Current content acceptance and deployment - 2026-10-15
+### Current sharing acceptance and deployment - 2026-10-15
+
+Issue #92 / PR #93 ACCEPTED and deployed. Reviewed HEAD
+`d98f79a2d39f6add0e6d7d4bb98126516623bfa7`, exact-head CI `38702187329` all
+three SUCCESS, same-agent review `5529930361`, merge
+`49b98b21bff0c6be3e11f05a6292ba6c383da3af`; merge CI `38702621096` SUCCESS.
+D-047 and [module contract](docs/PRODUCT-FILE-SHARING.md): Panta-hosted file links,
+5m/1h/6h/24h/7d expiry, optional code, separate guest grant cookie, copy link,
+owner list/revoke; exact canonical file authorization before create/download.
+This is NOT native115 sharing, directory sharing or public internet exposure.
+Current localhost URLs require reachable Panta. Source scopes unchanged.
+
+Browser ordinary and guest DOCX downloads both15423 bytes, SHA256
+`2bc8090eca36718b3c682ba66f9b3f1a97b88be0d850a1f7c55f1ffedf298925`.
+Wrong code denied; owner UI revoke then guest download denied. Separate formal
+guest CookieJar has NO product session; correct-code download/HEAD/206 Range,
+revocation and repeated redemption denial pass. Temporary test shares revoked.
+Existing five downloads, server PDF pages/Office/text and video Range/HEAD pass.
+Go/architecture/race/vet/build, 24 Node, ten Python and real isolated PG share
+expiry/current-owner/hash/concurrent-limit tests pass, plus exact-head PG16/18 CI.
+
+Only owned product DB explicitly migrated13 ->14 (two new sharing tables).
+Protected v13 backup retained. Reviewed v14 binary in sharing-disabled
+content-only mode was started and verified BEFORE enabling sharing; that config
+is the service fallback. Old strict-v13 binary cannot run against v14, so do NOT
+blindly reuse old rollback receipt. Deployed binary SHA256
+`38d8f0c5c75053b263c98c8cd0e0997f9c7be074b2eaa8584583d6e5f2eb951c`.
+Original staging v12 table hashes, query PID/generations0/1/1 and unrelated
+services unchanged. No native provider/share/download calls, scan/Hint/login or
+role change. Issue83 WIP untouched; its unmerged draft14 must be rebased and
+renumbered later, NOT applied on this product DB. No full MVP acceptance.
+
+### Previous content acceptance and deployment - 2026-10-15
 
 Issue #90 / PR #91 ACCEPTED, merged and deployed. Reviewed exact HEAD
 `34863813a53f8b1be187bfb9ceaecafbab4cb886`, CI `38699810879` all three jobs
