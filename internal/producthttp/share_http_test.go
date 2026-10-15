@@ -85,7 +85,7 @@ func TestShareHTTPAnonymousGrantRangeHeadAndRevoke(t *testing.T) {
 		return w
 	}
 	origin := "http://127.0.0.1:8180"
-	body := `{"binding_id":"` + string(workspaceBinding.ID) + `","resource_id":"file-one","path":"/docs/name.md","duration":"1h","code":"code123"}`
+	body := `{"binding_id":"` + string(workspaceBinding.ID) + `","resource_id":"file-one","path":"/docs/name.md","duration":"1h","code":"aB39"}`
 	if w := call("POST", "/api/v1/shares", body, false, nil, origin); w.Code != 401 {
 		t.Fatal("anonymous create", w.Code)
 	}
@@ -112,7 +112,7 @@ func TestShareHTTPAnonymousGrantRangeHeadAndRevoke(t *testing.T) {
 	if w = redeem("wrong-code"); w.Code != 404 {
 		t.Fatal("code bypass")
 	}
-	w = redeem("code123")
+	w = redeem("aB39")
 	if w.Code != 200 || len(w.Result().Cookies()) != 1 {
 		t.Fatal("grant", w.Code)
 	}

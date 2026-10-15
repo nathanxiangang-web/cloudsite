@@ -65,6 +65,7 @@ class ReadonlyServiceTests(unittest.TestCase):
         self.config["sharing_enabled"] = True
         self.write("product.json", json.dumps(self.config))
         with self.assertRaises(service.Refused): self.load()
+
         self.write("content.token", "test-only-token")
         cache = self.private / "preview-cache"
         cache.mkdir(mode=0o700)
@@ -75,6 +76,15 @@ class ReadonlyServiceTests(unittest.TestCase):
         self.config["sharing_enabled"] = "true"
         self.write("product.json", json.dumps(self.config))
         with self.assertRaises(service.Refused): self.load()
+
+    def test_four_bindings_and_explicit_consumer_selection(self):
+        self.config["bindings"].append({"binding_id":"cloudsite", "label":"CloudSite"})
+        self.config.update(library_binding_ids=["cloudsite"],whole_root_library=True)
+        self.write("product.json",json.dumps(self.config));self.load()
+        for selected in (["outside"],["cloudsite","cloudsite"],[]):
+            self.config["library_binding_ids"]=selected
+            self.write("product.json",json.dumps(self.config))
+            with self.assertRaises(service.Refused):self.load()
 
     def test_reject_permissions_symlink_duplicate_and_unknown_fields(self):
         path = self.private / "receipt.json"

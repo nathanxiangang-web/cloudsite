@@ -18,6 +18,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/platform/bootstrap"
 	"github.com/nathanxiangang-web/panta/internal/product"
 	"github.com/nathanxiangang-web/panta/internal/producthttp"
+	"github.com/nathanxiangang-web/panta/internal/storage"
 )
 
 const ServeAction = "serve-product-readonly"
@@ -27,6 +28,8 @@ var ErrConfig = errors.New("invalid protected product configuration")
 var ErrStartup = errors.New("product process unavailable")
 
 type Config struct {
+	LibraryBindingIDs    []storage.BindingID          `json:"library_binding_ids,omitempty"`
+	WholeRootLibrary     bool                         `json:"whole_root_library,omitempty"`
 	SharingEnabled       bool                         `json:"sharing_enabled,omitempty"`
 	FileAccessConfigFile string                       `json:"file_access_config_file,omitempty"`
 	DatabaseURLFile      string                       `json:"database_url_file"`

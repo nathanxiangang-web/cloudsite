@@ -1197,3 +1197,31 @@ means links require reachable Panta; it is not public internet distribution.
 Revocation denies new requests, not bytes already sent. No full MVP claim.
 See [module/deployment contract](PRODUCT-FILE-SHARING.md).
 
+## D-048 - Complete CloudSite file scope and optional random4-character codes
+
+**Status:** Accepted direct human correction, 2026-10-15; Issue #94.
+
+New share forms generate exactly4 uniformly sampled alphanumeric characters
+using browser crypto. Clearing the input intentionally disables code validation;
+never auto-refill it on submit. New nonempty codes are exactly4 A-Z/a-z/0-9.
+Existing longer hashed codes remain redeemable. Keep256-bit link/grant tokens,
+bcrypt, expiry/revoke and bounded guesses; four-character codes are not standalone
+access credentials. Show/copy the code with the created link and clear on logout.
+
+The human expands consumer scope to every file under their CloudSite directory,
+superseding the three-subtree-only operator scope. Read-only discovery confirms
+the existing OpenList account base_path `/115open/CloudSite`; logical `/` is this
+directory only, NOT all115 storage. Use one NEW Root in the isolated catalog and
+one bounded existing-CLI scan, unchanged canonical/deletion rules. No native
+download/share/session or source-file mutation, no original DB/Root changes.
+
+Keep old three product bindings readable so old shares survive; add one new
+observation-only DISABLED binding and select only it for the frontend. Admin and
+backend read scopes are not deleted. Explicit Q6 whole-root pagination supplements
+Q4 hierarchy; no direct product OpenList catalog or IndexCore DB access. Load all
+canonical pages in bounded cancellable batches without old32-page/256-dir cutoff,
+render120 files per UI page to keep it responsive. Disclose incomplete reads.
+Images/audio/archives/unrecognized extensions use Other; no file format excluded.
+Directories never become file cards. Product schema stays14, Issue83 WIP preserved.
+See [contract and evidence](PRODUCT-CLOUDSITE-LIBRARY.md). No full MVP claim.
+

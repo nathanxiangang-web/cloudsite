@@ -5,6 +5,12 @@ const catalogCode=fs.readFileSync(path.join(web,'file-catalog.js'),'utf8');
 const {Catalog}=vm.runInNewContext(catalogCode+'\nFileCatalog;',{});
 const file=(id,extra={})=>({binding_id:'one',resource_id:id,name:id+'.pdf',directory:false,presence:'PRESENT',size_bytes:123,...extra});
 const page=(items=[],next_cursor='')=>({items,next_cursor});
+
+test('whole-root Q6 inventory continues beyond32 pages without directory traversal',async()=>{
+ const c=new Catalog([{binding_id:'one'}],true);let n=0;
+ while(!c.complete){await c.round(async scope=>{assert.equal(scope.parent,null);n++;return page([file('folder-'+n,{directory:true}),file('file-'+n)],n<45?'cursor-'+n:'');});}
+ assert.equal(c.files.length,45);assert.equal(c.pages,45);assert.equal(c.limited,false);assert.equal(c.scopes.size,1);
+});
 test('nested folders are internal Q4 reads; only explicit files are collected',async()=>{
  const c=new Catalog([{binding_id:'one'},{binding_id:'two'}]);const calls=[];
  await c.round(async s=>{calls.push([s.binding,s.parent,s.cursor]);if(s.binding==='two')return page([file('same',{binding_id:'two',name:'same.pdf'})]);if(!s.parent)return page([file('same'),file('folder',{directory:true}),file('unknown',{directory:null})]);return page([file('nested')]);});
@@ -54,10 +60,10 @@ function workspace(){
   append(...nodes){this.children.push(...nodes);}replaceChildren(...nodes){this._text='';this.children=nodes;}
   addEventListener(type,fn){(this.listeners[type]||=[]).push(fn);}setAttribute(k,v){this.attrs[k]=v;}removeAttribute(k){delete this.attrs[k];delete this[k];}scrollIntoView(){}focus(){this.focused=true;}pause(){this.paused=true;}load(){this.loaded=true;}click(){this.clicked=true;}select(){this.selected=true;}
  }
- const elements=new Map(Array.from(ids,id=>[id,new Element()]));const requests=[],created=[];
- const ctx=vm.createContext({AbortController,URLSearchParams,document:{getElementById(id){assert.ok(elements.has(id),'Unknown id '+id);return elements.get(id);},createElement(){const e=new Element();created.push(e);return e;}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
+ const elements=new Map(Array.from(ids,id=>[id,new Element()]));const requests=[],created=[],copied=[];
+ const ctx=vm.createContext({AbortController,URLSearchParams,setTimeout,crypto:require('node:crypto').webcrypto,navigator:{clipboard:{async writeText(value){copied.push(value);}}},document:{getElementById(id){assert.ok(elements.has(id),'Unknown id '+id);return elements.get(id);},createElement(){const e=new Element();created.push(e);return e;}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
  for(const script of ['resource-display.js','file-catalog.js','library.js','library-sharing.js'])vm.runInContext(fs.readFileSync(path.join(web,script),'utf8'),ctx);
- return {ctx,elements,requests,created,run:s=>vm.runInContext(s,ctx)};
+ return {ctx,elements,requests,created,copied,run:s=>vm.runInContext(s,ctx)};
 }
 test('consumer DOM has literal file cards and no operational topology controls',()=>{
  const app=workspace();app.ctx.item=file('evil',{name:'<img src=x onerror=alert(1)>.pdf',path:'/PRIVATE/path'});
@@ -122,7 +128,7 @@ test('PDF uses server PNG pages, bounded navigation and discards late pages',asy
 
 test('share link is one-file only and cleared on logout; late create is ignored',async()=>{
  const app=workspace();app.ctx.item=file('doc',{name:'file.md',path:'/docs/file.md'});app.run('library.content=true;library.sharing=true;fileDetail(item,null);');
- app.elements.get('share-duration').value='1h';app.elements.get('share-code').value='code123';
+ app.elements.get('share-duration').value='1h';app.elements.get('share-code').value='aB39';
  const pending=app.elements.get('share-form').listeners.submit[0]({preventDefault(){}});const read=app.requests.find(r=>r.url==='/api/v1/shares');assert.equal(JSON.parse(read.options.body).resource_id,'doc');assert.equal(app.elements.get('share-create').disabled,true);
  read.resolve({ok:true,status:201,json:async()=>({url:'http://127.0.0.1:8180/s/#opaque',expires_at:'2026-10-16T00:00:00Z'})});await pending;assert.ok(app.elements.get('share-url').value.endsWith('#opaque'));
  app.run('signOut();');assert.equal(app.elements.get('share-url').value,'');assert.equal(app.elements.get('share-code').value,'');assert.equal(app.elements.get('my-shares-panel').hidden,true);
@@ -151,4 +157,23 @@ test('guest share page uses fragment token and verified single-file route, never
  const pending=elements.get('redeem-form').listeners.submit({preventDefault(){}});assert.equal(requests[0].url,'/api/v1/shares/redeem');assert.equal(JSON.parse(requests[0].options.body).token,'A'.repeat(43));
  requests[0].resolve({ok:true,json:async()=>({name:'<script>file</script>',size_bytes:4,expires_at:'2026-10-16T00:00:00Z',download_url:'/api/v1/shared/95000000-0000-4000-8000-000000000001/content'})});await pending;
  assert.equal(elements.get('shared-name').textContent,'<script>file</script>');assert.equal(elements.get('shared-file').hidden,false);
+});
+
+test('four-character code is random on open, clearing stays empty and copying preserves created code',async()=>{
+ const app=workspace();app.ctx.item=file('doc',{name:'file.md',path:'/docs/file.md'});app.run('library.content=true;library.sharing=true;fileDetail(item,null);');
+ const generated=new Set();for(let n=0;n<100;n++){const code=app.run('randomShareCode()');assert.match(code,/^[A-Za-z0-9]{4}$/);generated.add(code);}assert.ok(generated.size>1);
+ app.elements.get('file-share').listeners.click[0]();assert.match(app.elements.get('share-code').value,/^[A-Za-z0-9]{4}$/);
+ app.elements.get('share-code').value='';app.elements.get('share-duration').value='1h';
+ const pending=app.elements.get('share-form').listeners.submit[0]({preventDefault(){}});const request=app.requests.find(r=>r.url==='/api/v1/shares');assert.equal(JSON.parse(request.options.body).code,'');
+ request.resolve({ok:true,status:201,json:async()=>({url:'http://127.0.0.1:8180/s/#no-code',expires_at:'2026-10-16T00:00:00Z'})});await pending;assert.equal(app.elements.get('share-code-result').textContent,'无需提取码');
+ await app.elements.get('share-copy').listeners.click[0]();assert.equal(app.copied[0],'http://127.0.0.1:8180/s/#no-code\n无需提取码');
+ app.run("library.createdShareCode='aB39';");app.elements.get('share-code').value='xxxx';await app.elements.get('share-copy').listeners.click[0]();assert.ok(app.copied[1].endsWith('提取码：aB39'));
+});
+
+test('all files remain reachable with120-card pages; non-core extensions are Other',()=>{
+ const app=workspace();app.ctx.items=Array.from({length:241},(_,n)=>file(String(n)));
+ app.run("library.catalog=new FileCatalog.Catalog([{binding_id:'one'}],true);library.catalog.files=items;library.catalog.pending=[];drawFiles();");
+ assert.equal(app.elements.get('file-grid').children.length,120);assert.equal(app.elements.get('count-all').textContent,'241');
+ app.elements.get('file-page-next').listeners.click[0]();app.elements.get('file-page-next').listeners.click[0]();assert.equal(app.elements.get('file-grid').children.length,1);assert.ok(app.elements.get('file-page-status').textContent.includes('3 / 3'));
+ for(const name of ['image.png','archive.zip','music.mp3','no-extension','file.xyz']){app.ctx.item=file('other',{name});assert.equal(app.run('ResourceDisplay.category(item)'),'other');app.run('fileDetail(item,null);');assert.equal(app.elements.get('detail-type').textContent,'其他');}
 });

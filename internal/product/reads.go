@@ -97,6 +97,7 @@ type ResourcePage struct {
 	NextCursor string     `json:"next_cursor"`
 }
 type BrowseRequest struct {
+	WholeRoot        bool
 	BindingID        storage.BindingID
 	ParentResourceID *string
 	Cursor           string
@@ -273,7 +274,7 @@ func (s *ReadService) Browse(ctx context.Context, p auth.Principal, request Brow
 	if s == nil {
 		return ResourcePage{}, ErrUnavailable
 	}
-	if request.Limit < 1 || request.Limit > 50 || !ValidOpaque(request.Cursor) || (request.ParentResourceID != nil && (*request.ParentResourceID == "" || !ValidOpaque(*request.ParentResourceID))) {
+	if request.WholeRoot && request.ParentResourceID != nil || request.Limit < 1 || request.Limit > 50 || !ValidOpaque(request.Cursor) || (request.ParentResourceID != nil && (*request.ParentResourceID == "" || !ValidOpaque(*request.ParentResourceID))) {
 		return ResourcePage{}, ErrInvalid
 	}
 	ctx, cancel := context.WithTimeout(ctx, ReadTimeout)
@@ -282,7 +283,7 @@ func (s *ReadService) Browse(ctx context.Context, p auth.Principal, request Brow
 	if err != nil {
 		return ResourcePage{}, err
 	}
-	page, err := s.index.Browse(ctx, indexcore.BrowseRequest{RootID: binding.IndexCoreRootID, ParentResourceID: request.ParentResourceID, Cursor: request.Cursor, Limit: request.Limit})
+	page, err := s.index.Browse(ctx, indexcore.BrowseRequest{WholeRoot: request.WholeRoot, RootID: binding.IndexCoreRootID, ParentResourceID: request.ParentResourceID, Cursor: request.Cursor, Limit: request.Limit})
 	if err != nil {
 		return ResourcePage{}, safeReadError(err)
 	}

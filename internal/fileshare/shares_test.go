@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/nathanxiangang-web/panta/internal/auth"
 	"github.com/nathanxiangang-web/panta/internal/fileaccess"
+	"golang.org/x/crypto/bcrypt"
 	"io"
 	"strings"
 	"testing"
@@ -79,7 +80,7 @@ func TestShareCodeGrantIsolationAndCanonicalRevalidation(t *testing.T) {
 		t.Fatal("unavailable canonical shared")
 	}
 	files.err = nil
-	record, token, err := s.Create(ctx, owner(), fileaccess.Request{}, "1h", "code123")
+	record, token, err := s.Create(ctx, owner(), fileaccess.Request{}, "1h", "aB39")
 	if err != nil || !record.Protected || !validSecret(token) || string(record.TokenHash) == token || len(record.CodeHash) != 60 {
 		t.Fatal("share secret persistence", err)
 	}
@@ -89,7 +90,7 @@ func TestShareCodeGrantIsolationAndCanonicalRevalidation(t *testing.T) {
 	if _, err = s.Open(ctx, record.ID, token, "", false); !errors.Is(err, ErrDenied) || files.opened != 0 {
 		t.Fatal("link token forged grant")
 	}
-	grant, err := s.Redeem(ctx, token, "code123")
+	grant, err := s.Redeem(ctx, token, "aB39")
 	if err != nil || grant.Token == token {
 		t.Fatal("grant issuance", err)
 	}
@@ -106,5 +107,32 @@ func TestShareCodeGrantIsolationAndCanonicalRevalidation(t *testing.T) {
 	s.Revoke(ctx, owner(), record.ID)
 	if _, err = s.Open(ctx, record.ID, grant.Token, "", false); !errors.Is(err, ErrDenied) {
 		t.Fatal("revoke bypass")
+	}
+}
+func TestFourCharacterNewCodesAndLegacyRedeem(t *testing.T) {
+	for _, code := range []string{"aB39", "1234", "ABCD", "abcd"} {
+		if !ValidCode(code) {
+			t.Fatal(code)
+		}
+	}
+	for _, code := range []string{"123", "12345", "a B1", "a!B2", "中文12", "oldcode"} {
+		if ValidCode(code) {
+			t.Fatal("invalid code", code)
+		}
+	}
+	store := &fakeStore{}
+	s, _ := New(store, &fakeFiles{})
+	ctx := context.Background()
+	_, token, err := s.Create(ctx, owner(), fileaccess.Request{}, "1h", "")
+	if err != nil || store.record.Protected {
+		t.Fatal("empty must disable code", err)
+	}
+	if _, err = s.Redeem(ctx, token, ""); err != nil {
+		t.Fatal("no-code redeem", err)
+	}
+	store.record.Protected = true
+	store.record.CodeHash, _ = bcrypt.GenerateFromPassword([]byte("legacyCode123"), bcrypt.DefaultCost)
+	if _, err = s.Redeem(ctx, token, "legacyCode123"); err != nil {
+		t.Fatal("existing hashed code broken", err)
 	}
 }

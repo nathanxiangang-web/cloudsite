@@ -62,6 +62,8 @@ type ResolveResult struct {
 // BrowseRequest addresses one hierarchy level. A nil ParentResourceID means
 // root-level children; Cursor is an opaque value that must be reused unchanged.
 type BrowseRequest struct {
+	// WholeRoot explicitly selects Q6 active inventory, never Q4 hierarchy.
+	WholeRoot        bool
 	RootID           string
 	ParentResourceID *string
 	Cursor           string

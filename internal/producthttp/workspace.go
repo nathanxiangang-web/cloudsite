@@ -27,11 +27,12 @@ func ValidDisplayLabel(label string) bool {
 }
 
 type workspaceInfo struct {
-	SharingEnabled bool             `json:"sharing_enabled"`
-	ContentAccess  bool             `json:"content_access_enabled"`
-	Mode           string           `json:"mode"`
-	SchemaVersion  int64            `json:"schema_version"`
-	Bindings       []DisplayBinding `json:"bindings"`
+	WholeRootLibrary bool             `json:"whole_root_library"`
+	SharingEnabled   bool             `json:"sharing_enabled"`
+	ContentAccess    bool             `json:"content_access_enabled"`
+	Mode             string           `json:"mode"`
+	SchemaVersion    int64            `json:"schema_version"`
+	Bindings         []DisplayBinding `json:"bindings"`
 }
 type loginGate struct {
 	mu     sync.Mutex
@@ -97,12 +98,29 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		registerSharing(h, settings.shares)
 	}
 	info := workspaceInfo{SharingEnabled: settings.shares != nil, ContentAccess: settings.files != nil, Mode: "READ_ONLY", SchemaVersion: version, Bindings: append([]DisplayBinding(nil), bindings...)}
+	consumer := info
+	consumer.WholeRootLibrary = settings.wholeRoot
+	if len(settings.libraryIDs) > 0 {
+		consumer.Bindings = nil
+		selected := map[storage.BindingID]bool{}
+		for _, id := range settings.libraryIDs {
+			if !seen[id] || selected[id] {
+				return nil, product.ErrInvalid
+			}
+			selected[id] = true
+			for _, binding := range bindings {
+				if binding.ID == id {
+					consumer.Bindings = append(consumer.Bindings, binding)
+				}
+			}
+		}
+	}
 	h.mux.Handle("GET /api/v1/workspace", h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, err := strictQuery(r); err != nil {
 			readFailure(w, err)
 			return
 		}
-		respond(w, 200, info)
+		respond(w, 200, consumer)
 	})))
 	h.mux.Handle("GET /api/v1/admin/workspace", h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		p, _ := Principal(r.Context())

@@ -141,6 +141,9 @@ func (c *Client) Browse(ctx context.Context, request BrowseRequest) (ResourcePag
 	if request.Limit < 0 {
 		return ResourcePage{}, localRequestError("browse", "limit must not be negative")
 	}
+	if request.WholeRoot && (request.ParentResourceID != nil || request.IncludeRemoved || request.IncludeDeprecatedRoot || request.IncludeDeletedRoot) {
+		return ResourcePage{}, localRequestError("browse", "whole-root mode does not accept hierarchy or visibility overrides")
+	}
 	query := make(url.Values)
 	if request.ParentResourceID != nil {
 		query.Set("parent_id", *request.ParentResourceID)
@@ -152,7 +155,11 @@ func (c *Client) Browse(ctx context.Context, request BrowseRequest) (ResourcePag
 	addVisibility(query, request.ReadVisibility)
 
 	var response resourcePageWire
-	if err := c.get(ctx, "browse", request.RootID, "resources", query, &response); err != nil {
+	endpoint := "resources"
+	if request.WholeRoot {
+		endpoint = "active"
+	}
+	if err := c.get(ctx, "browse", request.RootID, endpoint, query, &response); err != nil {
 		return ResourcePage{}, err
 	}
 	if response.Items == nil {
