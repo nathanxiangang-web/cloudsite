@@ -3,7 +3,7 @@
 > Canonical short-form project memory for Architect/AI sessions.
 >
 > Last architecture-memory synchronization: **2026-10-15**
-> Current status: **Gate 0-3 CLOSED; docs/auth/read/readonly UI and presentation PR #85 merged. Real catalog/lifecycle PR #87 accepted and deployed: five document files, three directories, one MP4, confirmed empty software scope; not whole-drive coverage. Panta reads IndexCore HTTP only. D-044 excludes file-delete UI/API. Issue #83 admission/usage remains isolated unreviewed WIP. Copy projection/content access/playback/share still missing; no full MVP acceptance.**
+> Current status: **Gate 0-3 CLOSED. PR #89 accepted/deployed: separate consumer file library `/` and ADMIN workspace `/admin/`, directly using PR #87 real IndexCore catalog without per-file approval. Six actual file cards (five documents/one MP4), directories hidden from frontend. D-045 dual UI and D-044 no file deletion. Issue #83 remains isolated unreviewed WIP. Copy projection/content access/playback/share still missing; no full MVP acceptance.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -12,7 +12,20 @@
 
 ## 1. Source-of-truth order
 
-Latest accepted slice: Issue #86 / PR #87, exact HEAD
+Latest accepted slice: Issue #88 / PR #89, reviewed HEAD
+`8b7d1c23feabc0a76100d975b1ae9ebe1b4ec16b`, CI `38673309830` all three SUCCESS,
+same-agent review `5529290784`, merge `963c66d9c0d7735fbf8ae0a8ab0c7a4000d6bb1d`
+and merge CI `38695548823` SUCCESS. D-045: retain two UIs, file-first `/` with no
+directory/topology controls and ADMIN operational `/admin/`. Existing real Q4
+sources are composed directly with bounded internal folder traversal, no manual
+per-file approval or new data source. Six actual files verified at formal8180.
+Only owned product service replaced with accepted `8b7d1c23feab`; IndexCore query
+PID/generations, original staging database hashes and unrelated services unchanged.
+No role/credential/provider/scan/migration change. Playback/access/Issue #83 remain.
+See [contract and actual evidence](PRODUCT-FILE-LIBRARY.md). Source scope below
+remains PR #87; its old product binary default is superseded by PR #89.
+
+Previous accepted source/lifecycle slice: Issue #86 / PR #87, exact HEAD
 `d693878c7791b592fa21668a920abd322df9aa37`, CI `38669580171` all three jobs
 successful, same-agent review `5527219011`, merge
 `ddecd51c19b7431d9ca3611add3304eea725240a`. The formal 8180 scope now uses three

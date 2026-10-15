@@ -6,9 +6,31 @@
 
 **Gate 3 CLOSED; auth/read/readonly UI accepted; real canonical reads connected; minimum MVP still incomplete**
 
-Gate 0 through Gate 3 are accepted and closed. D-042 delegates Architect and Developer roles through minimum usable core MVP. Documentation audit PR #76, auth PR #78, reads PR #80 and readonly UI/startup PR #82 are merged. A protected readonly interface runs on staging host .50, accessed through a local loopback SSH forward. It now reads the existing real 115 MCP-Test canonical Root, not a mock or a fresh rescan. Admission/usage, current-database Copy synchronization, file access and share remain incomplete; this is not full MVP acceptance.
+Gate 0 through Gate 3 are accepted and closed. D-042 delegates Architect and Developer roles through minimum usable core MVP. Docs/auth/reads/readonly UI and real catalog slices are merged. Owned product UI runs on staging host .50 through a loopback SSH forward, reading the isolated real IndexCore catalog introduced by PR #87. PR #89 separates consumer file library from administrator workspace. Admission/usage, current-database Copy synchronization, file access and share remain incomplete; this is not full MVP acceptance.
 
 ### Current implementation task - 2026-10-15
+
+Issue #88 / PR #89 ACCEPTED and deployed. Reviewed HEAD
+`8b7d1c23feabc0a76100d975b1ae9ebe1b4ec16b`, exact-head CI `38673309830` all
+three jobs SUCCESS, same-agent review `5529290784`, squash merge
+`963c66d9c0d7735fbf8ae0a8ab0c7a4000d6bb1d`; merge CI `38695548823` SUCCESS.
+D-045 and [file-library contract](docs/PRODUCT-FILE-LIBRARY.md) freeze TWO UIs:
+`/` consumer file library, `/admin/` retained administrator directory/diagnostic
+workspace. Frontend directly composes configured real IndexCore files without
+per-file approval; folders are traversal details, never user file cards. ADMIN
+workspace configuration is enforced server-side; no user was escalated.
+
+Formal 8180 browser login and six actual file cards verified: five documents and
+one MP4, no folder/Binding/Copy/schema controls. Category/search/list/detail and
+USER backend denial verified. Product binary is now accepted `8b7d1c23feab`,
+SHA-256 `2c7265bb482e763d084243e20886822fdbe31e46133e308a7c420092ae0e6e2c`.
+Only the owned product UI service restarted; query PID, catalog generations
+0/1/1, original staging table hashes and unrelated services unchanged. Rollback
+receipt/binary retained. Schema13, no provider start, scan, migration, native
+login or role change. Playback/content/download/share remain unfinished. Resume
+preserved Issue #83 and subsequent content/access modules; no full MVP claim.
+
+### Previous catalog/lifecycle acceptance - 2026-10-15
 
 Real catalog configuration and owned readonly lifecycle Issue #86 / PR #87 are
 ACCEPTED: reviewed HEAD `d693878c7791b592fa21668a920abd322df9aa37`, CI

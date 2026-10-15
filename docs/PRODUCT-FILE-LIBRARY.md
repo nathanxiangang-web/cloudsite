@@ -98,3 +98,23 @@ Audit follow-through: 1 entry/file library - file-first, no KPI dashboard;
 3 backend entry - original operational UI preserved, USER denied. Current-run
 before/after/search/detail/denied captures accompany the local delivery. Keyboard
 focus restoration is tested; no full accessibility certification is claimed.
+
+## Accepted deployment
+
+PR #89 exact HEAD `8b7d1c23feabc0a76100d975b1ae9ebe1b4ec16b`, CI `38673309830`
+all three jobs SUCCESS, same-agent review `5529290784`, squash merge
+`963c66d9c0d7735fbf8ae0a8ab0c7a4000d6bb1d`; merge CI `38695548823` SUCCESS.
+Formal .50 loopback8180 now serves the consumer library; `/admin/` serves the
+separate operational UI. Actual product login and six-file display verified.
+No manual per-file approval workflow was introduced.
+
+Owned product binary `panta-file-library-8b7d1c23feab` embeds the reviewed commit
+with vcs.modified=false; SHA-256
+`2c7265bb482e763d084243e20886822fdbe31e46133e308a7c420092ae0e6e2c`.
+Protected hash receipt updated, prior receipt/binary archived. Only that user
+service restarted. IndexCore query PID, generations0/1/1, original staging table
+hashes and other service identities unchanged. Private execution receipt:
+`execution-file-library-issue88.json`. No scan/provider/schema/credential/role
+changes. USER backend denial verified; ADMIN success is server-test evidence,
+not a live administrator-login claim. Viewport override did not change actual
+browser width, so narrow/mobile visual verification remains unconfirmed.

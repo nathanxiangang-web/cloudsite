@@ -14,7 +14,17 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-15
 
-Latest accepted/deployed slice is Issue #86 / PR #87: exact HEAD `d693878c7791`,
+Latest accepted/deployed UI is Issue #88 / PR #89, exact HEAD `8b7d1c23feab`,
+CI `38673309830` all three SUCCESS, review `5529290784`, merge `963c66d9c0d7`.
+D-045 requires TWO UIs: file-first consumer `/`, ADMIN `/admin/` retaining the
+operational workspace. Frontend directly reads configured real IndexCore files,
+no per-file approval, directory controls or fake files. Six real file cards;
+backing sources are unchanged PR #87 scopes. No user role was escalated. Only
+owned product UI service restarted, original data/query/unrelated services
+unchanged. [Module contract](docs/PRODUCT-FILE-LIBRARY.md). No playback/content
+access or full MVP acceptance. D-044 no deletion; preserve isolated Issue #83 WIP.
+
+Previous accepted source/lifecycle slice is Issue #86 / PR #87: exact HEAD `d693878c7791`,
 CI `38669580171` all three successful, merge `ddecd51c19b7`, same-agent review
 `5527219011`. [Real catalog contract](docs/PRODUCT-REAL-CATALOG.md) governs the
 three new isolated observation-only DISABLED Bindings. Formal .50 loopback 8180
