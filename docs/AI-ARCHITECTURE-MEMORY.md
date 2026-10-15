@@ -12,6 +12,25 @@
 
 ## 1. Source-of-truth order
 
+Current superseding runtime: PR102 reviewed22705d031adc, CI38748673995 all3
+SUCCESS, review5534538189, merge68d945793b8f, merge CI38749342436 SUCCESS.
+Minimum6-character public registration/login verified;5 rejected; old hashes
+unchanged. PR103 reviewedcfc283178bb5, CI38754182448 all3 SUCCESS,
+review5535047887, merge7bfe63d7af4c. Application renewal follows actual protected
+OpenList identity, not the previous AList user5 assumption.
+
+The human explicitly expanded service scope: original root-compose alist is now
+replaced by local-config OpenList v4.2.6, pinned digestc555c6e1c8af2aead38ed12ec761ac077fdf046d19cf033414be8e056aec6b64.
+Old AList data/image/YAML remain recoverable; container removed. Other three
+root-stack containers unchanged. Local user3/CloudSite namespace/permission65341
+preserved, NOT falsely called permission0. Copied application JWT was rejected;
+existing local app username/password successfully obtain a new app token.
+No forged token, password reset, native115 login or new acquisition. Four copied
+OpenList transfer-queue rows omitted ONLY from the new clone before startup;
+original local DB and historical provider reservations unchanged. Actual public
+OpenList and cloudsite real-file regression pass. Latest release BUILD-MANIFEST
+anchors final build; no full-MVP/realtime-indexing claim.
+
 Latest deployment: Issue98 / PR99 reviewed93606e67ccf2, CI38745269165 all3 SUCCESS,
 same-agent review5534142444, merge7368671aa0af. PR100 quoted tmpfs fix reviewed
 7a8ab8fe1694, CI38746403395 all3 SUCCESS, review5534272835, merge841c4d14fb54;

@@ -6,6 +6,53 @@ deleted by the human, not by this release tool. Its verified Git mirror/bundle
 and metadata export are private backups, not a promise to restore GitHub IDs,
 stars/fork relationships or release assets exactly.
 
+## Latest human-authorized runtime changes — supersede initial AList boundary
+
+The human explicitly authorizes root-compose AList removal/replacement with
+OpenList, using LOCAL OpenList configuration/credentials and abandoning server
+AList credential migration. This supersedes the initial preserve-AList scope
+below. Only the alist service in `/opt/my-servers/docker-compose.yml` is replaced;
+Traefik/Portainer/rclone-backup IDs/images/PIDs remain unchanged. The old alist
+container was stopped and removed, not its original bind data or rollback image.
+
+Current OpenList: v4.2.6, image digest
+`sha256:c555c6e1c8af2aead38ed12ec761ac077fdf046d19cf033414be8e056aec6b64`,
+container `openlist`, copied private data `/opt/my-servers/openlist/data`, existing
+HTTPS route https://pan.netioi.com. User0:0 matches the local instance; no host
+port is added. Internal alias alist preserves network compatibility only; it is
+NOT an alist service/container. Product source is explicitly `http://openlist:5244`.
+
+Local config/database were copied consistently, with4 historical transfer-queue
+rows omitted ONLY from the new copy before startup. Original local data and
+historical acquisition reservations unchanged. Copied JWT failed validation;
+the existing local OpenList app username/password successfully log in, with no
+native115 login or account/password reset. Storage user3, base_path
+`/115open/CloudSite`, permission65341 preserved exactly; do NOT call this
+permission0 or claim a new permission-hardening pass. Product still only exposes
+known-file byte reads after canonical/auth checks, not storage write APIs.
+
+PR103 reviewedcfc283178bb5, CI38754182448 all3 SUCCESS, same-agent review
+5535047887, merge7bfe63d7af4c: protected renewal specifies container_name openlist
+and expected_identity id/base_path/permission; default AList identity retained
+for old deployments only. Renewal uses APPLICATION login, not native115 login.
+The existing timer is re-enabled after the migrated identity is verified.
+
+PR102 reviewed22705d031adc, CI38748673995 all3 SUCCESS, review5534538189,
+merge68d945793b8f, merge CI38749342436 SUCCESS. Actual public HTTPS tests verify
+6-character signup/login,5-character rejection and unchanged original account.
+Post-OpenList-switch real regression verifies283 canonical files, DOCX15423-byte
+attachment/text preview, video206 Range and both share-code modes; temporary
+shares revoked. The canonical snapshot and schema14 remain unchanged.
+
+Protected rollback directory:
+`/opt/my-servers/cloudsiteV1.0.0alpha/private/backups/openlist-replacement`.
+It contains the exact previous root YAML, consistent AList SQLite/config, old
+image/container identities and previous product access config/reader binding.
+Original `/opt/my-servers/alist/data` stays intact; image tag
+`alist:rollback-before-openlist-20261015` remains. Restore only that service with
+the original project directory and `--pull never`, never run a whole-stack down
+or delete database volumes. Product/token binding must roll back together.
+
 ## Version and compatibility
 
 - Public product name: `cloudsite`; exact release/tag: `cloudsiteV1.0.0alpha`.

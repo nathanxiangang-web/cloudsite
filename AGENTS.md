@@ -14,7 +14,14 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-15
 
-Issue #98 is the current directly authorized release task. Repository ID1391307332
+Release closeout: PR99/100/102 accepted;6-character public registration/login
+verified. Public server root compose now runs OpenList v4.2.6 using protected local
+configuration/app credentials; AList container removed, its data/rollback retained.
+PR103 accepts container/identity-bound application-token renewal. Existing local
+OpenList native session is reused, no new115 login/download. Traefik/Portainer/
+backup services unchanged. See latest alpha contract and release BUILD-MANIFEST.
+
+Issue #98 is the directly authorized release task. Repository ID1391307332
 was renamed panta -> cloudsite after the human deleted the legacy CloudSite repo.
 Freeze [release contract](docs/CLOUDSITE-V1-ALPHA.md): public name cloudsite,
 version/tag cloudsiteV1.0.0alpha, preserve Go/config/cookie/schema compatibility.

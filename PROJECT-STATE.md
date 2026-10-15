@@ -4,8 +4,27 @@
 
 ## Current phase
 
-**cloudsiteV1.0.0alpha is deployed at https://cloud.netioi.com — PR #99/#100
-accepted. Issue #101 authorizes the human-requested6-character password minimum.**
+**cloudsiteV1.0.0alpha is deployed at https://cloud.netioi.com. Open registration
+with6-character minimum is verified. Public storage is now OpenList v4.2.6 at
+https://pan.netioi.com, reusing local config/login; AList container removed.**
+
+Issue101 / PR102 reviewed22705d031adc, CI38748673995 all3 SUCCESS, same-agent
+review5534538189, merge68d945793b8f; merge CI38749342436 SUCCESS. Actual public
+6-character signup/login and5-character rejection pass; existing passwords unchanged.
+PR103 reviewedcfc283178bb5, CI38754182448 all3 SUCCESS, review5535047887,
+merge7bfe63d7af4c: token renewal binds the actual migrated OpenList identity.
+
+Direct human follow-up supersedes the initial instruction to preserve running
+AList: replace ONLY that root-compose service, using local OpenList credentials
+instead of migrating incompatible server AList credentials. OpenList is pinned
+to digestc555c6e1c8af2aead38ed12ec761ac077fdf046d19cf033414be8e056aec6b64.
+Root compose has openlist/traefik/portainer/rclone-backup. Other three container
+IDs/images/PIDs unchanged; old AList data/image/exact YAML backups preserved.
+Actual post-switch HTTPS regression passes:283 files, original account login,
+USER registration/admin denial, real DOCX preview/download, video Range,
+code/no-code guest downloads; test shares revoked. No native115 download/scan.
+Read [final evidence and rollback](docs/CLOUDSITE-V1-ALPHA.md). Final release
+BUILD-MANIFEST identifies the deployed build; alpha is not completed full MVP.
 
 Initial deployed code `841c4d14fb54882856267e2359c20f5075075a24`; merge CI
 `38746768026` all3 SUCCESS. PR99 reviewed HEAD `93606e67ccf2`, CI `38745269165`,
@@ -19,8 +38,8 @@ registration creates USER, duplicate rejected, login succeeds, admin API denied.
 code/no-code guest downloads verified. Test shares revoked. No native115
 acquisition/Worker/Hint/scanner. A protected application-token timer renews only
 the existing restricted storage user. See [deployment evidence](docs/CLOUDSITE-V1-ALPHA.md).
-The subsequent Issue101 password policy requires its own CI/review/deployment;
-current release artifact BUILD-MANIFEST and GitHub acceptance identify final code.
+The initial deployment facts below are historical; PR102 and the OpenList
+replacement above are the current superseding runtime state.
 
 The human deleted legacy CloudSite. This repository ID1391307332 is the former
 panta repository, now cloudsite; accepted history is preserved. Website/docs use
