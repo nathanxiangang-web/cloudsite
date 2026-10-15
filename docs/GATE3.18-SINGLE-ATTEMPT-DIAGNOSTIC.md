@@ -59,7 +59,7 @@ is outside this authorization. No production deployment or schema migration.
 - IndexCore `v0.4.0-alpha.1`, SHA
   `6f0eec85c59bd8cbe55011b0d9e512e0cafd6615`, one serve writer with P10/P11,
   ACTIVE OpenList root, healthy Query readiness and successful baseline.
-  Panta schema v12, separate Panta/IndexCore DB identities, no migrations.
+  cloudsite schema v12, separate cloudsite/IndexCore DB identities, no migrations.
 - Same host/network namespace as IndexCore; Hint listener literal 127.0.0.1
   and matching protected >=32-byte token. No boundary relaxation.
 - Exact ACTIVE connection/session/credential-ref and provider saveDirID agree.
@@ -71,7 +71,7 @@ is outside this authorization. No production deployment or schema migration.
   If the earlier destination still contains its baseline marker, it is NOT
   empty: stop and obtain a separately approved empty destination/configuration.
   Do not delete the marker or improvise a Binding during this run.
-- No other Worker/service/container/cron may claim this Panta DB. Freeze other
+- No other Worker/service/container/cron may claim this cloudsite DB. Freeze other
   submitters for the window. No other QUEUED, RETRY_WAIT (even future-dated), or
   RUNNING ACQUISITION Job; no unexpected active Manifest or corrupt links.
   The Worker does NOT support selecting a Job by ID. Queue isolation is a
@@ -256,7 +256,7 @@ to prevent a second StartDownload even during this brief shutdown interval.
 Failure to observe/stop, force-kill, interrupted shutdown or Worker timeout is
 STOP and must be reported, not automatically retried. As a hard preflight
 requirement, the operator must have a verified way to identify the actual
-Panta Worker process and confirm its exit after timeout/SIGTERM. Bash syntax
+cloudsite Worker process and confirm its exit after timeout/SIGTERM. Bash syntax
 validation does not test live signal delivery, process groups or child cleanup.
 Record supervisor/watch exit codes; a supervisor exit code alone is not proof
 of graceful Worker shutdown. Confirm no remaining child Worker before handoff.

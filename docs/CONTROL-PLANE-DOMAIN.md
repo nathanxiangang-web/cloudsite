@@ -2,7 +2,7 @@
 
 Status: **DOMAIN OWNERSHIP ACCEPTED under D-042; implementation incomplete**
 
-Tracking: [Issue #75](https://github.com/nathanxiangang-web/panta/issues/75).
+Tracking: [Issue #75](https://github.com/nathanxiangang-web/cloudsite/issues/75).
 Source baseline: `3f6d9cc20dbee8aa7cde02dcbfc89cfcd9071e71`.
 This document describes design, not working auth/API/UI, provider access, audit
 or quota. D-042 authorizes staged implementation under the separate execution

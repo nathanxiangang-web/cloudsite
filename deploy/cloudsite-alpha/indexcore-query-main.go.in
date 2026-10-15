@@ -1,0 +1,76 @@
+// Private readonly IndexCore composition, identical accepted ports; no writer.
+package main
+
+import (
+	"context"
+	"errors"
+	"io"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/nathanxiangang-web/index-core/internal/store/postgres"
+	"github.com/nathanxiangang-web/index-core/internal/transport/httpapi"
+)
+
+func run() error {
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+	cfg, err := pgxpool.ParseConfig(os.Getenv("INDEXCORE_DATABASE_URL"))
+	if err != nil {
+		return errors.New("readonly catalog configuration rejected")
+	}
+	cfg.ConnConfig.RuntimeParams["default_transaction_read_only"] = "on"
+	cfg.ConnConfig.ConnectTimeout = 5 * time.Second
+	cfg.MaxConns = 4
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
+	if err != nil {
+		return errors.New("readonly catalog database unavailable")
+	}
+	defer pool.Close()
+	startup, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	if pool.Ping(startup) != nil {
+		return errors.New("readonly catalog database unavailable")
+	}
+	var readonly, db string
+	if pool.QueryRow(startup, "SELECT current_database(),current_setting('transaction_read_only')").Scan(&db, &readonly) != nil || readonly != "on" || db != "indexcore_panta_mvp_catalog_20261014" {
+		return errors.New("readonly catalog database rejected")
+	}
+	state, err := postgres.SchemaStatus(startup, pool)
+	if err != nil || !state.Compatible() {
+		return errors.New("readonly catalog schema rejected")
+	}
+	server := httpapi.New(httpapi.Deps{Query: postgres.NewQueryReader(pool), Readiness: postgres.NewReadiness(pool), Logger: slog.New(slog.NewTextHandler(io.Discard, nil)), Version: "operator-catalog-readonly-7ef47217", Ready: func() bool { return true }})
+	server.Addr = "127.0.0.1:48892"
+	server.ReadTimeout = 15 * time.Second
+	server.WriteTimeout = 20 * time.Second
+	server.IdleTimeout = time.Minute
+	done := make(chan error, 1)
+	go func() { done <- server.ListenAndServe() }()
+	select {
+	case err := <-done:
+		if errors.Is(err, http.ErrServerClosed) {
+			return nil
+		}
+		return errors.New("readonly catalog listener unavailable")
+	case <-ctx.Done():
+		shutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if server.Shutdown(shutdown) != nil {
+			_ = server.Close()
+		}
+		<-done
+		return nil
+	}
+}
+func main() {
+	if err := run(); err != nil {
+		os.Stderr.WriteString(err.Error() + "\n")
+		os.Exit(1)
+	}
+}

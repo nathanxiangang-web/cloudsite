@@ -17,7 +17,7 @@ existing Copy with variant_id = NULL + existing target Variant
 
 - `internal/catalog.ClassificationService` owns request validation and exposes
   the explicit application command.
-- `internal/catalog.CopyBinder` is the Panta-owned atomic persistence port.
+- `internal/catalog.CopyBinder` is the cloudsite-owned atomic persistence port.
 - `internal/store/postgres.CatalogRepository` implements that port with a row
   lock and one transaction.
 - `internal/projector` remains independent. It owns physical availability and

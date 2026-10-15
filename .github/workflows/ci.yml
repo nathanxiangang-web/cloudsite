@@ -1,4 +1,4 @@
-name: Panta CI
+name: cloudsite CI
 
 on:
   pull_request:
@@ -27,6 +27,8 @@ jobs:
         run: node --test test/resource-display.test.cjs test/file-library.test.cjs
       - name: Owned readonly service safety tests
         run: python3 -m unittest discover -s test -p 'readonly_catalog_service_test.py' -v
+      - name: cloudsite release deployment safety tests
+        run: python3 -m unittest discover -s test -p 'deployment_safety_test.py' -v
       - name: Race tests
         run: go test -race ./... -count=1
       - name: Architecture import guard
@@ -96,7 +98,7 @@ jobs:
       PANTA_GATE1_INDEXCORE_DATABASE_URL: postgres://panta:panta_e2e@127.0.0.1:5432/indexcore_e2e?sslmode=disable
       PANTA_GATE1_PANTA_DATABASE_URL: postgres://panta:panta_e2e@127.0.0.1:5432/panta_e2e?sslmode=disable
     steps:
-      - name: Check out Panta
+      - name: Check out cloudsite
         uses: actions/checkout@v7
       - name: Check out pinned IndexCore
         uses: actions/checkout@v7
@@ -114,7 +116,7 @@ jobs:
           cache-dependency-path: |
             go.sum
             .gate1-indexcore/go.sum
-      - name: Create separate Panta database
+      - name: Create separate cloudsite database
         shell: bash
         run: >-
           docker exec "${{ job.services.postgres.id }}"

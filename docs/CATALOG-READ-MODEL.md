@@ -1,6 +1,6 @@
 # Catalog logical read model
 
-Gate 2.1 exposes one Panta-owned logical drill-down:
+Gate 2.1 exposes one cloudsite-owned logical drill-down:
 
 ```text
 Asset

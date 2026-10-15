@@ -21,12 +21,12 @@ validated acquisition request
 
 - `internal/acquisition` owns the Manifest model, closed milestone states,
   target-path normalization, creation service, and persistence port.
-- The creation service reads only Panta-owned StorageBinding and Catalog identity
+- The creation service reads only cloudsite-owned StorageBinding and Catalog identity
   ports. It does not create Storage or Catalog identity. New acquisition intent
   requires an ACTIVE binding with explicit provider scope and an ACTIVE owning
   StorageConnection.
 - `internal/store/postgres` implements Manifest persistence.
-- `internal/acquisition` may depend on the Panta-owned, provider-neutral Jobs
+- `internal/acquisition` may depend on the cloudsite-owned, provider-neutral Jobs
   contract for activation and provider contract DTOs for execution input. It
   still cannot depend on Job persistence, provider registry, or adapters.
 - Jobs continue to own execution, claim, lease, retry, and recovery behavior.
@@ -167,7 +167,7 @@ acquisition_provider_tasks
 
 One Manifest maps to at most one provider task and one Job maps to at most one
 provider task. Provider identity and reference values are bounded opaque text:
-Panta never parses or normalizes them, and the table stores no provider status
+cloudsite never parses or normalizes them, and the table stores no provider status
 because the provider remains authoritative for its own task lifecycle. There are
 no database defaults and no provider-specific columns. A conflicting identity
 fails closed rather than overwriting a known task reference.
@@ -245,11 +245,11 @@ FAILED            -> PROVIDER_FAILED
 CANCELED          -> PROVIDER_CANCELED
 ```
 
-Provider success is not Manifest `READY`. After provider success, Panta hands
+Provider success is not Manifest `READY`. After provider success, cloudsite hands
 the affected root/scope to the **IndexCore-owned observation pipeline** through a
 trusted Mutation Hint. IndexCore performs the OpenList-backed scoped verification.
 `READY` still requires canonical IndexCore Query/Journal evidence plus the
-corresponding Copy projection/association. Panta does not directly verify OpenList
+corresponding Copy projection/association. cloudsite does not directly verify OpenList
 during acquisition. An empty or invalid returned task reference and an unknown provider task
 state both fail closed.
 
@@ -338,7 +338,7 @@ contracts.ProviderID  = "115"
 
 Source.Value          -> the exact URI passed to 115 offline download
 Target.Scope          -> the 115 destination directory ID (wp_path_id)
-Target.Path           -> Panta's expected observation path only
+Target.Path           -> cloudsite's expected observation path only
 TaskReference.Value   -> the 115 offline task info_hash
 ```
 
@@ -360,7 +360,7 @@ anything else  -> explicit adapter error
 There is no 115 code for a canceled offline task: `CancelDownload` removes the
 task without deleting provider files, so a removed task surfaces as an explicit
 not-found error rather than as a canceled state. Provider `SUCCEEDED` is never
-Panta `READY`.
+cloudsite `READY`.
 
 Safety properties:
 
@@ -522,7 +522,7 @@ fencing meaning that must stay monotonic.
 Source Resolver/provider syntax normalization, the Job worker loop, trusted
 IndexCore Mutation Hint / observation handoff, the AWAITING_CANONICAL transition,
 canonical READY confirmation, auth/quota, and API/UI are separately authorized
-later work. Direct Panta -> OpenList acquisition verification is not a planned
+later work. Direct cloudsite -> OpenList acquisition verification is not a planned
 stage; D-029 keeps OpenList observation owned by IndexCore. A real secret backend, the 115 ShareProvider, and
 115-specific retry policy are also deferred.
 
@@ -536,13 +536,13 @@ provider succeeds
     ↓
 Manifest AWAITING_VISIBILITY
     ↓
-Panta -> IndexCore trusted Mutation Hint
+cloudsite -> IndexCore trusted Mutation Hint
     ↓
 IndexCore-owned OpenList scoped verification
     ↓
 IndexCore Canonical + Journal
     ↓
-Panta confirmation / Copy projection
+cloudsite confirmation / Copy projection
 ```
 
 The Manifest's `target_path` is used as the IndexCore mutation-hint
@@ -553,7 +553,7 @@ Do not derive this Hint from:
 - `openlist_mount_path`;
 - provider task reference.
 
-A direct Panta OpenList visibility client is not part of the acquisition flow.
+A direct cloudsite OpenList visibility client is not part of the acquisition flow.
 
 
 ## Durable result locator before canonical confirmation
@@ -571,7 +571,7 @@ Manifest.result_name     provider-stage durable top-level acquired-result locato
                          frozen once persisted and immutable afterwards
 ```
 
-Before provider success may progress automatically to `AWAITING_VISIBILITY`, Panta
+Before provider success may progress automatically to `AWAITING_VISIBILITY`, cloudsite
 resolves one top-level `result_name`:
 
 ```text
@@ -588,7 +588,7 @@ The future canonical candidate is then deterministic:
 Join(Manifest.target_path, Manifest.result_name)
 ```
 
-Panta must never replace this locator with directory guessing, a sole/newest file,
+cloudsite must never replace this locator with directory guessing, a sole/newest file,
 provider FileId/DirId, provider task reference, or an arbitrary Journal event.
 
 A valid provider-observed name always wins, so it does not have to match the request
@@ -655,7 +655,7 @@ resource's complete canonical path. `expected_name` remains optional acquisition
 intent.
 
 Before provider success may progress automatically to `AWAITING_VISIBILITY`,
-Panta resolves one top-level `result_name`:
+cloudsite resolves one top-level `result_name`:
 
 ```text
 valid provider-observed TaskStatus.ResultName
@@ -671,7 +671,7 @@ The future canonical candidate is then deterministic:
 Join(Manifest.target_path, Manifest.result_name)
 ```
 
-Panta must never replace this locator with directory guessing, a sole/newest file,
+cloudsite must never replace this locator with directory guessing, a sole/newest file,
 provider FileId/DirId, provider task reference, or an arbitrary Journal event.
 
 If no valid result name exists, provider success cannot progress automatically;
@@ -682,8 +682,8 @@ is still required before READY.
 ## Canonical confirmation and READY finalization
 
 D-033 closes the acquisition loop. `result_name` is the pre-canonical locator; once
-IndexCore canonical truth and Panta Journal projection agree, the acquisition is
-anchored to one stable Panta Copy.
+IndexCore canonical truth and cloudsite Journal projection agree, the acquisition is
+anchored to one stable cloudsite Copy.
 
 ```text
 Manifest AWAITING_CANONICAL + fenced RUNNING ACQUISITION Job
@@ -706,7 +706,7 @@ Manifest READY + result_copy_id, Job SUCCEEDED
 The durable result identity is therefore:
 
 ```text
-Manifest.result_copy_id -> Panta Copy
+Manifest.result_copy_id -> cloudsite Copy
                         -> indexcore_root_id
                         -> indexcore_resource_id
                         -> storage_binding_id
@@ -754,7 +754,7 @@ logical classification are separate concerns.
 ### D-017 ownership is unchanged
 
 Acquisition never creates or upserts a Copy. IndexCore Canonical → Q8 Journal → the
-Panta Projector remains the only Copy projection path. The invocation may advance
+cloudsite Projector remains the only Copy projection path. The invocation may advance
 that projector by one bounded page; it may not list directories, search, call OpenList,
 read the IndexCore database, or treat a provider file ID as a canonical identity.
 
@@ -784,7 +784,7 @@ Accepted D-033 / Gate 3.10 establishes the permanent acquisition result only aft
 ```text
 IndexCore Q5 exact PRESENT result
   -> existing Q8 Journal Projector
-  -> exact PRESENT Panta Copy
+  -> exact PRESENT cloudsite Copy
   -> optional monotonic Variant binding
   -> atomic Manifest.result_copy_id + READY + same Job SUCCEEDED
 ```

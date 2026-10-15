@@ -1,4 +1,4 @@
-# Panta — Decision Log
+# cloudsite — Decision Log
 
 > Append-only architecture/product decision memory. Do not rewrite history silently; supersede an old decision with a new entry.
 
@@ -6,25 +6,25 @@
 
 **Status:** Accepted
 
-Panta MVP prioritizes functional end-to-end flows and modular architecture before UI polish.
+cloudsite MVP prioritizes functional end-to-end flows and modular architecture before UI polish.
 
 ## D-002 — OpenList is the observation/access layer
 
 **Status:** Accepted
 
-Existing and future storage providers are preferably exposed through OpenList for observation. Panta does not build another provider scanner for IndexCore.
+Existing and future storage providers are preferably exposed through OpenList for observation. cloudsite does not build another provider scanner for IndexCore.
 
 ## D-003 — IndexCore owns physical resource truth
 
 **Status:** Accepted
 
-IndexCore remains an independent canonical physical-resource kernel. Panta consumes its read API/Journal and never writes its database.
+IndexCore remains an independent canonical physical-resource kernel. cloudsite consumes its read API/Journal and never writes its database.
 
-## D-004 — Panta owns logical resource semantics
+## D-004 — cloudsite owns logical resource semantics
 
 **Status:** Accepted
 
-Panta Catalog models logical identity as:
+cloudsite Catalog models logical identity as:
 
 ```text
 Asset → Release → Variant → Copy → IndexCore resource
@@ -51,7 +51,7 @@ Storage → OpenList → IndexCore → Catalog
 Control:
 
 ```text
-Panta → Job Engine → Provider Contract → Provider Adapter → Storage
+cloudsite → Job Engine → Provider Contract → Provider Adapter → Storage
 ```
 
 Provider command success does not override canonical observation.
@@ -83,37 +83,37 @@ CodeArts CLI + GLM-5.2 is the initial Agent Runtime. Deterministic product flows
 
 Project context, current state, accepted decisions, contracts, implementation and acceptance evidence must be committed to this repository.
 
-## D-011 — Go is the initial Panta backend implementation baseline
+## D-011 — Go is the initial cloudsite backend implementation baseline
 
 **Status:** Accepted
 
-Panta MVP backend implementation starts with **Go 1.27.1**, aligned with the current IndexCore toolchain to reduce build/runtime/tooling divergence during integration.
+cloudsite MVP backend implementation starts with **Go 1.27.1**, aligned with the current IndexCore toolchain to reduce build/runtime/tooling divergence during integration.
 
 This is an implementation/toolchain choice, not a domain coupling decision:
 
-- Panta does not import IndexCore internal packages;
-- Panta communicates with IndexCore only through Panta-owned ports and supported external integration contracts;
-- provider adapters remain replaceable behind Panta provider contracts;
+- cloudsite does not import IndexCore internal packages;
+- cloudsite communicates with IndexCore only through cloudsite-owned ports and supported external integration contracts;
+- provider adapters remain replaceable behind cloudsite provider contracts;
 - the MVP remains a single-process modular monolith until real scaling evidence justifies a split.
 
-The Panta product database remains PostgreSQL as established by the MVP blueprint. Database schema and migrations are handled in a later bounded Gate 0 task, not in Gate 0.1.
+The cloudsite product database remains PostgreSQL as established by the MVP blueprint. Database schema and migrations are handled in a later bounded Gate 0 task, not in Gate 0.1.
 
-## D-012 — Panta owns an independent PostgreSQL schema and append-only migration history
+## D-012 — cloudsite owns an independent PostgreSQL schema and append-only migration history
 
 **Status:** Accepted
 
-Panta product persistence uses PostgreSQL through `pgx/v5`.
+cloudsite product persistence uses PostgreSQL through `pgx/v5`.
 
-Schema evolution uses ordered, append-only SQL migrations owned by Panta and recorded in a `schema_migrations` history. Runtime ORM auto-migration/schema generation is not used.
+Schema evolution uses ordered, append-only SQL migrations owned by cloudsite and recorded in a `schema_migrations` history. Runtime ORM auto-migration/schema generation is not used.
 
 Compatibility is fail-closed:
 
 - missing required migrations are incompatible;
 - migrations unknown to the running binary are treated as future schema and are incompatible;
-- an older Panta binary must not silently run against a newer product schema;
+- an older cloudsite binary must not silently run against a newer product schema;
 - applied known migrations must form an ordered prefix of the embedded migration history; gaps/out-of-order history are incompatible and must not be auto-repaired.
 
-Panta product DB configuration remains independent from IndexCore DB configuration. Panta never obtains physical truth by reading or writing IndexCore PostgreSQL directly.
+cloudsite product DB configuration remains independent from IndexCore DB configuration. cloudsite never obtains physical truth by reading or writing IndexCore PostgreSQL directly.
 
 Catalog domain packages remain persistence-agnostic; pgx belongs in the PostgreSQL adapter/infrastructure boundary.
 
@@ -121,7 +121,7 @@ Catalog domain packages remain persistence-agnostic; pgx belongs in the PostgreS
 
 **Status:** Accepted
 
-All provider-changing operations must be represented by a durable Panta Job before external side effects occur.
+All provider-changing operations must be represented by a durable cloudsite Job before external side effects occur.
 
 The Gate 0 Job Engine is intentionally small and provider-neutral. It is a state/claim/recovery kernel, not a workflow engine, scheduler platform, or autonomous agent controller.
 
@@ -167,11 +167,11 @@ PostgreSQL time is authoritative for lease-expiry authorization and expired-leas
 The existing `attempt_count` is the MVP fencing generation. A separate lease token is not required unless later provider execution proves a stronger primitive is necessary.
 
 
-## D-015 — Panta consumes IndexCore through its external Query/Hint contracts only
+## D-015 — cloudsite consumes IndexCore through its external Query/Hint contracts only
 
 **Status:** Accepted
 
-Panta treats IndexCore as an independent infrastructure service and never imports IndexCore internals or accesses its PostgreSQL database directly.
+cloudsite treats IndexCore as an independent infrastructure service and never imports IndexCore internals or accesses its PostgreSQL database directly.
 
 For the observation plane:
 - Q4 hierarchy reads back known-root browsing;
@@ -181,22 +181,22 @@ For the observation plane:
 
 Journal cursor semantics are owned by the IndexCore HTTP contract: `after_seq` is exclusive and the next request reuses the **last event_seq actually observed**, without incrementing it.
 
-IndexCore Query API remains read-only from Panta's perspective.
+IndexCore Query API remains read-only from cloudsite's perspective.
 
 Mutation Hint is a separate trusted internal transport. A successful Hint acceptance is only a durable signal and never counts as proof that a resource is canonically visible. Canonical success must still be observed through IndexCore Query/Journal.
 
-Panta owns consumer DTOs, typed errors, cursors, and projection state. It does not reuse IndexCore internal Go types.
+cloudsite owns consumer DTOs, typed errors, cursors, and projection state. It does not reuse IndexCore internal Go types.
 
 
-## D-016 — Panta preserves IndexCore query semantics instead of simplifying them away
+## D-016 — cloudsite preserves IndexCore query semantics instead of simplifying them away
 
 **Status:** Accepted
 
-Panta's IndexCore ports are consumer-owned, but they must faithfully preserve the semantics of the accepted external IndexCore contract.
+cloudsite's IndexCore ports are consumer-owned, but they must faithfully preserve the semantics of the accepted external IndexCore contract.
 
 In particular:
 - Q4 is hierarchy-by-parent with opaque generation-bound pagination; it is not a path browse API and not a flattened root listing.
-- Q5 path resolution returns all matches plus an ambiguity flag. Panta must never silently choose one canonical-path match.
+- Q5 path resolution returns all matches plus an ambiguity flag. cloudsite must never silently choose one canonical-path match.
 - Resource presence remains an explicit canonical state rather than a boolean that would erase retained/tombstone meaning.
 - Q8 Journal ordering is per root only. The HTTP `after_seq` cursor is exclusive; consumers reuse the last event sequence actually observed and never increment it.
 - Stable remote error categories remain typed and distinguishable from transport and malformed-response failures.
@@ -208,11 +208,11 @@ Gate 0 placeholder contracts may be refined when real external semantics prove t
 
 **Status:** Accepted
 
-Panta's Catalog projection is derived from IndexCore canonical Journal and must be replay-safe.
+cloudsite's Catalog projection is derived from IndexCore canonical Journal and must be replay-safe.
 
 For each StorageBinding:
 - the durable projection cursor is the last Journal event_seq whose Copy mutations are committed;
-- IndexCore Q8 is called outside any Panta database transaction using exactly that cursor as after_seq;
+- IndexCore Q8 is called outside any cloudsite database transaction using exactly that cursor as after_seq;
 - the fetched batch is validated before mutation;
 - Copy mutations and cursor advancement commit in one PostgreSQL transaction;
 - the transaction compares/locks the expected cursor so concurrent projectors cannot overwrite newer progress.
@@ -232,7 +232,7 @@ Continuous polling/scheduling is not part of this decision or Gate 1.3.
 
 **Status:** Accepted
 
-Panta does not add a second production OpenList tree-walking client for Gate 1.
+cloudsite does not add a second production OpenList tree-walking client for Gate 1.
 
 The observation boundary is:
 
@@ -243,14 +243,14 @@ IndexCore OpenList Collector
         ↓
 Canonical Inventory + Journal
         ↓
-Panta IndexCore Query client + Catalog Projector
+cloudsite IndexCore Query client + Catalog Projector
 ```
 
-IndexCore owns collection, normalization, canonical identity, completeness safety, and Journal production. Panta consumes canonical physical truth through IndexCore and projects product-owned Copy state.
+IndexCore owns collection, normalization, canonical identity, completeness safety, and Journal production. cloudsite consumes canonical physical truth through IndexCore and projects product-owned Copy state.
 
-Panta's existing OpenList VisibilityPort / AccessPort remains a later control/acquisition-side contract. It may be implemented when Gate 3/4 needs post-download visibility verification or access resolution, but it must not become a second canonical observation scanner.
+cloudsite's existing OpenList VisibilityPort / AccessPort remains a later control/acquisition-side contract. It may be implemented when Gate 3/4 needs post-download visibility verification or access resolution, but it must not become a second canonical observation scanner.
 
-Gate 1 closeout uses a controlled OpenList-compatible fixture and a real, externally executed IndexCore binary pinned to an accepted version. Panta never imports IndexCore internals to obtain this evidence.
+Gate 1 closeout uses a controlled OpenList-compatible fixture and a real, externally executed IndexCore binary pinned to an accepted version. cloudsite never imports IndexCore internals to obtain this evidence.
 
 OpenList absence is not physical deletion. The accepted IndexCore OpenList collector is additive-safe unless stronger completeness evidence exists.
 
@@ -259,7 +259,7 @@ OpenList absence is not physical deletion. The accepted IndexCore OpenList colle
 
 **Status:** Accepted
 
-Panta classification attaches an existing unresolved Copy to an existing Variant.
+cloudsite classification attaches an existing unresolved Copy to an existing Variant.
 
 The default transition is monotonic:
 
@@ -290,7 +290,7 @@ Any future correction/reclassification capability requires a separately authoriz
 
 **Status:** Accepted
 
-Panta separates acquisition intent from execution state.
+cloudsite separates acquisition intent from execution state.
 
 The Acquisition Manifest records:
 - what source is requested;
@@ -319,7 +319,7 @@ Gate 3.1 creates and validates acquisition intent only. It does not execute 115,
 
 A PENDING Acquisition Manifest is durable intent, not executable work.
 
-Before any provider-changing acquisition side effect is allowed, Panta must commit one atomic activation that:
+Before any provider-changing acquisition side effect is allowed, cloudsite must commit one atomic activation that:
 - creates exactly one generic durable `ACQUISITION` Job in `QUEUED`;
 - links that Job to the Manifest;
 - transitions the Manifest from `PENDING` to `ACTIVE`.
@@ -332,7 +332,7 @@ The acquisition Job payload is a minimal versioned reference to `manifest_id`; i
 
 Activation replay is idempotent by Manifest identity. Once a Manifest is ACTIVE and correctly linked, the durable linked Job is authoritative even if a retry proposes another Job ID.
 
-The acquisition application layer may depend on Panta's provider-neutral Jobs domain for this orchestration. It must not duplicate Job lease/retry/recovery semantics.
+The acquisition application layer may depend on cloudsite's provider-neutral Jobs domain for this orchestration. It must not duplicate Job lease/retry/recovery semantics.
 
 Provider execution remains forbidden in Gate 3.2. Later workers may act only after this activation commit is durable.
 
@@ -341,7 +341,7 @@ Provider execution remains forbidden in Gate 3.2. Later workers may act only aft
 
 **Status:** Accepted
 
-A Panta StorageBinding connects three coordinate systems:
+A cloudsite StorageBinding connects three coordinate systems:
 
 ```text
 provider target scope
@@ -357,7 +357,7 @@ Rules:
 - Provider target scope is opaque adapter-owned text and is stored separately.
 - Observation-only bindings may omit provider scope.
 - Acquisition requires an explicit provider scope.
-- Provider adapters must not query Panta persistence to discover this mapping.
+- Provider adapters must not query cloudsite persistence to discover this mapping.
 - StorageConnection.provider_type is the provider registry identity used for later adapter selection.
 
 This separation prevents provider execution from depending on accidental equivalence between provider paths, OpenList mounts, and IndexCore roots.
@@ -367,15 +367,15 @@ This separation prevents provider execution from depending on accidental equival
 
 **Status:** Accepted
 
-Panta crosses the external downloader boundary through a durable, provider-neutral provider-task linkage.
+cloudsite crosses the external downloader boundary through a durable, provider-neutral provider-task linkage.
 
 Rules:
 - one MVP acquisition Manifest maps to at most one provider task;
 - if a durable provider task reference exists, replay polls that task and never calls StartDownload again;
 - provider task references remain opaque and are not parsed by the acquisition domain;
-- provider task status does not replace Panta Job state or Acquisition Manifest milestone state;
-- provider-reported success is not Panta READY;
-- if StartDownload succeeds but the returned provider task reference cannot be durably recorded, Panta treats the result as an uncertain external side effect;
+- provider task status does not replace cloudsite Job state or Acquisition Manifest milestone state;
+- provider-reported success is not cloudsite READY;
+- if StartDownload succeeds but the returned provider task reference cannot be durably recorded, cloudsite treats the result as an uncertain external side effect;
 - uncertain external side effects must fail closed and must not be converted into blind automatic recreation.
 
 This boundary exists so crash/restart behavior cannot accidentally duplicate provider-side downloads.
@@ -397,7 +397,7 @@ Rules:
 - ProviderID alone must never select authenticated provider state.
 - The same ProviderID may serve multiple StorageConnections.
 - Acquisition/domain code may carry CredentialRef only as opaque metadata; secret contents remain outside product state.
-- Provider adapters must not query Panta persistence to discover credentials.
+- Provider adapters must not query cloudsite persistence to discover credentials.
 - Secret/session resolution happens at the composition/provider-session boundary.
 - A missing or mismatched connection/credential binding fails closed before provider side effects.
 
@@ -422,7 +422,7 @@ DownloadRequest.Target.Scope
     -> 115 destination directory ID (wp_path_id / saveDirID)
 
 DownloadRequest.Target.Path
-    -> Panta expected observation path only
+    -> cloudsite expected observation path only
        never converted into provider directory identity
 
 TaskReference.Value
@@ -434,9 +434,9 @@ Rules:
 - deterministic Source Resolver owns future source canonicalization;
 - provider destination is never derived from OpenList mount, IndexCore root, or Target.Path;
 - one StartDownload creates exactly one offline URI task;
-- provider task status is mapped from 115 task state only and never implies Panta READY;
+- provider task status is mapped from 115 task state only and never implies cloudsite READY;
 - cancellation deletes the offline task only, never downloaded files;
-- Panta uses the 115driver Go library directly rather than CLI/MCP subprocesses for the runtime adapter.
+- cloudsite uses the 115driver Go library directly rather than CLI/MCP subprocesses for the runtime adapter.
 
 This keeps 115-specific semantics fully behind the provider contract and preserves the existing control-plane/observation-plane separation.
 
@@ -551,11 +551,11 @@ mount "/115" + target "/downloads/item" -> "/115/downloads/item"
 This preserves D-022/D-025's separation between provider target coordinates, OpenList observation coordinates, and IndexCore canonical root identity.
 
 
-## D-029 — Panta does not directly verify OpenList during acquisition
+## D-029 — cloudsite does not directly verify OpenList during acquisition
 
 **Status:** Accepted — **supersedes D-028 for acquisition verification**
 
-D-028 incorrectly elevated OpenList from IndexCore's provider/collector dependency into a direct Panta acquisition dependency.
+D-028 incorrectly elevated OpenList from IndexCore's provider/collector dependency into a direct cloudsite acquisition dependency.
 
 The accepted observation boundary remains D-018:
 
@@ -564,10 +564,10 @@ Storage
   -> OpenList
   -> IndexCore Collector
   -> Canonical + Journal
-  -> Panta
+  -> cloudsite
 ```
 
-Therefore, after a provider reports download success, Panta does **not** call OpenList to prove visibility.
+Therefore, after a provider reports download success, cloudsite does **not** call OpenList to prove visibility.
 
 Instead:
 
@@ -583,7 +583,7 @@ IndexCore-owned OpenList scoped verification
         ↓
 Canonical + Journal
         ↓
-Panta confirmation
+cloudsite confirmation
 ```
 
 Exact Mutation Hint mapping:
@@ -603,20 +603,20 @@ indexcore_root_id       canonical IndexCore root identity
 manifest.target_path    directory scope inside the selected binding/root
 ```
 
-`AWAITING_VISIBILITY` now means the provider stage is complete and Panta is waiting to hand the affected scope to the **IndexCore-owned observation pipeline**. It does not authorize a direct Panta -> OpenList stat.
+`AWAITING_VISIBILITY` now means the provider stage is complete and cloudsite is waiting to hand the affected scope to the **IndexCore-owned observation pipeline**. It does not authorize a direct cloudsite -> OpenList stat.
 
-After IndexCore accepts the trusted Hint, Panta may advance to `AWAITING_CANONICAL`, but Hint acceptance is only durable verification work ingress. It is never Canonical truth and never READY.
+After IndexCore accepts the trusted Hint, cloudsite may advance to `AWAITING_CANONICAL`, but Hint acceptance is only durable verification work ingress. It is never Canonical truth and never READY.
 
 Repeated identical Mutation Hints are intentionally safe at-least-once signals: IndexCore coalesces them through its accepted DirtyScopeWork state machine. A duplicate Hint may advance signal metadata but cannot duplicate the provider download or directly create Canonical truth.
 
-D-008's READY principle remains unchanged in meaning: the acquired result must become observable through the OpenList-backed IndexCore pipeline and then be canonically confirmed through IndexCore Query/Journal before Panta marks READY. Panta itself does not need a separate OpenList verification hop.
+D-008's READY principle remains unchanged in meaning: the acquired result must become observable through the OpenList-backed IndexCore pipeline and then be canonically confirmed through IndexCore Query/Journal before cloudsite marks READY. cloudsite itself does not need a separate OpenList verification hop.
 
 
 ## D-030 — AI-assisted development reconstructs truth from Git, not chat context
 
 **Status:** Accepted
 
-Panta is developed through long-running AI-assisted architecture and implementation sessions. Accumulated chat context is not reliable enough to act as project memory by itself.
+cloudsite is developed through long-running AI-assisted architecture and implementation sessions. Accumulated chat context is not reliable enough to act as project memory by itself.
 
 A compact canonical memory file is therefore maintained at:
 
@@ -644,14 +644,14 @@ Rules:
 - chat memory never overrides current Git;
 - a newer explicit accepted decision supersedes an older decision/prose/Issue/PR statement;
 - contradictions are resolved explicitly and then synchronized across project-memory docs;
-- an external integration must be checked against its current accepted contract before a new Panta Gate is written;
+- an external integration must be checked against its current accepted contract before a new cloudsite Gate is written;
 - Git must be searched for an existing owner before introducing a new module or responsibility;
 - project memory is synchronized after accepted architecture changes and after any discovered context-drift incident;
 - team topology remains exactly 1 Architect + 1 Developer unless an explicit later decision changes it.
 
 The purpose is not to duplicate all historical detail. The compact memory keeps only current invariants, dangerous superseded assumptions, active Gate state, and the required reconstruction protocol.
 
-This decision was introduced after a context-drift incident in which direct Panta -> OpenList acquisition verification was proposed despite the already accepted D-018 IndexCore-owned observation boundary. D-029 corrected the architecture; D-030 prevents the same class of drift from becoming process-normal.
+This decision was introduced after a context-drift incident in which direct cloudsite -> OpenList acquisition verification was proposed despite the already accepted D-018 IndexCore-owned observation boundary. D-029 corrected the architecture; D-030 prevents the same class of drift from becoming process-normal.
 
 
 ## D-031 — Acquisition result identity is one direct child of target_path
@@ -701,9 +701,9 @@ Gate 3.10 may later resolve the exact canonical child path from this frozen iden
 
 **Status:** Accepted
 
-`Manifest.target_path` is a directory scope, not the final acquired resource path. `Manifest.expected_name` is intentionally nullable. Panta must therefore never identify an acquisition result by listing the target directory and choosing a candidate.
+`Manifest.target_path` is a directory scope, not the final acquired resource path. `Manifest.expected_name` is intentionally nullable. cloudsite must therefore never identify an acquisition result by listing the target directory and choosing a candidate.
 
-Before an acquisition may leave the provider stage for IndexCore observation, Panta must have one durable provider-neutral top-level result name:
+Before an acquisition may leave the provider stage for IndexCore observation, cloudsite must have one durable provider-neutral top-level result name:
 
 ```text
 valid provider-observed TaskStatus.ResultName
@@ -806,7 +806,7 @@ StorageBinding.indexcore_root_id
 + Manifest.result_name
 ```
 
-Gate 3.10 turns that coordinate into one stable product result only after both IndexCore canonical truth and Panta Journal projection agree.
+Gate 3.10 turns that coordinate into one stable product result only after both IndexCore canonical truth and cloudsite Journal projection agree.
 
 READY requires:
 
@@ -817,7 +817,7 @@ one PRESENT IndexCore resource
         ↓
 existing Q8 Journal Projector
         ↓
-exact PRESENT Panta Copy
+exact PRESENT cloudsite Copy
         ↓
 optional monotonic Copy -> Manifest.variant_id binding
         ↓
@@ -874,7 +874,7 @@ Rules:
 - uncertain provider side effects must follow explicit recovery, never blind StartDownload replay;
 - normal provider polling, Hint/IndexCore propagation and canonical pending do not consume FailureCount; ClaimAttempts remains the generation fence;
 - provider execution, IndexCore Mutation Hint, Journal Projector, and Copy state retain their accepted owners;
-- no direct Panta-to-OpenList acquisition visibility validation.
+- no direct cloudsite-to-OpenList acquisition visibility validation.
 
 Gate 3.11 builds a bounded one-claim coordinator and controlled multi-claim evidence **without** an automatic scheduler/worker daemon. Later runtime wiring and cadence require a separately authorized Gate. No new database migration is required by this decision.
 
@@ -948,7 +948,7 @@ Gate 3.14 builds the opt-in lifecycle/service and safe process configuration sea
 Gate 3.14 accepted an opt-in serial acquisition worker but did not wire a live process. Gate 3.15 may compose **one** graph from the accepted PostgreSQL Job/Manifest/ProviderTask/Outcome/Refresh/Canonical stores, IndexCore Q5/Q8 read and trusted Mutation Hint clients, Catalog Journal Projector, exact provider-session registry, RunOnce and worker.
 
 Rules:
-- default process remains side-effect-free; enabled startup requires all mandatory dependencies and Panta schema v12 before claiming any Job;
+- default process remains side-effect-free; enabled startup requires all mandatory dependencies and cloudsite schema v12 before claiming any Job;
 - PostgreSQL product DB is distinct from IndexCore DB; no direct IndexCore DB/OpenList acquisition verification;
 - Q5/Q8 read and trusted Mutation Hint have separate validated clients and trust boundaries. Hint accepted does not create READY;
 - exact ProviderID + ConnectionID + CredentialRef session resolution, external secret injection, no persisted/logged plaintext cookies or Hint tokens;
@@ -970,7 +970,7 @@ Gate 3.15 accepted an internally complete, fail-closed acquisition runtime graph
 - Worker startup must reuse the one D-038 Runtime graph and D-037 serial lifecycle, with injected credentials from a restricted external SecretResolver and no command-line raw cookies or tokens.
 - Malformed/missing/wrong-permission secrets, duplicate or mismatched bindings, unsafe Hint trust, missing schema and uncovered ACTIVE acquisition sessions are fail-closed startup conditions.
 - Do not log or persist plaintext credentials, provider source URLs or secret bearer tokens. Secret backend and injected transports are composition-edge responsibilities.
-- SIGINT/SIGTERM stops scheduling, propagates cancellation, joins Run, then closes owned Panta DB resources. Fatal recovery debt remains an operator-visible error.
+- SIGINT/SIGTERM stops scheduling, propagates cancellation, joins Run, then closes owned cloudsite DB resources. Fatal recovery debt remains an operator-visible error.
 - No live 115 account action, production deployment, API/UI, new queue, direct OpenList acquisition check or schema migration is authorized in this Gate.
 
 Gate 3.16 evidence requires protected-secret/preflight safety tests and controlled PostgreSQL+local HTTP integration. Real 115 credentials and production deployment remain separately gated.
@@ -1007,29 +1007,29 @@ Rules:
 - live provider mutation is never a CI/AI action; the human operator explicitly invokes the accepted worker start;
 - use IndexCore `v0.4.0-alpha.1` at commit `6f0eec85c59bd8cbe55011b0d9e512e0cafd6615` as the fixed external baseline for this acceptance;
 - IndexCore's accepted trusted Hint listener stays literal-loopback-only with >=32-byte token and the P10/P11 hybrid incremental runtime enabled;
-- Panta and IndexCore share the same host/network namespace for this staging acceptance rather than weakening Hint trust;
-- OpenList remains exclusively an IndexCore collector dependency; Panta never calls OpenList or its DB to establish acquisition visibility;
+- cloudsite and IndexCore share the same host/network namespace for this staging acceptance rather than weakening Hint trust;
+- OpenList remains exclusively an IndexCore collector dependency; cloudsite never calls OpenList or its DB to establish acquisition visibility;
 - preserve coordinate separation among provider_scope, OpenList collector/mount configuration, indexcore_root_id and Manifest.target_path;
 - use a dedicated staging 115 target and small non-sensitive operator-controlled HTTPS test object; never publish the full source URL or credentials in Git/chat/evidence;
 - preflight must remain non-mutating, submission enqueue-only, and StartDownload may occur only after explicit worker start;
-- provider success and Hint 202 are intermediate evidence only; PASS requires exact Q5 PRESENT canonical resource, Q8/Projector evidence, Panta result_copy_id + READY and same Job SUCCEEDED;
+- provider success and Hint 202 are intermediate evidence only; PASS requires exact Q5 PRESENT canonical resource, Q8/Projector evidence, cloudsite result_copy_id + READY and same Job SUCCEEDED;
 - use bounded polling/deadlines, not fixed sleep as proof;
 - START_RESERVED uncertainty, Q5 ambiguity, mapping mismatch, recovery debt or secret disclosure are STOP conditions, not reasons to force retries or bypass accepted owners;
 - capture only redacted operator evidence and preserve durable failure states for diagnosis;
-- no production deployment topology, API/UI, auth/quota/share, Agent, second scheduler, direct IndexCore DB access, second Copy writer or direct Panta OpenList verifier is authorized.
+- no production deployment topology, API/UI, auth/quota/share, Agent, second scheduler, direct IndexCore DB access, second Copy writer or direct cloudsite OpenList verifier is authorized.
 
 Gate 3.18 / Issue #60 may add only staging harness/runbook/evidence scaffolding unless the real run exposes a genuine accepted-contract defect. Such a defect must be reviewed explicitly before production code is changed.
 
 ### D-041 execution acceptance — 2026-10-13
 
 Gate 3.18 is **ACCEPTED / CLOSED** under
-[Architect final acceptance #6143267673](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6143267673).
+[Architect final acceptance #6143267673](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6143267673).
 This is an acceptance record, not a new architecture decision or permission to
 repeat live provider mutation. The operator-authorized staging sequence used
 reviewed compatibility fixes and the existing accepted owners:
 
 - IndexCore empty-directory compatibility fix PR #110 at `7ef47217f23ee1ba921f2dcc8378c0a2a9fb84e1`;
-- Panta known-reference recovery PR #71, reviewed HEAD `3e61483bae28a96a43faacbf9353e2bad7fb82d6`,
+- cloudsite known-reference recovery PR #71, reviewed HEAD `3e61483bae28a96a43faacbf9353e2bad7fb82d6`,
   merged `74e9e69e1dd89944901e1b6a7b2b42c661b897d7`, exact-head CI `38374274046` all green;
 - one protected same-pair/reference continuation under GO `6142455770`;
 - provider SUCCESS -> trusted loopback Hint -> unique Q5 PRESENT -> Q8
@@ -1165,12 +1165,12 @@ CloudSite sharing is a reference, NOT implemented or accepted here. Preserve
 Issue #83 WIP, existing schemas, historical provider tasks and unrelated services.
 See [content module contract](PRODUCT-FILE-CONTENT.md).
 
-## D-047 - Expiring Panta single-file sharing and download UX
+## D-047 - Expiring cloudsite single-file sharing and download UX
 
 **Status:** Accepted delegated architecture decision, 2026-10-15; Issue #92.
 
 The human prioritizes download and sharing after D-046. Implement bounded
-Panta-hosted single-file shares, referencing inspected CloudSite expiry/code/
+cloudsite-hosted single-file shares, referencing inspected CloudSite expiry/code/
 revoke UX, not its database or provider integration. This is NOT native 115
 sharing; original ShareProvider create/inspect/revoke remains a distinct future
 capability and must not be declared complete from product links.
@@ -1193,7 +1193,7 @@ not a false promise of blindly restoring the old receipt. No public exposure.
 Consumer provides stream-based downloads, file-specific share creation/copy,
 owner list/revoke, and guest single-file redemption/download page. Do not buffer
 entire large downloads into browser Blobs. Existing localhost-only deployment
-means links require reachable Panta; it is not public internet distribution.
+means links require reachable cloudsite; it is not public internet distribution.
 Revocation denies new requests, not bytes already sent. No full MVP claim.
 See [module/deployment contract](PRODUCT-FILE-SHARING.md).
 
@@ -1224,4 +1224,30 @@ render120 files per UI page to keep it responsive. Disclose incomplete reads.
 Images/audio/archives/unrecognized extensions use Other; no file format excluded.
 Directories never become file cards. Product schema stays14, Issue83 WIP preserved.
 See [contract and evidence](PRODUCT-CLOUDSITE-LIBRARY.md). No full MVP claim.
+
+## D-049 - cloudsiteV1.0.0alpha identity and scoped HTTPS deployment
+
+**Status:** Accepted direct human authorization, 2026-10-15; Issue #98.
+
+The human deleted the legacy CloudSite repository. Rename the existing panta
+repository (same ID/history) to cloudsite; exact release/tag cloudsiteV1.0.0alpha.
+Update consumer/admin/guest branding and Markdown documentation without renaming
+durable schema/cookie/config/import compatibility identifiers or fabricating MVP
+completion. Version naming and functional acceptance are separate facts.
+
+Replace only the verified target's cloudsite1.0.yml workload, preserving its
+files/data/image rollback and unrelated services. Use existing HTTPS Traefik
+entry, private edge and loopback product/query namespace, separate new owned
+PostgreSQL16 product and PostgreSQL18 canonical-snapshot databases. Explicit
+HTTPS proxy Origin only; no public database/query ports, HTTP remote credentials,
+Worker/Hint/scanner or new provider acquisition. Read-only IndexCore composition
+is a separate pinned-source build with its template hash, not a product import
+of IndexCore internals or a falsely labelled unmodified upstream release.
+
+Reuse the existing restricted storage application account/namespace. Protected
+application-token renewal is NOT native115 login or provider execution. Reload
+the protected token at the adapter boundary, reject bad replacements, keep all
+auth/Q5/Range/guest-grant checks. Data restores only new owned databases; no old
+history deletion. Exact-head CI, separate same-agent review and actual HTTPS/
+real-file acceptance precede cutover. See [release contract](CLOUDSITE-V1-ALPHA.md).
 

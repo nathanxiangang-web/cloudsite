@@ -1,0 +1,11 @@
+# Build artifacts separately from a reviewed commit; never COPY private config.
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates python3 poppler-utils util-linux curl && rm -rf /var/lib/apt/lists/* && useradd --system --uid 10001 --create-home cloudsite
+COPY cloudsite cloudsite-index-reader /usr/local/bin/
+COPY catalog-entrypoint.py /usr/local/lib/cloudsite/catalog-entrypoint.py
+RUN chmod 755 /usr/local/bin/cloudsite /usr/local/bin/cloudsite-index-reader && chmod 644 /usr/local/lib/cloudsite/catalog-entrypoint.py
+USER 10001:10001
+WORKDIR /home/cloudsite
+ENV PANTA_ACQUISITION_WORKER_ENABLED=false
+ENTRYPOINT ["/usr/local/bin/cloudsite"]
+CMD ["serve-product-readonly"]

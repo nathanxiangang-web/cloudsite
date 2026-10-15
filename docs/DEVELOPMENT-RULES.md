@@ -1,4 +1,4 @@
-# Panta — Development & Acceptance Rules
+# cloudsite — Development & Acceptance Rules
 
 ## 1. Team model
 
@@ -8,7 +8,7 @@ pass. Do not call it independent review. Narrow stages, written contracts,
 tests/CI and honest evidence remain mandatory; ordinary in-scope work does not
 need another user authorization. D-042 risk boundaries remain in force.
 
-Panta MVP uses two roles.
+cloudsite MVP uses two roles.
 
 ### Architect
 Owns:
@@ -146,12 +146,12 @@ IndexCore/OpenList/CodeArts integrations are adapters. They are not domain model
 Observation ownership is stricter than ordinary adapter layering:
 
 ```text
-Storage -> OpenList -> IndexCore -> Panta
+Storage -> OpenList -> IndexCore -> cloudsite
 ```
 
-IndexCore owns OpenList collection/scoped verification and canonical physical truth. Panta acquisition must not introduce a second direct OpenList verification/scanning lane. Panta may send trusted Mutation Hints to IndexCore and then consume IndexCore Query/Journal evidence.
+IndexCore owns OpenList collection/scoped verification and canonical physical truth. cloudsite acquisition must not introduce a second direct OpenList verification/scanning lane. cloudsite may send trusted Mutation Hints to IndexCore and then consume IndexCore Query/Journal evidence.
 
-An OpenList integration in Panta is permitted only for a separately authorized access-layer/product need; it must never become a second canonical observation source.
+An OpenList integration in cloudsite is permitted only for a separately authorized access-layer/product need; it must never become a second canonical observation source.
 
 ## 6. Side-effect rule
 

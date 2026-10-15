@@ -160,13 +160,18 @@ func Run(ctx context.Context, action, configFile, userFile string) error {
 			cancel()
 			return ErrConfig
 		}
-		token, secretErr := bootstrap.ReadProtectedFile(accessConfig.TokenFile, 8192)
-		if secretErr != nil {
-			cancel()
-			return ErrConfig
+		loadToken := func(ctx context.Context) (string, error) {
+			if err := ctx.Err(); err != nil {
+				return "", err
+			}
+			secret, err := bootstrap.ReadProtectedFile(accessConfig.TokenFile, 8192)
+			if err != nil {
+				return "", ErrConfig
+			}
+			defer clear(secret)
+			return strings.TrimSpace(string(secret)), nil
 		}
-		source, sourceErr := openlistcontent.NewContentClient(accessConfig.BaseURL, strings.TrimSpace(string(token)))
-		clear(token)
+		source, sourceErr := openlistcontent.NewContentClientWithTokenSource(accessConfig.BaseURL, loadToken)
 		if sourceErr != nil {
 			cancel()
 			return ErrConfig

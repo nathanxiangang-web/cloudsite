@@ -1,4 +1,4 @@
-# AGENTS.md — Panta AI/Developer Entry Point
+# AGENTS.md — cloudsite AI/Developer Entry Point
 
 This repository uses AI-assisted development.
 
@@ -13,6 +13,15 @@ Before planning, changing, or reviewing code, **read these files first**:
 Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-15
+
+Issue #98 is the current directly authorized release task. Repository ID1391307332
+was renamed panta -> cloudsite after the human deleted the legacy CloudSite repo.
+Freeze [release contract](docs/CLOUDSITE-V1-ALPHA.md): public name cloudsite,
+version/tag cloudsiteV1.0.0alpha, preserve Go/config/cookie/schema compatibility.
+Replace only cloudsite1.0.yml workload at the verified target; new isolated
+databases, protected config and existing HTTPS route. Backups and rollback before
+cutover, exact-head CI and same-agent review required. Deployment is NOT yet
+accepted merely because repository rename or branding tests passed.
 
 Latest reliability fix Issue #96 / PR #97 accepted/deployed. Reviewed HEAD
 `d5d056b0e1e2`, CI `38736852134` all3 SUCCESS, same-agent review `5533296802`,
@@ -47,7 +56,7 @@ Issue83 WIP unchanged. No native115 share/download/login or full MVP claim.
 Previous accepted/deployed Issue #92 / PR #93, exact HEAD `d98f79a2d39f`,
 CI `38702187329` all three SUCCESS, same-agent review `5529930361`, merge
 `49b98b21bff0`; merge CI `38702621096` SUCCESS. D-047 and
-[sharing contract](docs/PRODUCT-FILE-SHARING.md): Panta-hosted single-file links,
+[sharing contract](docs/PRODUCT-FILE-SHARING.md): cloudsite-hosted single-file links,
 expiry/code/grant/owner revoke and streamed download UX. Not native115 shares or
 public exposure. Real ordinary/guest downloads hash-match; anonymous grant,
 wrong-code rejection and revoke-denial verified. Temporary test shares revoked.
@@ -90,20 +99,20 @@ three new isolated observation-only DISABLED Bindings. Formal .50 loopback 8180
 now shows five real document files/three directories, one MP4 and an empty
 software scope, superseding the old one-document default described below.
 Two owned readonly user-systemd services are enabled; controlled restart tested,
-full VM reboot untested. Panta uses IndexCore HTTP, never direct OpenList reads.
+full VM reboot untested. cloudsite uses IndexCore HTTP, never direct OpenList reads.
 D-044: DO NOT implement file-delete UI/API; users delete directly in their drive.
 No playback/content/access/Copy projection or full MVP acceptance is implied.
 Resume isolated Issue #83 admission/usage WIP without overwriting it; no v14
 migration has been deployed. No acquisition, Hint or scheduled scan is enabled.
 
 Gate 0 through Gate 3 are ACCEPTED / CLOSED. Gate 3.18 real Phase B passed
-[Architect final acceptance](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6143267673):
+[Architect final acceptance](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6143267673):
 original KNOWN task -> Hint -> Q5/Q8 -> PRESENT Copy/cursor -> READY + same Job
 SUCCEEDED, with no additional StartDownload. Preserve the eight historical
 unknown reservations and protected evidence. No further live 115 validation is
 needed. Documentation Issue #75 / PR #76 is merged. Current task:
 auth Issue #77 / PR #78 merged. Current implementation:
-[Issue #79](https://github.com/nathanxiangang-web/panta/issues/79) / PR #80 and Issue #81 / PR #82 are accepted and merged. Initial readonly UI used real MCP-Test data; PR #87's isolated catalog now supersedes that default scope. Next bounded [Issue #83](https://github.com/nathanxiangang-web/panta/issues/83): freeze and implement exact-source admission and operation usage. [Read-only UI/runbook](docs/PRODUCT-READONLY-UI.md) remains governed by D-043.
+[Issue #79](https://github.com/nathanxiangang-web/cloudsite/issues/79) / PR #80 and Issue #81 / PR #82 are accepted and merged. Initial readonly UI used real MCP-Test data; PR #87's isolated catalog now supersedes that default scope. Next bounded [Issue #83](https://github.com/nathanxiangang-web/cloudsite/issues/83): freeze and implement exact-source admission and operation usage. [Read-only UI/runbook](docs/PRODUCT-READONLY-UI.md) remains governed by D-043.
 User-prioritized real resource presentation Issue #84 / PR #85 is accepted and
 deployed after exact-head CI `38575852403`. See [display module](docs/PRODUCT-RESOURCE-DISPLAY.md).
 That PR #85 baseline was metadata classification/list/cards/detail over the
@@ -141,14 +150,14 @@ Storage / 115
   -> OpenList
   -> IndexCore Collector
   -> IndexCore Canonical + Journal
-  -> Panta
+  -> cloudsite
 ```
 
 IndexCore owns physical truth.
 
-**Do not add direct Panta -> OpenList acquisition visibility verification.**
+**Do not add direct cloudsite -> OpenList acquisition visibility verification.**
 
-After provider completion, Panta sends a trusted IndexCore Mutation Hint:
+After provider completion, cloudsite sends a trusted IndexCore Mutation Hint:
 
 ```text
 root_id   = StorageBinding.indexcore_root_id
@@ -156,12 +165,12 @@ scope_key = Manifest.target_path
 reason    = POSSIBLE_CHANGE
 ```
 
-Then Panta waits for IndexCore canonical Query/Journal evidence.
+Then cloudsite waits for IndexCore canonical Query/Journal evidence.
 
 ### Control
 
 ```text
-Panta
+cloudsite
   -> Job Engine
   -> Provider Contract
   -> Provider Adapter
@@ -287,10 +296,10 @@ Active Gate 3.14 / Issue #52 / D-037: serial opt-in lifecycle around the accepte
 
 Active Gate 3.15 / Issue #54 / D-038.
 
-- Construct a single complete real-protocol graph from accepted Panta PostgreSQL stores, IndexCore Q5/Q8, separate trusted Mutation Hint, provider-session registry, Journal Projector, RunOnce and worker.
+- Construct a single complete real-protocol graph from accepted cloudsite PostgreSQL stores, IndexCore Q5/Q8, separate trusted Mutation Hint, provider-session registry, Journal Projector, RunOnce and worker.
 - Worker-enabled startup must fail closed if any dependency, schema-v12 guard, trusted Hint configuration or exact provider/connection credential binding is absent.
-- Resolve 115 credentials through an externally injected SecretResolver; never put cookies, tokens or user magnets/URLs in Git, Panta DB, logs or diagnostic errors.
-- Never query IndexCore DB or inspect OpenList directly from Panta for acquisition visibility; Hint 202 is NOT canonical READY.
+- Resolve 115 credentials through an externally injected SecretResolver; never put cookies, tokens or user magnets/URLs in Git, cloudsite DB, logs or diagnostic errors.
+- Never query IndexCore DB or inspect OpenList directly from cloudsite for acquisition visibility; Hint 202 is NOT canonical READY.
 - No new acquisition Copy writer; Q8 Projector owns Copy and D-033 canonical transaction owns READY.
 - Controlled PostgreSQL + HTTP fake E2E is authorized, live 115 account acceptance / deployment remains a later Gate.
 
@@ -300,7 +309,7 @@ Current Gate 3.16 / Issue #56 / D-039.
 
 - Default `cmd/panta` mode must not resolve provider secrets, claim jobs, submit Hint, or make provider requests.
 - Provide distinct explicit read-only preflight and opt-in worker start using one accepted D-038 runtime graph.
-- Inject raw 115 cookies and trusted Hint tokens only via externally protected secret sources with strict file/path permission checks; never put secrets into CLI arguments, Git, logs, Panta tables or error messages.
+- Inject raw 115 cookies and trusted Hint tokens only via externally protected secret sources with strict file/path permission checks; never put secrets into CLI arguments, Git, logs, cloudsite tables or error messages.
 - Preflight must be verifiably read-only: schema v12/active session identities/config and secret availability, no DB migration, no ClaimNext, no external provider mutation.
 - Explicit start must fully validate all required exact sessions before claims, preserve one D-037 serial Worker, signal-based cancellation and owned pool Close-after-Run ordering.
 - Live 115 account downloads, production deployment, public API/UI and additional schedulers are not authorized in this Gate.

@@ -1,7 +1,7 @@
 # Product file downloads and expiring shares - 2026-10-15
 
 Human priority: continue real downloads and sharing, referencing CloudSite.
-This bounded slice is Panta-hosted single-file sharing, NOT native 115 shares,
+This bounded slice is cloudsite-hosted single-file sharing, NOT native 115 shares,
 provider execution or full Gate4/MVP acceptance. Native ShareProvider remains
 a separate future adapter. No source/Job/Manifest/ProviderTask or StartDownload.
 

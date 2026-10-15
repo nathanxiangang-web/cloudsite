@@ -14,6 +14,48 @@ import (
 	"testing"
 )
 
+func TestProtectedTokenSourceRotationAndFailureRemainClosed(t *testing.T) {
+	token := "first-test-token"
+	calls := 0
+	var base string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/fs/get" {
+			calls++
+			if r.Header.Get("Authorization") != token {
+				t.Error("stale application token")
+			}
+			json.NewEncoder(w).Encode(map[string]any{"code": 200, "data": map[string]any{"raw_url": base + "/p/file", "size": 1, "is_dir": false}})
+			return
+		}
+		if r.Header.Get("Authorization") != "" {
+			t.Error("token leaked to bytes endpoint")
+		}
+		w.Header().Set("Content-Length", "1")
+		w.Write([]byte("x"))
+	}))
+	defer server.Close()
+	base = server.URL
+	client, err := NewContentClientWithTokenSource(base, func(context.Context) (string, error) { return token, nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, next := range []string{"first-test-token", "rotated-test-token"} {
+		token = next
+		body, err := client.Open(context.Background(), fileaccess.SourceRequest{Path: "/file", Size: 1})
+		if err != nil {
+			t.Fatal(err)
+		}
+		body.Body.Close()
+	}
+	token = "bad\r\ntoken"
+	if _, err := client.Open(context.Background(), fileaccess.SourceRequest{Path: "/file", Size: 1}); err == nil || calls != 2 {
+		t.Fatal("invalid rotated token sent upstream")
+	}
+	if _, err := NewContentClientWithTokenSource(base, nil); err == nil {
+		t.Fatal("nil source accepted")
+	}
+}
+
 func TestContentProtocolHeadersRangesAndRedaction(t *testing.T) {
 	var base, target string
 	data := "0123456789"

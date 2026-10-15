@@ -1,0 +1,11 @@
+[Unit]
+Description=cloudsite restricted storage application token renewal
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/my-servers/cloudsiteV1.0.0alpha/refresh-storage-token.py
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes

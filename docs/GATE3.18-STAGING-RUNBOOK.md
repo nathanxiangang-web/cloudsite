@@ -13,13 +13,13 @@ schema, alternate verifier or second scheduler is part of this Gate.
 
 ## Impact, stop and rollback
 
-`submit-acquisition` writes one Panta Manifest and ACQUISITION Job. It does not
+`submit-acquisition` writes one cloudsite Manifest and ACQUISITION Job. It does not
 contact 115. `start-acquisition` is the **only** step that may create a real 115
 offline task and trigger IndexCore observation through the accepted Hint. Use a
 small, non-sensitive, operator-controlled HTTPS object with a stable basename,
 and an isolated 115 staging directory. Do not use copyrighted/private media.
 
-To stop, send SIGTERM to the Panta worker and wait for exit. Do not automatically
+To stop, send SIGTERM to the cloudsite worker and wait for exit. Do not automatically
 delete the 115 task, downloaded file, Manifest, Job, Copy or IndexCore evidence.
 If `START_RESERVED` exists and the provider reference is uncertain, **stop**:
 never resubmit with a new ID, clear the reservation or call StartDownload again.
@@ -28,16 +28,16 @@ Other STOP conditions are listed below. A failed run remains diagnostic data.
 ## Module boundaries and topology
 
 ```text
-protected request -> Panta submit-acquisition -> Manifest + Job
-human start       -> Panta worker -> 115 DownloaderProvider
+protected request -> cloudsite submit-acquisition -> Manifest + Job
+human start       -> cloudsite worker -> 115 DownloaderProvider
                                       -> trusted Hint (127.0.0.1 only)
 IndexCore P10/P11 -> OpenList collector -> Canonical + Q8 Journal
-Panta Q5/Q8       -> Projector Copy -> READY + result_copy_id + Job SUCCEEDED
+cloudsite Q5/Q8       -> Projector Copy -> READY + result_copy_id + Job SUCCEEDED
 ```
 
-Panta never queries OpenList for acquisition truth or reads IndexCore's DB.
-The evidence tool `cmd/panta-staging` is **read-only**: it checks Panta schema
-v12, reads explicit Panta columns in a read-only transaction, and calls only
+cloudsite never queries OpenList for acquisition truth or reads IndexCore's DB.
+The evidence tool `cmd/panta-staging` is **read-only**: it checks cloudsite schema
+v12, reads explicit cloudsite columns in a read-only transaction, and calls only
 IndexCore Q5/Q8/Q9. It has no command to submit or start a worker. Its JSONL
 report contains IDs, states, counters, SHA-256 of the source/result name,
 generation, cursor and canonical resource ID; it excludes raw source, cookie,
@@ -48,12 +48,12 @@ one by string concatenation or path guessing:
 
 | Coordinate | Staging value (operator fills privately) | Owner |
 | --- | --- | --- |
-| `provider_scope` | dedicated 115 saveDirID | Panta StorageBinding |
+| `provider_scope` | dedicated 115 saveDirID | cloudsite StorageBinding |
 | `openlist_mount_path` and collector path | real OpenList staging mount/scope | IndexCore collector config |
 | `indexcore_root_id` | one ACTIVE root ID | IndexCore |
-| `Manifest.target_path` | root-relative destination directory | Panta acquisition |
+| `Manifest.target_path` | root-relative destination directory | cloudsite acquisition |
 
-Panta and IndexCore must share a **host/network namespace**. Two isolated Docker
+cloudsite and IndexCore must share a **host/network namespace**. Two isolated Docker
 containers with different loopbacks are not acceptable. Do not change the
 trusted Hint listener to `0.0.0.0` or a bridge IP to make this test work.
 
@@ -62,14 +62,14 @@ trusted Hint listener to `0.0.0.0` or a bridge IP to make this test work.
 Use the IndexCore prerelease `v0.4.0-alpha.1`, whose annotated tag peels to
 `6f0eec85c59bd8cbe55011b0d9e512e0cafd6615`. Verify the running binary
 and source/image provenance against that commit; do not mix an upgrade with this
-acceptance. Record the exact Panta commit and OpenList version in the report.
+acceptance. Record the exact cloudsite commit and OpenList version in the report.
 
 IndexCore's accepted `serve` mode must have one writer, a compatible schema,
 `INDEXCORE_INCREMENTAL_RUNTIME_ENABLED=true`, an ACTIVE OpenList-backed root,
 and a successful baseline observation. Configure the separate trusted Hint
 listener with literal `127.0.0.1:<port>` and a token of at least 32 bytes.
 The Query API stays on a private/loopback address; `/readyz` must succeed. The
-token is an env-only secret to IndexCore; Panta receives the matching token
+token is an env-only secret to IndexCore; cloudsite receives the matching token
 through its protected bootstrap mount. Do not paste either value into a shell
 command, Git, chat or the evidence report.
 
@@ -89,7 +89,7 @@ the real OpenList mount can see the dedicated 115 staging destination. The
 P10/P11 runtime and writer lock belong to the same `indexcore serve` process;
 do not launch a competing manual `incremental run` while it owns the lock.
 
-Keep Panta and IndexCore database names distinct. Verify the two database
+Keep cloudsite and IndexCore database names distinct. Verify the two database
 settings locally without printing either DSN. Check the IndexCore Hint socket
 is bound only to loopback. **Before starting the worker**, verify its planned
 process/container network namespace is the same as the running IndexCore
@@ -99,20 +99,20 @@ If that placement cannot be proved, do not start the worker.
 ## 2. Protected inputs and non-mutating preflight
 
 On the staging host, create owner-only (`0700`) directories and owner-readable
-(`0600`) files outside Git. The Panta bootstrap file names the exact
+(`0600`) files outside Git. The cloudsite bootstrap file names the exact
 ProviderID/ConnectionID/CredentialRef, the protected 115 cookie file, and the
 separate Hint token file. IndexCore's OpenList credential, Hint token and DB
 passwords remain in its protected runtime environment. Do not copy the user's
 desktop credential file into this repository or into a command line.
 
-Required Panta environment variables are `PANTA_DATABASE_URL`,
+Required cloudsite environment variables are `PANTA_DATABASE_URL`,
 `PANTA_INDEXCORE_BASE_URL`, `PANTA_ACQUISITION_BOOTSTRAP_FILE` and
 `PANTA_ACQUISITION_WORKER_ENABLED=true`. Supply values from protected service
 configuration, not inline shell arguments. The preflight only validates local
 secrets and exact active session coverage; it cannot authenticate 115 or prove
 an external service will complete a download.
 
-Build the staging evidence tool from this PR's reviewed Panta commit. Set:
+Build the staging evidence tool from this PR's reviewed cloudsite commit. Set:
 
 ```text
 PANTA_STAGING_ROOT_ID=<the ACTIVE IndexCore root ID>
@@ -132,9 +132,9 @@ panta-staging inspect   > <protected-inspect.json>
 panta-staging watch     > <protected-timeline.jsonl>
 ```
 
-Before submission, run `panta-staging baseline`; it checks Panta schema v12,
+Before submission, run `panta-staging baseline`; it checks cloudsite schema v12,
 IndexCore Q9 ACTIVE root/generation/admission sequence, drains bounded Q8
-pages to the last `event_seq`, and records Panta Job count, total claim
+pages to the last `event_seq`, and records cloudsite Job count, total claim
 attempts and provider-task count. Then run
 `panta preflight-acquisition` explicitly. Capture a second baseline and
 compare Job/provider-task counts, total claim attempts, Q9 admission sequence
@@ -172,7 +172,7 @@ Only after `READY_TO_START`, the human invokes the existing
 `panta start-acquisition` in the foreground or a controlled service session.
 Record its PID without recording its environment. Reconfirm its actual network
 namespace is identical to the IndexCore `serve` PID. A mismatch is a STOP
-condition: SIGTERM Panta immediately and correct placement; the pre-start
+condition: SIGTERM cloudsite immediately and correct placement; the pre-start
 placement check above is mandatory because this post-start check alone cannot
 prevent a worker from claiming a Job.
 
@@ -187,20 +187,20 @@ The timeline records:
   the raw reference;
 - IndexCore Q9 generation, Q5 exact candidate match/ambiguity/resource ID;
 - Q8 last event_seq and exact resource event after the baseline cursor;
-- Panta projector cursor and Copy availability.
+- cloudsite projector cursor and Copy availability.
 
 The watch exits `PASS` only for one exact Q5 PRESENT resource, new Q8 evidence
-for that resource, matching PRESENT Panta Copy, advanced projection cursor,
+for that resource, matching PRESENT cloudsite Copy, advanced projection cursor,
 `Manifest READY + result_copy_id + same Job SUCCEEDED`, a known provider task
 reference and a post-baseline Q9 generation. Provider `SUCCEEDED` or Hint
-`202 Accepted` alone never passes. On STOP/TIMEOUT, send SIGTERM to Panta,
+`202 Accepted` alone never passes. On STOP/TIMEOUT, send SIGTERM to cloudsite,
 wait for process exit, and preserve all durable records. Do not use a blind
 fixed sleep as success evidence.
 
 ## 5. Human acceptance record
 
 Attach only the redacted baseline, inspect and timeline JSON/JSONL plus a
-short operator note. Include Panta commit, pinned IndexCore tag+commit,
+short operator note. Include cloudsite commit, pinned IndexCore tag+commit,
 OpenList version, separate DB identities (names only), namespace equality,
 four-coordinate table, source SHA-256/scheme, one provider task creation
 evidence, signal/shutdown outcome, ManifestID, JobID, result_copy_id,

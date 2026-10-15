@@ -11,7 +11,7 @@ closed. An embedding process must inject a `contracts.SecretResolver` and exact
 
 ```text
 external secret boundary -> runtime.NewRuntime
-                         -> Panta PostgreSQL v12 stores (product DB only)
+                         -> cloudsite PostgreSQL v12 stores (product DB only)
                          -> 115 connection-scoped session registry
                          -> separate IndexCore Q5/Q8 read and trusted Hint clients
                          -> accepted Execution/Outcome/Refresh/Canonical services
@@ -25,22 +25,22 @@ The Projector alone creates Copy; Hint acceptance never establishes READY.
 
 ## Controlled startup and shutdown
 
-1. Provision a **separate Panta product database** at schema v12 through the
+1. Provision a **separate cloudsite product database** at schema v12 through the
    existing migration command before starting a worker. Runtime startup only
    reads migration status and refuses pending, modified, gapped, or unknown
    history. It never migrates a live database.
 2. Obtain the IndexCore Q5/Q8 read URL and its distinct loopback-only trusted
    Hint URL/token from the operator's trusted channel. Do not put tokens in Git,
-   Panta tables, examples, or diagnostic logs. The Hint listener must be
+   cloudsite tables, examples, or diagnostic logs. The Hint listener must be
    `127.0.0.1` or `::1` from the worker's network namespace.
 3. Inject a production `SecretResolver` whose `ResolveSecret` returns a fresh
    byte slice for each opaque `CredentialRef`. Do not use the test-only
    `StaticSecretResolver`. Register every intended 115 session by exact
    ProviderID, ConnectionID, and CredentialRef; startup checks each registration
-   against the Panta `storage_connections` row before any Job can be claimed.
+   against the cloudsite `storage_connections` row before any Job can be claimed.
 4. Call `runtime.NewRuntime(ctx, cfg, deps)` before accepting work. Treat any
    error as a startup failure; do not substitute mock clients or skip a failed
-   session. The constructor owns the Panta pool and performs no provider or
+   session. The constructor owns the cloudsite pool and performs no provider or
    IndexCore network probe. Keep the read and Hint endpoints in separate
    configuration fields.
 5. Run the returned runtime with a cancellation-aware context. On shutdown,

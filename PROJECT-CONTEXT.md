@@ -1,10 +1,10 @@
-# Panta — Project Context
+# cloudsite — Project Context
 
 > Durable project memory. Update this file when project intent, architecture invariants, or product boundaries change.
 
 ## 1. Product intent
 
-Panta manages the lifecycle from “I want / I have a resource” to “the resource is actually usable.”
+cloudsite manages the lifecycle from “I want / I have a resource” to “the resource is actually usable.”
 
 It is not tied to 115Drive. 115 is the first Storage/Downloader/Share provider used to prove the model.
 
@@ -23,7 +23,7 @@ Search is useful but is not a prerequisite for browse, path resolution, acquisit
 
 ## 3. Resource model
 
-Panta distinguishes four identities:
+cloudsite distinguishes four identities:
 
 ```text
 Asset
@@ -57,7 +57,7 @@ This separation allows:
 
 ## 4. Observation plane
 
-Panta observes storage through:
+cloudsite observes storage through:
 
 ```text
 115 / future storage
@@ -68,17 +68,17 @@ IndexCore OpenList Collector
         ↓
 Canonical Inventory + Journal
         ↓
-Panta Catalog Projector
+cloudsite Catalog Projector
 ```
 
 Rules:
 - OpenList is the upstream storage observation/access layer used by IndexCore.
 - IndexCore is the canonical physical-resource truth.
-- Panta never redefines physical presence independently of IndexCore.
-- Panta does not directly query OpenList to decide acquisition visibility or canonical presence.
-- Panta must not read OpenList DB or read/write IndexCore PostgreSQL directly.
+- cloudsite never redefines physical presence independently of IndexCore.
+- cloudsite does not directly query OpenList to decide acquisition visibility or canonical presence.
+- cloudsite must not read OpenList DB or read/write IndexCore PostgreSQL directly.
 - Product-facing physical-resource services consume IndexCore read APIs / Journal.
-- After provider mutations, Panta may send a trusted IndexCore Mutation Hint; IndexCore owns the subsequent OpenList scoped verification.
+- After provider mutations, cloudsite may send a trusted IndexCore Mutation Hint; IndexCore owns the subsequent OpenList scoped verification.
 - Trusted Mutation Hint acceptance is work ingress only, not canonical truth.
 
 ## 5. Control plane
@@ -101,7 +101,7 @@ Provider-specific implementation details must remain below the provider contract
 
 ## 6. 115 MVP role
 
-115 is the first provider used to prove Panta's provider-neutral model.
+115 is the first provider used to prove cloudsite's provider-neutral model.
 
 Current implemented provider slice:
 - Cloud Downloader Provider: `internal/providers/115`;
@@ -111,9 +111,9 @@ Current implemented provider slice:
 
 Not yet implemented:
 - 115 ShareProvider;
-- a separate Panta StorageProvider scanner.
+- a separate cloudsite StorageProvider scanner.
 
-Existing-storage observation remains OpenList -> IndexCore, not a 115 scanner inside Panta. Future provider implementation may change without changing the Panta domain contract.
+Existing-storage observation remains OpenList -> IndexCore, not a 115 scanner inside cloudsite. Future provider implementation may change without changing the cloudsite domain contract.
 
 ## 7. Cloud-download synchronization
 
@@ -128,7 +128,7 @@ Acquisition Job
   ↓
 provider stage commits AWAITING_VISIBILITY
   ↓
-Panta sends trusted IndexCore Mutation Hint
+cloudsite sends trusted IndexCore Mutation Hint
   root_id   = StorageBinding.indexcore_root_id
   scope_key = Manifest.target_path
   reason    = POSSIBLE_CHANGE
@@ -139,12 +139,12 @@ IndexCore OpenList scoped verification
   ↓
 IndexCore Canonical + Journal
   ↓
-Panta Query/Journal confirmation + Catalog Projector
+cloudsite Query/Journal confirmation + Catalog Projector
   ↓
 READY
 ```
 
-Panta does **not** add a separate direct OpenList visibility-verification hop. OpenList remains inside the IndexCore-owned observation pipeline.
+cloudsite does **not** add a separate direct OpenList visibility-verification hop. OpenList remains inside the IndexCore-owned observation pipeline.
 
 No full 40 TB rescan is required for a normal acquisition.
 
@@ -158,10 +158,10 @@ Cloud download and share require product login.
 
 ## 9. Product account boundary
 
-Panta account and storage-provider account are different identities:
+cloudsite account and storage-provider account are different identities:
 
 ```text
-Panta User
+cloudsite User
    ↓
 Storage Connections
    ├─ 115
@@ -210,13 +210,13 @@ Pricing is explicitly out of scope for the first implementation gates.
 2. Search is optional.
 3. OpenList and IndexCore remain independent upstream components.
 4. Product DB and IndexCore DB are separate.
-5. Panta Catalog owns logical resource semantics.
+5. cloudsite Catalog owns logical resource semantics.
 6. All side effects go through jobs/provider ports.
 7. A provider callback cannot unilaterally declare a Copy READY.
 8. Agent output never becomes canonical truth without deterministic validation/evidence.
 9. Provider-specific names/types must not leak into core domain interfaces.
 10. Git is the project memory; accepted decisions and state changes must be committed.
-11. Panta acquisition does not directly observe OpenList; IndexCore owns OpenList collection/scoped verification.
+11. cloudsite acquisition does not directly observe OpenList; IndexCore owns OpenList collection/scoped verification.
 12. If an old document, issue, PR, or chat memory conflicts with a newer accepted decision, the newer accepted Git decision wins.
 13. Before a new Gate is planned or reviewed, read `docs/AI-ARCHITECTURE-MEMORY.md`, `PROJECT-STATE.md`, and the newest relevant decisions.
 

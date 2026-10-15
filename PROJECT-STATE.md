@@ -1,12 +1,22 @@
-# Panta — Project State
+# cloudsite — Project State
 
 > This file is the current execution pointer. Update it at every accepted gate.
 
 ## Current phase
 
+**Current authorized release: Issue #98 — cloudsiteV1.0.0alpha rebrand and scoped
+HTTPS deployment. Repository rename completed; code/runtime acceptance pending.**
+
+The human deleted legacy CloudSite. This repository ID1391307332 is the former
+panta repository, now cloudsite; accepted history is preserved. Website/docs use
+cloudsite, exact alpha label cloudsiteV1.0.0alpha. Internal import/config/cookie/
+schema identifiers remain compatible. See [contract](docs/CLOUDSITE-V1-ALPHA.md).
+Only the cloudsite1.0.yml workload may be replaced; existing service/data/rollback
+protection remains. Do not infer completed production deployment or full MVP.
+
 **Gate 3 CLOSED; auth/read/readonly UI accepted; real canonical reads connected; minimum MVP still incomplete**
 
-Gate 0 through Gate 3 are accepted and closed. D-042 delegates Architect and Developer roles through minimum usable core MVP. Docs/auth/reads/UI, real catalog, file content and Panta-hosted single-file sharing are merged. Owned product UI runs on staging host .50 through a loopback SSH forward, reading the isolated real IndexCore catalog introduced by PR #87 and expanded to complete CloudSite by PR #95. PR #89 separates consumer and admin UI; PR #91 adds content/server previews; PR #93 adds product shares/download UX; PR #95 adds random4-character codes and full CloudSite file inventory. Admission/usage, current-database Copy synchronization and native115 ShareProvider remain incomplete; this is not full MVP acceptance.
+Gate 0 through Gate 3 are accepted and closed. D-042 delegates Architect and Developer roles through minimum usable core MVP. Docs/auth/reads/UI, real catalog, file content and cloudsite-hosted single-file sharing are merged. Owned product UI runs on staging host .50 through a loopback SSH forward, reading the isolated real IndexCore catalog introduced by PR #87 and expanded to complete CloudSite by PR #95. PR #89 separates consumer and admin UI; PR #91 adds content/server previews; PR #93 adds product shares/download UX; PR #95 adds random4-character codes and full CloudSite file inventory. Admission/usage, current-database Copy synchronization and native115 ShareProvider remain incomplete; this is not full MVP acceptance.
 
 ### Current download/playback reliability fix - 2026-10-15
 
@@ -71,11 +81,11 @@ Issue #92 / PR #93 ACCEPTED and deployed. Reviewed HEAD
 `d98f79a2d39f6add0e6d7d4bb98126516623bfa7`, exact-head CI `38702187329` all
 three SUCCESS, same-agent review `5529930361`, merge
 `49b98b21bff0c6be3e11f05a6292ba6c383da3af`; merge CI `38702621096` SUCCESS.
-D-047 and [module contract](docs/PRODUCT-FILE-SHARING.md): Panta-hosted file links,
+D-047 and [module contract](docs/PRODUCT-FILE-SHARING.md): cloudsite-hosted file links,
 5m/1h/6h/24h/7d expiry, optional code, separate guest grant cookie, copy link,
 owner list/revoke; exact canonical file authorization before create/download.
 This is NOT native115 sharing, directory sharing or public internet exposure.
-Current localhost URLs require reachable Panta. Source scopes unchanged.
+Current localhost URLs require reachable cloudsite. Source scopes unchanged.
 
 Browser ordinary and guest DOCX downloads both15423 bytes, SHA256
 `2bc8090eca36718b3c682ba66f9b3f1a97b88be0d850a1f7c55f1ffedf298925`.
@@ -162,7 +172,7 @@ Bindings over an isolated IndexCore catalog: documents/tutorials (five real file
 and three directories), one video directory (one real MP4), software (confirmed
 empty). Browser category/cards/video detail verified on 2026-10-15. These replace
 the previous one-document default scope; this is not whole-drive coverage.
-Panta queries IndexCore HTTP only, not OpenList or its DB. D-044 excludes file
+cloudsite queries IndexCore HTTP only, not OpenList or its DB. D-044 excludes file
 delete UI/API: users delete in their drive, conservative IndexCore rules unchanged.
 
 Two enabled user-systemd readonly services survived a controlled graceful
@@ -178,7 +188,7 @@ separate and unreviewed; resume that slice before Copy/access/share implementati
 User-prioritized readonly resource presentation Issue #84 / PR #85 is ACCEPTED
 and merged at `0ddf314554cd5b252969e9e1d82a06f9b36469c8`, reviewed HEAD
 `af23cf2746a0fa3f2266a8d7c95f4a0be550ec6d`; CI `38575852403` all three jobs
-successful. [Same-agent review](https://github.com/nathanxiangang-web/panta/pull/85#pullrequestreview-5519125136),
+successful. [Same-agent review](https://github.com/nathanxiangang-web/cloudsite/pull/85#pullrequestreview-5519125136),
 [display contract](docs/PRODUCT-RESOURCE-DISPLAY.md). The owned .50 readonly UI
 is updated, schema stays v13. Real Markdown Q4/Q5/card/detail, category/search
 empty states, logout/relogin and responsive layout were verified. Software/video
@@ -194,7 +204,7 @@ deployed, and its draft v14 migration has not touched any real database. Resume
 that bounded slice, then Copy projection and authorized real content access;
 metadata presentation must not replace the remaining minimum MVP capabilities.
 
-Issue #81 / PR #82 ACCEPTED and merged at `8b86ae336b8b88b00bb0a9b6ab787695126eb060`; exact HEAD `e82d2fed1fa92ac68702a4189a336f2134f8f61c`, CI `38537678423` all three groups successful. [Acceptance record](https://github.com/nathanxiangang-web/panta/pull/82#issuecomment-6164669005), [readonly module/runbook](docs/PRODUCT-READONLY-UI.md). Browser login, real browse/Q5, owner-only empty tasks and logout/relogin are verified. Next bounded [Issue #83](https://github.com/nathanxiangang-web/panta/issues/83): freeze and implement exact-source admission and zero-price operation usage. It is not implemented yet; download controls remain unavailable.
+Issue #81 / PR #82 ACCEPTED and merged at `8b86ae336b8b88b00bb0a9b6ab787695126eb060`; exact HEAD `e82d2fed1fa92ac68702a4189a336f2134f8f61c`, CI `38537678423` all three groups successful. [Acceptance record](https://github.com/nathanxiangang-web/cloudsite/pull/82#issuecomment-6164669005), [readonly module/runbook](docs/PRODUCT-READONLY-UI.md). Browser login, real browse/Q5, owner-only empty tasks and logout/relogin are verified. Next bounded [Issue #83](https://github.com/nathanxiangang-web/cloudsite/issues/83): freeze and implement exact-source admission and zero-price operation usage. It is not implemented yet; download controls remain unavailable.
 
 Prior acceptance: auth Issue #77 / PR #78 merged at `eeedd3af242353822c0541cd1e74e48475fe596d`, exact HEAD `95ca01a6cf450b20f4f2e357587cbeb31b84b78a`, CI `38506025321` successful; reads Issue #79 / PR #80 at `574124aa997464eb3305fcc6ce2d5ddcb9ff28f7`, exact HEAD `f8c0607c73cbe640aeec06be0d39c11cd9296bd1`, CI `38507300691` successful. All are bounded module acceptances, not full MVP completion.
 
@@ -202,13 +212,13 @@ Prior acceptance: auth Issue #77 / PR #78 merged at `eeedd3af242353822c0541cd1e7
 recoverable deletions. [Domain ownership](docs/CONTROL-PLANE-DOMAIN.md) and
 [execution plan](docs/GATE4-IMPLEMENTATION-PLAN.md) distinguish current source
 from approved future design. Original Gate 4 auth/access/share/usage remains the
-target. Issues #75/#77/#79/#81/#84 are completed; Issue #83 remains unfinished. Accepted product migration head is v13; original Gate 3.18 Panta DB/binary remains v12. On explicit human request for real data, the stopped staging PostgreSQL container was restored and an owned IndexCore read-only component entrypoint started. Original table/provider-history hashes are unchanged, with no writer/scan/Hint/provider start; unrelated services unchanged. No automatic migration or real download occurred.
+target. Issues #75/#77/#79/#81/#84 are completed; Issue #83 remains unfinished. Accepted product migration head is v13; original Gate 3.18 cloudsite DB/binary remains v12. On explicit human request for real data, the stopped staging PostgreSQL container was restored and an owned IndexCore read-only component entrypoint started. Original table/provider-history hashes are unchanged, with no writer/scan/Hint/provider start; unrelated services unchanged. No automatic migration or real download occurred.
 D-042 authorizes later bounded implementation without another user approval;
 tests/review/CI remain mandatory. Historical data/runtime invariants are preserved.
 
 ### Current final acceptance — 2026-10-13
 
-The [Architect final acceptance](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6143267673)
+The [Architect final acceptance](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6143267673)
 supersedes all historical C2-B/C3 NO-GO, polling-repair and OPEN pointers below.
 PR #71 merged at `74e9e69e1dd89944901e1b6a7b2b42c661b897d7`; reviewed exact HEAD
 `3e61483bae28a96a43faacbf9353e2bad7fb82d6`, CI `38374274046` all three groups SUCCESS.
@@ -230,19 +240,19 @@ Older sections below are retained chronological evidence, not current authority.
 
 ## Accepted baseline
 
-- Project name: Panta
+- Project name: cloudsite
 - MVP-first: functionality before UI polish
 - Team model: one agent performs Architect, Developer and a separate same-agent review pass under D-042; not independent review
 - OpenList remains inside the primary observation path as an IndexCore-owned collector dependency
-- Panta acquisition does not directly query OpenList for visibility/canonical truth
+- cloudsite acquisition does not directly query OpenList for visibility/canonical truth
 - IndexCore remains an independent canonical physical-resource kernel
-- Panta introduces a separate logical Catalog
+- cloudsite introduces a separate logical Catalog
 - Resource identity model: Asset → Release → Variant → Copy
 - Browse/known-path access must work without search
 - 115 is the first provider, not the product architecture
 - 115 cloud download is an MVP core capability
 - Cloud download/share require product login
-- Cloud-download result must be handed to the IndexCore-owned OpenList observation pipeline through a trusted scoped Mutation Hint, then canonically confirmed by IndexCore Query/Journal; no Panta direct OpenList verification and no full scan
+- Cloud-download result must be handed to the IndexCore-owned OpenList observation pipeline through a trusted scoped Mutation Hint, then canonically confirmed by IndexCore Query/Journal; no cloudsite direct OpenList verification and no full scan
 - CodeArts CLI is the initial replaceable Agent Runtime
 - Initial backend implementation baseline: Go 1.27.1
 - MVP deployment shape: single-process modular monolith
@@ -260,7 +270,7 @@ Older sections below are retained chronological evidence, not current authority.
 Status: **ACCEPTED / CLOSED**
 
 Goal:
-Create the smallest compilable/runnable Panta skeleton with module boundaries and ports before implementing real 115 behavior.
+Create the smallest compilable/runnable cloudsite skeleton with module boundaries and ports before implementing real 115 behavior.
 
 Required outputs:
 - module/package skeleton;
@@ -311,7 +321,7 @@ Merged:
 - squash commit `8d16b9a3692f1f2fb3cab48be6ccbcbacce0646c`
 
 Accepted scope:
-- independent Panta PostgreSQL configuration/connection boundary;
+- independent cloudsite PostgreSQL configuration/connection boundary;
 - pgx/v5 persistence adapter boundary;
 - ordered embedded append-only SQL migrations;
 - schema migration checksum/history compatibility;
@@ -408,7 +418,7 @@ Merged:
 - squash commit `0cd355a7917e522c24ccee62be949406d955c492`
 
 Scope:
-- refine Panta-owned IndexCore query contracts to match Q4/Q5/Q8/Q9 semantics;
+- refine cloudsite-owned IndexCore query contracts to match Q4/Q5/Q8/Q9 semantics;
 - typed server-side HTTP client;
 - Q4 parent hierarchy + opaque cursor;
 - Q5 all matches + ambiguity;
@@ -455,7 +465,7 @@ Explicitly deferred:
 
 ## Current bounded task
 
-### Gate 1.4 — Controlled OpenList → IndexCore → Panta observation E2E and Gate 1 closeout
+### Gate 1.4 — Controlled OpenList → IndexCore → cloudsite observation E2E and Gate 1 closeout
 
 Status: **ACCEPTED**
 
@@ -471,14 +481,14 @@ Pinned external integration:
 Scope:
 - test-only OpenList-compatible controlled fixture;
 - real external IndexCore OpenList Collector / Canonical / Journal path;
-- real Panta Q4/Q5/Q8 client and PostgreSQL projector;
+- real cloudsite Q4/Q5/Q8 client and PostgreSQL projector;
 - direct known-path acceptance without Search;
 - repeat-idempotency and additive-change evidence;
 - GitHub Actions observation E2E;
 - Gate 1 documentation/CI closeout.
 
 Explicitly deferred:
-- production Panta OpenList scanner;
+- production cloudsite OpenList scanner;
 - post-download visibility verifier;
 - Mutation Hint/scoped refresh;
 - continuous Journal polling;
@@ -492,7 +502,7 @@ Gate 1 closeout evidence:
 - pinned IndexCore commit `6f0eec85c59bd8cbe55011b0d9e512e0cafd6615`;
 - initial observation, identical NOOP repeat, and additive change all passed;
 - direct Q5 known-path flow requires no Search;
-- IndexCore and Panta databases remain separate.
+- IndexCore and cloudsite databases remain separate.
 
 ## Current bounded task
 
@@ -802,7 +812,7 @@ Acceptance evidence:
 - connection/credential mismatch fails closed before provider calls;
 - contracts.SecretResolver freezes the opaque secret lookup boundary;
 - secret contents remain outside Manifest, Job payload, and provider-task persistence;
-- provider adapters do not query Panta persistence for credentials;
+- provider adapters do not query cloudsite persistence for credentials;
 - all Gate 3.4 side-effect fencing remains intact;
 - GitHub Actions run `36608071506` fully green;
 - no migration change; schema remains version 9.
@@ -846,7 +856,7 @@ Acceptance evidence:
 - bounded exact-hash status polling;
 - 115 status 0/1/2/-1 maps to provider Pending/Running/Succeeded/Failed only;
 - cancel deletes task only with `deleteFiles=false`;
-- provider success remains distinct from Panta READY;
+- provider success remains distinct from cloudsite READY;
 - GitHub Actions run `36610303120` fully green;
 - no migration change; schema remains version 9.
 
@@ -928,28 +938,28 @@ Acceptance evidence:
 - production `internal/app.HintPort` composes the real IndexCore Hint client into the acquisition-owned port;
 - Hint transport remains literal-loopback-only and never follows redirects;
 - exact D-029 root/scope/reason mapping;
-- no production Panta -> OpenList acquisition verification path;
+- no production cloudsite -> OpenList acquisition verification path;
 - 202 Accepted remains non-canonical and never READY;
 - accepted Hint atomically commits AWAITING_CANONICAL + RETRY_WAIT on the same Job;
-- at-least-once Hint resend is safe before Panta commit and stops after durable handoff;
+- at-least-once Hint resend is safe before cloudsite commit and stops after durable handoff;
 - GitHub Actions run `36665857635` fully green;
 - no migration change; schema remains version 10.
 
 Correction:
-- Issue #37 was closed NOT PLANNED because direct Panta -> OpenList acquisition verification violates D-018/D-015.
+- Issue #37 was closed NOT PLANNED because direct cloudsite -> OpenList acquisition verification violates D-018/D-015.
 - D-029 supersedes D-028 for acquisition verification.
-- Panta does not directly inspect OpenList in the acquisition path.
+- cloudsite does not directly inspect OpenList in the acquisition path.
 - This correction is also frozen in `docs/AI-ARCHITECTURE-MEMORY.md`, `PROJECT-CONTEXT.md`, and `docs/MVP-BLUEPRINT.md`.
 
 Scope:
-- implement the Panta-owned typed client for IndexCore's accepted trusted Mutation Hint transport;
+- implement the cloudsite-owned typed client for IndexCore's accepted trusted Mutation Hint transport;
 - exact Hint mapping: root_id = StorageBinding.indexcore_root_id, scope_key = Manifest.target_path, reason = POSSIBLE_CHANGE;
 - preserve IndexCore's loopback-only Bearer-authenticated Hint trust boundary;
 - require AWAITING_VISIBILITY Manifest + exact linked fenced ACQUISITION Job;
 - accepted Hint atomically hands the same Job to Manifest AWAITING_CANONICAL + Job RETRY_WAIT;
 - Hint acceptance remains non-canonical and never READY;
-- duplicate Hint after a lost Panta commit is allowed under IndexCore's at-least-once/coalescing semantics;
-- no direct Panta OpenList HTTP/API/database access.
+- duplicate Hint after a lost cloudsite commit is allowed under IndexCore's at-least-once/coalescing semantics;
+- no direct cloudsite OpenList HTTP/API/database access.
 
 Explicitly deferred:
 - acquisition result locator capture;
@@ -1014,7 +1024,7 @@ The sequence may be refined by an architect decision, but later tasks must not b
 - Gate 1.1 — StorageConnection / StorageBinding persistence — **ACCEPTED**
 - Gate 1.2 — Typed IndexCore HTTP read client (Q4/Q5/Q8/Q9) — **ACCEPTED**
 - Gate 1.3 — Journal cursor persistence + idempotent unresolved Copy projector — **ACCEPTED**
-- Gate 1.4 — Controlled OpenList → IndexCore → Panta observation integration + Gate 1 closeout — **ACCEPTED**
+- Gate 1.4 — Controlled OpenList → IndexCore → cloudsite observation integration + Gate 1 closeout — **ACCEPTED**
 
 ## Planned project sequence
 
@@ -1250,14 +1260,14 @@ Merge evidence:
 - Architect Review `5368761583` ACCEPTED;
 - exact-head CI `36739873694` all three jobs SUCCESS, including explicit PostgreSQL 16 controlled runtime E2E.
 
-Acceptance: one fail-closed Panta PostgreSQL v12/IndexCore read+trusted Hint/115 session registry/Journal Projector/RunOnce/Worker graph; external injected CredentialRef-bound credentials, redacted startup failures; ACTIVE session inventory before any claim; controlled HTTP protocol E2E provider→Hint→Q5/Q8→exact Copy→READY and failure/cancellation tests. No real 115 account contact and no deployment.
+Acceptance: one fail-closed cloudsite PostgreSQL v12/IndexCore read+trusted Hint/115 session registry/Journal Projector/RunOnce/Worker graph; external injected CredentialRef-bound credentials, redacted startup failures; ACTIVE session inventory before any claim; controlled HTTP protocol E2E provider→Hint→Q5/Q8→exact Copy→READY and failure/cancellation tests. No real 115 account contact and no deployment.
 
 Governing decision: D-038.
 
 Scope:
-- compose and validate one complete Panta product DB/repository/IndexCore read and trusted Hint/provider-session/Projector/RunOnce/Worker runtime graph;
+- compose and validate one complete cloudsite product DB/repository/IndexCore read and trusted Hint/provider-session/Projector/RunOnce/Worker runtime graph;
 - secrets injected through external port, exact provider/connection/credential binding; no credential persistence or logs;
-- startup checks Panta schema v12 and fails closed on missing dependencies; owned resources close on cancellation;
+- startup checks cloudsite schema v12 and fails closed on missing dependencies; owned resources close on cancellation;
 - controlled PostgreSQL + HTTP-fake E2E shows provider → Hint → canonical Q5/Journal/Copy → READY;
 - no new schema migration planned.
 
@@ -1325,8 +1335,8 @@ Status: **ACCEPTED / CLOSED — REAL PHASE B COMPLETE, 2026-10-13**
 
 Tracking: GitHub Issue #60 / diagnostic and staging Issue #62 / docs synchronization Issue #66
 
-Current checkpoint: the [real execution report](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6143257082)
-and [Architect final acceptance](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6143267673)
+Current checkpoint: the [real execution report](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6143257082)
+and [Architect final acceptance](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6143267673)
 prove original provider task SUCCESS -> Hint -> Q5 PRESENT -> Q8 sequence 1 ->
 PRESENT Copy/cursor 1 -> `result_copy_id` + READY + same Job SUCCEEDED.
 PR #71 supplies reviewed paired recovery and poll-only continuation; no new
@@ -1367,29 +1377,29 @@ Diagnostic PR #63 (accepted/merged, not acquisition acceptance):
 
 ### Subsequent accepted checkpoints (earlier evidence above retained)
 
-- [PR #64](https://github.com/nathanxiangang-web/panta/pull/64): parser-boundary
+- [PR #64](https://github.com/nathanxiangang-web/cloudsite/pull/64): parser-boundary
   diagnostics accepted; reviewed HEAD `a140486f9ff7626a6a322764ba4b880c2e969583`,
   squash `9e2e2e5cdaf140e97c030b0678e1418660d1b48c`. Synthetic diagnostics do not
   identify an unretained historical HTTP response or prove real download success.
-- [PR #65](https://github.com/nathanxiangang-web/panta/pull/65): single-attempt
+- [PR #65](https://github.com/nathanxiangang-web/cloudsite/pull/65): single-attempt
   operator plan merged at `f28f3a05759a6e4a9c7f01895e58df8db9829f33`; exact
   source_ref SHA-256 definition corrected. A plan is not live-test authorization.
-- C1: isolated clean Panta candidate built from that accepted main; prepared
-  Hint address remains inactive. [Report](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6096649587),
-  [acceptance](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6096681761).
+- C1: isolated clean cloudsite candidate built from that accepted main; prepared
+  Hint address remains inactive. [Report](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6096649587),
+  [acceptance](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6096681761).
 - C1.5: configuration-first restricted virtual-root proposal accepted; the
   existing non-root collector yields a Hint/Q5 coordinate incompatibility.
   Do not prepend guessed prefixes or modify accepted protocols.
-  [Report](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6097019507),
-  [acceptance](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6097060575).
+  [Report](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6097019507),
+  [acceptance](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6097060575).
 - C2-A: independent OpenList v4.2.6 synthetic Local instance actually running
   on host loopback, restart=no, fresh private state and no real 115 mount or
-  credentials. [Report](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6097687709),
-  [acceptance](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6098683022).
+  credentials. [Report](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6097687709),
+  [acceptance](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6098683022).
   Synthetic PASS is **not** real 115 isolation, Hint/Q5/Q8 or E2E acceptance.
-- Historical [C2-B0 work order](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6098855717)
-  is completed: [actual report](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6098957134)
-  and [architect acceptance](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6099065863).
+- Historical [C2-B0 work order](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6098855717)
+  is completed: [actual report](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6098957134)
+  and [architect acceptance](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6099065863).
   **READ-ONLY EVIDENCE ACCEPTED / C2-B ADMISSION NO-GO**. In the measured scope,
   the synthetic instance at `127.0.0.1:5248`, original nine containers, pinned
   single IndexCore writer, schema v12 and five historical recovery/reservation
@@ -1416,10 +1426,10 @@ External baseline:
 
 Scope:
 - prepare a redacted staging harness/runbook without changing accepted production semantics;
-- run Panta and IndexCore in the same host/network namespace for the literal-loopback Hint trust boundary;
+- run cloudsite and IndexCore in the same host/network namespace for the literal-loopback Hint trust boundary;
 - use one dedicated real 115 staging destination and real OpenList-backed IndexCore root;
-- Panta preflight remains non-mutating; submission enqueues exactly one durable pair; explicit operator start performs the real provider mutation;
-- prove provider -> Hint -> IndexCore OpenList observation -> Q5/Q8 -> Panta Projector -> READY/result_copy_id/Job SUCCEEDED;
+- cloudsite preflight remains non-mutating; submission enqueues exactly one durable pair; explicit operator start performs the real provider mutation;
+- prove provider -> Hint -> IndexCore OpenList observation -> Q5/Q8 -> cloudsite Projector -> READY/result_copy_id/Job SUCCEEDED;
 - retain durable failure/recovery evidence; never bypass IndexCore or clear START_RESERVED to force a retry;
 - no new schema expected.
 

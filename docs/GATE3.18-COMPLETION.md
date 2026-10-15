@@ -2,10 +2,10 @@
 
 **ACCEPTED / CLOSED.** This is real-account evidence, not a CI-only result.
 
-- [Execution report](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6143257082)
-- [Gate #60 evidence mirror](https://github.com/nathanxiangang-web/panta/issues/60#issuecomment-6143257802)
-- [Architect final acceptance](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6143267673)
-- [Scoped recovery GO](https://github.com/nathanxiangang-web/panta/issues/62#issuecomment-6142455770)
+- [Execution report](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6143257082)
+- [Gate #60 evidence mirror](https://github.com/nathanxiangang-web/cloudsite/issues/60#issuecomment-6143257802)
+- [Architect final acceptance](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6143267673)
+- [Scoped recovery GO](https://github.com/nathanxiangang-web/cloudsite/issues/62#issuecomment-6142455770)
 
 ## Reviewed runtime
 
@@ -31,7 +31,7 @@ one scoped Worker completed; new Submit, Manifest, Job, ProviderTask and
 StartDownload calls were all **0**. Original real StartDownload count remains 1.
 
 Q5 returned one non-ambiguous PRESENT resource. Q8 produced resource-added
-sequence 1. Q5/Q8/Panta Copy resource IDs match; Copy is PRESENT in the exact
+sequence 1. Q5/Q8/cloudsite Copy resource IDs match; Copy is PRESENT in the exact
 Binding; cursor 1 equals the journal sequence. Manifest.result_copy_id equals
 that Copy ID. Same Job SUCCEEDED, lease cleared, Worker exit 0 and joined.
 
