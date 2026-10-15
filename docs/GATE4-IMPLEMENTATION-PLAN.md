@@ -15,8 +15,11 @@ usage/quota ledger must work. Account identity is independent of 115 credentials
 These are **acceptance targets**, not current functionality. Existing accepted
 code provides Gate 3 acquisition/canonical behavior. Issue #77 adds auth/session
 domain, store and handlers; [module evidence](PRODUCT-AUTH.md) is separate from
-startup/operator provisioning and product acceptance. Product listener/UI,
-access integration, concrete share and accounting are still missing.
+startup/operator provisioning and product acceptance. Product listener/readonly
+UI are now accepted (PR #82/#85); current runtime/evidence is in PROJECT-STATE.md.
+Access integration, concrete share and accounting remain incomplete. D-044
+excludes file deletion UI/API: users delete in the drive; IndexCore remains the
+observation authority. Share revocation must preserve source files.
 
 ## Execution model
 

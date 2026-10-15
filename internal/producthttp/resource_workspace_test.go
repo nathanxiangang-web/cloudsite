@@ -30,6 +30,15 @@ func TestResourcePresentationServesSafeAssetsWithoutWritableRoutes(t *testing.T)
 	if !strings.Contains(page, "不是整个网盘") || !strings.Contains(page, "不包含文件正文") {
 		t.Fatal("scope/content incorrectly implied")
 	}
+	if strings.Contains(page, "删除文件") {
+		t.Fatal("file deletion is excluded by the human's scope")
+	}
+	for _, path := range []string{"/api/v1/files/97000000-0000-4000-8000-000000000001", "/api/v1/resources/97000000-0000-4000-8000-000000000001"} {
+		w := request(h, "DELETE", path, "", testToken, "http://127.0.0.1:8180")
+		if w.Code != 404 && w.Code != 405 {
+			t.Fatal("file-delete API unexpectedly available", path, w.Code)
+		}
+	}
 	for _, path := range []string{"/api/v1/acquisitions", "/api/v1/files/access", "/api/v1/shares"} {
 		w := request(h, "POST", path, `{}`, testToken, "http://127.0.0.1:8180")
 		if w.Code != 404 && w.Code != 405 {
