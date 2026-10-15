@@ -67,7 +67,7 @@ class ReadonlyServiceTests(unittest.TestCase):
         self.write("product.json", json.dumps(self.config))
         self.write("catalog.url", "postgres://test@127.0.0.1:55433/indexcore_gate318")
         with self.assertRaises(service.Refused): self.load()
-        for override in ("host=other.invalid", "port=5432", "dbname=indexcore_gate318", "sslmode=disable&sslmode=require"):
+        for override in ("host=other.invalid", "host=", "port=5432", "dbname=indexcore_gate318", "dbname=", "sslmode=disable&sslmode=require"):
             self.write("catalog.url", "postgres://test@127.0.0.1:55433/indexcore_panta_mvp_catalog_20261014?"+override)
             with self.assertRaises(service.Refused): self.load()
         with self.assertRaises(service.Refused): service.verified_binary(self.root, self.private / "product.json", self.digest)
