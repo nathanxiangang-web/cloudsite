@@ -4,12 +4,15 @@
 
 ## Current phase
 
-Cloud-download implementation IN PROGRESS: Issue83 / D-054. Product admission,
-zero-price usage and explicit HTTP adapter now implement atomic original/
-execution/frozen-policy reservation plus stable-ID activation. Schema15 is
-append-only development history, NOT migrated to public14 or original staging12.
-No public cloud-download UI/Worker or live115 execution yet. Original dirty
-Issue83 WIP preserved. [Module contract](docs/PRODUCT-ADMISSION.md).
+Cloud-download composition IN PROGRESS: Issue111 / D-055. Explicit managed
+product runtime, fixed-target consumer submission, own tasks/usage and source-free
+operation reconciliation. [Module contract](docs/PRODUCT-CLOUD-RUNTIME.md).
+Issue83/PR110 admission is ACCEPTED: revieweda630dafa, exact-head CI38901805468
+all3 SUCCESS, same-agent review5547872267, mergeec568ae1; merge CI38902038377
+SUCCESS. Schema15 is development-only, public14/original staging12 unchanged.
+Public native login restored and directory read verified, zero StartDownload.
+The runtime/UI is not publicly enabled; IndexCore writer integration remains a
+deployment step. Original dirty Issue83 WIP and historical reservations preserved.
 
 Accepted cloud acquisition preparation: Issue108 / PR109 / D-053. Pure input
 policy keeps BTIH/optional dn. D-054 now implements its new-reservation durable

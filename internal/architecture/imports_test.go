@@ -181,6 +181,25 @@ var allowedDomainDependencies = []struct {
 	imported  string
 	relaxed   string
 }{
+	// D-055: the explicit product acquisition composition root reuses existing
+	// domain constructors/runtime/lifecycle events. Readonly startup is still
+	// prohibited from constructing them. Concrete providers and jobs remain
+	// forbidden; domain and HTTP packages gain no adapter dependencies.
+	{
+		dependent: "github.com/nathanxiangang-web/panta/internal/platform/productserver",
+		imported:  "github.com/nathanxiangang-web/panta/internal/acquisition",
+		relaxed:   "/internal/acquisition",
+	},
+	{
+		dependent: "github.com/nathanxiangang-web/panta/internal/platform/productserver",
+		imported:  "github.com/nathanxiangang-web/panta/internal/runtime",
+		relaxed:   "/internal/runtime",
+	},
+	{
+		dependent: "github.com/nathanxiangang-web/panta/internal/platform/productserver",
+		imported:  "github.com/nathanxiangang-web/panta/internal/app",
+		relaxed:   "/internal/app",
+	},
 	{
 		dependent: "github.com/nathanxiangang-web/panta/internal/acquisition",
 		imported:  "github.com/nathanxiangang-web/panta/internal/providers/contracts",

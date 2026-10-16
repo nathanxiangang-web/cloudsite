@@ -1,5 +1,5 @@
-// Package productserver composes the opt-in product HTTP process. It never
-// constructs an acquisition runtime, provider session, Hint client or worker.
+// Package productserver composes explicit product actions. The readonly action
+// never constructs an acquisition graph; the separate cloud action opts in.
 package productserver
 
 import (
@@ -28,6 +28,7 @@ var ErrConfig = errors.New("invalid protected product configuration")
 var ErrStartup = errors.New("product process unavailable")
 
 type Config struct {
+	CloudDownload        *CloudDownloadConfig         `json:"cloud_download,omitempty"`
 	RegistrationEnabled  bool                         `json:"registration_enabled,omitempty"`
 	HTTPSProxy           bool                         `json:"https_proxy,omitempty"`
 	LibraryBindingIDs    []storage.BindingID          `json:"library_binding_ids,omitempty"`
@@ -130,6 +131,9 @@ func LoadConfig(ctx context.Context, path string) (Config, error) {
 	return cfg, nil
 }
 func (cfg Config) Validate() error {
+	if cfg.CloudDownload != nil && !cfg.CloudDownload.Valid() {
+		return ErrConfig
+	}
 	host, port, err := net.SplitHostPort(cfg.ListenAddress)
 	ip := net.ParseIP(host)
 	p, portErr := strconv.Atoi(port)
@@ -160,6 +164,9 @@ func (cfg Config) Validate() error {
 			return ErrConfig
 		}
 		seen[string(binding.ID)] = true
+	}
+	if cfg.CloudDownload != nil && !seen[string(cfg.CloudDownload.Target.BindingID)] {
+		return ErrConfig
 	}
 	return nil
 }

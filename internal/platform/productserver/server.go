@@ -19,6 +19,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/integrations/indexcore"
 	openlistcontent "github.com/nathanxiangang-web/panta/internal/integrations/openlist/content"
 	"github.com/nathanxiangang-web/panta/internal/platform/bootstrap"
+	"github.com/nathanxiangang-web/panta/internal/platform/config"
 	"github.com/nathanxiangang-web/panta/internal/product"
 	"github.com/nathanxiangang-web/panta/internal/producthttp"
 	"github.com/nathanxiangang-web/panta/internal/resourceview"
@@ -55,9 +56,11 @@ func openDatabase(ctx context.Context, cfg Config) (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-// Run is explicit and owns exactly one pool. It never migrates a database.
-func Run(ctx context.Context, action, configFile, userFile string) error {
-	if action != ServeAction && action != ProvisionAction {
+// Run owns its HTTP pool and, in cloud mode, the existing runtime's separate
+// pool for the exact same database. It never migrates a database.
+func Run(ctx context.Context, action, configFile, userFile string, policies ...config.AcquisitionWorker) error {
+	cloud := action == CloudAction || action == CloudPreflightAction
+	if action != ServeAction && action != ProvisionAction && !cloud {
 		return ErrConfig
 	}
 	if err := ctx.Err(); err != nil {
@@ -68,6 +71,10 @@ func Run(ctx context.Context, action, configFile, userFile string) error {
 	if err != nil {
 		cancel()
 		return err
+	}
+	if cloud && (cfg.CloudDownload == nil || len(policies) != 1 || !policies[0].Enabled) || !cloud && action == ServeAction && cfg.CloudDownload != nil {
+		cancel()
+		return ErrConfig
 	}
 	var input provisionRequest
 	if action == ProvisionAction {
@@ -145,6 +152,24 @@ func Run(ctx context.Context, action, configFile, userFile string) error {
 		return ErrStartup
 	}
 	var options []producthttp.WorkspaceOption
+	var cloudWorker interface {
+		Run(context.Context) error
+		Close()
+	}
+	if cloud {
+		worker, option, err := buildCloud(startupCtx, cfg, policies[0], pool)
+		if err != nil {
+			cancel()
+			return err
+		}
+		defer worker.Close()
+		cloudWorker = worker
+		if action == CloudPreflightAction {
+			cancel()
+			return nil
+		}
+		options = append(options, option)
+	}
 	options = append(options, producthttp.WithRegistration(cfg.RegistrationEnabled))
 	options = append(options, producthttp.WithLibraryScope(cfg.LibraryBindingIDs, cfg.WholeRootLibrary))
 	if cfg.SharingEnabled && cfg.FileAccessConfigFile == "" {
@@ -236,6 +261,9 @@ func Run(ctx context.Context, action, configFile, userFile string) error {
 	}
 	// No URL/credentials are logged. Connection errors cannot include backend
 	// responses or sources through the server's default logger.
+	if cloudWorker != nil {
+		return serveCloud(ctx, listener, handler, cloudWorker)
+	}
 	return serve(ctx, listener, handler)
 }
 func serve(ctx context.Context, listener net.Listener, handler http.Handler) error {

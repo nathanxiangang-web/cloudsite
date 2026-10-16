@@ -1364,3 +1364,34 @@ Public UI, native115 session and runtime/Hint/index writer composition are next
 separate integration work, not claims derived from this slice. Preserve8 unknown
 reservations and original KNOWN READY evidence. See PRODUCT-ADMISSION.md.
 
+## D-055 - Explicit managed product acquisition and consumer submission
+
+Delegated architecture direction,2026-10-16, Issue111, frozen in the issue before
+implementation. PR110/D-054 is accepted (revieweda630dafa, exact-head
+CI38901805468 all3 SUCCESS, same-agent review5547872267, mergeec568ae1,
+merge CI38902038377 SUCCESS). Compose it without replacing the existing engine.
+
+Add separate serve-product-acquisition and preflight-product-acquisition actions,
+enabled policy plus protected fixed target/session/bootstrap. Readonly action
+rejects acquisition config. Listener precedes Worker.Run; either side exiting
+cancels/joins the other before pool Close. Preflight validates construction,
+not live login/health, and performs no claims/provider/Hint/cache work. The
+composition-root import guard permits exactly acquisition/runtime/app, retaining
+the prohibition on concrete providers/jobs and all existing domain/HTTP guards.
+
+Consumer accepts source+operation_key+optional expected_name only, never target
+or provider controls. Same-caller fresh-input preparation preview is the sole
+narrow no-source-DTO exception. Stored source/task/usage/error/log output remains
+redacted. Source-free owner-operation GET reconciles uncertain commits without
+activation. Persist only user-bound pending key, no source; never automatic
+submission/replacement IDs after failure/reload/not-found. Clear private DOM on
+expiry/hide; retain reconciliation key until acknowledged or explicit logout.
+Existing START_RESERVED, frozen-source replay and failure budgets stay intact.
+
+No schema beyond15. Controlled HTTP/PG/runtime/lifecycle tests, exact-head CI and
+separate same-agent review precede merge. Public14 migration needs backup and
+15-compatible disabled fallback; native session and single-writer incremental
+IndexCore readiness need deployment evidence. Shared loopback namespace must
+not weaken Hint trust. Public native login recovery is not a download. See
+[module and deployment boundaries](PRODUCT-CLOUD-RUNTIME.md).
+

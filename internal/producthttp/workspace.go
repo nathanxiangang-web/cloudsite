@@ -14,7 +14,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
 
-//go:embed web/index.html web/app.css web/resource-display.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js web/library-sharing.js web/share.html web/share.js
+//go:embed web/index.html web/app.css web/resource-display.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js web/library-sharing.js web/share.html web/share.js web/downloads.html web/downloads.css web/downloads.js web/download-model.js
 var workspaceFiles embed.FS
 
 type DisplayBinding struct {
@@ -27,12 +27,14 @@ func ValidDisplayLabel(label string) bool {
 }
 
 type workspaceInfo struct {
-	WholeRootLibrary bool             `json:"whole_root_library"`
-	SharingEnabled   bool             `json:"sharing_enabled"`
-	ContentAccess    bool             `json:"content_access_enabled"`
-	Mode             string           `json:"mode"`
-	SchemaVersion    int64            `json:"schema_version"`
-	Bindings         []DisplayBinding `json:"bindings"`
+	CloudDownloadEnabled bool             `json:"cloud_download_enabled"`
+	CloudDownloadLabel   string           `json:"cloud_download_label,omitempty"`
+	WholeRootLibrary     bool             `json:"whole_root_library"`
+	SharingEnabled       bool             `json:"sharing_enabled"`
+	ContentAccess        bool             `json:"content_access_enabled"`
+	Mode                 string           `json:"mode"`
+	SchemaVersion        int64            `json:"schema_version"`
+	Bindings             []DisplayBinding `json:"bindings"`
 }
 type loginGate struct {
 	mu     sync.Mutex
@@ -102,6 +104,17 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		registerSharing(h, settings.shares)
 	}
 	info := workspaceInfo{SharingEnabled: settings.shares != nil, ContentAccess: settings.files != nil, Mode: "READ_ONLY", SchemaVersion: version, Bindings: append([]DisplayBinding(nil), bindings...)}
+	if settings.cloud != nil {
+		if !seen[settings.cloud.target.BindingID] {
+			return nil, product.ErrInvalid
+		}
+		if err := registerCloudDownload(h, settings.cloud); err != nil {
+			return nil, err
+		}
+		info.CloudDownloadEnabled = true
+		info.CloudDownloadLabel = settings.cloud.target.Label
+		info.Mode = "ACQUISITION"
+	}
 	consumer := info
 	consumer.WholeRootLibrary = settings.wholeRoot
 	if len(settings.libraryIDs) > 0 {
@@ -139,6 +152,10 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		respond(w, 200, info)
 	})))
 	for _, asset := range []struct{ route, file, mime string }{
+		{"GET /downloads/{$}", "web/downloads.html", "text/html; charset=utf-8"},
+		{"GET /assets/downloads.js", "web/downloads.js", "text/javascript; charset=utf-8"},
+		{"GET /assets/download-model.js", "web/download-model.js", "text/javascript; charset=utf-8"},
+		{"GET /assets/downloads.css", "web/downloads.css", "text/css; charset=utf-8"},
 		{"GET /{$}", "web/library.html", "text/html; charset=utf-8"},
 		{"GET /admin/{$}", "web/index.html", "text/html; charset=utf-8"},
 		{"GET /assets/library.css", "web/library.css", "text/css; charset=utf-8"},

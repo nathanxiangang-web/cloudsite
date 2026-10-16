@@ -12,13 +12,16 @@
 
 ## 1. Source-of-truth order
 
-Active Issue83 / D-054 implements cloud-download admission+usage, following the
-human's explicit start instruction. Original/execution/policy are transactionally
-persisted with an owned operation and PENDING intent; stable-ID activation uses
-existing services and replay never re-prepares. Schema15 is development-only;
-public14 and historical12 remain unchanged. No public route/Worker activation
-or native115 login/download from this PR. See PRODUCT-ADMISSION.md. The isolated
-old dirty WIP is preserved, not overwritten or directly upgraded.
+Active Issue111 / D-055 composes the managed product acquisition action and
+fixed-target consumer task/submission UI. Read PRODUCT-CLOUD-RUNTIME.md. Readonly
+action stays separate; owner-key GET reconciles uncertain submissions without
+provider calls. Issue83/PR110/D-054 is accepted at ec568ae1: exact-head
+CI38901805468 and merge CI38902038377 all3 SUCCESS, same-agent review5547872267.
+Schema15 remains development-only; public14 and historical12 unchanged. Public
+native session restored/read-verified with zero StartDownload, not runtime
+activation. Public enablement still requires backup/15-compatible disabled
+fallback and a real incremental IndexCore writer with loopback Hint. Preserve
+the old dirty checkout and8 historical unknown reservations.
 
 Accepted Issue108 / PR109 / D-053 prepared cloud acquisition: see
 [verified gaps and modular sequence](PRODUCT-CLOUD-DOWNLOAD.md). Pure PrepareSource
