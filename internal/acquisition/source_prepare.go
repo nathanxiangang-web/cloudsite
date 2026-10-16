@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"net/url"
+	"sort"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -68,7 +69,13 @@ func PrepareSource(value string, policy SourcePolicy) (PreparedSource, error) {
 	hash, name := "", ""
 	nameSeen := false
 	removed := 0
-	for key, values := range query {
+	keys := make([]string, 0, len(query))
+	for key := range query {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		values := query[key]
 		switch strings.ToLower(key) {
 		case "xt":
 			for _, topic := range values {

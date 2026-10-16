@@ -113,6 +113,14 @@ func TestLargeTrackerInputIsBoundedNotBlindlyTruncatedAndRedacted(t *testing.T) 
 		}
 	}
 }
+func TestMagnetRejectionPriorityIsDeterministic(t *testing.T) {
+	input := testMinimal + "&so=0&dn=one&dn=two"
+	for i := 0; i < 100; i++ {
+		if _, err := acquisition.PrepareSource(input, acquisition.MagnetBTIHNameV1); err != acquisition.ErrMagnetAmbiguous {
+			t.Fatal("unstable error classification", err)
+		}
+	}
+}
 func FuzzPrepareMagnetNeverProducesMalformedOrUnboundedOutput(f *testing.F) {
 	f.Add(testMinimal + "&dn=demo&tr=udp%3A%2F%2Ftracker.invalid")
 	f.Add("magnet:?xt=urn:btih:invalid")
