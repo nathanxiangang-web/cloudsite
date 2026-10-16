@@ -25,7 +25,14 @@ Zero new submissions/Worker/StartDownload; one-start budget remains unconsumed.
 UI explicitly shows LOGIN_REQUIRED and allows pure preparation, not admission.
 Human native session restoration and target-ID/path verification are required
 before managed execution. Preserve8 historical unknown reservations.
-Issue116 corrects only stale consumer scope wording and adds a DOM regression.
+Issue116 / PR117 ACCEPTED: exact HEADf0807cc014231b36e24c16e07e28c844a7d5d51a,
+CI38970141986 all3 SUCCESS, separate same-agent review; merge987adb3af3910ff3,
+merge CI38970604155 all3 SUCCESS. Public product image cloud-scope-987adb3
+supersedes894962f for folder-neutral footer only, with44 Node cases. Browser
+verifies new scope wording and download entry;1440/390 layouts have no horizontal
+overflow. Post-switch audit/284-file/login/prepare/admission404 pass. Product and
+new catalog healthy; original services/PIDs/root generations unchanged; owned
+temporary processes stopped. No new schema, credential or provider change.
 
 Cloud-download composition ACCEPTED: Issue111 / PR112 / D-055. Reviewed exact
 HEAD0555d3b464f9faf1c92a8772fddb216457b34748, CI38907187975 all3 SUCCESS,

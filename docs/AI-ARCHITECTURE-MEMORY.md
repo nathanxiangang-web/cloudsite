@@ -3,7 +3,7 @@
 > Canonical short-form project memory for Architect/AI sessions.
 >
 > Last architecture-memory synchronization: **2026-10-17**
-> Current status: **PR115/D-056 accepted and public894962f6bb5a/schema15: LOGIN_REQUIRED and pure magnet preparation. Existing /云下载 mapped through standard OpenList Alias and separate IndexCore observation;284 files (old283+cloud1). Managed Worker off, native990001/ErrNotLogin, one-start budget unconsumed.302/CDN206/document preview/guest shares reverified. No full MVP/realtime-index/all-codec claim.**
+> Current status: **PR115/D-056 and PR117 accepted; public987adb3af391/schema15 includes folder-neutral scope, LOGIN_REQUIRED and pure magnet preparation. Existing /云下载 mapped through standard OpenList Alias and separate IndexCore observation;284 files (old283+cloud1). Managed Worker off, native990001/ErrNotLogin, one-start budget unconsumed.302/CDN206/document preview/guest shares reverified. No full MVP/realtime-index/all-codec claim.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -23,7 +23,9 @@ existing CloudSite namespace without moving files or changing OAuth/account root
 Observation/public UI/API regression passed:283 original+1 cloud file, persistent
 single writer and strict loopback Hint. New DISABLED observation Binding has no
 native scope/credential and is not acquisition-ready. Real download awaits native
-session and target-coordinate verification. Issue116 corrects stale scope wording.
+session and target-coordinate verification. Issue116/PR117 scope-only follow-up
+accepted: exactf0807cc0 CI38970141986 all3 SUCCESS, merge987adb3af391,
+merge CI38970604155 all3 SUCCESS,44 Node cases, public browser/API/audit pass.
 Preview configuration is not an acquisition graph or health service.
 
 Accepted Issue111 / PR112 / D-055 composes the managed product acquisition action

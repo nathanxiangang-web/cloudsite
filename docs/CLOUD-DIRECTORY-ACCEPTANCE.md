@@ -7,7 +7,14 @@ PR115 / Issue114 / D-056: reviewed exact HEAD
 separate same-agent review (not independent), merge
 `894962f6bb5aa2a24e8ffc172eda06738fe6b6a2`, merge CI38967953503 SUCCESS.
 Full Go/race/vet/build,43 Node cases and owned PostgreSQL/runtime/CLI tests passed.
-Issue116 changes only the folder-neutral footer and adds one Node regression.
+Issue116/PR117 changes only the folder-neutral footer and adds one Node regression.
+Reviewedf0807cc014231b36e24c16e07e28c844a7d5d51a, exact-head CI38970141986
+all3 SUCCESS, separate same-agent review, merge987adb3af3910ff3d634b2b0b699304b8b237f40,
+merge CI38970604155 all3 SUCCESS;44 Node cases. Product-only follow-up publicly
+deployed as cloudsite:cloud-scope-987adb3, replacing the product894962f image below.
+Post-switch health/audit/284-file/login/prepare/admission404 pass; original service
+PIDs/root generations unchanged. Browser verifies footer and1440/390 layouts
+without horizontal overflow. Temporary processes stopped, all records retained.
 
 Public deployment: https://cloud.netioi.com/downloads/ on113.20.6.57.
 Product image `cloudsite:cloud-preview-894962f`; public DB explicitly14 -> 15.
