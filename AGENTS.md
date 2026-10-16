@@ -12,15 +12,18 @@ Before planning, changing, or reviewing code, **read these files first**:
 
 Chat history is not a source of truth.
 
-## Current execution pointer — 2026-10-15
+## Current execution pointer — 2026-10-16
 
-Issue105 / D-052 is the current human-authorized correction: diagnose local versus
-public delivery and implement authenticated302 after exact IndexCore validation.
+Issue105 / PR106 / D-052 is ACCEPTED and publicly deployed at0b29ecc88faff5f9.
+PR exact-head and merge CI all3 SUCCESS. Current Chrome confirms302->115 CDN206,
+play/seek/pause without media error; native click saved a15423-byte DOCX whose
+hash matches the source. The automated download event was NOT observed.
 See [direct-delivery contract](docs/PRODUCT-DIRECT-DELIVERY.md). Source URL hiding
 and same-origin-only byte proxy rules below are superseded ONLY for explicitly
 configured direct delivery. Private one-hour document preview/cache stays intact.
-No IndexCore truth/DB/schema/scan/Hint/Worker/provider-history changes. Current
-fix must pass exact-head CI and same-agent review before product-only cutover.
+No IndexCore truth/DB/schema/scan/Hint/Worker/provider-history changes. See
+[actual acceptance](docs/DIRECT-DELIVERY-ACCEPTANCE.md). One-hour private document
+previews remain server-side. Product-only cutover retains old image/config.
 
 Release closeout: PR99/100/102 accepted;6-character public registration/login
 verified. Public server root compose now runs OpenList v4.2.6 using protected local

@@ -1,5 +1,16 @@
 # cloudsiteV1.0.0alpha release and deployment contract
 
+## Superseding deployed hotfix - 2026-10-16
+
+Issue105 / PR106 / D-052 adds authorized302 direct file delivery at
+0b29ecc88faff5f90f03b2feacd4065ea4acaaff, binary
+SHA256dbdfb6e5baebd0fb352e756b24bd691283a41573b9860a4930158dfeb7baa922.
+Exact-head and merge CI all3 pass; actual Chrome302->115206/play/seek and native
+download/file hash are verified. Private one-hour document previews unchanged.
+See [evidence and rollback](DIRECT-DELIVERY-ACCEPTANCE.md). This current product
+hotfix supersedes earlier runtime-binary statements below; original release
+tag/assets remain immutable and are not falsely claimed to contain this fix.
+
 Direct human authorization, 2026-10-15; Issue #98. Repository ID1391307332
 is now `nathanxiangang-web/cloudsite`. The legacy CloudSite repository was
 deleted by the human, not by this release tool. Its verified Git mirror/bundle

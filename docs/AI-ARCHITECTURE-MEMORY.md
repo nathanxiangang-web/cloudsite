@@ -2,8 +2,8 @@
 
 > Canonical short-form project memory for Architect/AI sessions.
 >
-> Last architecture-memory synchronization: **2026-10-15**
-> Current status: **cloudsiteV1.0.0alpha deployed over public HTTPS at cloud.netioi.com; PR99/100 accepted, schema14. Original local product credentials preserved; USER-only registration and283 real files/download/preview/Range/shares verified. Issue101 lowers password minimum to6 characters; separate follow-up relocates local OpenList configuration/credentials into an isolated public-server instance. Existing AList and original histories must remain unchanged. No full MVP/realtime-index/all-codec claim.**
+> Last architecture-memory synchronization: **2026-10-16**
+> Current status: **cloudsiteV1.0.0alpha public deployment includes accepted PR106 direct302 delivery at0b29ecc88faff5f9. Exact IndexCore authorization remains; private one-hour document previews stay server-side. Chrome playback/seek and native downloaded DOCX hash are verified. Local-config OpenList replaced AList, whose data/rollback remain retained. Six-character USER registration,283 canonical files and schema14 preserved. No full MVP/realtime-index/all-codec claim.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -18,7 +18,15 @@ content; document previews remain private streamed/cache/rendered. Existing
 local and public code both proxied bytes; local functional acceptance was not
 public302 acceptance. No silent fallback or bypass of auth/Q5/grants. Issued
 upstream bearer URLs remain usable until upstream expiry after product revoke.
-See [module contract](PRODUCT-DIRECT-DELIVERY.md). Fix in progress, not deployed.
+See [module contract](PRODUCT-DIRECT-DELIVERY.md) and
+[actual acceptance](DIRECT-DELIVERY-ACCEPTANCE.md). PR106 reviewed2f873bfa03a4,
+CI38762045631 all3 SUCCESS, same-agent review5535806545, squash0b29ecc88faff5f9,
+merge CI38762378328 all3 SUCCESS. Public product image carries that revision;
+binary SHA256dbdfb6e5baebd0fb352e756b24bd691283a41573b9860a4930158dfeb7baa922.
+Actual browser observes302->115206, playback through149s with seek/error=null,
+and a fresh15423-byte native downloaded DOCX with matching SHA256. Download-event
+automation returned no event, so completion rests on the verified new local file.
+Candidate stopped; other services/DB/catalog unchanged. Old image/config retained.
 
 Current superseding runtime: PR102 reviewed22705d031adc, CI38748673995 all3
 SUCCESS, review5534538189, merge68d945793b8f, merge CI38749342436 SUCCESS.
