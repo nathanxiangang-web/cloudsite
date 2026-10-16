@@ -14,14 +14,16 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-16
 
-Active implementation: Issue83 / D-054, product cloud-download admission and
-zero-price operation usage, rebased on bf4a697. Read docs/PRODUCT-ADMISSION.md.
-Append-only15 stores raw/execution/frozen policy with the stable operation and
-PENDING Manifest; replay never re-prepares. Explicit standalone HTTP adapter,
-not public UI/runtime activation. Preserve the original dirty Issue83 checkout.
-Do not migrate public14 or original staging12. Later deployment requires owned
-DB backup and a15-compatible disabled-admission fallback. No live115 call,
-Worker/Hint/scanner or historical-reservation modification in this slice.
+Active implementation: Issue111 / D-055, opt-in managed product runtime and
+fixed-target consumer cloud-download/task UI. Read PRODUCT-CLOUD-RUNTIME.md.
+Issue83/PR110/D-054 accepted at ec568ae1; exact-head and merge CI all3 SUCCESS.
+Readonly action must never construct Worker. Explicit cloud action requires
+protected bootstrap/target and enabled policy, listener before Run, join before
+Close. Source-free owner lookup reconciles uncertain commits; no automatic POST.
+Schema15 development only; public14/original12 and old dirty WIP preserved.
+Public native session restored/read-verified, zero download. Public activation
+needs backup,15-compatible disabled fallback and actual IndexCore writer/Hint
+deployment. Never infer it from controlled tests or use OpenList OAuth as cookie.
 
 Accepted preparation: Issue108 / PR109 / D-053 and
 [module/integration plan](docs/PRODUCT-CLOUD-DOWNLOAD.md). PrepareSource remains

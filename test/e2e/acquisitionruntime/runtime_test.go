@@ -294,14 +294,18 @@ VALUES ($1,$1,'other-scope','/other-root','other-root','ACTIVE',clock_timestamp(
 }
 
 func TestPostgresAcquisitionRuntimeRealProtocolE2E(t *testing.T) {
-	runRuntimeRealProtocolE2E(t, false)
+	runRuntimeRealProtocolE2E(t, false, false)
 }
 
 func TestPostgresOperatorProductAdmissionRuntimeE2E(t *testing.T) {
-	runRuntimeRealProtocolE2E(t, true)
+	runRuntimeRealProtocolE2E(t, true, false)
 }
 
-func runRuntimeRealProtocolE2E(t *testing.T, admitted bool) {
+func TestPostgresOperatorConsumerCloudHTTPRuntimeE2E(t *testing.T) {
+	runRuntimeRealProtocolE2E(t, true, true)
+}
+
+func runRuntimeRealProtocolE2E(t *testing.T, admitted, consumerHTTP bool) {
 	fixture, manifestID, jobID := runtimeFixture(t)
 	provider := &runtimeDownloader{}
 	var admission *product.AdmissionService
@@ -337,11 +341,13 @@ func runRuntimeRealProtocolE2E(t *testing.T, admitted bool) {
 			t.Fatal(err)
 		}
 		intent = product.AdmissionRequest{OperationKey: "runtime-once", Source: "magnet:?xt=urn:btih:0123456789ABCDEF0123456789ABCDEF01234567&dn=hint-only&tr=https%3A%2F%2Ftracker.invalid", BindingID: fixture.bindingID, TargetPath: "/downloads/item"}
-		created, err := admission.Admit(fixture.ctx, owner, intent)
-		if err != nil {
-			t.Fatal(err)
+		if !consumerHTTP {
+			created, err := admission.Admit(fixture.ctx, owner, intent)
+			if err != nil {
+				t.Fatal(err)
+			}
+			manifestID, jobID = created.ManifestID, created.JobID
 		}
-		manifestID, jobID = created.ManifestID, created.JobID
 		prepared, _ := acquisition.PrepareSource(intent.Source, acquisition.MagnetBTIHNameV1)
 		provider.expectedSource = prepared.Reference.Value
 	}
@@ -380,6 +386,11 @@ func runRuntimeRealProtocolE2E(t *testing.T, admitted bool) {
 		fmt.Fprint(w, `{"status":"accepted","root_id":"canonical-root","scope_key":"/downloads/item","work_state":"PENDING","signal_seq":1}`)
 	}))
 	defer hint.Close()
+	var verifyHTTP func()
+	if consumerHTTP {
+		created, verify := consumerCloudHTTP(t, fixture, read.URL, admission, intent, owner)
+		manifestID, jobID, verifyHTTP = created.ManifestID, created.JobID, verify
+	}
 	cfg := runtimeConfig(read.URL)
 	deps := runtimeDeps(fixture, hint.URL, provider)
 	clock := &runtimeClock{now: time.Now().UTC()}
@@ -429,6 +440,9 @@ func runRuntimeRealProtocolE2E(t *testing.T, admitted bool) {
 		t.Fatalf("stages=%v", stages)
 	}
 	if admitted {
+		if verifyHTTP != nil {
+			verifyHTTP()
+		}
 		replay, err := admission.Admit(fixture.ctx, owner, intent)
 		if err != nil || replay.ManifestID != manifestID || replay.JobID != jobID || replay.Status != acquisition.SubmissionReplay {
 			t.Fatal("READY replay changed operation", err)

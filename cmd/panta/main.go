@@ -32,7 +32,7 @@ func runWithContext(ctx context.Context, args []string) error {
 	if len(args) > 1 {
 		return operator.ErrInvalidAction
 	}
-	if len(args) == 1 && args[0] != string(operator.Preflight) && args[0] != string(operator.Start) && args[0] != string(operator.ResumeKnown) && args[0] != string(operator.StartKnown) && args[0] != "submit-acquisition" && args[0] != productserver.ServeAction && args[0] != productserver.ProvisionAction {
+	if len(args) == 1 && args[0] != string(operator.Preflight) && args[0] != string(operator.Start) && args[0] != string(operator.ResumeKnown) && args[0] != string(operator.StartKnown) && args[0] != "submit-acquisition" && args[0] != productserver.ServeAction && args[0] != productserver.ProvisionAction && args[0] != productserver.CloudAction && args[0] != productserver.CloudPreflightAction {
 		return operator.ErrInvalidAction
 	}
 	cfg, err := config.Load()
@@ -40,6 +40,12 @@ func runWithContext(ctx context.Context, args []string) error {
 		return errors.New("invalid process configuration")
 	}
 	if len(args) == 1 {
+		if args[0] == productserver.CloudAction || args[0] == productserver.CloudPreflightAction {
+			if !cfg.AcquisitionWorker.Enabled {
+				return productserver.ErrConfig
+			}
+			return productserver.Run(ctx, args[0], os.Getenv("PANTA_PRODUCT_CONFIG_FILE"), "", cfg.AcquisitionWorker)
+		}
 		if args[0] == productserver.ServeAction || args[0] == productserver.ProvisionAction {
 			if cfg.AcquisitionWorker.Enabled {
 				return productserver.ErrConfig

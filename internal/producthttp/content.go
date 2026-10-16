@@ -18,6 +18,7 @@ import (
 
 type WorkspaceOption func(*workspaceOptions)
 type workspaceOptions struct {
+	cloud        *cloudDownloadOptions
 	registration bool
 	libraryIDs   []storage.BindingID
 	wholeRoot    bool

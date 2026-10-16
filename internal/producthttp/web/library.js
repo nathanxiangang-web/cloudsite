@@ -28,7 +28,8 @@ function clearFiles(){
  for(const kind of categories)node('count-'+kind).textContent='';
  node('collection-status').textContent='正在整理你的文件…';node('load-status').textContent='';clearError('library-error');
 }
-function signOut(){
+function signOut(clearPending=false){
+	if(clearPending&&typeof CloudDownloadModel!=='undefined'&&library.userID)CloudDownloadModel.clearPending(library.userID);library.userID=null;node('cloud-download-link').hidden=true;
  if(typeof clearSharing==='function')clearSharing();node('my-shares').hidden=true;library.sharing=false;
  library.session++;library.request++;library.controller.abort();library.controller=new AbortController();clearFiles();library.bindings=[];library.content=false;library.category='all';library.layout='cards';
  node('login-name').textContent='';node('file-search').value='';node('account-password').value='';node('account').hidden=true;node('admin-link').hidden=true;node('library-view').hidden=true;node('login-view').hidden=false;
@@ -36,6 +37,7 @@ function signOut(){
 async function signIn(principal){
  const generation=++library.session;
  const info=await request('/api/v1/workspace');if(generation!==library.session)return;
+	library.userID=principal.user_id;node('cloud-download-link').hidden=info.cloud_download_enabled!==true;
  library.bindings=info.bindings;library.wholeRoot=info.whole_root_library===true;node('library-scope').textContent=library.wholeRoot?'展示 CloudSite 目录已完成索引的文件；不包含目录外的网盘内容。':'当前展示已接入的真实文件，不代表整个网盘。';library.content=info.content_access_enabled===true;library.sharing=info.sharing_enabled===true;node('my-shares').hidden=!library.sharing;node('login-name').textContent=principal.login;node('admin-link').hidden=principal.role!=='ADMIN';node('account').hidden=false;node('login-view').hidden=true;node('library-view').hidden=false;clearError('login-error');
  await refreshFiles();
 }
@@ -159,7 +161,7 @@ node('login-form').addEventListener('submit',async event=>{
  }catch(error){errorAt('login-error',error);if(error.code==='AUTH_REQUIRED')node('login-error').textContent='账号或密码不正确。';}
  finally{node('account-password').value='';node('account-confirm').value='';node('login-submit').disabled=false;node('auth-toggle').disabled=false;}
 });
-node('logout').addEventListener('click',async()=>{node('logout').disabled=true;try{await request('/api/v1/auth/logout','POST');signOut();}catch(error){errorAt('library-error',error);}finally{node('logout').disabled=false;}});
+node('logout').addEventListener('click',async()=>{node('logout').disabled=true;try{await request('/api/v1/auth/logout','POST');signOut(true);}catch(error){errorAt('library-error',error);}finally{node('logout').disabled=false;}});
 node('refresh').addEventListener('click',refreshFiles);node('load-more').addEventListener('click',()=>library.wholeRoot?loadWholeLibrary():loadRound());node('load-pause').addEventListener('click',()=>{library.autoLoad=false;node('load-pause').hidden=true;});
 for(const category of categories)node('category-'+category).addEventListener('click',()=>{library.category=category;library.filePage=0;drawFiles();});
 for(const layout of ['cards','list'])node('view-'+layout).addEventListener('click',()=>{library.layout=layout;drawFiles();});
