@@ -1,5 +1,14 @@
 # Gate 3.17 source intake and acquisition submission
 
+## New-input preparation boundary - D-053 / Issue108
+
+[Cloud-download preparation](PRODUCT-CLOUD-DOWNLOAD.md) adds a separate pure
+PrepareSource helper with explicit BTIH/dn magnet policy. It does NOT change this
+legacy CLI/ResolveSource/SubmissionService. Future product admission must persist
+raw input, accepted execution value and policy version atomically; only then may
+it pass the execution value here. Manifest->Provider stays byte-exact. Never
+apply preparation during worker replay or silently edit historical source_ref.
+
 This is an enqueue-only staging/operator boundary for Issue #58 / D-040. It is
 not permission to run a real 115 download or deploy a worker. Schema remains
 v12. No provider, IndexCore, OpenList, DNS, HTTP, search or Agent operation is

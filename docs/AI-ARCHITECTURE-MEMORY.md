@@ -12,6 +12,15 @@
 
 ## 1. Source-of-truth order
 
+Issue108 / D-053 prepares cloud acquisition: see
+[verified gaps and modular sequence](PRODUCT-CLOUD-DOWNLOAD.md). Pure PrepareSource
+adds explicit magnet-btih-name-v1 (BTIH+optional dn) while retaining raw input.
+ResolveSource/old submissions/adapter remain byte-exact. The helper is NOT wired
+to live admission; future transactional operation persistence must retain raw,
+execution and policy before it is enabled. No native call/migration/Worker/UI
+activation in this slice. Issue83 draft14 is dirty/unaccepted and conflicts with
+merged sharing14; preserve and rebase later, never deploy it as-is.
+
 Current Issue105 / D-052 supersedes server-byte-proxy-only delivery, not IndexCore
 truth: protected direct_link_hosts opt in to authorized302 for ordinary/guest
 content; document previews remain private streamed/cache/rendered. Existing

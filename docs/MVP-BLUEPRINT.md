@@ -2,6 +2,14 @@
 
 > First implementation blueprint. Intentionally bounded: enough architecture to support modular staged development without prebuilding the final product.
 
+> Current cloud-download preparation,2026-10-16: Issue108 / D-053,
+> [module plan](PRODUCT-CLOUD-DOWNLOAD.md). Historical Gate3 engine exists; the
+> current public product still lacks complete authenticated admission/usage,
+> acquisition topology, Worker/IndexCore writer and current-DB projection wiring.
+> Explicit new-input magnet preparation preserves raw input separately and sends
+> accepted BTIH/dn execution value; it does not rewrite historical tasks/adapters.
+> A preparation helper is not an enabled public cloud-download feature.
+
 ## 1. MVP objective
 
 cloudsite v0.1 proves an end-to-end resource lifecycle on top of existing mature infrastructure.

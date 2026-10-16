@@ -1,5 +1,21 @@
 # Minimum usable MVP execution plan
 
+## Superseding current-status note - 2026-10-16
+
+The stage descriptions below retain their original frozen baseline, not a claim
+that current completed auth/access/sharing work is missing. Public USER signup,
+minimum6-character passwords, real-file access, product-hosted sharing and
+authenticated302 delivery are now accepted (D-047..D-052). They supersede older
+no-signup/12-byte/no-public-exposure guidance within the expressly deployed scope.
+Native115 ShareProvider and full admission/usage still remain incomplete.
+
+The next cloud-download work is [Issue108/D-053 preparation and its modular
+sequence](PRODUCT-CLOUD-DOWNLOAD.md): raw/execution/policy separation with optional
+magnet BTIH/dn preparation, then audit/restore Issue83 admission, then actual
+runtime composition and consumer task UX. Old exact-source rules below still
+govern existing submissions and execution, not a ban on this explicit new-input
+policy. This preparation adds no live route, migration, Worker or download.
+
 Status: **ARCHITECTURE DECISION - implementation not complete**
 Authority: D-042 and the user's 2026-10-14 instruction to perform Architect and
 Developer roles and proceed without repeated stage authorization.
