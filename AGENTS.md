@@ -14,6 +14,15 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-16
 
+Current cloud acquisition preparation: Issue108 / D-053 and
+[module/integration plan](docs/PRODUCT-CLOUD-DOWNLOAD.md). PrepareSource is a pure,
+explicit raw+execution+policy boundary; it is NOT wired to existing submission,
+UI, Worker or provider. Future admission must persist both values and pin policy
+before enabling magnet filtering. Existing ResolveSource and Manifest->Provider
+exact bytes stay unchanged; no old task normalization/replay. Preserve Issue83
+dirty work; its draft14 conflicts with merged sharing14 and needs later rebase.
+No live source/credential/provider action, migration or deployment in this slice.
+
 Issue105 / PR106 / D-052 is ACCEPTED and publicly deployed at0b29ecc88faff5f9.
 PR exact-head and merge CI all3 SUCCESS. Current Chrome confirms302->115 CDN206,
 play/seek/pause without media error; native click saved a15423-byte DOCX whose

@@ -1310,3 +1310,30 @@ bearer capabilities until upstream expiry; product revoke cannot invalidate them
 No schema/IndexCore scan/Hint/Worker/native115 acquisition/historical mutation.
 See [contract](PRODUCT-DIRECT-DELIVERY.md); same-agent review/CI before deployment.
 
+## D-053 - Explicit magnet compatibility before new cloud acquisition admission
+
+Accepted direct human direction,2026-10-16, Issue108. Inspect the MVP blueprint
+and actual acquisition/product runtime before adding public cloud download. Reuse
+the existing Job/Provider/Hint/Canonical/Projector boundaries, not a second engine.
+Current public query-only composition is not an acquisition-ready writer runtime.
+
+Add a separate pure PrepareSource policy magnet-btih-name-v1: one valid BTIH and
+optional dn, remove advisory query parameters without arbitrary length cutting;
+preserve original input and policy separately. Hex/base32 identities and retained
+URL encoding validated; conflicts, so selection and unsupported v2/hybrid topics
+fail explicitly. HTTP/HTTPS/ed2k and legacy ResolveSource stay exact. Source values
+remain private; no human real-source fixture in Git or diagnostics.
+
+This supersedes D-040's blanket prohibition ONLY for a future explicitly selected
+new-product-input preparation step. It does not change the existing resolver,
+SubmissionService, Manifest->Provider exact execution bytes, adapter or any old
+task/recovery. No raw-source loss: future operation transaction must persist raw,
+accepted execution and fixed policy before enabling it. Replays use stored policy
+results, not a newly cleaned source. The present helper is not wired to runtime.
+
+Preparation scope is plan/pure module/synthetic tests, no schema, public API/UI,
+deployment, real provider call, credential probing, Hint/scan/Worker. Issue83's
+dirty draft14 must be preserved and later rebased past merged sharing14. See
+[cloud integration contract](PRODUCT-CLOUD-DOWNLOAD.md). Do not claim live cloud
+download readiness from parsing tests or old Gate3 staging acceptance.
+
