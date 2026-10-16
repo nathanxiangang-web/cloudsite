@@ -116,6 +116,13 @@ test('detail close restores focus; admin link follows authenticated role only',a
  await new Promise(resolve=>setImmediate(resolve));const files=app.requests.find(r=>r.url.startsWith('/api/v1/resources?'));files.resolve({ok:true,status:200,json:async()=>page()});await pending;assert.equal(app.elements.get('admin-link').hidden,true);
 });
 
+test('whole-root library scope does not hardcode a physical folder or promise the entire drive',async()=>{
+ const app=workspace();const pending=app.run("signIn({login:'test',role:'USER'});");
+ const read=app.requests.find(r=>r.url==='/api/v1/workspace');read.resolve({ok:true,status:200,json:async()=>({bindings:[{binding_id:'one'},{binding_id:'two'}],whole_root_library:true})});
+ await new Promise(resolve=>setImmediate(resolve));const files=app.requests.filter(r=>r.url.startsWith('/api/v1/resources?'));for(const request of files)request.resolve({ok:true,status:200,json:async()=>page()});
+ await new Promise(resolve=>setImmediate(resolve));for(const request of app.requests.filter(r=>r.url.startsWith('/api/v1/resources?')&&!files.includes(r)))request.resolve({ok:true,status:200,json:async()=>page()});await pending;
+ assert.equal(app.elements.get('library-scope').textContent,'展示已接入目录中完成索引的文件，不代表整个网盘。');assert.equal(app.elements.get('library-scope').textContent.includes('CloudSite'),false);
+});
 test('real content actions use only same-origin identity URLs and stop media on close',()=>{
  const app=workspace();app.ctx.item=file('video',{name:'real.mp4',path:'/videos/real.mp4'});
  app.run('library.content=true;fileDetail(item,null);');
