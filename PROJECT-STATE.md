@@ -4,15 +4,21 @@
 
 ## Current phase
 
-Cloud-download composition IN PROGRESS: Issue111 / D-055. Explicit managed
-product runtime, fixed-target consumer submission, own tasks/usage and source-free
-operation reconciliation. [Module contract](docs/PRODUCT-CLOUD-RUNTIME.md).
+Cloud-download composition ACCEPTED: Issue111 / PR112 / D-055. Reviewed exact
+HEAD0555d3b464f9faf1c92a8772fddb216457b34748, CI38907187975 all3 SUCCESS,
+separate same-agent acceptance (not independent review), squash51211b553bac.
+Explicit managed product runtime, fixed-target consumer submission, own tasks/
+usage and source-free operation reconciliation.42 Node tests and full Go/actual
+isolated PostgreSQL/controlled runtime tests passed. Merge CI is separate from
+the accepted exact-head CI. [Module contract](docs/PRODUCT-CLOUD-RUNTIME.md).
 Issue83/PR110 admission is ACCEPTED: revieweda630dafa, exact-head CI38901805468
 all3 SUCCESS, same-agent review5547872267, mergeec568ae1; merge CI38902038377
 SUCCESS. Schema15 is development-only, public14/original staging12 unchanged.
 Public native login restored and directory read verified, zero StartDownload.
-The runtime/UI is not publicly enabled; IndexCore writer integration remains a
-deployment step. Original dirty Issue83 WIP and historical reservations preserved.
+The runtime/UI is not publicly enabled. NEXT: bounded public integration on
+113.20.6.57, backup+15-compatible disabled fallback, explicit product migration,
+fixed four coordinates and actual IndexCore single-writer/loopback Hint. No
+repeat login or historical task retry. Original dirty Issue83 WIP is preserved.
 
 Accepted cloud acquisition preparation: Issue108 / PR109 / D-053. Pure input
 policy keeps BTIH/optional dn. D-054 now implements its new-reservation durable

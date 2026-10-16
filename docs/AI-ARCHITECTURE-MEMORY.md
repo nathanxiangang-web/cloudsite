@@ -12,8 +12,11 @@
 
 ## 1. Source-of-truth order
 
-Active Issue111 / D-055 composes the managed product acquisition action and
-fixed-target consumer task/submission UI. Read PRODUCT-CLOUD-RUNTIME.md. Readonly
+Accepted Issue111 / PR112 / D-055 composes the managed product acquisition action
+and fixed-target consumer task/submission UI. Reviewed0555d3b4,
+CI38907187975 all3 SUCCESS, separate same-agent acceptance, squash51211b553bac.
+Read PRODUCT-CLOUD-RUNTIME.md. Next is bounded public integration on113.20.6.57.
+Readonly
 action stays separate; owner-key GET reconciles uncertain submissions without
 provider calls. Issue83/PR110/D-054 is accepted at ec568ae1: exact-head
 CI38901805468 and merge CI38902038377 all3 SUCCESS, same-agent review5547872267.
