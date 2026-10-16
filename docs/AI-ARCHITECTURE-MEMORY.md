@@ -12,6 +12,14 @@
 
 ## 1. Source-of-truth order
 
+Current Issue114/D-056: explicit readonly source preview and truthful login-
+unavailable UI. Issue113 has zero submissions/Worker/StartDownload; actual native
+GET returns HTTP200/API990001/ErrNotLogin. Do not run downloads with this known-
+rejected session. Human target now /云下载, standard OpenList Alias mapped into
+existing CloudSite namespace without moving files or changing OAuth/account root.
+Finish independent UI/IndexCore observation while real download awaits login.
+Preview configuration is not an acquisition graph or health service.
+
 Accepted Issue111 / PR112 / D-055 composes the managed product acquisition action
 and fixed-target consumer task/submission UI. Reviewed0555d3b4,
 CI38907187975 all3 SUCCESS, separate same-agent acceptance, squash51211b553bac.

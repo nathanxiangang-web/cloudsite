@@ -28,18 +28,19 @@ var ErrConfig = errors.New("invalid protected product configuration")
 var ErrStartup = errors.New("product process unavailable")
 
 type Config struct {
-	CloudDownload        *CloudDownloadConfig         `json:"cloud_download,omitempty"`
-	RegistrationEnabled  bool                         `json:"registration_enabled,omitempty"`
-	HTTPSProxy           bool                         `json:"https_proxy,omitempty"`
-	LibraryBindingIDs    []storage.BindingID          `json:"library_binding_ids,omitempty"`
-	WholeRootLibrary     bool                         `json:"whole_root_library,omitempty"`
-	SharingEnabled       bool                         `json:"sharing_enabled,omitempty"`
-	FileAccessConfigFile string                       `json:"file_access_config_file,omitempty"`
-	DatabaseURLFile      string                       `json:"database_url_file"`
-	ListenAddress        string                       `json:"listen_address"`
-	Origin               string                       `json:"origin"`
-	IndexCoreBaseURL     string                       `json:"indexcore_base_url"`
-	Bindings             []producthttp.DisplayBinding `json:"bindings"`
+	CloudDownloadPreview *producthttp.SourcePreviewConfig `json:"cloud_download_preview,omitempty"`
+	CloudDownload        *CloudDownloadConfig             `json:"cloud_download,omitempty"`
+	RegistrationEnabled  bool                             `json:"registration_enabled,omitempty"`
+	HTTPSProxy           bool                             `json:"https_proxy,omitempty"`
+	LibraryBindingIDs    []storage.BindingID              `json:"library_binding_ids,omitempty"`
+	WholeRootLibrary     bool                             `json:"whole_root_library,omitempty"`
+	SharingEnabled       bool                             `json:"sharing_enabled,omitempty"`
+	FileAccessConfigFile string                           `json:"file_access_config_file,omitempty"`
+	DatabaseURLFile      string                           `json:"database_url_file"`
+	ListenAddress        string                           `json:"listen_address"`
+	Origin               string                           `json:"origin"`
+	IndexCoreBaseURL     string                           `json:"indexcore_base_url"`
+	Bindings             []producthttp.DisplayBinding     `json:"bindings"`
 }
 type provisionRequest struct {
 	Login    string    `json:"login"`
@@ -131,6 +132,9 @@ func LoadConfig(ctx context.Context, path string) (Config, error) {
 	return cfg, nil
 }
 func (cfg Config) Validate() error {
+	if cfg.CloudDownloadPreview != nil && (!cfg.CloudDownloadPreview.Valid() || cfg.CloudDownload != nil) {
+		return ErrConfig
+	}
 	if cfg.CloudDownload != nil && !cfg.CloudDownload.Valid() {
 		return ErrConfig
 	}

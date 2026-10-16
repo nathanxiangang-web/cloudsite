@@ -152,6 +152,9 @@ func Run(ctx context.Context, action, configFile, userFile string, policies ...c
 		return ErrStartup
 	}
 	var options []producthttp.WorkspaceOption
+	if cfg.CloudDownloadPreview != nil {
+		options = append(options, producthttp.WithCloudSourcePreview(*cfg.CloudDownloadPreview))
+	}
 	var cloudWorker interface {
 		Run(context.Context) error
 		Close()

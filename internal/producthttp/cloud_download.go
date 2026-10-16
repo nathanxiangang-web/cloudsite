@@ -53,26 +53,7 @@ func registerCloudDownload(h *Handler, options *cloudDownloadOptions) error {
 	if options == nil || !options.target.Valid() || nilCloudPort(options.admissions) || nilCloudPort(options.operations) {
 		return product.ErrInvalid
 	}
-	h.mux.Handle("POST /api/v1/cloud-downloads/prepare", h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		input, err := decodeCloudDownload(w, r, true)
-		if err != nil {
-			admissionFailure(w, err)
-			return
-		}
-		prepared, err := acquisition.PrepareSource(input.Source, acquisition.MagnetBTIHNameV1)
-		if err != nil {
-			admissionFailure(w, product.ErrInvalid)
-			return
-		}
-		// Explicit same-caller preview of freshly submitted input only. Never loads
-		// stored sources, contacts115, creates a Manifest or reserves quota.
-		respond(w, 200, struct {
-			Execution string                   `json:"execution_source"`
-			Policy    acquisition.SourcePolicy `json:"policy"`
-			Changed   bool                     `json:"changed"`
-			Removed   int                      `json:"removed_parameters"`
-		}{prepared.Reference.Value, prepared.Policy, prepared.Changed, prepared.RemovedParameters})
-	})))
+	registerSourcePreview(h)
 	h.mux.Handle("POST /api/v1/cloud-downloads", h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		input, err := decodeCloudDownload(w, r, false)
 		if err != nil {

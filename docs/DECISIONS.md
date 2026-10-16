@@ -1395,3 +1395,26 @@ IndexCore readiness need deployment evidence. Shared loopback namespace must
 not weaken Hint trust. Public native login recovery is not a download. See
 [module and deployment boundaries](PRODUCT-CLOUD-RUNTIME.md).
 
+## D-056 - Explicit readonly source preview and unavailable cloud-download UI
+
+Delegated direction2026-10-17, Issue114. Native directory GET on the public
+server now returns HTTP200/API990001/ErrNotLogin; Issue113 has no submission or
+provider start. Human changes the physical destination to existing /云下载 and
+requests continued UI/testing. Never call StartDownload using a known-rejected
+session or claim acceptance without actual provider/IndexCore/Copy evidence.
+
+Allow explicit protected cloud_download_preview (label plus closed enum
+LOGIN_REQUIRED/NOT_CONFIGURED) in readonly mode. It advertises only fresh-input
+pure preparation and unavailable UI; it constructs no bootstrap/runtime/Worker,
+and exposes no admission/operation-reconciliation/usage routes. Reject mixed
+readonly-preview and managed-acquisition config. This is the sole extension to
+D-055's no-preview-routes readonly contract, not permission for background work.
+Current-cookie diagnosis is an operator fact, not a fabricated health probe.
+
+Consumer can check its fresh source/view own tasks while submit stays disabled,
+retaining pending keys and never probing missing write/lookup/usage routes.
+Existing enabled mode and original-source policy remain unchanged. Standard
+OpenList Alias may map the requested directory under the existing app namespace;
+do not copy OAuth, move source files, broaden account root or bypass IndexCore.
+No schema beyond15; exact-head CI and same-agent review before deployment.
+

@@ -3,6 +3,24 @@
 Issue111 / D-055, following accepted PR110 / D-054. Schema remains15.
 This is a composition and consumer-entry slice, not public deployment acceptance.
 
+## Readonly unavailability extension - D-056 / Issue114
+
+An explicit protected `cloud_download_preview` object may contain
+`label: "云下载"` and `unavailable_reason: "LOGIN_REQUIRED"` (or NOT_CONFIGURED).
+It is mutually exclusive with `cloud_download`. The readonly process then
+advertises `cloud_download_enabled=false`, `cloud_download_preview_enabled=true`
+and the closed reason. Only the authenticated same-caller pure prepare route is
+added. No admission, operation lookup, usage, session/bootstrap, provider, Hint,
+Worker or reservation is constructed. No automatic health probe is claimed.
+
+The page displays the actual declared unavailable state, allows fresh-source
+compatibility checking and existing own-task reads, and keeps submit disabled.
+It retains pending keys and never automatically probes absent mutation/lookup/
+usage endpoints. Unconfigured readonly mode still exposes no preparation route;
+managed mode remains unchanged. This narrowly supersedes the older blanket
+absence-of-preview prose below. Actual native GET990001 is not fixed by a UI
+change; real acceptance remains blocked until a valid native session exists.
+
 ## Modules and dependency direction
 
 | Module | Responsibility | Boundary |

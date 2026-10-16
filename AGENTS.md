@@ -14,6 +14,16 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-16
 
+Active Issue114 / D-056: explicit readonly cloud preview/unavailability UI.
+Native public session currently returns API990001/ErrNotLogin. Issue113 has no
+submission, Worker or StartDownload. The human changed the destination to the
+existing /云下载 and requests UI/testing while unavailable. Pure same-caller
+preview is permitted only by explicit readonly config; no admission/lookup/
+usage/Worker/runtime routes are enabled by it. Preserve the one-start budget.
+The standard OpenList Alias exposes that directory beneath the existing app
+namespace, without moving files/copying OAuth/expanding the app account root.
+IndexCore still owns file visibility. No fabricated download/READY acceptance.
+
 Accepted: Issue111 / PR112 / D-055, opt-in managed product runtime and fixed-target
 consumer cloud-download/task UI. Reviewed0555d3b4, CI38907187975 all3 SUCCESS,
 separate same-agent acceptance, squash51211b553bac. Read PRODUCT-CLOUD-RUNTIME.md.
