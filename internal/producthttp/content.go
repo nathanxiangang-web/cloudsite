@@ -18,13 +18,14 @@ import (
 
 type WorkspaceOption func(*workspaceOptions)
 type workspaceOptions struct {
-	cloud        *cloudDownloadOptions
-	registration bool
-	libraryIDs   []storage.BindingID
-	wholeRoot    bool
-	shares       *fileshare.Service
-	files        *fileaccess.Service
-	previews     *fileaccess.PreviewService
+	sourcePreview *SourcePreviewConfig
+	cloud         *cloudDownloadOptions
+	registration  bool
+	libraryIDs    []storage.BindingID
+	wholeRoot     bool
+	shares        *fileshare.Service
+	files         *fileaccess.Service
+	previews      *fileaccess.PreviewService
 }
 
 func WithRegistration(enabled bool) WorkspaceOption {

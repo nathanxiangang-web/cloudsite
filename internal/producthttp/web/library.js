@@ -37,7 +37,7 @@ function signOut(clearPending=false){
 async function signIn(principal){
  const generation=++library.session;
  const info=await request('/api/v1/workspace');if(generation!==library.session)return;
-	library.userID=principal.user_id;node('cloud-download-link').hidden=info.cloud_download_enabled!==true;
+	library.userID=principal.user_id;node('cloud-download-link').hidden=info.cloud_download_enabled!==true&&info.cloud_download_preview_enabled!==true;
  library.bindings=info.bindings;library.wholeRoot=info.whole_root_library===true;node('library-scope').textContent=library.wholeRoot?'展示 CloudSite 目录已完成索引的文件；不包含目录外的网盘内容。':'当前展示已接入的真实文件，不代表整个网盘。';library.content=info.content_access_enabled===true;library.sharing=info.sharing_enabled===true;node('my-shares').hidden=!library.sharing;node('login-name').textContent=principal.login;node('admin-link').hidden=principal.role!=='ADMIN';node('account').hidden=false;node('login-view').hidden=true;node('library-view').hidden=false;clearError('login-error');
  await refreshFiles();
 }

@@ -62,6 +62,7 @@ func TestPostgresOperatorProductReadOnlyCLI(t *testing.T) {
 	reservation.Close()
 	origin := "http://" + address
 	cfg := productserver.Config{DatabaseURLFile: database, ListenAddress: address, Origin: origin, IndexCoreBaseURL: read.URL, Bindings: []producthttp.DisplayBinding{{ID: fixture.bindingID, Label: "CONTROLLED TEST FIXTURE - not real 115"}}}
+	cfg.CloudDownloadPreview = &producthttp.SourcePreviewConfig{Label: "Cloud downloads", UnavailableReason: "LOGIN_REQUIRED"}
 	configFile := filepath.Join(private, "product.json")
 	data, _ := json.Marshal(cfg)
 	if err = os.WriteFile(configFile, data, 0600); err != nil {
@@ -154,6 +155,12 @@ func TestPostgresOperatorProductReadOnlyCLI(t *testing.T) {
 	}
 	if code, body, _ = request("GET", "/api/v1/workspace", "", cookie); code != 200 || !bytes.Contains(body, []byte("READ_ONLY")) {
 		t.Fatal("workspace missing")
+	}
+	if code, body, _ = request("POST", "/api/v1/cloud-downloads/prepare", `{"source":"https://example.invalid/test.iso"}`, cookie); code != 200 || !bytes.Contains(body, []byte("execution_source")) {
+		t.Fatal("readonly fresh preview missing")
+	}
+	if code, _, _ = request("POST", "/api/v1/cloud-downloads", `{"source":"https://example.invalid/test.iso","operation_key":"readonly"}`, cookie); code != 404 {
+		t.Fatal("readonly process accepted admission")
 	}
 	if code, body, _ = request("GET", "/api/v1/resources?binding_id="+string(fixture.bindingID), "", cookie); code != 200 || !bytes.Contains(body, []byte("README-ui-fixture.md")) {
 		t.Fatal("real adapter read failed", code, string(body))

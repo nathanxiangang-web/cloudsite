@@ -27,14 +27,16 @@ func ValidDisplayLabel(label string) bool {
 }
 
 type workspaceInfo struct {
-	CloudDownloadEnabled bool             `json:"cloud_download_enabled"`
-	CloudDownloadLabel   string           `json:"cloud_download_label,omitempty"`
-	WholeRootLibrary     bool             `json:"whole_root_library"`
-	SharingEnabled       bool             `json:"sharing_enabled"`
-	ContentAccess        bool             `json:"content_access_enabled"`
-	Mode                 string           `json:"mode"`
-	SchemaVersion        int64            `json:"schema_version"`
-	Bindings             []DisplayBinding `json:"bindings"`
+	CloudDownloadPreviewEnabled    bool             `json:"cloud_download_preview_enabled"`
+	CloudDownloadUnavailableReason string           `json:"cloud_download_unavailable_reason,omitempty"`
+	CloudDownloadEnabled           bool             `json:"cloud_download_enabled"`
+	CloudDownloadLabel             string           `json:"cloud_download_label,omitempty"`
+	WholeRootLibrary               bool             `json:"whole_root_library"`
+	SharingEnabled                 bool             `json:"sharing_enabled"`
+	ContentAccess                  bool             `json:"content_access_enabled"`
+	Mode                           string           `json:"mode"`
+	SchemaVersion                  int64            `json:"schema_version"`
+	Bindings                       []DisplayBinding `json:"bindings"`
 }
 type loginGate struct {
 	mu     sync.Mutex
@@ -104,6 +106,15 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		registerSharing(h, settings.shares)
 	}
 	info := workspaceInfo{SharingEnabled: settings.shares != nil, ContentAccess: settings.files != nil, Mode: "READ_ONLY", SchemaVersion: version, Bindings: append([]DisplayBinding(nil), bindings...)}
+	if settings.sourcePreview != nil {
+		if settings.cloud != nil || !settings.sourcePreview.Valid() {
+			return nil, product.ErrInvalid
+		}
+		registerSourcePreview(h)
+		info.CloudDownloadPreviewEnabled = true
+		info.CloudDownloadLabel = settings.sourcePreview.Label
+		info.CloudDownloadUnavailableReason = settings.sourcePreview.UnavailableReason
+	}
 	if settings.cloud != nil {
 		if !seen[settings.cloud.target.BindingID] {
 			return nil, product.ErrInvalid
@@ -112,6 +123,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 			return nil, err
 		}
 		info.CloudDownloadEnabled = true
+		info.CloudDownloadPreviewEnabled = true
 		info.CloudDownloadLabel = settings.cloud.target.Label
 		info.Mode = "ACQUISITION"
 	}

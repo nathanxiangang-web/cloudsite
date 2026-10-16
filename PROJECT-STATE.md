@@ -4,6 +4,14 @@
 
 ## Current phase
 
+IN PROGRESS: Issue114 / D-056, readonly preparation and explicit LOGIN_REQUIRED
+consumer UI. Issue113 native root directory GET: HTTP200/API990001/ErrNotLogin;
+zero submission/Worker/StartDownload. Human changes destination to existing
+/云下载. Standard OpenList Alias created under the existing CloudSite app scope;
+no file move, native/OAuth credential change or account-scope expansion. Real
+download remains unconsumed pending valid native session. Complete independent
+UI/IndexCore mapping tests; public deployment is not yet accepted.
+
 Cloud-download composition ACCEPTED: Issue111 / PR112 / D-055. Reviewed exact
 HEAD0555d3b464f9faf1c92a8772fddb216457b34748, CI38907187975 all3 SUCCESS,
 separate same-agent acceptance (not independent review), squash51211b553bac.
