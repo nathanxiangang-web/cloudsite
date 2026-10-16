@@ -4,11 +4,15 @@
 
 ## Current phase
 
-Current authorized follow-up: Issue105 / D-052, local/public delivery correction
-IN PROGRESS. Both old local and public code proxy bytes rather than302. Add an
-explicit protected HTTPS CDN host allowlist, preserve IndexCore canonical checks,
-guest grants and one-hour private document previews. No data/index/provider
-mutation. [Contract](docs/PRODUCT-DIRECT-DELIVERY.md). Deployment not yet accepted.
+Issue105 / PR106 / D-052 ACCEPTED and publicly deployed at0b29ecc88faff5f9.
+Exact-head CI38762045631, review5535806545 (same-agent), merge CI38762378328
+all3 SUCCESS. Both former local/public builds proxied bytes; the public fix now
+issues authorized302 after IndexCore checks. Actual Chrome302->115 CDN206,
+play/seek/pause and15423-byte native DOCX download/hash verified. Automated
+download event NOT observed; fresh filesystem file is the download evidence.
+Private one-hour document preview,283 canonical files and guest grants/revoke
+still pass. Product-only cutover; no source/catalog/provider-history mutation. See
+[acceptance and rollback](docs/DIRECT-DELIVERY-ACCEPTANCE.md).
 
 **cloudsiteV1.0.0alpha is deployed at https://cloud.netioi.com. Open registration
 with6-character minimum is verified. Public storage is now OpenList v4.2.6 at
