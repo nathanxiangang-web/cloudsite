@@ -1337,3 +1337,30 @@ dirty draft14 must be preserved and later rebased past merged sharing14. See
 [cloud integration contract](PRODUCT-CLOUD-DOWNLOAD.md). Do not claim live cloud
 download readiness from parsing tests or old Gate3 staging acceptance.
 
+## D-054 - Product admission with frozen execution evidence and operation usage
+
+Accepted delegated architecture direction,2026-10-16, Issue83. The human directs
+implementation of cloud download; the OpenList base-path question is withdrawn.
+Resume on current main while preserving the original dirty Issue83 checkout.
+The first bounded slice is admission/persistence/HTTP, not live deployment.
+
+Store raw original source, accepted execution source and frozen D-053 policy in
+one transaction with product operation identity, quota and PENDING Manifest.
+Server-assigned stable Manifest/Job IDs, current enabled user, immutable process
+target allowlist, owner-only replay and zero-price10-lifetime/2-in-flight limits.
+Digest raw intent, not normalized equality; replay reads stored policy/source
+without re-preparation, including after target disablement. Manifest-to-Provider
+bytes remain exact. After commit existing SubmissionService activates the pair;
+uncertain commit reads durable evidence, never invents replacement IDs/downloads.
+
+Separate product domain, persistence port, postgres adapter and strict HTTP;
+no new Job engine/queue or source in DTO/logs. Source64KiB, body512KiB, accepted
+execution4096bytes. Append migration15 without touching sharing14. Current public
+14 and original staging12 stay unchanged; new15 binary needs explicit reviewed
+upgrade/backup and a15-compatible disabled-admission fallback, no auto-migration.
+Test actual isolated PostgreSQL rollback/concurrency/uncertainty/pending paths
+and controlled admitted-to-READY runtime before exact-head CI/same-agent review.
+Public UI, native115 session and runtime/Hint/index writer composition are next
+separate integration work, not claims derived from this slice. Preserve8 unknown
+reservations and original KNOWN READY evidence. See PRODUCT-ADMISSION.md.
+

@@ -16,8 +16,10 @@ import (
 
 	"github.com/nathanxiangang-web/panta/internal/acquisition"
 	"github.com/nathanxiangang-web/panta/internal/app"
+	"github.com/nathanxiangang-web/panta/internal/auth"
 	"github.com/nathanxiangang-web/panta/internal/jobs"
 	"github.com/nathanxiangang-web/panta/internal/platform/config"
+	"github.com/nathanxiangang-web/panta/internal/product"
 	"github.com/nathanxiangang-web/panta/internal/providers/contracts"
 	"github.com/nathanxiangang-web/panta/internal/runtime"
 	"github.com/nathanxiangang-web/panta/internal/storage"
@@ -38,8 +40,9 @@ func (resolver runtimeSecretResolver) ResolveSecret(_ context.Context, ref contr
 }
 
 type runtimeDownloader struct {
-	starts, polls int
-	cancel        context.CancelFunc
+	starts, polls  int
+	cancel         context.CancelFunc
+	expectedSource string
 }
 
 type runtimeClock struct {
@@ -72,6 +75,9 @@ func (provider *runtimeDownloader) Descriptor() contracts.Descriptor {
 }
 func (provider *runtimeDownloader) StartDownload(_ context.Context, request contracts.DownloadRequest) (contracts.TaskReference, error) {
 	provider.starts++
+	if provider.expectedSource != "" && request.Source.Value != provider.expectedSource {
+		return contracts.TaskReference{}, errors.New("prepared source did not survive admission")
+	}
 	if provider.cancel != nil {
 		provider.cancel()
 		return contracts.TaskReference{}, context.Canceled
@@ -288,8 +294,57 @@ VALUES ($1,$1,'other-scope','/other-root','other-root','ACTIVE',clock_timestamp(
 }
 
 func TestPostgresAcquisitionRuntimeRealProtocolE2E(t *testing.T) {
+	runRuntimeRealProtocolE2E(t, false)
+}
+
+func TestPostgresOperatorProductAdmissionRuntimeE2E(t *testing.T) {
+	runRuntimeRealProtocolE2E(t, true)
+}
+
+func runRuntimeRealProtocolE2E(t *testing.T, admitted bool) {
 	fixture, manifestID, jobID := runtimeFixture(t)
 	provider := &runtimeDownloader{}
+	var admission *product.AdmissionService
+	var owner auth.Principal
+	var intent product.AdmissionRequest
+	if admitted {
+		// Replace only this disposable fixture's seed pair with an operation
+		// created by the actual product admission and activation services.
+		if _, err := fixture.pool.Exec(fixture.ctx, `DELETE FROM acquisition_manifests WHERE manifest_id=$1`, string(manifestID)); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := fixture.pool.Exec(fixture.ctx, `DELETE FROM jobs WHERE job_id=$1`, string(jobID)); err != nil {
+			t.Fatal(err)
+		}
+		accountsRepo, _ := postgres.NewAuthRepository(fixture.pool)
+		accounts, _ := auth.NewService(accountsRepo)
+		var err error
+		owner, err = accounts.Provision(fixture.ctx, "admitted-runtime", "synthetic-password", auth.RoleUser)
+		if err != nil {
+			t.Fatal(err)
+		}
+		topology, _ := postgres.NewStorageRepository(fixture.pool)
+		catalog, _ := postgres.NewCatalogRepository(fixture.pool)
+		manifests, _ := postgres.NewAcquisitionManifestRepository(fixture.pool)
+		creator, _ := acquisition.NewService(topology, catalog, manifests)
+		activationRepo, _ := postgres.NewAcquisitionActivationRepository(fixture.pool)
+		activation, _ := acquisition.NewActivationService(activationRepo)
+		jobRepo, _ := postgres.NewJobRepository(fixture.pool)
+		submitter, _ := acquisition.NewSubmissionService(creator, manifests, activation, jobRepo)
+		store, _ := postgres.NewProductAdmissionRepository(fixture.pool)
+		admission, err = product.NewAdmissionService(store, submitter, []storage.BindingID{fixture.bindingID})
+		if err != nil {
+			t.Fatal(err)
+		}
+		intent = product.AdmissionRequest{OperationKey: "runtime-once", Source: "magnet:?xt=urn:btih:0123456789ABCDEF0123456789ABCDEF01234567&dn=hint-only&tr=https%3A%2F%2Ftracker.invalid", BindingID: fixture.bindingID, TargetPath: "/downloads/item"}
+		created, err := admission.Admit(fixture.ctx, owner, intent)
+		if err != nil {
+			t.Fatal(err)
+		}
+		manifestID, jobID = created.ManifestID, created.JobID
+		prepared, _ := acquisition.PrepareSource(intent.Source, acquisition.MagnetBTIHNameV1)
+		provider.expectedSource = prepared.Reference.Value
+	}
 	visible := false
 	hintCalls, resolveCalls, journalCalls := 0, 0, 0
 	read := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -372,6 +427,19 @@ func TestPostgresAcquisitionRuntimeRealProtocolE2E(t *testing.T) {
 	if len(stages) != 3 || stages[0] != acquisition.StageProvider ||
 		stages[1] != acquisition.StageVisibility || stages[2] != acquisition.StageCanonical {
 		t.Fatalf("stages=%v", stages)
+	}
+	if admitted {
+		replay, err := admission.Admit(fixture.ctx, owner, intent)
+		if err != nil || replay.ManifestID != manifestID || replay.JobID != jobID || replay.Status != acquisition.SubmissionReplay {
+			t.Fatal("READY replay changed operation", err)
+		}
+		usage, err := admission.Usage(fixture.ctx, owner)
+		if err != nil || usage.Used != 1 || usage.InFlight != 0 || provider.starts != 1 {
+			t.Fatal("completion/replay charged or restarted", err)
+		}
+		if manifest.ExpectedName != nil || manifest.ResultName == nil || *manifest.ResultName != "movie.mkv" {
+			t.Fatal("magnet display name replaced provider result")
+		}
 	}
 	application.Close()
 	application.Close()

@@ -12,14 +12,21 @@
 
 ## 1. Source-of-truth order
 
-Issue108 / D-053 prepares cloud acquisition: see
+Active Issue83 / D-054 implements cloud-download admission+usage, following the
+human's explicit start instruction. Original/execution/policy are transactionally
+persisted with an owned operation and PENDING intent; stable-ID activation uses
+existing services and replay never re-prepares. Schema15 is development-only;
+public14 and historical12 remain unchanged. No public route/Worker activation
+or native115 login/download from this PR. See PRODUCT-ADMISSION.md. The isolated
+old dirty WIP is preserved, not overwritten or directly upgraded.
+
+Accepted Issue108 / PR109 / D-053 prepared cloud acquisition: see
 [verified gaps and modular sequence](PRODUCT-CLOUD-DOWNLOAD.md). Pure PrepareSource
 adds explicit magnet-btih-name-v1 (BTIH+optional dn) while retaining raw input.
-ResolveSource/old submissions/adapter remain byte-exact. The helper is NOT wired
-to live admission; future transactional operation persistence must retain raw,
-execution and policy before it is enabled. No native call/migration/Worker/UI
-activation in this slice. Issue83 draft14 is dirty/unaccepted and conflicts with
-merged sharing14; preserve and rebase later, never deploy it as-is.
+D-054 uses it only on new durable product reservations. ResolveSource, old
+submissions and adapter remain byte-exact. No native call/public migration/
+Worker/UI activation in this slice. Old dirty Issue83 draft14 remains unchanged;
+new development uses append-only15 after sharing14, never deploys the old draft.
 
 Current Issue105 / D-052 supersedes server-byte-proxy-only delivery, not IndexCore
 truth: protected direct_link_hosts opt in to authorized302 for ordinary/guest
