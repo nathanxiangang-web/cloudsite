@@ -5,6 +5,10 @@
 
 ## 1. 蓝图与实际缺口
 
+后续实施已启动：Issue83 / D-054在当前基线上实现准入/用量及原始、执行、策略
+三元组持久化，详见[准入模块](PRODUCT-ADMISSION.md)。追加开发迁移15，尚未升级
+公网14或启用UI/Worker。以下Issue108内容记录准备阶段，不代表仍禁止已授权实现。
+
 依据 MVP-BLUEPRINT 第8/9/10/11节及 GATE4-IMPLEMENTATION-PLAN：现有
 SubmissionService、Manifest、ACQUISITION Job、115 Downloader、START_RESERVED、
 单 Worker、Hint、Q5/Q8、Projector、原子 READY 已有实现与历史验收，不另建队列。
@@ -73,9 +77,10 @@ magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567&dn=demo-video
 
 `PrepareSource`返回私有Original、执行Reference、策略版本、Changed和移除参数数。
 普通JSON/字符串摘要隐藏原始及执行来源；不要记录完整magnet、任务引用或凭据。
-当前纯函数不入库、不提交Job、不修改ResolveSource、SubmissionService或115 Adapter。
+纯函数自身不入库、不提交Job、不修改ResolveSource、SubmissionService或115 Adapter。
+后续D-054准入模块已经组合纯函数与事务存储，见PRODUCT-ADMISSION；还未公网启用。
 
-后续准入必须在同一受保护操作记录中持久化：原始输入、准备后的执行值、固定策略版本
+准入必须在同一受保护操作记录中持久化：原始输入、准备后的执行值、固定策略版本
 及身份/目标/幂等信息。Manifest.source_ref使用已接受的执行值，之后直到Provider
 仍严格逐字节一致。原始值留在操作记录追溯；不能只保留短值然后声称原文已保存。
 未完成这种持久化和事务测试前，不将本策略接入现有提交/Worker。

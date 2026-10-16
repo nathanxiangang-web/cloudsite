@@ -4,13 +4,18 @@
 
 ## Current phase
 
-Cloud acquisition preparation: Issue108 / D-053. The human requests blueprint
-review and magnet compatibility, not a live download of the supplied example.
-[Integration plan](docs/PRODUCT-CLOUD-DOWNLOAD.md) plus pure PrepareSource policy
-keep BTIH/optional dn and preserve raw input separately. This is preparation,
-NOT an enabled public cloud-download route/Worker. Next integration must audit
-Issue83 WIP, persist raw/execution/policy intent and compose actual dependencies.
-Current schema14/public delivery/source/provider history stay unchanged.
+Cloud-download implementation IN PROGRESS: Issue83 / D-054. Product admission,
+zero-price usage and explicit HTTP adapter now implement atomic original/
+execution/frozen-policy reservation plus stable-ID activation. Schema15 is
+append-only development history, NOT migrated to public14 or original staging12.
+No public cloud-download UI/Worker or live115 execution yet. Original dirty
+Issue83 WIP preserved. [Module contract](docs/PRODUCT-ADMISSION.md).
+
+Accepted cloud acquisition preparation: Issue108 / PR109 / D-053. Pure input
+policy keeps BTIH/optional dn. D-054 now implements its new-reservation durable
+boundary; future work composes actual dependencies and consumer UI. The example
+magnet has NOT been downloaded. Current public schema14, delivery and historical
+provider evidence stay unchanged. [Integration plan](docs/PRODUCT-CLOUD-DOWNLOAD.md).
 
 Issue105 / PR106 / D-052 ACCEPTED and publicly deployed at0b29ecc88faff5f9.
 Exact-head CI38762045631, review5535806545 (same-agent), merge CI38762378328
