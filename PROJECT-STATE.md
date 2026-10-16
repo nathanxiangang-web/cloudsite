@@ -4,13 +4,28 @@
 
 ## Current phase
 
-IN PROGRESS: Issue114 / D-056, readonly preparation and explicit LOGIN_REQUIRED
-consumer UI. Issue113 native root directory GET: HTTP200/API990001/ErrNotLogin;
-zero submission/Worker/StartDownload. Human changes destination to existing
-/云下载. Standard OpenList Alias created under the existing CloudSite app scope;
-no file move, native/OAuth credential change or account-scope expansion. Real
-download remains unconsumed pending valid native session. Complete independent
-UI/IndexCore mapping tests; public deployment is not yet accepted.
+Issue114 / PR115 / D-056 ACCEPTED, publicly deployed on2026-10-17.
+Reviewed bbb38ae1e00271b1c7c8454594755f55bfce9f80; exact-head CI38967538356
+and merge CI38967953503 all3 SUCCESS, squash894962f6bb5a, separate same-agent
+review (not independent). Public schema14 -> 15 after backup and tested
+15-compatible readonly fallback. Old strict14 binary is NOT a valid fallback.
+See [public evidence and recovery](docs/CLOUD-DIRECTORY-ACCEPTANCE.md).
+
+Human target is existing /云下载, not MCP-Test. Standard OpenList Alias exposes
+it inside the existing application scope; no file move, native/OAuth credential
+change or account-root expansion. Separate IndexCore DB preserves old root and
+resource IDs/generations. Accepted bounded cloud scan: generation1,2 resources,
+1 file. Persistent single writer uses7ef47217; Hint remains loopback-only.
+Old283 files plus1 cloud file accessible:284 total. New observation Connection/
+Binding remain DISABLED, without native scope/credential. This is NOT yet an
+acquisition-ready Hint/canonical namespace. Original catalog remains unchanged.
+
+Issue113 BLOCKED: fresh native GET returns HTTP200/API990001/ErrNotLogin.
+Zero new submissions/Worker/StartDownload; one-start budget remains unconsumed.
+UI explicitly shows LOGIN_REQUIRED and allows pure preparation, not admission.
+Human native session restoration and target-ID/path verification are required
+before managed execution. Preserve8 historical unknown reservations.
+Issue116 corrects only stale consumer scope wording and adds a DOM regression.
 
 Cloud-download composition ACCEPTED: Issue111 / PR112 / D-055. Reviewed exact
 HEAD0555d3b464f9faf1c92a8772fddb216457b34748, CI38907187975 all3 SUCCESS,
@@ -21,17 +36,16 @@ isolated PostgreSQL/controlled runtime tests passed. Merge CI is separate from
 the accepted exact-head CI. [Module contract](docs/PRODUCT-CLOUD-RUNTIME.md).
 Issue83/PR110 admission is ACCEPTED: revieweda630dafa, exact-head CI38901805468
 all3 SUCCESS, same-agent review5547872267, mergeec568ae1; merge CI38902038377
-SUCCESS. Schema15 is development-only, public14/original staging12 unchanged.
-Public native login restored and directory read verified, zero StartDownload.
-The runtime/UI is not publicly enabled. NEXT: bounded public integration on
-113.20.6.57, backup+15-compatible disabled fallback, explicit product migration,
-fixed four coordinates and actual IndexCore single-writer/loopback Hint. No
-repeat login or historical task retry. Original dirty Issue83 WIP is preserved.
+SUCCESS. Public schema15 supersedes the former public14 snapshot; original
+staging12 stays unchanged. Historical login success is superseded by990001 above.
+Pure preview UI is public; managed acquisition/Worker stay off. Finish Issue113
+only after valid native session and fixed native/canonical coordinates. Original
+dirty Issue83 WIP is preserved.
 
 Accepted cloud acquisition preparation: Issue108 / PR109 / D-053. Pure input
 policy keeps BTIH/optional dn. D-054 now implements its new-reservation durable
 boundary; future work composes actual dependencies and consumer UI. The example
-magnet has NOT been downloaded. Current public schema14, delivery and historical
+magnet has NOT been downloaded. Former public schema14, delivery and historical
 provider evidence stay unchanged. [Integration plan](docs/PRODUCT-CLOUD-DOWNLOAD.md).
 
 Issue105 / PR106 / D-052 ACCEPTED and publicly deployed at0b29ecc88faff5f9.

@@ -2,8 +2,8 @@
 
 > Canonical short-form project memory for Architect/AI sessions.
 >
-> Last architecture-memory synchronization: **2026-10-16**
-> Current status: **cloudsiteV1.0.0alpha public deployment includes accepted PR106 direct302 delivery at0b29ecc88faff5f9. Exact IndexCore authorization remains; private one-hour document previews stay server-side. Chrome playback/seek and native downloaded DOCX hash are verified. Local-config OpenList replaced AList, whose data/rollback remain retained. Six-character USER registration,283 canonical files and schema14 preserved. No full MVP/realtime-index/all-codec claim.**
+> Last architecture-memory synchronization: **2026-10-17**
+> Current status: **PR115/D-056 accepted and public894962f6bb5a/schema15: LOGIN_REQUIRED and pure magnet preparation. Existing /云下载 mapped through standard OpenList Alias and separate IndexCore observation;284 files (old283+cloud1). Managed Worker off, native990001/ErrNotLogin, one-start budget unconsumed.302/CDN206/document preview/guest shares reverified. No full MVP/realtime-index/all-codec claim.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -12,12 +12,18 @@
 
 ## 1. Source-of-truth order
 
-Current Issue114/D-056: explicit readonly source preview and truthful login-
-unavailable UI. Issue113 has zero submissions/Worker/StartDownload; actual native
+Accepted Issue114/PR115/D-056: readonly source preview and truthful login-
+unavailable UI publicly deployed; exact-head CI38967538356 and merge38967953503
+all3 SUCCESS, same-agent acceptance, merge894962f6bb5a. Public DB15 with backed-up
+14 and tested15-compatible readonly fallback. See CLOUD-DIRECTORY-ACCEPTANCE.md.
+Issue113 has zero submissions/Worker/StartDownload; actual native
 GET returns HTTP200/API990001/ErrNotLogin. Do not run downloads with this known-
 rejected session. Human target now /云下载, standard OpenList Alias mapped into
 existing CloudSite namespace without moving files or changing OAuth/account root.
-Finish independent UI/IndexCore observation while real download awaits login.
+Observation/public UI/API regression passed:283 original+1 cloud file, persistent
+single writer and strict loopback Hint. New DISABLED observation Binding has no
+native scope/credential and is not acquisition-ready. Real download awaits native
+session and target-coordinate verification. Issue116 corrects stale scope wording.
 Preview configuration is not an acquisition graph or health service.
 
 Accepted Issue111 / PR112 / D-055 composes the managed product acquisition action
@@ -28,10 +34,9 @@ Readonly
 action stays separate; owner-key GET reconciles uncertain submissions without
 provider calls. Issue83/PR110/D-054 is accepted at ec568ae1: exact-head
 CI38901805468 and merge CI38902038377 all3 SUCCESS, same-agent review5547872267.
-Schema15 remains development-only; public14 and historical12 unchanged. Public
-native session restored/read-verified with zero StartDownload, not runtime
-activation. Public enablement still requires backup/15-compatible disabled
-fallback and a real incremental IndexCore writer with loopback Hint. Preserve
+Public15 supersedes former public14; historical12 unchanged. Historical native
+login success is superseded by990001. Public managed runtime remains off; pure
+preview UI is enabled. Keep backed-up14,15-compatible fallback and old catalog. Preserve
 the old dirty checkout and8 historical unknown reservations.
 
 Accepted Issue108 / PR109 / D-053 prepared cloud acquisition: see
