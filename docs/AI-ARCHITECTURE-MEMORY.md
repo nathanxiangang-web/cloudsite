@@ -16,7 +16,11 @@ Current Issue129 / D-062 prepares optional AI behind a replaceable Agent Port,
 with.50 server-side credential resolution and private authenticated gateway to
 public113.20.6.57. IndexCore remains physical truth, not an LLM host module.
 No AI packages/routes/tables exist on this baseline; all new names/contracts in
-the plan are proposed. CodeArts components exist on.50, but an old systemd
+the plan are proposed. The user's local CodeartsBridge c190fc8 is the software
+source; its private CSV seed has three populated AK/SK profiles, not imported.
+Registry bus-w02-dev maps to.50; account mapping/live entitlement is unverified.
+Preserve the dirty Bridge worktree and never publicly proxy its coding /api/tasks;
+use a dedicated restricted adapter. CodeArts components exist on.50, but an old systemd
 Bridge points at missing/home/nathan/bridge-python;8080/8765 health unavailable.
 Readiness, actual model profile, restricted execution and network must be verified
 before enabling. Do not revive broad shell-capable development Workers for users.

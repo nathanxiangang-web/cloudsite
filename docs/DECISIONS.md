@@ -1584,6 +1584,15 @@ Existing secret references/files may be reused only after identity/type/permissi
 and endpoint capability are validated. Configuration examples in the plan are
 proposed, not accepted fields of the current strict product config parser.
 
+The user's local CodeartsBridge c190fc8 is the authoritative software source.
+Three private CSV profiles have populated AK/SK fields; no values are disclosed
+or imported. Registry bus-w02-dev maps to.50; the matching account and live model
+entitlement still require validation. Do not choose a CSV by filename, copy all
+accounts or demand replacement credentials. Preserve the dirty Bridge worktree.
+Its actual /api/tasks coding API and CLI JSONL parser are not a product AgentPort;
+reuse only bounded protocol/diagnostic components behind a dedicated restricted
+adapter. Any necessary Bridge change needs its own narrow patch and tests.
+
 Read-only checks found CodeArts components on.50, but the existing bridge.service
 working directory is absent and8080/8765 health is unreachable; common checked
 CLI profiles were absent. This does not prove no credentials exist elsewhere.

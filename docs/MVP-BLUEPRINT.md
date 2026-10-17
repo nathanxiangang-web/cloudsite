@@ -7,7 +7,9 @@
 > limits, including the separate exhausted original ISO smoke. AI remains absent
 > and disabled. Issue129 / D-062 now authorizes [AI integration planning](PRODUCT-AI-INTEGRATION.md),
 > not model execution or Gate5 completion. Existing AI configuration source is
-> the human-designated.50 host, not public-host website/115 credentials. Earlier
+> the designated local CodeartsBridge c190fc8 and private account CSV seed, with.50
+> as execution host. Source found does not prove live entitlement; never expose the
+> bridge's coding task API to product users or reuse website/115 credentials. Earlier
 > preparation documents retain historical stage context, not current feature limits.
 
 ## 1. MVP objective

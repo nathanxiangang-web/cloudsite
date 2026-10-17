@@ -17,7 +17,12 @@ Chat history is not a source of truth.
 Issue129 / D-062 authorizes AI planning and read-only readiness checks only.
 Read docs/PRODUCT-AI-INTEGRATION.md before any implementation. Human identifies
 192.168.178.50 (IndexCore development host) as the existing AI software/config
-source, distinct from public113.20.6.57. Keep model credentials on.50 and out of
+execution host, distinct from public113.20.6.57. Software is the designated local
+CodeartsBridge c190fc8; private CSV seed contains three populated AK/SK profiles.
+Its registry maps bus-w02-dev to.50, not a verified account entitlement. Preserve
+the dirty Bridge checkout; do not proxy coding /api/tasks to product users.
+Select/validate/import only the designated profile during later deployment, not
+the whole account directory. Keep model credentials on.50 and out of
 prompts/Git; do not export them or reuse website/provider credentials. Historical
 Bridge is currently broken (missing working directory); presence of CodeArts
 components is not proof of a usable gateway. Proposed stage5.1 contracts/mock
