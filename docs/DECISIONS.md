@@ -1442,3 +1442,34 @@ legacy expiry unchanged, expiry refusal and existing revoke/concurrency paths.
 Exact-head CI and separate same-agent review before product-only deployment;
 retain old image/config rollback. No schema beyond15.
 
+## D-058 - Real cloud submission using the CloudSite directory namespace
+
+Issue120, explicit human direction2026-10-17: enable real public submission using
+the current native115 session; if save path is selectable, place it under CloudSite.
+Physical /CloudSite/云下载 is the chosen target; the old root /云下载 is not moved
+or deleted. ProviderScope is the independently verified native child ID, never
+an OpenList virtual path. App account base stays /115open/CloudSite; canonical
+and Hint target are /云下载 under the existing full-root CloudSite namespace.
+
+Reuse accepted runtime/admission/Worker/stages/lease/projector and schema15.
+Operator may create fresh logical mapping OR atomically attach a NEW115 session
+Connection to the exact existing DISABLED observation Binding. CAS requires old
+observation-only Connection with no credential, expected Root/mount/Connection,
+nil provider scope and no acquisition history; preserve Binding/Root/mount IDs
+and old Connection/credential. Guard current database/schema and empty task/
+operation queue; refuse replay/adoption. New Connection+Binding change is one
+transaction through storage repositories. No direct Job/Manifest/Copy state SQL.
+
+Bounded parent-root PARTIAL Hint discovers the child directory before child Hint;
+never run an unnecessary recursive full scan or reinterpret a narrow root path.
+Use same identity protected OpenList auth, single IndexCore writer, loopback Hint.
+Backup product config/compose and test readonly fallback; preflight constructs
+but never claims. Only then use explicit managed action and one serial Worker.
+Public submissions retain quotas/ownership/idempotency; no automatic browser POST.
+One sealed supplied ordinary ISO smoke submission is permitted; source/name/hash/
+provider ref remain private. Unknown outcome preserves reservation, never repeats
+StartDownload or retries historical8 unknowns. Public managed lifecycle is now
+authorized, superseding Issue113's temporary isolated-worker-only deployment limit,
+not its no-duplicate provider-write rule. Actual READY acceptance needs the whole
+same Job/provider/Hint/Q5/Q8/Copy transaction evidence, not merely an enabled button.
+
