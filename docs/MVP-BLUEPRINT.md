@@ -2,13 +2,15 @@
 
 > First implementation blueprint. Intentionally bounded: enough architecture to support modular staged development without prebuilding the final product.
 
-> Current cloud-download preparation,2026-10-16: Issue108 / D-053,
-> [module plan](PRODUCT-CLOUD-DOWNLOAD.md). Historical Gate3 engine exists; the
-> current public product still lacks complete authenticated admission/usage,
-> acquisition topology, Worker/IndexCore writer and current-DB projection wiring.
-> Explicit new-input magnet preparation preserves raw input separately and sends
-> accepted BTIH/dn execution value; it does not rewrite historical tasks/adapters.
-> A preparation helper is not an enabled public cloud-download feature.
+> Current pointer,2026-10-18: cloud-download admission/usage and the managed
+> runtime are public; see PROJECT-STATE and D-058/D-061 for actual evidence and
+> limits, including the separate exhausted original ISO smoke. AI remains absent
+> and disabled. Issue129 / D-062 now authorizes [AI integration planning](PRODUCT-AI-INTEGRATION.md),
+> not model execution or Gate5 completion. Existing AI configuration source is
+> the designated local CodeartsBridge c190fc8 and private account CSV seed, with.50
+> as execution host. Source found does not prove live entitlement; never expose the
+> bridge's coding task API to product users or reuse website/115 credentials. Earlier
+> preparation documents retain historical stage context, not current feature limits.
 
 ## 1. MVP objective
 
@@ -482,6 +484,11 @@ provider share
 ```
 
 ## 16. Agent MVP boundary
+
+Current staged preparation: [AI integration plan](PRODUCT-AI-INTEGRATION.md),
+Issue129 / D-062. Use the designated.50 model environment behind a restricted
+Agent Port only after recovery/validation; metadata suggestions first, Source/Release
+and evidence tasks later. Model availability and credentials are not yet verified.
 
 Agent integration is deliberately later than deterministic core flows.
 

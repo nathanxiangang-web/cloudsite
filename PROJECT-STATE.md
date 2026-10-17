@@ -4,6 +4,28 @@
 
 ## Current phase
 
+Issue129 / D-062: AI INTEGRATION PLANNING, NOT IMPLEMENTED/ENABLED.
+Human requests blueprint-aligned AI and identifies.50 alongside IndexCore as
+the execution host. Authoritative software is the user-designated local CodeartsBridge
+at c190fc8; its private CSV directory has three structurally populated AK/SK profiles.
+The registry maps bus-w02-dev to.50, but the matching account and live entitlement
+are unverified. No CSV was imported or disclosed. Read [modular staged plan](docs/PRODUCT-AI-INTEGRATION.md).
+Prioritize evidence-backed real-file metadata suggestions; no auto-download,
+file mutation or IndexCore/DB access by the agent. Model credentials remain on.50;
+public113.20.6.57 uses a separately authenticated private gateway only after
+readiness is verified. On.50 CodeArts components exist, but the old Bridge unit
+targets a missing directory; historical8080/8765 endpoints are unreachable and
+checked CLI profiles are absent. No proof of current callable model credentials.
+Do not infer absence of credentials: the local seed is located. Bind a verified
+profile during staged deployment; do not provision another account or expose coding
+/api/tasks to product users. Preserve the dirty local Bridge worktree.
+Next staged scope is [Issue131](https://github.com/nathanxiangang-web/cloudsite/issues/131):
+5.1 contracts/strict validation/mock, not model execution; prepared, not started.
+Current product schema15 and all services/credentials/tasks stay unchanged;
+this planning run made zero model requests, migrations, starts or service restarts.
+
+### Current runtime evidence (not AI acceptance)
+
 2026-10-18 VERIFIED: IndexCore issue111 / PR112 merged e03d14a9e1bbf6e022fc67000ae2034c165d7845
 and deployed to the owned public catalog process. Exact-head CI38996188340 and
 merge CI38996436652 SUCCESS. CloudSite issue126 / PR127 merged and deployed

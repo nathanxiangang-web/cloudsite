@@ -1558,3 +1558,52 @@ visual playback test. The original long-running ISO smoke has no READY acceptanc
 Its separate known-reference pair exhausted5/5 failures; the accepted recovery
 API rejected resume, so retain the pair/reservation without refunding its budget.
 
+## D-062 - Blueprint-aligned AI planning with the existing .50 environment
+
+2026-10-18, Issue129. Human requests AI preparation/planning and clarifies the
+existing software/configuration source is192.168.178.50 beside IndexCore, not
+the public product host113.20.6.57. This authorizes documentation and read-only
+readiness checks, not a model request, production AI enablement or a new Gate5
+implementation claim. See [modular staged plan](PRODUCT-AI-INTEGRATION.md).
+
+Start with selected real-file metadata/semantic suggestions and verifiable
+evidence, then Source/Release/enrichment/verification tasks. Deterministic file
+format classification and core user flows remain independent. Model output is
+advice, never permission to mutate IndexCore, provider, Job or product state.
+AgentPort and strict versioned contracts isolate CodeArts from domain modules.
+No chat shell, new Job Engine, autonomous downloader, drive rename/delete or
+unrequested whole-library content upload. Manual suggestion application, when
+implemented, revalidates authorization/current resource and domain constraints.
+
+Keep actual model credentials on.50 and use a dedicated private authenticated
+gateway connection from the product. Do not copy developer homes/IDE tokens,
+repurpose115/OpenList/Hint/website keys, expose the old trusted-LAN Worker on
+the internet or weaken IndexCore loopback Hint. Public-to-private routing must
+be demonstrated in the actual container namespace; not an assumed reachable URL.
+Existing secret references/files may be reused only after identity/type/permissions
+and endpoint capability are validated. Configuration examples in the plan are
+proposed, not accepted fields of the current strict product config parser.
+
+The user's local CodeartsBridge c190fc8 is the authoritative software source.
+Three private CSV profiles have populated AK/SK fields; no values are disclosed
+or imported. Registry bus-w02-dev maps to.50; the matching account and live model
+entitlement still require validation. Do not choose a CSV by filename, copy all
+accounts or demand replacement credentials. Preserve the dirty Bridge worktree.
+Its actual /api/tasks coding API and CLI JSONL parser are not a product AgentPort;
+reuse only bounded protocol/diagnostic components behind a dedicated restricted
+adapter. Any necessary Bridge change needs its own narrow patch and tests.
+
+Read-only checks found CodeArts components on.50, but the existing bridge.service
+working directory is absent and8080/8765 health is unreachable; common checked
+CLI profiles were absent. This does not prove no credentials exist elsewhere.
+Do not silently upgrade/reinstall/restart shared services in this planning task.
+Restore a restricted dedicated integration separately after locating the actual
+profile. Do not confuse co-location with putting LLM logic in IndexCore kernel.
+
+Future AGENT_TASK execution reuses type-filtered Jobs and independent AI usage,
+not Acquisition quota/retry state. Task/Job/result/usage finalization must use
+DB-time generation-fenced atomic commits. Unknown external model-call outcomes
+cannot be declared unbilled/not executed or blindly retried. No automatic budget
+refund/format-repair call. AI-disabled core regressions and controlled PG/HTTP/
+UI/real-model evidence precede every staged release; a docs CI is not AI acceptance.
+

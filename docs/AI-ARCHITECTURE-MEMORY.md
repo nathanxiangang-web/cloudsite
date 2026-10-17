@@ -3,7 +3,7 @@
 > Canonical short-form project memory for Architect/AI sessions.
 >
 > Last architecture-memory synchronization: **2026-10-18**
-> Current status: **Public CloudSitef1bceee/PR127 with IndexCoree03d14a9/PR112, schema15. Authenticated API confirms2 cloud files and main283, exact Q5 PRESENT. Opt-in /云下载 bounded child discovery reuses the IndexCore single-writer PARTIAL queue; visible-page10s GET refresh no longer waits for a changed READY Copy ID. PR125100-operation and silent-auth changes included. Original ISO smoke budget remains consumed; reference-known recovery must use accepted CAS API, never resubmit or reset history. No blanket30-second SLA or original ISO READY claim. Final visual automation unavailable; API/static-asset proof only. See PROJECT-STATE.md and D-061.**
+> Current status: **Issue129 / D-062: AI planning only; read PRODUCT-AI-INTEGRATION.md. User identifies.50 (IndexCore development host) as the existing AI config source; model secrets stay there. Old Bridge is currently broken and callable credentials unverified; no AI module/model request/feature activation. First proposed slice is strict Agent contracts/mock and real-file metadata suggestions, not autonomous provider actions. Existing publicf1bceee/IndexCoree03d14a9/schema15 unchanged, last canonical proof2 cloud/main283. Original ISO remains known-reference with5/5 exhausted failures; do not resubmit or reset. No Gate5/full-MVP acceptance.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -11,6 +11,22 @@
 > If chat context, an old issue, an old PR description, README text, or an older decision conflicts with this file plus the latest accepted Decision Log / Project State, **Git wins and the newer accepted decision wins**.
 
 ## 1. Source-of-truth order
+
+Current Issue129 / D-062 prepares optional AI behind a replaceable Agent Port,
+with.50 server-side credential resolution and private authenticated gateway to
+public113.20.6.57. IndexCore remains physical truth, not an LLM host module.
+No AI packages/routes/tables exist on this baseline; all new names/contracts in
+the plan are proposed. The user's local CodeartsBridge c190fc8 is the software
+source; its private CSV seed has three populated AK/SK profiles, not imported.
+Registry bus-w02-dev maps to.50; account mapping/live entitlement is unverified.
+Preserve the dirty Bridge worktree and never publicly proxy its coding /api/tasks;
+use a dedicated restricted adapter. CodeArts components exist on.50, but an old systemd
+Bridge points at missing/home/nathan/bridge-python;8080/8765 health unavailable.
+Readiness, actual model profile, restricted execution and network must be verified
+before enabling. Do not revive broad shell-capable development Workers for users.
+Core runtime/history remains as recorded in current PROJECT-STATE/D-061.
+
+### Earlier execution snapshots (not the current task)
 
 Current Issue124 / D-060:100 operations, hide UI concurrency count, preserve
 server concurrency2. Fix login-form flash with silent session restoration,
