@@ -1555,4 +1555,6 @@ Public authenticated canonical API shows2 cloud files/main283, unique Q5 PRESENT
 child work VERIFIED. No new download submissions/StartDownload. Browser automation
 was unavailable for final visual verification; do not relabel API evidence as a
 visual playback test. The original long-running ISO smoke has no READY acceptance.
+Its separate known-reference pair exhausted5/5 failures; the accepted recovery
+API rejected resume, so retain the pair/reservation without refunding its budget.
 

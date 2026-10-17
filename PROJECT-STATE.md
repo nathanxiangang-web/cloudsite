@@ -19,6 +19,10 @@ schema change or new download. Current authenticated canonical API evidence:
 exact Q5 PRESENT. OpenList transient TLS failures occurred before convergence.
 Browser automation was unavailable for this final verification; API/static asset
 verification is not a claim of an independent visual playback test. See D-061.
+Separately, the original sealed ISO smoke pair remains RECOVERY_REQUIRED with a
+known reference and exhausted5/5 failure budget. The accepted recovery CLI refused
+resume; its reservation/log are retained. No reset, extra source or provider start.
+This is not an original ISO READY acceptance or a claim that every task completed.
 
 Issue124 / PR125 / D-060 ACCEPTED and deployed0877e133124ba3193943622a3990e93f26165c76,
 now included in PR127:100-operation policy, no UI in-flight counter, backend
