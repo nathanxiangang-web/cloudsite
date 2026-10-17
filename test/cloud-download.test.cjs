@@ -35,3 +35,9 @@ test('new READY refreshes in-page files once; ordinary polling does not disrupt 
  const link=app.elements.get('download-task-list').children[0].children[1].children[1];assert.equal(link.href,'#download-files');
  app.events.pagehide();assert.equal(clears,1);assert.equal(app.requests.some(r=>r.options.method==='POST'),false);
 });
+
+test('quota display uses server100 total and omits concurrency counters without changing admission',async()=>{
+ const app=pageApp();await app.respond('/api/v1/auth/me',{user_id:id,login:'test-user'});await app.respond('/api/v1/workspace',{cloud_download_enabled:true});await app.respond('/api/v1/tasks?limit=50',{items:[],next_cursor:''});await app.respond('/api/v1/usage',{used:1,operation_limit:100,in_flight:0,concurrency_limit:2});
+ assert.equal(app.elements.get('download-usage').textContent,'已使用 1 / 100 次');
+ assert.equal(app.requests.some(r=>r.url==='/api/v1/cloud-downloads'),false);
+});

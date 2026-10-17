@@ -15,6 +15,12 @@ import (
 
 const admissionBinding storage.BindingID = "98000000-0000-4000-8000-000000000001"
 
+func TestDefaultQuotaPolicyIs100WithUnchangedConcurrencyFence(t *testing.T) {
+	if DefaultOperationLimit != 100 || DefaultConcurrencyLimit != 2 {
+		t.Fatal("quota policy")
+	}
+}
+
 func admissionPrincipal() auth.Principal {
 	return auth.Principal{UserID: "98000000-0000-4000-8000-000000000002", Login: "test-user", Role: auth.RoleUser}
 }

@@ -4,14 +4,28 @@
 
 ## Current phase
 
-IN PROGRESS Issue122 / D-059: human requests cloud files directly on /downloads/,
+IN PROGRESS Issue124 / D-060: human requests100 operations and removal of the UI
+in-flight counter. New quota default100; privately backed-up existing default10
+quota rows will become100 without changing used operations or concurrency2.
+Library auth bootstrap must not paint a login form before session restoration;
+401 reveals login, transient failures remain unknown. No session/credential/
+provider change. Actual IndexCore PID1 incremental runtime enabled=true, wake5s,
+single-root writer1; no full scan or recursive claim. See D-060.
+
+ACCEPTED/public Issue122 / PR123 / D-059 at e2576dc9c6c7641b2a98ef5b49133bc1da4dde79:
+exact6b48e78af64d0a73f13b170cd686202818ad3811, CI38994379661 and merge38994534211
+all3 SUCCESS, separate same-agent review. Human confirms the cloud file list is
+currently empty; that is expected, not an indexing incident. Main283-file count
+and shared controller render verified; no extra scan/provider download performed.
+Original service identities/config/schema15 preserved; no recovery debt.
+The human requests cloud files directly on /downloads/,
 excluded from the main library. Shared file template/controller retains preview,
 playback, native attachment and sharing; pure exact Binding/canonical-subtree
 partition applies before search/count/pagination. Authenticated workspace exposes
 canonical view coordinates only, not native scope/ref/credentials or selectable
 submission target. IndexCore remains read authority; no migration/provider call/
 file move/delete/task rewrite. See docs/FILE-SURFACES.md. Tests pass locally;
-full CI/review and product-only deployment remain, no new download smoke budget.
+full CI/review and product-only deployment passed, no new download smoke budget.
 
 Issue120 / PR121 / D-058 ACCEPTED and deployed at f8be03ccf1d798898b52618f3fd773a5a9094699.
 Exact reviewed c1ed10be896ff6f1e6011c8c86ef979c382f6be4, CI38992241383 and merge

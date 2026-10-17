@@ -34,13 +34,13 @@ function signOut(clearPending=false){
 	if(clearPending&&typeof CloudDownloadModel!=='undefined'&&library.userID)CloudDownloadModel.clearPending(library.userID);library.userID=null;node('cloud-download-link').hidden=true;
  if(typeof clearSharing==='function')clearSharing();node('my-shares').hidden=true;library.sharing=false;
  library.session++;library.request++;library.controller.abort();library.controller=new AbortController();clearFiles();library.bindings=[];library.content=false;library.category='all';library.layout='cards';
- node('login-name').textContent='';node('file-search').value='';node('account-password').value='';node('account').hidden=true;node('admin-link').hidden=true;node('library-view').hidden=true;node('login-view').hidden=false;
+ node('session-loading').hidden=true;node('login-name').textContent='';node('file-search').value='';node('account-password').value='';node('account').hidden=true;node('admin-link').hidden=true;node('library-view').hidden=true;node('login-view').hidden=false;
 }
 async function signIn(principal){
  const generation=++library.session;
  const info=await request('/api/v1/workspace');if(generation!==library.session)return;
 	library.userID=principal.user_id;node('cloud-download-link').hidden=info.cloud_download_enabled!==true&&info.cloud_download_preview_enabled!==true;
- library.cloudScope=info.cloud_download_files||null;library.bindings=info.bindings;library.wholeRoot=info.whole_root_library===true;node('library-scope').textContent=library.wholeRoot?'展示已接入目录中完成索引的文件，不代表整个网盘。':'当前展示已接入的真实文件，不代表整个网盘。';library.content=info.content_access_enabled===true;library.sharing=info.sharing_enabled===true;node('my-shares').hidden=!library.sharing;node('login-name').textContent=principal.login;node('admin-link').hidden=principal.role!=='ADMIN';node('account').hidden=false;node('login-view').hidden=true;node('library-view').hidden=false;clearError('login-error');
+ library.cloudScope=info.cloud_download_files||null;library.bindings=info.bindings;library.wholeRoot=info.whole_root_library===true;node('library-scope').textContent=library.wholeRoot?'展示已接入目录中完成索引的文件，不代表整个网盘。':'当前展示已接入的真实文件，不代表整个网盘。';library.content=info.content_access_enabled===true;library.sharing=info.sharing_enabled===true;node('my-shares').hidden=!library.sharing;node('login-name').textContent=principal.login;node('admin-link').hidden=principal.role!=='ADMIN';node('account').hidden=false;node('session-loading').hidden=true;node('login-view').hidden=true;node('library-view').hidden=false;clearError('login-error');
  await refreshFiles();
 }
 function surfaceFiles(){return FileSurface.partition(library.catalog?library.catalog.files:[],library.cloudScope,cloudFilePage?'downloads':'library');}
@@ -173,7 +173,7 @@ for(const layout of ['cards','list'])node('view-'+layout).addEventListener('clic
 node('file-search').addEventListener('input',()=>{library.filePage=0;drawFiles();});node('detail-close').addEventListener('click',()=>closeDetail(true));
 node('file-page-prev').addEventListener('click',()=>{library.filePage=Math.max(0,(library.filePage||0)-1);drawFiles();});node('file-page-next').addEventListener('click',()=>{library.filePage=(library.filePage||0)+1;drawFiles();});
 node('file-detail').addEventListener('keydown',event=>{if(event.key==='Escape')closeDetail(true);});
-if(!cloudFilePage)(async()=>{try{const capabilities=await request('/api/v1/auth/capabilities');node('auth-toggle').hidden=capabilities.registration_enabled!==true;}catch(error){node('auth-toggle').hidden=true;}try{await signIn(await request('/api/v1/auth/me'));}catch(error){if(error.code!=='AUTH_REQUIRED')errorAt('login-error',error);}})();
+if(!cloudFilePage)(async()=>{try{const capabilities=await request('/api/v1/auth/capabilities');node('auth-toggle').hidden=capabilities.registration_enabled!==true;}catch(error){node('auth-toggle').hidden=true;}try{await signIn(await request('/api/v1/auth/me'));}catch(error){if(error.code!=='AUTH_REQUIRED'){node('session-loading').textContent='暂时无法确认登录状态，请刷新重试。';}}})();
 
 // Reuse the exact content/player/download/share controller on the download page.
 const CloudFileSurface=Object.freeze({

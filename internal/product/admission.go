@@ -24,7 +24,7 @@ var (
 )
 
 const (
-	DefaultOperationLimit   = 10
+	DefaultOperationLimit   = 100
 	DefaultConcurrencyLimit = 2
 	AdmissionMaxAttempts    = 5
 	AdmissionTimeout        = 30 * time.Second

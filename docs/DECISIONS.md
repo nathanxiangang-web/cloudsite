@@ -1502,3 +1502,24 @@ controllers and ignores late responses. Never fabricate empty/complete success
 on errors. No migration, scanner, provider call, Copy rewrite or new smoke budget.
 See FILE-SURFACES.md; tests/exact CI/separate same-agent review before deployment.
 
+## D-060 -100-operation policy and explicit session-restoration state
+
+Issue124, human follow-up2026-10-17: cloud list being empty is expected; no new
+scan/backfill. Set new default operation quota100 and raise existing default10
+configuration rows once with private backup. Preserve used operations and any
+non10 custom limits, current operation keys/Job/provider records. No migration.
+Remove the in-flight count from consumer text only; server concurrency2/fences
+and DTO remain, not unlimited parallel downloads or reset of lifetime usage.
+
+Main library initially shows pending-session status with login form hidden.
+Successful auth/workspace restoration opens files without a login flash;401
+shows login, transient errors must not pretend the session is invalid. Preserve
+30-day cookie/DB policy, logout, account and origin protections. No credential
+rotation or session rewrite. Auth/canonical/presentation remain distinct modules.
+
+Actual IndexCore PID1 environment confirms incremental runtime enabled,5s wake,
+single-root writer. Accepted chain remains provider completion -> loopback Hint
+-> direct-child PARTIAL incremental observation -> Q5/Q8 -> Projector/Copy.
+It is not recursive/full scanning and no new scanner or observer is added here.
+Full tests/CI and separate same-agent review before product-only deployment.
+
