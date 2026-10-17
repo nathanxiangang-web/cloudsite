@@ -14,7 +14,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
 
-//go:embed web/index.html web/app.css web/resource-display.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js web/library-sharing.js web/share.html web/share.js web/downloads.html web/downloads.css web/downloads.js web/download-model.js
+//go:embed web/index.html web/app.css web/resource-display.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js web/library-sharing.js web/share.html web/share.js web/downloads.html web/downloads.css web/downloads.js web/download-model.js web/file-browser.html web/file-surface.js
 var workspaceFiles embed.FS
 
 type DisplayBinding struct {
@@ -26,7 +26,14 @@ func ValidDisplayLabel(label string) bool {
 	return utf8.ValidString(label) && strings.TrimSpace(label) != "" && utf8.RuneCountInString(label) <= 100 && !strings.ContainsAny(label, "\x00\r\n")
 }
 
+// Canonical browsing coordinates only, never the native provider save-directory ID.
+type cloudFileScope struct {
+	BindingID storage.BindingID `json:"binding_id"`
+	Path      string            `json:"path"`
+}
+
 type workspaceInfo struct {
+	CloudDownloadFiles             *cloudFileScope  `json:"cloud_download_files,omitempty"`
 	CloudDownloadPreviewEnabled    bool             `json:"cloud_download_preview_enabled"`
 	CloudDownloadUnavailableReason string           `json:"cloud_download_unavailable_reason,omitempty"`
 	CloudDownloadEnabled           bool             `json:"cloud_download_enabled"`
@@ -122,6 +129,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		if err := registerCloudDownload(h, settings.cloud); err != nil {
 			return nil, err
 		}
+		info.CloudDownloadFiles = &cloudFileScope{BindingID: settings.cloud.target.BindingID, Path: settings.cloud.target.TargetPath}
 		info.CloudDownloadEnabled = true
 		info.CloudDownloadPreviewEnabled = true
 		info.CloudDownloadLabel = settings.cloud.target.Label
@@ -175,6 +183,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		{"GET /assets/library-sharing.js", "web/library-sharing.js", "text/javascript; charset=utf-8"},
 		{"GET /s/{$}", "web/share.html", "text/html; charset=utf-8"},
 		{"GET /assets/share.js", "web/share.js", "text/javascript; charset=utf-8"},
+		{"GET /assets/file-surface.js", "web/file-surface.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/file-catalog.js", "web/file-catalog.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/app.css", "web/app.css", "text/css; charset=utf-8"},
 		{"GET /assets/resource-display.js", "web/resource-display.js", "text/javascript; charset=utf-8"},
@@ -183,6 +192,13 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		content, err := workspaceFiles.ReadFile(asset.file)
 		if err != nil {
 			return nil, product.ErrUnavailable
+		}
+		if strings.Contains(string(content), "<!--FILE_BROWSER-->") {
+			fragment, err := workspaceFiles.ReadFile("web/file-browser.html")
+			if err != nil {
+				return nil, product.ErrUnavailable
+			}
+			content = []byte(strings.ReplaceAll(string(content), "<!--FILE_BROWSER-->", string(fragment)))
 		}
 		h.mux.HandleFunc(asset.route, func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", asset.mime)

@@ -4,6 +4,15 @@
 
 ## Current phase
 
+IN PROGRESS Issue122 / D-059: human requests cloud files directly on /downloads/,
+excluded from the main library. Shared file template/controller retains preview,
+playback, native attachment and sharing; pure exact Binding/canonical-subtree
+partition applies before search/count/pagination. Authenticated workspace exposes
+canonical view coordinates only, not native scope/ref/credentials or selectable
+submission target. IndexCore remains read authority; no migration/provider call/
+file move/delete/task rewrite. See docs/FILE-SURFACES.md. Tests pass locally;
+full CI/review and product-only deployment remain, no new download smoke budget.
+
 Issue120 / PR121 / D-058 ACCEPTED and deployed at f8be03ccf1d798898b52618f3fd773a5a9094699.
 Exact reviewed c1ed10be896ff6f1e6011c8c86ef979c382f6be4, CI38992241383 and merge
 CI38992448685 all3 SUCCESS; separate same-agent review, not independent review.

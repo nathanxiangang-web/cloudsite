@@ -44,9 +44,25 @@ func TestCloudDownloadExplicitCapabilityAndPrivateFixedTarget(t *testing.T) {
 		t.Fatal(err)
 	}
 	info := request(writable, "GET", "/api/v1/workspace", "", testToken, "")
-	if info.Code != 200 || !strings.Contains(info.Body.String(), `"cloud_download_enabled":true`) || strings.Contains(info.Body.String(), "operator-target") {
+	if info.Code != 200 || !strings.Contains(info.Body.String(), `"cloud_download_enabled":true`) {
 		t.Fatal("capability or private target")
 	}
+	var descriptor workspaceInfo
+	if json.Unmarshal(info.Body.Bytes(), &descriptor) != nil || descriptor.CloudDownloadFiles == nil || descriptor.CloudDownloadFiles.BindingID != workspaceBinding.ID || descriptor.CloudDownloadFiles.Path != "/operator-target" || backend.calls != 0 {
+		t.Fatal("canonical view descriptor or GET side effect")
+	}
+	ro := request(readonly, "GET", "/api/v1/workspace", "", testToken, "")
+	var disabled workspaceInfo
+	if json.Unmarshal(ro.Body.Bytes(), &disabled) != nil || disabled.CloudDownloadFiles != nil {
+		t.Fatal("unconfigured descriptor")
+	}
+	for _, page := range []string{"/", "/downloads/"} {
+		rendered := request(writable, "GET", page, "", "", "")
+		if rendered.Code != 200 || strings.Contains(rendered.Body.String(), "<!--FILE_BROWSER-->") || strings.Count(rendered.Body.String(), "id=\"file-grid\"") != 1 || strings.Count(rendered.Body.String(), "id=\"file-preview\"") != 1 {
+			t.Fatal("shared browser markup", page)
+		}
+	}
+
 	submitted := request(writable, "POST", "/api/v1/cloud-downloads", body, testToken, "http://127.0.0.1:8180")
 	if submitted.Code != 201 || backend.calls != 1 || backend.owner != access.p || backend.input.BindingID != workspaceBinding.ID || backend.input.TargetPath != "/operator-target" || backend.input.Source != "https://example.invalid/PRIVATE?sig=exact" {
 		t.Fatal("fixed target/identity/source", submitted.Code)

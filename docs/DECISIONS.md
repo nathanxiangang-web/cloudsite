@@ -1480,3 +1480,25 @@ and native destination match, still RUNNING/progress0 at01:58UTC. Budget consume
 only observe this pair, no READY acceptance. Original service identities and public
 delivery/preview/sharing regressions pass. See CLOUD-ACQUISITION-ACCEPTANCE.md.
 
+## D-059 - Cloud-download files have a separate consumer surface
+
+Issue122, human request2026-10-17: show acquired files directly on /downloads/,
+not mixed into the main file library. This is a presentation partition using exact
+Binding and canonical target subtree, including nested torrent files. No native
+file move/delete or new acquisition. Share one file-browser HTML fragment and
+existing content/player/download/share controller, with independent page state.
+Filter before search, counts and local pagination; preserve upstream cursors.
+
+Authenticated workspace may expose the already-browsable canonical Binding/path
+as a read-only view descriptor. This supersedes earlier virtual-target redaction
+only; native directory ID, reference, session and credentials stay secret. Fixed
+target admission still ignores/refuses consumer injection. Owner-only tasks and
+existing shared configured-file authorization are unchanged. UI filtering is not
+an authorization boundary. Keep server Q5/content/share checks on every action.
+
+READY links to the in-page files. New READY identities may refresh inventory by
+GET; ordinary polling must not reset playback. Stop/expiry aborts/clears both
+controllers and ignores late responses. Never fabricate empty/complete success
+on errors. No migration, scanner, provider call, Copy rewrite or new smoke budget.
+See FILE-SURFACES.md; tests/exact CI/separate same-agent review before deployment.
+

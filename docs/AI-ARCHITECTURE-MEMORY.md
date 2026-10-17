@@ -12,6 +12,13 @@
 
 ## 1. Source-of-truth order
 
+Current Issue122 / D-059: separate cloud files on /downloads/, not the main feed.
+Use one shared file template/controller and exact Binding/canonical-path partition
+before search/count/pagination. New authenticated canonical view descriptor is
+read-only; no native scope/credentials or caller-selected target. Existing file
+authorization and owner-only tasks unchanged. No downloads, migration or file move.
+See FILE-SURFACES.md; code not yet deployed, CI/review pending.
+
 Issue120 / PR121 / D-058 accepted/deployed f8be03c. Exact c1ed10be, CI38992241383
 and merge CI38992448685 all3 SUCCESS, separate same-agent review. Target physical
 /CloudSite/云下载, canonical /云下载; old root directory/files unchanged. Reused
