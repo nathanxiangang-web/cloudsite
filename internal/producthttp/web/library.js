@@ -195,5 +195,19 @@ const CloudFileSurface=Object.freeze({
   library.category='all';library.layout='cards';node('file-search').value='';node('my-shares').hidden=true;
   if(cloudFilePage)node('download-files').hidden=true;
  },
- async refresh(){if(library.cloudScope&&!library.busy)await refreshFiles();}
+ async refresh(){
+  if(!library.cloudScope||library.busy||library.quietRefresh)return;
+  const session=library.session,generation=library.request,previous=library.catalog;
+  const current=()=>session===library.session&&generation===library.request&&previous===library.catalog;
+  const next=new FileCatalog.Catalog(library.bindings,true);library.quietRefresh=true;
+  try{
+   while(!next.complete&&!next.limited&&current())await next.round(scope=>{const query=new URLSearchParams({binding_id:scope.binding,whole_root:'true',limit:'50'});if(scope.cursor)query.set('cursor',scope.cursor);return request('/api/v1/resources?'+query);},current);
+   if(!current()||!next.complete)return;
+   const after=FileSurface.partition(next.files,library.cloudScope,'downloads');
+   if(library.failed||JSON.stringify(after)!==JSON.stringify(surfaceFiles())){
+    library.catalog=next;library.failed=false;clearError('library-error');drawFiles(true);
+   }
+  }catch(error){if(current()&&error.name!=='AbortError'){library.failed=true;errorAt('library-error',error);}}
+  finally{library.quietRefresh=false;}
+ }
 });

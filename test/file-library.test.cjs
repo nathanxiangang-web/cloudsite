@@ -249,6 +249,25 @@ test('download file canonical read failure stays incomplete and never becomes em
  assert.equal(app.elements.get('library-error').hidden,false);assert.equal(app.elements.get('files-empty').hidden,true);assert.match(app.elements.get('load-status').textContent,/不完整/);
 });
 
+test('quiet cloud refresh discovers delayed files without closing playback or flashing existing cards',async()=>{
+ const app=workspace('downloads');app.ctx.first=file('first',{path:'/云下载/first.pdf'});app.ctx.second=file('second',{path:'/云下载/nested/second.pdf'});
+ app.run("library.cloudScope={binding_id:'one',path:'/云下载'};library.bindings=[{binding_id:'one'}];library.catalog=new FileCatalog.Catalog(library.bindings,true);library.catalog.files=[first];library.catalog.pending=[];drawFiles();fileDetail(first,null);");
+ const oldCard=app.elements.get('file-grid').children[0];
+ const unchanged=app.run('CloudFileSurface.refresh()');
+ assert.equal(app.elements.get('file-grid').children[0],oldCard);
+ assert.equal(app.elements.get('file-detail').hidden,false);
+ app.requests[0].resolve({ok:true,status:200,json:async()=>page([app.ctx.first])});await unchanged;
+ assert.equal(app.elements.get('file-grid').children[0],oldCard,'unchanged inventory must not repaint');
+ const changed=app.run('CloudFileSurface.refresh()');
+ app.requests[1].resolve({ok:true,status:200,json:async()=>page([app.ctx.first,app.ctx.second])});await changed;
+ assert.equal(app.elements.get('count-all').textContent,'2');assert.equal(app.elements.get('file-detail').hidden,false);
+ assert.equal(app.run('library.selected.resource_id'),'first');
+ const late=app.run('CloudFileSurface.refresh()');app.run('CloudFileSurface.clear();');
+ app.requests[2].resolve({ok:true,status:200,json:async()=>page([app.ctx.first])});await late;
+ assert.equal(app.elements.get('file-grid').children.length,0);assert.equal(app.elements.get('download-files').hidden,true);
+ assert.equal(app.requests.some(r=>r.options.method!=='GET'),false);
+});
+
 test('returning library never paints the login form while session restoration is pending',async()=>{
  const html=fs.readFileSync(path.join(web,'library.html'),'utf8');assert.match(html,/<main id="login-view"[^>]* hidden>/);assert.equal(html.includes('正在恢复登录'),false);assert.match(html,/<p id="session-error"[^>]* hidden>/);
  const app=workspace();app.elements.get('login-view').hidden=true;
