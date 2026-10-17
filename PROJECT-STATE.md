@@ -4,6 +4,22 @@
 
 ## Current phase
 
+Issue129 / D-062: AI INTEGRATION PLANNING, NOT IMPLEMENTED/ENABLED.
+Human requests blueprint-aligned AI and identifies.50 alongside IndexCore as
+the existing AI configuration source. Read [modular staged plan](docs/PRODUCT-AI-INTEGRATION.md).
+Prioritize evidence-backed real-file metadata suggestions; no auto-download,
+file mutation or IndexCore/DB access by the agent. Model credentials remain on.50;
+public113.20.6.57 uses a separately authenticated private gateway only after
+readiness is verified. On.50 CodeArts components exist, but the old Bridge unit
+targets a missing directory; historical8080/8765 endpoints are unreachable and
+checked CLI profiles are absent. No proof of current callable model credentials.
+Do not infer nonexistence elsewhere or provision a replacement account silently.
+Next staged scope is5.1 contracts/strict validation/mock, not model execution.
+Current product schema15 and all services/credentials/tasks stay unchanged;
+this planning run made zero model requests, migrations, starts or service restarts.
+
+### Current runtime evidence (not AI acceptance)
+
 2026-10-18 VERIFIED: IndexCore issue111 / PR112 merged e03d14a9e1bbf6e022fc67000ae2034c165d7845
 and deployed to the owned public catalog process. Exact-head CI38996188340 and
 merge CI38996436652 SUCCESS. CloudSite issue126 / PR127 merged and deployed

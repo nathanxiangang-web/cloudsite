@@ -14,6 +14,17 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-18
 
+Issue129 / D-062 authorizes AI planning and read-only readiness checks only.
+Read docs/PRODUCT-AI-INTEGRATION.md before any implementation. Human identifies
+192.168.178.50 (IndexCore development host) as the existing AI software/config
+source, distinct from public113.20.6.57. Keep model credentials on.50 and out of
+prompts/Git; do not export them or reuse website/provider credentials. Historical
+Bridge is currently broken (missing working directory); presence of CodeArts
+components is not proof of a usable gateway. Proposed stage5.1 contracts/mock
+come first; no live model call, AI feature enablement, migration or autonomous
+provider action is authorized by this planning document. AI stays outside the
+IndexCore kernel and behind a replaceable Agent Port; do not claim Gate5 complete.
+
 PR127/publicf1bceee with IndexCore PR112/publice03d14a9 fixes an actual delayed
 file incident: the old empty-list expectation is no longer current. Verified API
 counts2 cloud files/main283 and exact Q5 PRESENT. IndexCore owns bounded child
