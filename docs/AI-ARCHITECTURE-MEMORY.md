@@ -12,12 +12,22 @@
 
 ## 1. Source-of-truth order
 
-Current Issue122 / D-059: separate cloud files on /downloads/, not the main feed.
+Current Issue124 / D-060:100 operations, hide UI concurrency count, preserve
+server concurrency2. Fix login-form flash with silent session restoration,
+401 vs transient failures distinguished. Existing default10 quota config backed
+up then raised; used operations untouched, no schema/provider/session change.
+
+Issue122 / PR123 / D-059 accepted/publice2576dc. Exact CI38994379661 and merge
+CI38994534211 all3 SUCCESS. Human confirms empty cloud list is expected; no
+backfill/scan needed. Main283-file list/shared markup verified; config/service
+identities preserved. Actual IndexCore process incremental=true, wake5s, one
+root writer. Existing scoped refresh only observes direct children, no recursive
+or full-scan claim. Separate cloud files on /downloads/, not the main feed.
 Use one shared file template/controller and exact Binding/canonical-path partition
 before search/count/pagination. New authenticated canonical view descriptor is
 read-only; no native scope/credentials or caller-selected target. Existing file
 authorization and owner-only tasks unchanged. No downloads, migration or file move.
-See FILE-SURFACES.md; code not yet deployed, CI/review pending.
+See FILE-SURFACES.md; this surface code is already deployed and accepted.
 
 Issue120 / PR121 / D-058 accepted/deployed f8be03c. Exact c1ed10be, CI38992241383
 and merge CI38992448685 all3 SUCCESS, separate same-agent review. Target physical
