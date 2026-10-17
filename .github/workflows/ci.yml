@@ -72,6 +72,12 @@ jobs:
         run: go test ./test/e2e/acquisitionruntime -run 'TestPostgres(AcquisitionRuntime|Operator)' -count=1 -v
       - name: Apply migrations
         run: go run ./cmd/panta-db migrate
+      - name: Create isolated operator mapping database
+        run: PGPASSWORD=panta_test createdb -h127.0.0.1 -Upanta panta_operator_activation
+      - name: Atomic operator mapping and nonempty queue regression
+        env:
+          PANTA_TEST_OPERATOR_DATABASE_URL: postgres://panta:panta_test@127.0.0.1:5432/panta_operator_activation?sslmode=disable
+        run: go test ./ops/acquisition_binding -run TestPostgres -count=1 -v
       - name: Validate migration status
         run: go run ./cmd/panta-db status
 

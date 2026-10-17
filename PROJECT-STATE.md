@@ -4,6 +4,17 @@
 
 ## Current phase
 
+IN PROGRESS Issue120 / D-058: human explicitly requests real public submission
+and changes physical destination to /CloudSite/云下载. Native interface supports
+save-directory ID; new empty child created/verified without download. Root-level
+/云下载 remains untouched. Existing CloudSite Root/mount namespace can be reused,
+avoiding a new root and duplicate file identities. A guarded operator transaction
+attaches a NEW native session Connection to the exact existing DISABLED observation
+Binding; preserves Binding/Root/mount IDs and old Connection/credential. No task/
+Copy/history rewrite or schema migration. Full preflight/Hint-path evidence and
+readonly rollback precede public Worker enablement. At most one sealed supplied
+ISO smoke submission; never retry uncertain external side effects. Not yet deployed.
+
 ACCEPTED Issue118 / PR119 / D-057: human confirms WEBSITE login30 days, not115 TTL.
 One shared fixed30-day policy for new cookies and DB-time sessions; no sliding
 refresh or retroactive extension. Logout/revocation/security boundaries unchanged.
@@ -19,7 +30,7 @@ Native115 login recovery2026-10-17: explicit human QR confirmation succeeded,
 same-account and native root GetFiles verified; new cookie protected0600 in a
 new attempt directory. Old cookie retained, no native download/Worker/submission.
 Prior990001 below belongs to the OLD session and is retained as historical
-evidence. New credentials alone do not make managed acquisition ready: still
+evidence. New credentials alone do not make managed acquisition ready.
 The new session also verified /云下载 parent/native ID using read-only GetFiles;
 protected ID receipt saved, no cookie/ID output. Hint/Q5 path agreement and managed
 execution still remain. Preview remains readonly; public reason is now

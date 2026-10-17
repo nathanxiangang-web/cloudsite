@@ -12,6 +12,16 @@
 
 ## 1. Source-of-truth order
 
+Issue120 / D-058 active: human requests real public submission and supersedes
+root /云下载 with physical /CloudSite/云下载. New empty child is verified; original
+root directory/files unchanged. Reuse existing CloudSite canonical Root/Binding
+identities with exact CAS observation-to-session attachment and a fresh Connection;
+do not mutate old credentials or duplicate canonical trees. Target path /云下载,
+OpenList account base /115open/CloudSite, native child ID verified privately.
+Preflight and actual loopback Hint/Q5/Q8 mapping before one serial Worker/public
+submission. Existing one supplied ISO smoke budget unconsumed; uncertain writes
+stop/no retry. No schema/queue/engine/scanner/provider rewrite.
+
 Accepted Issue118/PR119/D-057: human selects WEBSITE fixed30-day login. Domain TTL,
 DB-time persistence and cookie expiry agree; reads never slide existing expiry,
 logout/revocation remains immediate, no backfill/migration or provider change.
