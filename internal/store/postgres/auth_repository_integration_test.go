@@ -52,6 +52,11 @@ func TestPostgresAuthSessionExpiryRevocationIdentityAndHTTP(t *testing.T) {
 	if err = pool.QueryRow(ctx, `SELECT octet_length(token_hash),token_hash=$1 FROM product_sessions WHERE user_id=$2`, digest[:], string(u.UserID)).Scan(&storedLen, &match); err != nil || storedLen != 32 || !match {
 		t.Fatal("not a hashed session")
 	}
+	var duration float64
+	var expires time.Time
+	if err = pool.QueryRow(ctx, `SELECT extract(epoch FROM expires_at-created_at),expires_at FROM product_sessions WHERE token_hash=$1`, digest[:]).Scan(&duration, &expires); err != nil || duration != 2592000 || !expires.Equal(result.ExpiresAt) {
+		t.Fatal("DB-time session expiry is not30 days")
+	}
 	if _, err = pool.Exec(ctx, `UPDATE product_users SET role='ADMIN' WHERE user_id=$1`, string(u.UserID)); err != nil {
 		t.Fatal(err)
 	}
@@ -87,6 +92,9 @@ func TestPostgresAuthSessionExpiryRevocationIdentityAndHTTP(t *testing.T) {
 		t.Fatal("real HTTP login failed")
 	}
 	cookie := w.Result().Cookies()[0]
+	if cookie.MaxAge != 2592000 || !cookie.HttpOnly {
+		t.Fatal("HTTP cookie does not preserve30-day contract")
+	}
 	r = httptest.NewRequest("POST", "http://127.0.0.1:8180/api/v1/auth/logout", nil)
 	r.Header.Set("Origin", "http://127.0.0.1:8180")
 	r.AddCookie(cookie)
@@ -109,6 +117,56 @@ func TestPostgresAuthSessionExpiryRevocationIdentityAndHTTP(t *testing.T) {
 	}
 	if _, err = pool.Exec(ctx, `UPDATE product_users SET role='PREMIUM' WHERE user_id=$1`, string(u.UserID)); err == nil {
 		t.Fatal("unsupported role accepted")
+	}
+}
+func TestPostgresAuthFixedLifetimePreservesLegacyAndDoesNotSlide(t *testing.T) {
+	ctx := context.Background()
+	pool := integrationPool(t, ctx)
+	resetTestSchema(t, ctx, pool)
+	m, _ := NewMigrator(pool)
+	if _, err := m.Apply(ctx); err != nil {
+		t.Fatal(err)
+	}
+	repo, _ := NewAuthRepository(pool)
+	s, _ := auth.NewService(repo)
+	if _, err := s.Provision(ctx, "session.user", "test-only-password-123", auth.RoleUser); err != nil {
+		t.Fatal(err)
+	}
+	legacy, err := s.Login(ctx, "session.user", "test-only-password-123")
+	if err != nil {
+		t.Fatal(err)
+	}
+	digest := auth.TokenDigest(legacy.Token)
+	// Simulate a previously issued1-hour session only in this owned test DB.
+	var original time.Time
+	if err = pool.QueryRow(ctx, `UPDATE product_sessions SET expires_at=created_at+interval '1 hour' WHERE token_hash=$1 RETURNING expires_at`, digest[:]).Scan(&original); err != nil {
+		t.Fatal(err)
+	}
+	for n := 0; n < 2; n++ {
+		if _, err = s.Authenticate(ctx, legacy.Token); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var after time.Time
+	if err = pool.QueryRow(ctx, `SELECT expires_at FROM product_sessions WHERE token_hash=$1`, digest[:]).Scan(&after); err != nil || !after.Equal(original) {
+		t.Fatal("legacy session silently extended")
+	}
+	fresh, err := s.Login(ctx, "session.user", "test-only-password-123")
+	if err != nil {
+		t.Fatal(err)
+	}
+	freshDigest := auth.TokenDigest(fresh.Token)
+	if _, err = s.Authenticate(ctx, fresh.Token); err != nil {
+		t.Fatal(err)
+	}
+	if err = pool.QueryRow(ctx, `SELECT expires_at FROM product_sessions WHERE token_hash=$1`, freshDigest[:]).Scan(&after); err != nil || !after.Equal(fresh.ExpiresAt) {
+		t.Fatal("new session slides on read")
+	}
+	if _, err = pool.Exec(ctx, `UPDATE product_sessions SET created_at=clock_timestamp()-interval '31 days',expires_at=clock_timestamp()-interval '1 second' WHERE token_hash=$1`, freshDigest[:]); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = s.Authenticate(ctx, fresh.Token); !errors.Is(err, auth.ErrUnauthorized) {
+		t.Fatal("expired30-day session accepted")
 	}
 }
 func TestPostgresAuthConcurrentTokensAndCancellation(t *testing.T) {

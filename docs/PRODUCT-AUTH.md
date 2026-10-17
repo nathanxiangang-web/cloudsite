@@ -35,7 +35,13 @@ are not a production login fallback.
 POST `/api/v1/auth/login` accepts exactly login/password JSON fields (8 KiB
 maximum, duplicate/unknown keys rejected). Returns only user_id/login/role and
 an opaque 32-byte random session transported as a cookie; token never in JSON.
-Database stores only its SHA-256 digest. Session lifetime is one hour.
+Database stores only its SHA-256 digest. D-057 / Issue118 supersedes the original
+one-hour lifetime at the human's explicit request: new website logins last a
+fixed30 days (2592000 seconds), measured by PostgreSQL time. Cookie Max-Age and
+Expires match the same lifetime. Reads do not slide/extend expiry; existing
+one-hour sessions keep their stored expiry and require one new login to obtain
+the30-day policy. No migration/backfill, token format or auth-strength change.
+This is independent of115/OpenList cookies, whose validity is provider-controlled.
 
 GET `/api/v1/auth/me` requires exactly one valid session cookie and returns the
 same three-field Principal. POST `/api/v1/auth/logout` revokes idempotently and

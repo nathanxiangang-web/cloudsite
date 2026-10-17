@@ -12,6 +12,15 @@
 
 ## 1. Source-of-truth order
 
+Current Issue118/D-057: human selects WEBSITE fixed30-day login. Domain TTL,
+DB-time persistence and cookie expiry agree; reads never slide existing expiry,
+logout/revocation remains immediate, no backfill/migration or provider change.
+Native115 QR recovery now SUCCESS on public server: same-account/root GET verified,
+new credential protected0600; old rejected cookie retained. Historical990001 below
+does not describe the new session. No submission/Worker/download. Still verify
+native cloud-directory ID and Hint/Q5 namespace before managed activation;
+readonly preview reason becomes NOT_CONFIGURED rather than LOGIN_REQUIRED.
+
 Accepted Issue114/PR115/D-056: readonly source preview and truthful login-
 unavailable UI publicly deployed; exact-head CI38967538356 and merge38967953503
 all3 SUCCESS, same-agent acceptance, merge894962f6bb5a. Public DB15 with backed-up

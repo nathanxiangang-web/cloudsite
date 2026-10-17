@@ -4,6 +4,19 @@
 
 ## Current phase
 
+IN PROGRESS Issue118 / D-057: human confirms WEBSITE login30 days, not115 TTL.
+One shared fixed30-day policy for new cookies and DB-time sessions; no sliding
+refresh or retroactive extension. Logout/revocation/security boundaries unchanged.
+No migration. Domain/HTTP and real owned PostgreSQL auth regressions pass.
+
+Native115 login recovery2026-10-17: explicit human QR confirmation succeeded,
+same-account and native root GetFiles verified; new cookie protected0600 in a
+new attempt directory. Old cookie retained, no native download/Worker/submission.
+Prior990001 below belongs to the OLD session and is retained as historical
+evidence. New credentials alone do not make managed acquisition ready: still
+verify /云下载 native ID and Hint/Q5 path agreement. Preview remains readonly;
+public reason should become NOT_CONFIGURED, not falsely claim new login failed.
+
 Issue114 / PR115 / D-056 ACCEPTED, publicly deployed on2026-10-17.
 Reviewed bbb38ae1e00271b1c7c8454594755f55bfce9f80; exact-head CI38967538356
 and merge CI38967953503 all3 SUCCESS, squash894962f6bb5a, separate same-agent
@@ -20,11 +33,11 @@ Old283 files plus1 cloud file accessible:284 total. New observation Connection/
 Binding remain DISABLED, without native scope/credential. This is NOT yet an
 acquisition-ready Hint/canonical namespace. Original catalog remains unchanged.
 
-Issue113 BLOCKED: fresh native GET returns HTTP200/API990001/ErrNotLogin.
+Historical Issue113 blocker before QR recovery: native GET returned HTTP200/API990001/ErrNotLogin.
 Zero new submissions/Worker/StartDownload; one-start budget remains unconsumed.
 UI explicitly shows LOGIN_REQUIRED and allows pure preparation, not admission.
-Human native session restoration and target-ID/path verification are required
-before managed execution. Preserve8 historical unknown reservations.
+Native session is now restored as above; target-ID/path verification is still
+required before managed execution. Preserve8 historical unknown reservations.
 Issue116 / PR117 ACCEPTED: exact HEADf0807cc014231b36e24c16e07e28c844a7d5d51a,
 CI38970141986 all3 SUCCESS, separate same-agent review; merge987adb3af3910ff3,
 merge CI38970604155 all3 SUCCESS. Public product image cloud-scope-987adb3

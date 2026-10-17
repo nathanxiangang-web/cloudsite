@@ -31,9 +31,10 @@ type UserID string
 type Role string
 
 const (
-	RoleUser   Role = "USER"
-	RoleAdmin  Role = "ADMIN"
-	SessionTTL      = time.Hour
+	RoleUser  Role = "USER"
+	RoleAdmin Role = "ADMIN"
+	// Fixed product-session lifetime; independent of provider cookie validity.
+	SessionTTL = 30 * 24 * time.Hour
 )
 
 var loginPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9._-]{2,63}$`)
