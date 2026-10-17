@@ -12,7 +12,19 @@ Before planning, changing, or reviewing code, **read these files first**:
 
 Chat history is not a source of truth.
 
-## Current execution pointer — 2026-10-16
+## Current execution pointer — 2026-10-17
+
+Issue118 / D-057: human explicitly selects30-day WEBSITE login, not provider TTL.
+New product sessions and cookies share fixed30 days, DB-time authorization,
+no sliding refresh or extension/backfill of existing sessions. Preserve logout,
+account/role checks, hashed tokens and all cookie/Host/Origin protections.
+No migration/provider runtime changes. Native115 QR on public server has now
+succeeded with same-account/root-read verification and protected new credential;
+old credential retained, no download and no managed runtime activation. Earlier
+990001 describes the rejected OLD session, not this new one. Download still
+requires native target-ID/path agreement; unavailable reason becomes NOT_CONFIGURED.
+PR115/117 are accepted/public schema15;284-file observation and3 CI groups pass.
+These current facts supersede the historical snapshots below.
 
 Active Issue114 / D-056: explicit readonly cloud preview/unavailability UI.
 Native public session currently returns API990001/ErrNotLogin. Issue113 has no

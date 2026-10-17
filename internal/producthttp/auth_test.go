@@ -24,7 +24,7 @@ type fakeAccess struct {
 
 func (f *fakeAccess) Login(context.Context, string, string) (auth.LoginResult, error) {
 	f.calls++
-	return auth.LoginResult{Principal: f.p, Token: testToken, ExpiresAt: time.Now().Add(time.Hour)}, f.err
+	return auth.LoginResult{Principal: f.p, Token: testToken, ExpiresAt: time.Now().Add(auth.SessionTTL)}, f.err
 }
 func (f *fakeAccess) Authenticate(context.Context, string) (auth.Principal, error) {
 	f.calls++
@@ -65,8 +65,11 @@ func TestAuthHTTPContractCookieAndRedaction(t *testing.T) {
 		t.Fatal("missing cookie")
 	}
 	c := cookies[0]
-	if !c.HttpOnly || c.SameSite != http.SameSiteStrictMode || c.Domain != "" || c.Path != "/" || c.MaxAge != 3600 || c.Secure {
+	if !c.HttpOnly || c.SameSite != http.SameSiteStrictMode || c.Domain != "" || c.Path != "/" || c.MaxAge != 2592000 || c.Secure {
 		t.Fatal("unsafe development cookie")
+	}
+	if remaining := time.Until(c.Expires); remaining < auth.SessionTTL-2*time.Second || remaining > auth.SessionTTL {
+		t.Fatal("cookie absolute expiry does not match30-day session")
 	}
 	w = request(h, "GET", "/api/v1/auth/me", "", testToken, "")
 	var data map[string]any

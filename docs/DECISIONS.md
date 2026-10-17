@@ -1397,6 +1397,11 @@ not weaken Hint trust. Public native login recovery is not a download. See
 
 ## D-056 - Explicit readonly source preview and unavailable cloud-download UI
 
+Superseding operational observation2026-10-17: the human subsequently completed
+new native QR login; same-account/root GET succeeded, protected new cookie saved.
+The OLD-session990001 below remains historical evidence, not current new-cookie
+health. Runtime still not configured; no download is implied by login recovery.
+
 Delegated direction2026-10-17, Issue114. Native directory GET on the public
 server now returns HTTP200/API990001/ErrNotLogin; Issue113 has no submission or
 provider start. Human changes the physical destination to existing /云下载 and
@@ -1417,4 +1422,23 @@ Existing enabled mode and original-source policy remain unchanged. Standard
 OpenList Alias may map the requested directory under the existing app namespace;
 do not copy OAuth, move source files, broaden account root or bypass IndexCore.
 No schema beyond15; exact-head CI and same-agent review before deployment.
+
+## D-057 - Fixed30-day product website sessions
+
+Issue118, human explicitly selected cloudsite WEBSITE login30 days on2026-10-17,
+not115 session validity. Supersede auth module's original one-hour issue policy
+only for NEW sessions: auth domain owns30*24h, PostgreSQL measures expiry from
+DB clock at creation, HTTP cookie Max-Age2592000 and Expires use that result.
+No sliding refresh, read-triggered writes, old-session extension or migration.
+An existing1-hour session needs one new login to obtain the new lifetime.
+
+Keep random opaque token/digest-only persistence, current account role/enabled
+checks, DB expiry and revocation, immediate logout, host-only Secure/HttpOnly/
+SameSite Strict cookies and Host/Origin/Fetch Metadata boundaries. Do not change
+share grants or provider credentials, TTLs, polling or download budget. Native115
+cookie lifetime is controlled by115 and cannot be guaranteed by this policy.
+Test domain/store TTL, cookie Max-Age/Expires, actual DB duration, no sliding,
+legacy expiry unchanged, expiry refusal and existing revoke/concurrency paths.
+Exact-head CI and separate same-agent review before product-only deployment;
+retain old image/config rollback. No schema beyond15.
 

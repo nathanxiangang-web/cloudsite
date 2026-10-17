@@ -16,6 +16,7 @@ type memoryStore struct {
 	active  bool
 	err     error
 	creates int
+	ttl     time.Duration
 }
 
 func (m *memoryStore) CreateUser(_ context.Context, u User) error { m.user = u; return m.err }
@@ -33,6 +34,7 @@ func (m *memoryStore) CreateSession(_ context.Context, id UserID, digest, hash [
 		return Principal{}, time.Time{}, m.err
 	}
 	m.creates++
+	m.ttl = ttl
 	m.digest = string(digest)
 	m.active = true
 	return Principal{m.user.ID, m.user.Login, m.user.Role}, time.Now().Add(ttl), nil
@@ -83,6 +85,9 @@ func TestProductAuthRealHashLoginSessionRevocation(t *testing.T) {
 	}
 	if !ValidToken(result.Token) || store.digest == result.Token || len(store.digest) != 32 {
 		t.Fatal("token was not randomly generated and hashed")
+	}
+	if store.ttl != 30*24*time.Hour || SessionTTL != 30*24*time.Hour {
+		t.Fatal("product session is not fixed30 days")
 	}
 	p, err := s.Authenticate(ctx, result.Token)
 	if err != nil || p != user {
