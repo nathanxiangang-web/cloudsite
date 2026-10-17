@@ -76,8 +76,9 @@ test('session page and queue caps disclose incomplete results',async()=>{
  for(let round=0;round<2;round++)await d.round(async()=>page(Array.from({length:50},()=>file('dir-'+(++id),{directory:true}))));
  assert.equal(d.limited,true);assert.equal(d.complete,false);assert.ok(d.scopes.size<=256);
 });
-function workspace(){
- const html=fs.readFileSync(path.join(web,'library.html'),'utf8');const ids=new Set(Array.from(html.matchAll(/id="([^"]+)"/g),m=>m[1]));
+function workspace(surface='library'){
+
+ const html=fs.readFileSync(path.join(web,surface==='downloads'?'downloads.html':'library.html'),'utf8').replace('<!--FILE_BROWSER-->',fs.readFileSync(path.join(web,'file-browser.html'),'utf8'));const ids=new Set(Array.from(html.matchAll(/id="([^"]+)"/g),m=>m[1]));
  class Element{
   constructor(){this.children=[];this.attrs={};this.listeners={};this.value='';this.hidden=false;this.disabled=false;this.isConnected=true;this._text='';}
   set textContent(value){this._text=String(value);this.children=[];}get textContent(){return this._text;}
@@ -85,8 +86,8 @@ function workspace(){
   addEventListener(type,fn){(this.listeners[type]||=[]).push(fn);}setAttribute(k,v){this.attrs[k]=v;}removeAttribute(k){delete this.attrs[k];delete this[k];}scrollIntoView(){}focus(){this.focused=true;}async play(){this.paused=false;this.played=true;}pause(){this.paused=true;}load(){this.loaded=true;}click(){this.clicked=true;}select(){this.selected=true;}
  }
  const elements=new Map(Array.from(ids,id=>[id,new Element()]));const requests=[],created=[],copied=[];
- const ctx=vm.createContext({AbortController,URLSearchParams,TextEncoder,setTimeout,crypto:require('node:crypto').webcrypto,navigator:{clipboard:{async writeText(value){copied.push(value);}}},document:{getElementById(id){assert.ok(elements.has(id),'Unknown id '+id);return elements.get(id);},createElement(){const e=new Element();created.push(e);return e;}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
- for(const script of ['resource-display.js','file-catalog.js','library.js','library-sharing.js'])vm.runInContext(fs.readFileSync(path.join(web,script),'utf8'),ctx);
+ const ctx=vm.createContext({AbortController,URLSearchParams,TextEncoder,setTimeout,crypto:require('node:crypto').webcrypto,navigator:{clipboard:{async writeText(value){copied.push(value);}}},document:{body:{dataset:{fileSurface:surface}},getElementById(id){assert.ok(elements.has(id),'Unknown id '+id);return elements.get(id);},createElement(){const e=new Element();created.push(e);return e;}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
+ for(const script of ['resource-display.js','file-catalog.js','file-surface.js','library.js','library-sharing.js'])vm.runInContext(fs.readFileSync(path.join(web,script),'utf8'),ctx);
  return {ctx,elements,requests,created,copied,run:s=>vm.runInContext(s,ctx)};
 }
 test('consumer DOM has literal file cards and no operational topology controls',()=>{
@@ -220,4 +221,30 @@ test('all files remain reachable with120-card pages; non-core extensions are Oth
  assert.equal(app.elements.get('file-grid').children.length,120);assert.equal(app.elements.get('count-all').textContent,'241');
  app.elements.get('file-page-next').listeners.click[0]();app.elements.get('file-page-next').listeners.click[0]();assert.equal(app.elements.get('file-grid').children.length,1);assert.ok(app.elements.get('file-page-status').textContent.includes('3 / 3'));
  for(const name of ['image.png','archive.zip','music.mp3','no-extension','file.xyz']){app.ctx.item=file('other',{name});assert.equal(app.run('ResourceDisplay.category(item)'),'other');app.run('fileDetail(item,null);');assert.equal(app.elements.get('detail-type').textContent,'其他');}
+});
+
+test('both real controllers partition before search/count/pagination and retain all file actions',()=>{
+ for(const surface of ['library','downloads']){
+  const app=workspace(surface);app.ctx.items=[file('cloud',{path:'/云下载/nested/a.pdf'}),file('main',{path:'/教程/b.pdf'}),file('sibling',{path:'/云下载备份/c.pdf'})];
+  app.run("library.cloudScope={binding_id:'one',path:'/云下载'};library.catalog=new FileCatalog.Catalog([{binding_id:'one'}],true);library.catalog.files=items;library.catalog.pending=[];library.content=true;library.sharing=true;drawFiles();");
+  assert.equal(app.elements.get('count-all').textContent,surface==='downloads'?'1':'2');
+  const card=app.elements.get('file-grid').children[0];card.listeners.click[0]();
+  assert.equal(app.elements.get('file-download').hidden,false);assert.equal(app.elements.get('file-share').hidden,false);
+  assert.ok(app.elements.get('file-download').href.includes('disposition=attachment'));
+  assert.equal(app.elements.get('file-download').target,'_blank');
+  app.elements.get('file-search').value=surface==='downloads'?'main':'cloud';app.run('drawFiles();');assert.equal(app.elements.get('file-grid').children.length,0);
+ }
+});
+test('download file mount has one canonical GET loader; clear drops late results and previews',async()=>{
+ const app=workspace('downloads');assert.equal(app.requests.length,0,'file component must not start a second auth or Worker flow');
+ const pending=app.run("CloudFileSurface.mount({user_id:'test'}, {cloud_download_files:{binding_id:'one',path:'/云下载'},content_access_enabled:true,sharing_enabled:true},()=>{});");
+ const read=app.requests.find(r=>r.url.startsWith('/api/v1/resources?'));assert.ok(read);assert.equal(read.options.method,'GET');assert.ok(read.url.includes('whole_root=true'));
+ app.run('CloudFileSurface.clear();');read.resolve({ok:true,status:200,json:async()=>page([file('late',{path:'/云下载/a.pdf'})])});await pending;
+ assert.equal(app.elements.get('file-grid').children.length,0);assert.equal(app.elements.get('file-preview').children.length,0);assert.equal(app.elements.get('download-files').hidden,true);
+ assert.equal(app.requests.some(r=>r.options.method==='POST'),false);
+});
+test('download file canonical read failure stays incomplete and never becomes empty success',async()=>{
+ const app=workspace('downloads');const pending=app.run("CloudFileSurface.mount({user_id:'test'}, {cloud_download_files:{binding_id:'one',path:'/云下载'}},()=>{});");
+ app.requests[0].resolve({ok:false,status:503,json:async()=>({code:'READ_UNAVAILABLE'})});await pending;
+ assert.equal(app.elements.get('library-error').hidden,false);assert.equal(app.elements.get('files-empty').hidden,true);assert.match(app.elements.get('load-status').textContent,/不完整/);
 });

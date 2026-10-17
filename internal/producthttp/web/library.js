@@ -1,6 +1,7 @@
 'use strict';
 const node=id=>document.getElementById(id);
 const library={session:0,request:0,detail:0,pdfRequest:0,content:false,player:null,catalog:null,bindings:[],category:'all',layout:'cards',busy:false,failed:false,opener:null,controller:new AbortController()};
+const cloudFilePage=document.body?.dataset.fileSurface==='downloads';
 const categories=['all','software','video','document','other'];
 function failureText(error){return ({ACCOUNT_EXISTS:'此账号已注册，请登录或更换账号。',AUTH_REQUIRED:'登录已失效，请重新登录。',AUTH_BUSY:'登录或注册请求过多，请一分钟后再试。',READ_UNAVAILABLE:'暂时无法获取更多文件，已展示的结果可能不完整。',INVALID_REQUEST:'请检查输入后重试。',ORIGIN_REJECTED:'当前入口不可用。'})[error.code]||'连接暂时不可用，请刷新重试。';}
 function errorAt(id,error){node(id).textContent=failureText(error);node(id).hidden=false;}
@@ -29,6 +30,7 @@ function clearFiles(){
  node('collection-status').textContent='正在整理你的文件…';node('load-status').textContent='';clearError('library-error');
 }
 function signOut(clearPending=false){
+ if(cloudFilePage){CloudFileSurface.clear();if(library.onUnauthorized)library.onUnauthorized();return;}
 	if(clearPending&&typeof CloudDownloadModel!=='undefined'&&library.userID)CloudDownloadModel.clearPending(library.userID);library.userID=null;node('cloud-download-link').hidden=true;
  if(typeof clearSharing==='function')clearSharing();node('my-shares').hidden=true;library.sharing=false;
  library.session++;library.request++;library.controller.abort();library.controller=new AbortController();clearFiles();library.bindings=[];library.content=false;library.category='all';library.layout='cards';
@@ -38,12 +40,13 @@ async function signIn(principal){
  const generation=++library.session;
  const info=await request('/api/v1/workspace');if(generation!==library.session)return;
 	library.userID=principal.user_id;node('cloud-download-link').hidden=info.cloud_download_enabled!==true&&info.cloud_download_preview_enabled!==true;
- library.bindings=info.bindings;library.wholeRoot=info.whole_root_library===true;node('library-scope').textContent=library.wholeRoot?'展示已接入目录中完成索引的文件，不代表整个网盘。':'当前展示已接入的真实文件，不代表整个网盘。';library.content=info.content_access_enabled===true;library.sharing=info.sharing_enabled===true;node('my-shares').hidden=!library.sharing;node('login-name').textContent=principal.login;node('admin-link').hidden=principal.role!=='ADMIN';node('account').hidden=false;node('login-view').hidden=true;node('library-view').hidden=false;clearError('login-error');
+ library.cloudScope=info.cloud_download_files||null;library.bindings=info.bindings;library.wholeRoot=info.whole_root_library===true;node('library-scope').textContent=library.wholeRoot?'展示已接入目录中完成索引的文件，不代表整个网盘。':'当前展示已接入的真实文件，不代表整个网盘。';library.content=info.content_access_enabled===true;library.sharing=info.sharing_enabled===true;node('my-shares').hidden=!library.sharing;node('login-name').textContent=principal.login;node('admin-link').hidden=principal.role!=='ADMIN';node('account').hidden=false;node('login-view').hidden=true;node('library-view').hidden=false;clearError('login-error');
  await refreshFiles();
 }
+function surfaceFiles(){return FileSurface.partition(library.catalog?library.catalog.files:[],library.cloudScope,cloudFilePage?'downloads':'library');}
 function visibleFiles(){
  const needle=node('file-search').value.trim().toLocaleLowerCase('zh-CN');
- return (library.catalog?library.catalog.files:[]).filter(item=>(library.category==='all'||ResourceDisplay.category(item)===library.category)&&(!needle||ResourceDisplay.name(item).toLocaleLowerCase('zh-CN').includes(needle)));
+ return surfaceFiles().filter(item=>(library.category==='all'||ResourceDisplay.category(item)===library.category)&&(!needle||ResourceDisplay.name(item).toLocaleLowerCase('zh-CN').includes(needle)));
 }
 function fileDetail(item,opener){
  closeDetail();
@@ -105,7 +108,7 @@ async function previewPDF(item,generation,session,page){
 }
 function drawFiles(preserveDetail=false){
  const catalog=library.catalog;if(!catalog)return;
- const files=visibleFiles();const counts=ResourceDisplay.counts(catalog.files);
+ const files=visibleFiles();const counts=ResourceDisplay.counts(surfaceFiles());
  for(const kind of categories){node('count-'+kind).textContent=String(counts[kind]);node('category-'+kind).setAttribute('aria-pressed',String(kind===library.category));}
  if(!preserveDetail)closeDetail();node('file-grid').replaceChildren();node('file-rows').replaceChildren();
  const pages=Math.max(1,Math.ceil(files.length/120));library.filePage=Math.min(library.filePage||0,pages-1);const offset=library.filePage*120;
@@ -123,9 +126,9 @@ function drawFiles(preserveDetail=false){
  for(const layout of ['cards','list'])node('view-'+layout).setAttribute('aria-pressed',String(layout===library.layout));
  node('files-empty').hidden=files.length!==0||library.busy||library.failed;
  node('empty-title').textContent=node('file-search').value?'没有匹配的文件':library.category==='all'?'还没有找到文件':'暂时没有这类文件';
- node('empty-description').textContent=catalog.complete?'当前已接入文件中没有匹配结果。':'更多文件尚未加载，可继续加载后再找找。';
- node('collection-status').textContent='已加载 '+catalog.files.length+' 个文件'+(files.length!==catalog.files.length?' · 当前显示 '+files.length+' 个':'');
- node('load-status').textContent=library.busy?'正在加载文件…':library.failed?'加载中断，当前结果可能不完整。':catalog.limited?'已达到本次加载上限，当前结果并非完整文件库。':catalog.complete?(library.wholeRoot?'CloudSite 全部已索引文件加载完成。':'已载入当前接入范围的文件，不是整个网盘。'):'还有文件待加载，搜索与分类仅针对已加载文件。';
+ node('empty-description').textContent=catalog.complete?(cloudFilePage?'当前云下载目录中没有匹配结果。':'当前文件库中没有匹配结果。'):'更多文件尚未加载，可继续加载后再找找。';
+ node('collection-status').textContent='已加载 '+surfaceFiles().length+' 个文件'+(files.length!==surfaceFiles().length?' · 当前显示 '+files.length+' 个':'');
+ node('load-status').textContent=library.busy?'正在加载文件…':library.failed?'加载中断，当前结果可能不完整。':catalog.limited?'已达到本次加载上限，当前结果并非完整文件库。':catalog.complete?(library.wholeRoot?(cloudFilePage?'云下载目录已收录文件加载完成。':'主文件库已收录文件加载完成（不含云下载）。'):'已载入当前接入范围的文件，不是整个网盘。'):'还有文件待加载，搜索与分类仅针对已加载文件。';
  if(catalog.unknown)node('load-status').textContent+=' '+catalog.unknown+' 项类型未明确，未当作文件显示。';
  node('load-more').hidden=catalog.complete||catalog.limited||library.failed;node('load-more').disabled=library.busy;
  node('load-pause').hidden=!library.wholeRoot||!library.autoLoad||catalog.complete||library.failed;
@@ -147,6 +150,7 @@ async function refreshFiles(){
 }
 let registering=false;
 function authMode(value){registering=value;node('auth-title').textContent=value?'创建你的账号':'登录文件库';node('login-submit').textContent=value?'注册账号':'进入文件库';node('auth-toggle').textContent=value?'已有账号？返回登录':'没有账号？立即注册';node('account-password').autocomplete=value?'new-password':'current-password';node('confirm-field').hidden=!value;node('account-confirm').required=value;node('auth-help').hidden=!value;node('account-password').value='';node('account-confirm').value='';node('auth-notice').hidden=true;clearError('login-error');}
+if(!cloudFilePage){
 node('auth-toggle').addEventListener('click',()=>authMode(!registering));
 node('login-form').addEventListener('submit',async event=>{
  event.preventDefault();clearError('login-error');node('auth-notice').hidden=true;
@@ -162,10 +166,34 @@ node('login-form').addEventListener('submit',async event=>{
  finally{node('account-password').value='';node('account-confirm').value='';node('login-submit').disabled=false;node('auth-toggle').disabled=false;}
 });
 node('logout').addEventListener('click',async()=>{node('logout').disabled=true;try{await request('/api/v1/auth/logout','POST');signOut(true);}catch(error){errorAt('library-error',error);}finally{node('logout').disabled=false;}});
+}
 node('refresh').addEventListener('click',refreshFiles);node('load-more').addEventListener('click',()=>library.wholeRoot?loadWholeLibrary():loadRound());node('load-pause').addEventListener('click',()=>{library.autoLoad=false;node('load-pause').hidden=true;});
 for(const category of categories)node('category-'+category).addEventListener('click',()=>{library.category=category;library.filePage=0;drawFiles();});
 for(const layout of ['cards','list'])node('view-'+layout).addEventListener('click',()=>{library.layout=layout;drawFiles();});
 node('file-search').addEventListener('input',()=>{library.filePage=0;drawFiles();});node('detail-close').addEventListener('click',()=>closeDetail(true));
 node('file-page-prev').addEventListener('click',()=>{library.filePage=Math.max(0,(library.filePage||0)-1);drawFiles();});node('file-page-next').addEventListener('click',()=>{library.filePage=(library.filePage||0)+1;drawFiles();});
 node('file-detail').addEventListener('keydown',event=>{if(event.key==='Escape')closeDetail(true);});
-(async()=>{try{const capabilities=await request('/api/v1/auth/capabilities');node('auth-toggle').hidden=capabilities.registration_enabled!==true;}catch(error){node('auth-toggle').hidden=true;}try{await signIn(await request('/api/v1/auth/me'));}catch(error){if(error.code!=='AUTH_REQUIRED')errorAt('login-error',error);}})();
+if(!cloudFilePage)(async()=>{try{const capabilities=await request('/api/v1/auth/capabilities');node('auth-toggle').hidden=capabilities.registration_enabled!==true;}catch(error){node('auth-toggle').hidden=true;}try{await signIn(await request('/api/v1/auth/me'));}catch(error){if(error.code!=='AUTH_REQUIRED')errorAt('login-error',error);}})();
+
+// Reuse the exact content/player/download/share controller on the download page.
+const CloudFileSurface=Object.freeze({
+ async mount(principal,info,onUnauthorized){
+  if(!cloudFilePage)return;
+  CloudFileSurface.clear();
+  library.cloudScope=FileSurface.validScope(info.cloud_download_files)?info.cloud_download_files:null;
+  if(!library.cloudScope)return;
+  library.onUnauthorized=onUnauthorized;library.userID=principal.user_id;
+  library.bindings=[{binding_id:library.cloudScope.binding_id}];library.wholeRoot=true;
+  library.content=info.content_access_enabled===true;library.sharing=info.sharing_enabled===true;
+  node('my-shares').hidden=!library.sharing;node('download-files').hidden=false;
+  await refreshFiles();
+ },
+ clear(){
+  library.session++;library.request++;library.controller.abort();library.controller=new AbortController();
+  if(typeof clearSharing==='function')clearSharing();
+  clearFiles();library.bindings=[];library.cloudScope=null;library.userID=null;library.content=false;library.sharing=false;
+  library.category='all';library.layout='cards';node('file-search').value='';node('my-shares').hidden=true;
+  if(cloudFilePage)node('download-files').hidden=true;
+ },
+ async refresh(){if(library.cloudScope&&!library.busy)await refreshFiles();}
+});

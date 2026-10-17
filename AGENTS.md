@@ -14,6 +14,13 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-17
 
+Issue122 / D-059 current bounded work: cloud files on /downloads/, exclude same
+Binding/canonical subtree from main library; share one file template/controller.
+Read docs/FILE-SURFACES.md. No move/delete/new download/state migration. Existing
+provider/session/Job/Copy and IndexCore boundaries unchanged. Canonical view scope
+may be returned to authenticated browser, never native scope/credentials or
+caller-selected target. Exact CI and separate same-agent review before rollout.
+
 Issue120 / PR121 / D-058 ACCEPTED/publicf8be03c/schema15. Exact c1ed10be,
 CI38992241383 and merge38992448685 all3 SUCCESS; separate same-agent review.
 Managed public submission and one serial Worker ACTIVE on113.20.6.57.
