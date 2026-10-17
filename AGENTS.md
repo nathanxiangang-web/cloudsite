@@ -21,7 +21,7 @@ source, distinct from public113.20.6.57. Keep model credentials on.50 and out of
 prompts/Git; do not export them or reuse website/provider credentials. Historical
 Bridge is currently broken (missing working directory); presence of CodeArts
 components is not proof of a usable gateway. Proposed stage5.1 contracts/mock
-come first; no live model call, AI feature enablement, migration or autonomous
+come first (prepared Issue131, not started); no live model call, AI feature enablement, migration or autonomous
 provider action is authorized by this planning document. AI stays outside the
 IndexCore kernel and behind a replaceable Agent Port; do not claim Gate5 complete.
 

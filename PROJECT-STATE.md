@@ -14,7 +14,8 @@ readiness is verified. On.50 CodeArts components exist, but the old Bridge unit
 targets a missing directory; historical8080/8765 endpoints are unreachable and
 checked CLI profiles are absent. No proof of current callable model credentials.
 Do not infer nonexistence elsewhere or provision a replacement account silently.
-Next staged scope is5.1 contracts/strict validation/mock, not model execution.
+Next staged scope is [Issue131](https://github.com/nathanxiangang-web/cloudsite/issues/131):
+5.1 contracts/strict validation/mock, not model execution; prepared, not started.
 Current product schema15 and all services/credentials/tasks stay unchanged;
 this planning run made zero model requests, migrations, starts or service restarts.
 
