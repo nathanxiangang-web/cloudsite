@@ -1524,3 +1524,37 @@ single-root writer. Accepted chain remains provider completion -> loopback Hint
 It is not recursive/full scanning and no new scanner or observer is added here.
 Full tests/CI and separate same-agent review before product-only deployment.
 
+## D-061 - Directory result identity is not descendant file coverage
+
+Human-reported missing files2026-10-17; verified online2026-10-18. A valid READY
+directory Copy anchors the acquisition result, not a guarantee that files inside
+it have been observed. Do not fabricate files, rewrite READY history, or add a
+consumer-side provider scanner to hide this difference.
+
+IndexCore PR112 owns optional bounded child-directory discovery. Its scan service
+reports root-relative observed direct directory scopes only after admitted
+PARTIAL observations. The executor limits expansion to an explicit configured
+subtree and eight descendant directory levels, using existing per-scope entry
+caps and one refresh per ExecuteOne. The store atomically merges child work and
+verifies the parent claimed prefix, with root-first locking and CAS. No new queue,
+schema, completeness or removal rule; no provider-native delta claim. Repeated
+existing-scope hints may backfill missed files. Later changes still need a hint,
+watch or explicit refresh; large trees/network failures have no universal30s SLA.
+
+CloudSite PR127 reuses the existing visible-page10s polling cadence for GET-only
+canonical inventory checks, even with unchanged READY result_copy_id. A complete
+temporary catalog replaces old cloud data only when changed; selected preview,
+search/page and existing cards survive ordinary polling. Session/generation
+guards drop late results. No browser provider calls, hidden acquisition POST,
+new login restoration message or task retry.
+
+Evidence: IndexCore exact66c8ec8 / CI38996188340 and mergee03d14a9 /
+CI38996436652 SUCCESS. CloudSite exact0f6fd5b / CI38996296258 and mergef1bceee /
+CI38996449893 all3 SUCCESS;55 Node cases plus Go/real PostgreSQL tests and race.
+Public authenticated canonical API shows2 cloud files/main283, unique Q5 PRESENT,
+child work VERIFIED. No new download submissions/StartDownload. Browser automation
+was unavailable for final visual verification; do not relabel API evidence as a
+visual playback test. The original long-running ISO smoke has no READY acceptance.
+Its separate known-reference pair exhausted5/5 failures; the accepted recovery
+API rejected resume, so retain the pair/reservation without refunding its budget.
+

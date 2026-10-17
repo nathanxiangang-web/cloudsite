@@ -2,8 +2,8 @@
 
 > Canonical short-form project memory for Architect/AI sessions.
 >
-> Last architecture-memory synchronization: **2026-10-17**
-> Current status: **PR121/D-058 accepted and publicf8be03c/schema15. Managed submission and one serial Worker enabled; native target /CloudSite/云下载, canonical /云下载. One HTTP201 smoke pair has REFERENCE_KNOWN and matching native destination, still RUNNING/progress0 at01:58UTC; ACTIVE/RETRY_WAIT, no READY claim. Smoke budget consumed: observe only, do not resubmit. Website fixed30-day policy preserved.**
+> Last architecture-memory synchronization: **2026-10-18**
+> Current status: **Public CloudSitef1bceee/PR127 with IndexCoree03d14a9/PR112, schema15. Authenticated API confirms2 cloud files and main283, exact Q5 PRESENT. Opt-in /云下载 bounded child discovery reuses the IndexCore single-writer PARTIAL queue; visible-page10s GET refresh no longer waits for a changed READY Copy ID. PR125100-operation and silent-auth changes included. Original ISO smoke budget remains consumed; reference-known recovery must use accepted CAS API, never resubmit or reset history. No blanket30-second SLA or original ISO READY claim. Final visual automation unavailable; API/static-asset proof only. See PROJECT-STATE.md and D-061.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**

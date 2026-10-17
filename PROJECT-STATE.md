@@ -4,18 +4,38 @@
 
 ## Current phase
 
-IN PROGRESS Issue124 / D-060: human requests100 operations and removal of the UI
-in-flight counter. New quota default100; privately backed-up existing default10
-quota rows will become100 without changing used operations or concurrency2.
-Library auth bootstrap is silent: no login form or intermediate status message;
-401 reveals login, transient failures remain unknown. No session/credential/
-provider change. Actual IndexCore PID1 incremental runtime enabled=true, wake5s,
-single-root writer1; no full scan or recursive claim. See D-060.
+2026-10-18 VERIFIED: IndexCore issue111 / PR112 merged e03d14a9e1bbf6e022fc67000ae2034c165d7845
+and deployed to the owned public catalog process. Exact-head CI38996188340 and
+merge CI38996436652 SUCCESS. CloudSite issue126 / PR127 merged and deployed
+f1bceeea8cbc5dff20cb19cb0c4481a35224ed14; exact CI38996296258 and merge
+CI38996449893 all3 SUCCESS. Same-agent review, not independent approval.
+The incident was real: READY directory Copies existed while child files had not
+been indexed, and unchanged READY polling did not refresh file inventory.
+Bounded IndexCore-owned child work now expands /云下载 via the existing single
+writer and PARTIAL observations; the consumer quietly re-reads canonical files
+every visible-page10s, preserving preview. No Panta provider scanner, full scan,
+schema change or new download. Current authenticated canonical API evidence:
+2 cloud files, main283; child scopes VERIFIED, no blocked/retry child scopes;
+exact Q5 PRESENT. OpenList transient TLS failures occurred before convergence.
+Browser automation was unavailable for this final verification; API/static asset
+verification is not a claim of an independent visual playback test. See D-061.
+Separately, the original sealed ISO smoke pair remains RECOVERY_REQUIRED with a
+known reference and exhausted5/5 failure budget. The accepted recovery CLI refused
+resume; its reservation/log are retained. No reset, extra source or provider start.
+This is not an original ISO READY acceptance or a claim that every task completed.
+
+Issue124 / PR125 / D-060 ACCEPTED and deployed0877e133124ba3193943622a3990e93f26165c76,
+now included in PR127:100-operation policy, no UI in-flight counter, backend
+concurrency2 and usage retained; silent library auth bootstrap and30-day website
+session unchanged. Exact CI38995121532 and merge38995326826 all3 SUCCESS.
+
+### Earlier accepted snapshots (superseded where the current pointer differs)
 
 ACCEPTED/public Issue122 / PR123 / D-059 at e2576dc9c6c7641b2a98ef5b49133bc1da4dde79:
 exact6b48e78af64d0a73f13b170cd686202818ad3811, CI38994379661 and merge38994534211
-all3 SUCCESS, separate same-agent review. Human confirms the cloud file list is
-currently empty; that is expected, not an indexing incident. Main283-file count
+all3 SUCCESS, separate same-agent review. At that checkpoint the human confirmed
+an empty cloud list was expected; the later actual missing-file incident is fixed
+by PR112/PR127 above. Main283-file count
 and shared controller render verified; no extra scan/provider download performed.
 Original service identities/config/schema15 preserved; no recovery debt.
 The human requests cloud files directly on /downloads/,
