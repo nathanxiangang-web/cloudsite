@@ -1473,3 +1473,10 @@ authorized, superseding Issue113's temporary isolated-worker-only deployment lim
 not its no-duplicate provider-write rule. Actual READY acceptance needs the whole
 same Job/provider/Hint/Q5/Q8/Copy transaction evidence, not merely an enabled button.
 
+Operational evidence2026-10-17: PR121 exact c1ed10be, CI38992241383 and merge
+CI38992448685 all3 SUCCESS; public f8be03c deployed with preflight, unique target
+Q5 and accepted parent/child Hint. One sealed smoke POST201 has REFERENCE_KNOWN
+and native destination match, still RUNNING/progress0 at01:58UTC. Budget consumed;
+only observe this pair, no READY acceptance. Original service identities and public
+delivery/preview/sharing regressions pass. See CLOUD-ACQUISITION-ACCEPTANCE.md.
+

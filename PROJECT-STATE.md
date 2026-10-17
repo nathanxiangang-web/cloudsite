@@ -4,16 +4,33 @@
 
 ## Current phase
 
-IN PROGRESS Issue120 / D-058: human explicitly requests real public submission
-and changes physical destination to /CloudSite/云下载. Native interface supports
-save-directory ID; new empty child created/verified without download. Root-level
-/云下载 remains untouched. Existing CloudSite Root/mount namespace can be reused,
-avoiding a new root and duplicate file identities. A guarded operator transaction
-attaches a NEW native session Connection to the exact existing DISABLED observation
-Binding; preserves Binding/Root/mount IDs and old Connection/credential. No task/
-Copy/history rewrite or schema migration. Full preflight/Hint-path evidence and
-readonly rollback precede public Worker enablement. At most one sealed supplied
-ISO smoke submission; never retry uncertain external side effects. Not yet deployed.
+Issue120 / PR121 / D-058 ACCEPTED and deployed at f8be03ccf1d798898b52618f3fd773a5a9094699.
+Exact reviewed c1ed10be896ff6f1e6011c8c86ef979c382f6be4, CI38992241383 and merge
+CI38992448685 all3 SUCCESS; separate same-agent review, not independent review.
+Public managed submission and one serial Worker are ACTIVE on113.20.6.57.
+Physical destination /CloudSite/云下载; Manifest/Hint/Q5 path /云下载. The native
+save-directory ID is privately verified. Existing CloudSite Root/Binding/mount
+identities are preserved; a fresh115 Connection is attached through guarded CAS,
+old observation Connection/credential preserved. No migration beyond schema15.
+Parent and child PARTIAL Hint accepted; Q5 resolves exactly one PRESENT directory.
+
+One sealed ordinary ISO submission returned HTTP201 on2026-10-17 at01:54UTC.
+Provider reference is durably REFERENCE_KNOWN; native readonly status reports
+RUNNING, destination matches the new child, progress0 at01:58UTC. Manifest ACTIVE /
+Job RETRY_WAIT, zero recorded failures. Download/Copy/READY are NOT yet accepted.
+The one-start smoke budget is CONSUMED: observe this pair only, no repeat POST.
+Public form/quota, strict400 and auth/ownership verified; original283-file library,
+DOCX preview/hash,302 CDN download,206 video and both guest-share modes pass.
+Temporary shares revoked. Original edge/OpenList/catalog/database service IDs,
+images and PIDs unchanged. Product and new catalog healthy. Root-level /云下载
+and its old files are untouched, excluded only from the active CloudSite feed.
+See [runtime evidence and rollback](docs/CLOUD-ACQUISITION-ACCEPTANCE.md).
+
+## Historical snapshots (superseded where the current phase differs)
+
+The unavailable banners,284-file alias feed, zero submissions, disabled managed
+runtime and unconsumed budget below describe earlier deployments, NOT current
+status. Existing website30-day policy and safety constraints still apply.
 
 ACCEPTED Issue118 / PR119 / D-057: human confirms WEBSITE login30 days, not115 TTL.
 One shared fixed30-day policy for new cookies and DB-time sessions; no sliding

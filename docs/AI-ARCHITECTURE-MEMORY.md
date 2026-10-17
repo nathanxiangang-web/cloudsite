@@ -3,7 +3,7 @@
 > Canonical short-form project memory for Architect/AI sessions.
 >
 > Last architecture-memory synchronization: **2026-10-17**
-> Current status: **PR119/D-057 accepted and publiccaabc0a0cf1e/schema15: new website sessions fixed30 days, actual Cookie/DB2592000s and immediate logout verified. Human native115 QR recovery and root/cloud-directory read succeeded; old990001 cookie retained. Readonly unavailable reason now NOT_CONFIGURED, not LOGIN_REQUIRED.284 files (old283+cloud1); managed Worker off, one-start budget unconsumed. No automatic provider health monitor, real download or full MVP claim.**
+> Current status: **PR121/D-058 accepted and publicf8be03c/schema15. Managed submission and one serial Worker enabled; native target /CloudSite/云下载, canonical /云下载. One HTTP201 smoke pair has REFERENCE_KNOWN and matching native destination, still RUNNING/progress0 at01:58UTC; ACTIVE/RETRY_WAIT, no READY claim. Smoke budget consumed: observe only, do not resubmit. Website fixed30-day policy preserved.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -12,15 +12,28 @@
 
 ## 1. Source-of-truth order
 
-Issue120 / D-058 active: human requests real public submission and supersedes
-root /云下载 with physical /CloudSite/云下载. New empty child is verified; original
-root directory/files unchanged. Reuse existing CloudSite canonical Root/Binding
-identities with exact CAS observation-to-session attachment and a fresh Connection;
-do not mutate old credentials or duplicate canonical trees. Target path /云下载,
-OpenList account base /115open/CloudSite, native child ID verified privately.
-Preflight and actual loopback Hint/Q5/Q8 mapping before one serial Worker/public
-submission. Existing one supplied ISO smoke budget unconsumed; uncertain writes
-stop/no retry. No schema/queue/engine/scanner/provider rewrite.
+Issue120 / PR121 / D-058 accepted/deployed f8be03c. Exact c1ed10be, CI38992241383
+and merge CI38992448685 all3 SUCCESS, separate same-agent review. Target physical
+/CloudSite/云下载, canonical /云下载; old root directory/files unchanged. Reused
+CloudSite Root/Binding/mount IDs via guarded CAS attaching a NEW native Connection;
+old observation Connection remains DISABLED without credentials. Parent/child
+PARTIAL Hint accepted, Q5 PRESENT directory unique. Preflight passed before the
+managed serial Worker/public form enabled. Original283-file library and public
+delivery/preview/share regressions pass; product/new catalog healthy, original
+service identities/PIDs preserved. Website fixed30-day policy remains.
+
+One sealed ordinary ISO smoke POST returned201 at01:54UTC on2026-10-17. Durable
+REFERENCE_KNOWN, native destination matches and status RUNNING/progress0 at01:58UTC;
+ACTIVE/RETRY_WAIT and zero recorded failures. No Copy/READY acceptance yet. Budget
+CONSUMED; no new smoke pair or repeated start. Continue observing the same pair.
+See CLOUD-ACQUISITION-ACCEPTANCE.md. No schema/queue/engine/scanner/provider rewrite.
+
+### Historical deployment snapshots
+
+Statements below about284-file alias visibility, NOT_CONFIGURED/LOGIN_REQUIRED,
+disabled managed Worker, zero submissions or unconsumed smoke budget are preserved
+history, NOT current instructions. Current native session is verified; do not
+infer old990001 applies to it. Eight historical unknown reservations stay frozen.
 
 Accepted Issue118/PR119/D-057: human selects WEBSITE fixed30-day login. Domain TTL,
 DB-time persistence and cookie expiry agree; reads never slide existing expiry,

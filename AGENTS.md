@@ -14,6 +14,25 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-17
 
+Issue120 / PR121 / D-058 ACCEPTED/publicf8be03c/schema15. Exact c1ed10be,
+CI38992241383 and merge38992448685 all3 SUCCESS; separate same-agent review.
+Managed public submission and one serial Worker ACTIVE on113.20.6.57.
+Physical /CloudSite/云下载, canonical/Hint /云下载; native directory verified.
+Same CloudSite Root/Binding/mount identities retained; NEW native Connection
+attached using guarded CAS, old credential-free observation Connection preserved.
+Parent/child PARTIAL Hint and unique Q5 PRESENT directory verified; preflight
+passed. One ordinary ISO smoke POST201 has REFERENCE_KNOWN, destination matches;
+ACTIVE/RETRY_WAIT and native RUNNING/progress0 at01:58UTC. No READY acceptance yet.
+This smoke budget is CONSUMED: observe the same pair, never resubmit it. Preserve
+all8 historical unknown reservations. See docs/CLOUD-ACQUISITION-ACCEPTANCE.md.
+Website30-day policy and original283-file/delivery/preview/share capabilities pass.
+
+### Historical execution snapshots
+
+Earlier zero-submission, NOT_CONFIGURED, managed-Worker-off,284-file alias feed
+and unconsumed-budget statements below are historical, superseded by the pointer
+above. Do not repeat old setup, login, directory creation or smoke submission.
+
 Issue118 / PR119 / D-057 ACCEPTED/publiccaabc0a0: human selects30-day WEBSITE
 login, not provider TTL. Exact CI38991088165 and merge38991282378 all3 SUCCESS;
 actual HTTPS Cookie/DB2592000s, old expiry unchanged and logout401 pass.
