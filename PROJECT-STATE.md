@@ -4,18 +4,28 @@
 
 ## Current phase
 
-IN PROGRESS Issue118 / D-057: human confirms WEBSITE login30 days, not115 TTL.
+ACCEPTED Issue118 / PR119 / D-057: human confirms WEBSITE login30 days, not115 TTL.
 One shared fixed30-day policy for new cookies and DB-time sessions; no sliding
 refresh or retroactive extension. Logout/revocation/security boundaries unchanged.
 No migration. Domain/HTTP and real owned PostgreSQL auth regressions pass.
+Reviewed2bee9a6b5ff57d205c485e09662f7884025003a2, exact CI38991088165 all3
+SUCCESS, separate same-agent review; mergecaabc0a0cf1eaa67b05dd68a69b287dc82987501,
+merge CI38991282378 all3 SUCCESS. Public image cloudsite:session30-caabc0a.
+Actual HTTPS proves Max-Age2592000, same DB duration/absolute expiry, secure flags,
+existing session expiry unchanged and immediate logout401. Original services/
+catalog generations preserved; no schema change or native download.
 
 Native115 login recovery2026-10-17: explicit human QR confirmation succeeded,
 same-account and native root GetFiles verified; new cookie protected0600 in a
 new attempt directory. Old cookie retained, no native download/Worker/submission.
 Prior990001 below belongs to the OLD session and is retained as historical
 evidence. New credentials alone do not make managed acquisition ready: still
-verify /云下载 native ID and Hint/Q5 path agreement. Preview remains readonly;
-public reason should become NOT_CONFIGURED, not falsely claim new login failed.
+The new session also verified /云下载 parent/native ID using read-only GetFiles;
+protected ID receipt saved, no cookie/ID output. Hint/Q5 path agreement and managed
+execution still remain. Preview remains readonly; public reason is now
+NOT_CONFIGURED. Browser refreshed and confirms the stale LOGIN_REQUIRED banner
+is gone. This is explicit operator state synchronization, NOT an implemented
+automatic provider health monitor or automatic Worker recovery.
 
 Issue114 / PR115 / D-056 ACCEPTED, publicly deployed on2026-10-17.
 Reviewed bbb38ae1e00271b1c7c8454594755f55bfce9f80; exact-head CI38967538356

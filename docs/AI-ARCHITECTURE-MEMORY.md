@@ -3,7 +3,7 @@
 > Canonical short-form project memory for Architect/AI sessions.
 >
 > Last architecture-memory synchronization: **2026-10-17**
-> Current status: **PR115/D-056 and PR117 accepted; public987adb3af391/schema15 includes folder-neutral scope, LOGIN_REQUIRED and pure magnet preparation. Existing /云下载 mapped through standard OpenList Alias and separate IndexCore observation;284 files (old283+cloud1). Managed Worker off, native990001/ErrNotLogin, one-start budget unconsumed.302/CDN206/document preview/guest shares reverified. No full MVP/realtime-index/all-codec claim.**
+> Current status: **PR119/D-057 accepted and publiccaabc0a0cf1e/schema15: new website sessions fixed30 days, actual Cookie/DB2592000s and immediate logout verified. Human native115 QR recovery and root/cloud-directory read succeeded; old990001 cookie retained. Readonly unavailable reason now NOT_CONFIGURED, not LOGIN_REQUIRED.284 files (old283+cloud1); managed Worker off, one-start budget unconsumed. No automatic provider health monitor, real download or full MVP claim.**
 > Governing corrections: **D-029** (IndexCore-owned observation), **D-030** (Git-first AI reconstruction), **D-032** (durable result_name locator), **D-033** (READY anchored to one canonical projected Copy), **D-034** (one-claim stage routing), **D-035** (type-scoped claiming and atomic recovery), **D-036** (one explicit runner tick), **D-037** (opt-in worker lifecycle), **D-038** (fail-closed runtime graph and secret/trust boundaries), **D-039** (protected operator bootstrap/preflight), **D-040** (deterministic source intake with exact value preservation), and **D-041** (human-authorized live staging acceptance without architectural bypass).
 >
 > **Read this file before planning, reviewing, or authorizing any new Gate.**
@@ -12,20 +12,25 @@
 
 ## 1. Source-of-truth order
 
-Current Issue118/D-057: human selects WEBSITE fixed30-day login. Domain TTL,
+Accepted Issue118/PR119/D-057: human selects WEBSITE fixed30-day login. Domain TTL,
 DB-time persistence and cookie expiry agree; reads never slide existing expiry,
 logout/revocation remains immediate, no backfill/migration or provider change.
 Native115 QR recovery now SUCCESS on public server: same-account/root GET verified,
 new credential protected0600; old rejected cookie retained. Historical990001 below
 does not describe the new session. No submission/Worker/download. Still verify
 native cloud-directory ID and Hint/Q5 namespace before managed activation;
-readonly preview reason becomes NOT_CONFIGURED rather than LOGIN_REQUIRED.
+readonly preview reason now NOT_CONFIGURED rather than LOGIN_REQUIRED. Native
+cloud-directory ID/parent read verified and privately recorded; Hint/Q5 namespace
+agreement remains. Reviewed2bee9a6b, exact CI38991088165 all3 SUCCESS; mergecaabc0a0,
+merge CI38991282378 all3 SUCCESS. Public Cookie/DB TTL/expiry, unchanged old expiry
+and logout401 verified. Recovery banner was a declared config, not live health;
+it is now synchronized after verified login. Do not claim automatic health checks.
 
 Accepted Issue114/PR115/D-056: readonly source preview and truthful login-
 unavailable UI publicly deployed; exact-head CI38967538356 and merge38967953503
 all3 SUCCESS, same-agent acceptance, merge894962f6bb5a. Public DB15 with backed-up
 14 and tested15-compatible readonly fallback. See CLOUD-DIRECTORY-ACCEPTANCE.md.
-Issue113 has zero submissions/Worker/StartDownload; actual native
+Issue113 has zero submissions/Worker/StartDownload; historical OLD native
 GET returns HTTP200/API990001/ErrNotLogin. Do not run downloads with this known-
 rejected session. Human target now /云下载, standard OpenList Alias mapped into
 existing CloudSite namespace without moving files or changing OAuth/account root.

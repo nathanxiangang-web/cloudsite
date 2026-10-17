@@ -43,6 +43,13 @@ one-hour sessions keep their stored expiry and require one new login to obtain
 the30-day policy. No migration/backfill, token format or auth-strength change.
 This is independent of115/OpenList cookies, whose validity is provider-controlled.
 
+PR119 accepted at caabc0a0cf1eaa67b05dd68a69b287dc82987501; reviewed2bee9a6b,
+exact CI38991088165 and merge CI38991282378 all3 SUCCESS, separate same-agent
+review (not independent). Product-only public deployment verified HTTPS cookie
+Max-Age2592000, DB duration2592000, matching absolute expiry, unchanged previous
+session expiry, Secure/HttpOnly/SameSite Strict and immediate logout401.
+No migration. Previous image/config retained for rollback; no provider action.
+
 GET `/api/v1/auth/me` requires exactly one valid session cookie and returns the
 same three-field Principal. POST `/api/v1/auth/logout` revokes idempotently and
 clears the cookie (204). Invalid request 400; bad/missing/expired/revoked session

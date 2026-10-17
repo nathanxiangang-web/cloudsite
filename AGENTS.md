@@ -14,7 +14,9 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-17
 
-Issue118 / D-057: human explicitly selects30-day WEBSITE login, not provider TTL.
+Issue118 / PR119 / D-057 ACCEPTED/publiccaabc0a0: human selects30-day WEBSITE
+login, not provider TTL. Exact CI38991088165 and merge38991282378 all3 SUCCESS;
+actual HTTPS Cookie/DB2592000s, old expiry unchanged and logout401 pass.
 New product sessions and cookies share fixed30 days, DB-time authorization,
 no sliding refresh or extension/backfill of existing sessions. Preserve logout,
 account/role checks, hashed tokens and all cookie/Host/Origin protections.
@@ -22,7 +24,9 @@ No migration/provider runtime changes. Native115 QR on public server has now
 succeeded with same-account/root-read verification and protected new credential;
 old credential retained, no download and no managed runtime activation. Earlier
 990001 describes the rejected OLD session, not this new one. Download still
-requires native target-ID/path agreement; unavailable reason becomes NOT_CONFIGURED.
+has read-verified native cloud-directory ID; Hint/Q5 path agreement remains.
+Unavailable reason is now NOT_CONFIGURED. This is synchronized operator state,
+not an implemented automatic provider health check or automatic Worker recovery.
 PR115/117 are accepted/public schema15;284-file observation and3 CI groups pass.
 These current facts supersede the historical snapshots below.
 
