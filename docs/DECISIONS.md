@@ -1511,7 +1511,8 @@ non10 custom limits, current operation keys/Job/provider records. No migration.
 Remove the in-flight count from consumer text only; server concurrency2/fences
 and DTO remain, not unlimited parallel downloads or reset of lifetime usage.
 
-Main library initially shows pending-session status with login form hidden.
+Main library silently resolves session state with login form hidden and no
+intermediate message or popup.
 Successful auth/workspace restoration opens files without a login flash;401
 shows login, transient errors must not pretend the session is invalid. Preserve
 30-day cookie/DB policy, logout, account and origin protections. No credential

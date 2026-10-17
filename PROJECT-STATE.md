@@ -7,7 +7,7 @@
 IN PROGRESS Issue124 / D-060: human requests100 operations and removal of the UI
 in-flight counter. New quota default100; privately backed-up existing default10
 quota rows will become100 without changing used operations or concurrency2.
-Library auth bootstrap must not paint a login form before session restoration;
+Library auth bootstrap is silent: no login form or intermediate status message;
 401 reveals login, transient failures remain unknown. No session/credential/
 provider change. Actual IndexCore PID1 incremental runtime enabled=true, wake5s,
 single-root writer1; no full scan or recursive claim. See D-060.

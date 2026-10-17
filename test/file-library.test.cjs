@@ -250,14 +250,14 @@ test('download file canonical read failure stays incomplete and never becomes em
 });
 
 test('returning library never paints the login form while session restoration is pending',async()=>{
- const html=fs.readFileSync(path.join(web,'library.html'),'utf8');assert.match(html,/<main id="login-view"[^>]* hidden>/);assert.match(html,/id="session-loading"[^>]*role="status"/);
+ const html=fs.readFileSync(path.join(web,'library.html'),'utf8');assert.match(html,/<main id="login-view"[^>]* hidden>/);assert.equal(html.includes('正在恢复登录'),false);assert.match(html,/<p id="session-error"[^>]* hidden>/);
  const app=workspace();app.elements.get('login-view').hidden=true;
  const caps=app.requests.find(r=>r.url==='/api/v1/auth/capabilities');caps.resolve({ok:true,status:200,json:async()=>({registration_enabled:true})});await new Promise(resolve=>setImmediate(resolve));
  assert.equal(app.elements.get('login-view').hidden,true);
  const me=app.requests.find(r=>r.url==='/api/v1/auth/me');me.resolve({ok:true,status:200,json:async()=>({user_id:'user',login:'test',role:'USER'})});await new Promise(resolve=>setImmediate(resolve));
  assert.equal(app.elements.get('login-view').hidden,true);
  const info=app.requests.find(r=>r.url==='/api/v1/workspace');info.resolve({ok:true,status:200,json:async()=>({bindings:[{binding_id:'one'}]})});await new Promise(resolve=>setImmediate(resolve));
- assert.equal(app.elements.get('login-view').hidden,true);assert.equal(app.elements.get('session-loading').hidden,true);assert.equal(app.elements.get('library-view').hidden,false);
+ assert.equal(app.elements.get('login-view').hidden,true);assert.equal(app.elements.get('session-error').hidden,true);assert.equal(app.elements.get('library-view').hidden,false);
 });
 test('expired session reveals login; transient auth failure does not pretend the user logged out',async()=>{
  for(const status of [401,503]){
@@ -265,6 +265,6 @@ test('expired session reveals login; transient auth failure does not pretend the
   app.requests[0].resolve({ok:true,status:200,json:async()=>({registration_enabled:true})});await new Promise(resolve=>setImmediate(resolve));
   app.requests.find(r=>r.url==='/api/v1/auth/me').resolve({ok:false,status,json:async()=>({code:status===401?'AUTH_REQUIRED':'READ_UNAVAILABLE'})});await new Promise(resolve=>setImmediate(resolve));
   assert.equal(app.elements.get('login-view').hidden,status!==401);
-  if(status===503)assert.match(app.elements.get('session-loading').textContent,/无法确认/);
+  if(status===503)assert.match(app.elements.get('session-error').textContent,/连接暂时不可用/);
  }
 });

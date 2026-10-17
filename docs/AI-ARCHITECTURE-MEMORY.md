@@ -13,7 +13,7 @@
 ## 1. Source-of-truth order
 
 Current Issue124 / D-060:100 operations, hide UI concurrency count, preserve
-server concurrency2. Fix login-form flash with explicit pending-session state,
+server concurrency2. Fix login-form flash with silent session restoration,
 401 vs transient failures distinguished. Existing default10 quota config backed
 up then raised; used operations untouched, no schema/provider/session change.
 
