@@ -12,14 +12,19 @@ Before planning, changing, or reviewing code, **read these files first**:
 
 Chat history is not a source of truth.
 
-## Current execution pointer — 2026-10-17
+## Current execution pointer — 2026-10-18
 
-Issue124 / D-060 current bounded work:100-operation default, backed-up upgrade
-of existing default10 quota configs, hide in-flight UI only (server2 preserved),
-no login form while session state pending. No new download/scan/schema/session
-change. Human confirms empty cloud files expected; stop treating it as incident.
-IndexCore actual incremental process verified=true/5s/single writer; direct-child
-scopes are not recursive scans. PR123 accepted/publice2576dc, CI all3 SUCCESS.
+PR127/publicf1bceee with IndexCore PR112/publice03d14a9 fixes an actual delayed
+file incident: the old empty-list expectation is no longer current. Verified API
+counts2 cloud files/main283 and exact Q5 PRESENT. IndexCore owns bounded child
+scope discovery beneath /云下载; collector stays direct-child PARTIAL, one refresh
+per execution. No consumer-side OpenList scanner or new queue/schema. Quiet
+visible-page10s canonical GET refresh preserves preview and handles files arriving
+after an unchanged READY directory Copy. CI and merge CI passed in both repos.
+No new provider starts or historical reservation edits; original ISO smoke remains
+reference-known and has no READY acceptance. Any paired recovery uses accepted
+DB-time CAS, never direct SQL. See D-061 and latest PROJECT-STATE.md.
+PR125/D-060100-operation policy and silent library auth are accepted/public.
 
 Issue122 / D-059 accepted work: cloud files on /downloads/, exclude same
 Binding/canonical subtree from main library; share one file template/controller.
