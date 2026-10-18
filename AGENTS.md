@@ -14,6 +14,16 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-18
 
+REGRESSION: IndexCore Issue115/PR116 supersedes the earlier deletion acceptance
+below. The backend incorrectly removed749 rows from a virtual-only successful
+OpenList list, leaving library1. Physical files remain; root mirror/watch disabled
+and valid-directory queue CAS recovery is in progress. Do not call this a UI
+filter issue or claim deletion sync fully enabled. Verify separate library and
+download partitions plus surviving sibling trees over subsequent observations.
+No canonical SQL resurrection, physical deletion or provider starts. AI unstarted.
+
+### Earlier rollout notes (not current acceptance)
+
 User-authorized Issue132 is the current source-deletion hotfix. IndexCore Issue113
 owns the opt-in coverage/removal gate and recurring Root watch; the product only
 reads Canonical and quietly reconciles complete temporary catalogs. No physical

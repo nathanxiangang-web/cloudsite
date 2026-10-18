@@ -4,7 +4,28 @@
 
 ## Current phase
 
-Issue132 / PR133: SOURCE DELETION CONVERGENCE HOTFIX, LIVE VERIFIED 2026-10-18.
+REGRESSION: IndexCore Issue115 / PR116, recovery in progress2026-10-18.
+The user's library dropped to1 file after the initial acceptance below. At08:06Z
+OpenList returned success with only a virtual alias while the real backend list
+failed; mirror incorrectly tombstoned749 unrelated records. Source folders/files
+still exist. The current UI honestly reflected the bad canonical inventory;
+this is not a frontend category/filter problem. Native root watch/mirror were
+disabled. A whole-root additive scan timed out300s without positive commit.
+Existing root-scoped RepairBlocked CAS+MergeSignal now restore valid PRESENT
+directories through the existing single writer;300 INVALID_SCOPE blockers are
+being repaired. No SQL resurrection or physical file deletion. Initial actual
+recovery proof:53 files, library51/downloads2; recovery continues, not accepted.
+
+IndexCore PR116 adds independent bounded before/after storage-topology evidence.
+Nested virtual mounts/unknown or Alias covering drivers/missing credential mean
+additive-only, not deletion. Old unsafe proofs are rejected. No topology secret
+has been configured live; unsafe root deletion remains disabled. Verify library
+AND download partitions, surviving sibling subtrees and later cycles, not only
+gallery absence or a single total. AI remains unstarted.
+
+### Earlier one-time rollout evidence, not current acceptance
+
+Issue132 / PR133 initial rollout2026-10-18.
 IndexCore Issue113 owns explicit opt-in direct-child presence coverage and
 deleted-directory subtree tombstones/Journal; ordinary PARTIAL remains safe.
 CloudSite reuses GET-only quiet catalog refresh for the visible library as well
