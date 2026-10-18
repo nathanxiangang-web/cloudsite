@@ -1607,3 +1607,41 @@ cannot be declared unbilled/not executed or blindly retried. No automatic budget
 refund/format-repair call. AI-disabled core regressions and controlled PG/HTTP/
 UI/real-model evidence precede every staged release; a docs CI is not AI acceptance.
 
+## D-063 - Mirror confirmed source absence, not indefinite stale file cards
+
+2026-10-18, Issue132 and IndexCore Issue113. The user deleted an entire gallery
+directory. Forced parent listing succeeded without that directory, while four
+canonical children remained PRESENT with zero missing evidence. No recurring
+Root watch or accepted COMPLETE scan existed. Waiting24h could never converge.
+
+IndexCore owns a new explicit opt-in direct-child coverage contract, with fresh
+complete list/namespace/config/generation validation and pure Kernel subtree
+absence decisions. It is not a whole-root COMPLETE claim or a change making
+ordinary PARTIAL omissions destructive. Validated mirror absence does not wait
+the unrelated24-hour whole-root grace. Tombstones and Q8 commit atomically in
+the existing coordinator; no direct canonical UPDATE or physical drive deletion.
+Existing bounded executor/watch/CAS handles recurring verification; no new engine.
+
+The library and downloads share GET-only quiet reload of a complete temporary
+catalog. Visible library polls every10s; hidden/signed-out/busy requests do not
+overlap, errors/partial results never replace real cards with empty success, and
+late responses cannot cross logout/manual refresh. Preserve player/details,
+category/search/layout, download/share behavior and login. The product does not
+infer existence by reading OpenList itself. Existing deep-tree bounds/cadence
+mean this is eventual synchronization, not an unconditional30s service promise.
+
+Keep AI disabled/planning-only. Deploy only the owned IndexCore/product after
+isolated PostgreSQL/HTTP/UI tests, exact-head CI, explicit same-agent review and
+protected binary/config/database backup. Preserve original provider references.
+Actual API/Q8/tombstone evidence, not this document, determines acceptance.
+
+2026-10-18 live acceptance: IndexCore code efd3cdca8d64 (CI39100197664 SUCCESS)
+produced10 gallery tombstones and10 Q8 removal events in one generation. Four
+image Q5 queries and the authenticated public resource inventory contain no
+gallery PRESENT resources;276 files survive. Product d337ebf (CI39098778407 all3
+SUCCESS,57 UI tests) is healthy with no-store quiet-refresh assets. Windows
+archive CRLF initially broke all15 embedded migration checksums; rollout was
+reverted, then explicit LF packaging matched existing history and passed readonly
+preflight/health/public checks. Pin SQL LF with .gitattributes and exercise an
+autocrlf=true archive regression. No migration/history rewrite or provider start.
+

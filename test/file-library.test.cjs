@@ -85,10 +85,10 @@ function workspace(surface='library'){
   append(...nodes){this.children.push(...nodes);}replaceChildren(...nodes){this._text='';this.children=nodes;}
   addEventListener(type,fn){(this.listeners[type]||=[]).push(fn);}setAttribute(k,v){this.attrs[k]=v;}removeAttribute(k){delete this.attrs[k];delete this[k];}scrollIntoView(){}focus(){this.focused=true;}async play(){this.paused=false;this.played=true;}pause(){this.paused=true;}load(){this.loaded=true;}click(){this.clicked=true;}select(){this.selected=true;}
  }
- const elements=new Map(Array.from(ids,id=>[id,new Element()]));const requests=[],created=[],copied=[];
- const ctx=vm.createContext({AbortController,URLSearchParams,TextEncoder,setTimeout,crypto:require('node:crypto').webcrypto,navigator:{clipboard:{async writeText(value){copied.push(value);}}},document:{body:{dataset:{fileSurface:surface}},getElementById(id){assert.ok(elements.has(id),'Unknown id '+id);return elements.get(id);},createElement(){const e=new Element();created.push(e);return e;}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
+ const elements=new Map(Array.from(ids,id=>[id,new Element()]));const requests=[],created=[],copied=[],timers=[];
+ const ctx=vm.createContext({AbortController,URLSearchParams,TextEncoder,setTimeout,setInterval(callback,ms){timers.push({callback,ms});return timers.length;},crypto:require('node:crypto').webcrypto,navigator:{clipboard:{async writeText(value){copied.push(value);}}},document:{body:{dataset:{fileSurface:surface}},getElementById(id){assert.ok(elements.has(id),'Unknown id '+id);return elements.get(id);},createElement(){const e=new Element();created.push(e);return e;}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
  for(const script of ['resource-display.js','file-catalog.js','file-surface.js','library.js','library-sharing.js'])vm.runInContext(fs.readFileSync(path.join(web,script),'utf8'),ctx);
- return {ctx,elements,requests,created,copied,run:s=>vm.runInContext(s,ctx)};
+ return {ctx,elements,requests,created,copied,timers,run:s=>vm.runInContext(s,ctx)};
 }
 test('consumer DOM has literal file cards and no operational topology controls',()=>{
  const app=workspace();app.ctx.item=file('evil',{name:'<img src=x onerror=alert(1)>.pdf',path:'/PRIVATE/path'});
@@ -251,7 +251,7 @@ test('download file canonical read failure stays incomplete and never becomes em
 
 test('quiet cloud refresh discovers delayed files without closing playback or flashing existing cards',async()=>{
  const app=workspace('downloads');app.ctx.first=file('first',{path:'/云下载/first.pdf'});app.ctx.second=file('second',{path:'/云下载/nested/second.pdf'});
- app.run("library.cloudScope={binding_id:'one',path:'/云下载'};library.bindings=[{binding_id:'one'}];library.catalog=new FileCatalog.Catalog(library.bindings,true);library.catalog.files=[first];library.catalog.pending=[];drawFiles();fileDetail(first,null);");
+ app.run("library.userID='user';library.wholeRoot=true;library.cloudScope={binding_id:'one',path:'/云下载'};library.bindings=[{binding_id:'one'}];library.catalog=new FileCatalog.Catalog(library.bindings,true);library.catalog.files=[first];library.catalog.pending=[];drawFiles();fileDetail(first,null);");
  const oldCard=app.elements.get('file-grid').children[0];
  const unchanged=app.run('CloudFileSurface.refresh()');
  assert.equal(app.elements.get('file-grid').children[0],oldCard);
@@ -286,4 +286,23 @@ test('expired session reveals login; transient auth failure does not pretend the
   assert.equal(app.elements.get('login-view').hidden,status!==401);
   if(status===503)assert.match(app.elements.get('session-error').textContent,/连接暂时不可用/);
  }
+});
+
+test('library silently drops removed canonical cards without resetting the player; polling is bounded',async()=>{
+ const app=workspace();app.ctx.keep=file('keep',{name:'keep.mp4'});app.ctx.gone=file('gone',{name:'deleted.jpg'});
+ app.run("library.userID='owner';library.wholeRoot=true;library.bindings=[{binding_id:'one'}];library.catalog=new FileCatalog.Catalog(library.bindings,true);library.catalog.files=[keep,gone];library.catalog.pending=[];library.content=true;drawFiles();fileDetail(keep,null);");
+ const player=app.run('library.player');assert.equal(app.timers.length,1);assert.equal(app.timers[0].ms,10000);
+ app.timers[0].callback();app.timers[0].callback();
+ const reads=app.requests.filter(r=>r.url.startsWith('/api/v1/resources?'));assert.equal(reads.length,1);assert.equal(app.elements.get('file-grid').children.length,2);
+ reads[0].resolve({ok:true,status:200,json:async()=>page([app.ctx.keep])});await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(app.elements.get('file-grid').children.length,1);assert.equal(app.run('library.player'),player);assert.notEqual(player.paused,true);assert.equal(app.elements.get('file-detail').hidden,false);
+ const count=app.requests.length;app.ctx.document.hidden=true;app.timers[0].callback();assert.equal(app.requests.length,count);
+ app.ctx.document.hidden=false;app.run('signOut()');app.timers[0].callback();assert.equal(app.requests.length,count);
+});
+
+test('failed quiet library reads preserve existing cards instead of claiming deletion',async()=>{
+ const app=workspace();app.ctx.keep=file('keep');app.run("library.userID='owner';library.wholeRoot=true;library.bindings=[{binding_id:'one'}];library.catalog=new FileCatalog.Catalog(library.bindings,true);library.catalog.files=[keep];library.catalog.pending=[];drawFiles();");
+ const pending=app.run('refreshCanonicalQuietly()');const req=app.requests.find(r=>r.url.startsWith('/api/v1/resources?'));
+ req.resolve({ok:false,status:503,json:async()=>({code:'READ_UNAVAILABLE'})});await pending;
+ assert.equal(app.elements.get('file-grid').children.length,1);assert.equal(app.run('library.catalog.files.length'),1);
 });
