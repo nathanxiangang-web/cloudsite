@@ -1,0 +1,3 @@
+# Embedded SQL is checksummed byte-for-byte against append-only DB history.
+# Windows checkout/archive must preserve the published LF representation.
+*.sql text eol=lf

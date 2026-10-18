@@ -1635,3 +1635,13 @@ isolated PostgreSQL/HTTP/UI tests, exact-head CI, explicit same-agent review and
 protected binary/config/database backup. Preserve original provider references.
 Actual API/Q8/tombstone evidence, not this document, determines acceptance.
 
+2026-10-18 live acceptance: IndexCore code efd3cdca8d64 (CI39100197664 SUCCESS)
+produced10 gallery tombstones and10 Q8 removal events in one generation. Four
+image Q5 queries and the authenticated public resource inventory contain no
+gallery PRESENT resources;276 files survive. Product d337ebf (CI39098778407 all3
+SUCCESS,57 UI tests) is healthy with no-store quiet-refresh assets. Windows
+archive CRLF initially broke all15 embedded migration checksums; rollout was
+reverted, then explicit LF packaging matched existing history and passed readonly
+preflight/health/public checks. Pin SQL LF with .gitattributes and exercise an
+autocrlf=true archive regression. No migration/history rewrite or provider start.
+

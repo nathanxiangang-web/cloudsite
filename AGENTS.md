@@ -20,6 +20,11 @@ reads Canonical and quietly reconciles complete temporary catalogs. No physical
 deletion or hand-edited canonical state. Validate both repositories and public
 API evidence before claiming deployment. AI Issue131 remains unstarted.
 
+This hotfix is now live verified: gallery10 REMOVED/Q8 events, four screenshot
+Q5 queries and authenticated public inventory contain no gallery PRESENT rows.
+Preserve .gitattributes LF SQL and follow docs/RELEASE-PACKAGING.md: never change
+DB migration checksums to repair Windows release line-ending corruption.
+
 ### Earlier AI preparation scope (unchanged)
 
 Issue129 / D-062 authorizes AI planning and read-only readiness checks only.

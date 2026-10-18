@@ -4,13 +4,24 @@
 
 ## Current phase
 
-Issue132: SOURCE DELETION CONVERGENCE HOTFIX, IN PROGRESS (not yet deployed).
+Issue132 / PR133: SOURCE DELETION CONVERGENCE HOTFIX, LIVE VERIFIED 2026-10-18.
 IndexCore Issue113 owns explicit opt-in direct-child presence coverage and
 deleted-directory subtree tombstones/Journal; ordinary PARTIAL remains safe.
 CloudSite reuses GET-only quiet catalog refresh for the visible library as well
 as downloads. No direct provider crawl, physical deletion or canonical SQL patch.
-UI regression:57 tests passed locally. Exact-head CI and production checks are
-still required; do not label the deleted images fixed before actual API evidence.
+Runtime code d337ebf75bc088fd303ef878ce3cdf6cb8a081cd, CI39098778407 all3 SUCCESS,
+57 local UI regressions passed. Public image cloudsite:source-sync-lf-d337ebf is
+healthy, readonly preflight passed, and public library.js is no-store with quiet
+refresh. Actual authenticated resource API has zero gallery rows and276 surviving
+files. IndexCore efd3cdca8d64 tombstoned10 gallery records in one generation with
+10 Q8 removals; four screenshot image Q5 queries have zero PRESENT matches.
+No physical deletion, manual canonical SQL, migration or operator download start.
+Other service container identities unchanged. The first product package was
+rejected because Windows archive converted embedded SQL to CRLF; the old image
+was restored, then an explicit LF package matched all15 DB history checksums and
+passed preflight/health/public API checks. See [packaging guard](docs/RELEASE-PACKAGING.md).
+The final acceptance commit adds only attributes, packaging tests and evidence;
+runtime Go/JS bytes remain those of the tested code heads. AI remains unstarted.
 
 ### AI planning status (unchanged; not the active hotfix)
 

@@ -1,8 +1,18 @@
-import base64,importlib.util,json,time,unittest
+import base64,importlib.util,json,time,unittest,io,subprocess,tarfile
 from pathlib import Path
 DEPLOY=Path(__file__).resolve().parents[1]/'deploy/cloudsite-alpha'
 spec=importlib.util.spec_from_file_location('refresh_storage',DEPLOY/'refresh-storage-token.py');refresh=importlib.util.module_from_spec(spec);spec.loader.exec_module(refresh)
 class DeploymentSafety(unittest.TestCase):
+ def test_windows_archive_preserves_published_migration_bytes(self):
+  root=DEPLOY.parents[1]
+  raw=subprocess.check_output(['git','-c','core.autocrlf=true','archive','--format=tar','HEAD','migrations'],cwd=root,timeout=15)
+  with tarfile.open(fileobj=io.BytesIO(raw),mode='r:') as archive:
+   files=[item for item in archive.getmembers() if item.name.endswith('.sql')]
+   self.assertEqual(len(files),15)
+   for item in files:
+    published=subprocess.check_output(['git','cat-file','blob','HEAD:'+item.name],cwd=root,timeout=5)
+    self.assertNotIn(b'\r\n',published)
+    self.assertEqual(archive.extractfile(item).read(),published,item.name)
  def test_token_expiry_and_scope_are_checked(self):
   now=100000;payload=base64.urlsafe_b64encode(json.dumps({'exp':now+7200}).encode()).decode().rstrip('=');token='header.'+payload+'.signature'
   self.assertTrue(refresh.valid_token(token,now));self.assertFalse(refresh.valid_token(token,now+7200))
