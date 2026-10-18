@@ -4,6 +4,16 @@
 
 ## Current phase
 
+Issue132: SOURCE DELETION CONVERGENCE HOTFIX, IN PROGRESS (not yet deployed).
+IndexCore Issue113 owns explicit opt-in direct-child presence coverage and
+deleted-directory subtree tombstones/Journal; ordinary PARTIAL remains safe.
+CloudSite reuses GET-only quiet catalog refresh for the visible library as well
+as downloads. No direct provider crawl, physical deletion or canonical SQL patch.
+UI regression:57 tests passed locally. Exact-head CI and production checks are
+still required; do not label the deleted images fixed before actual API evidence.
+
+### AI planning status (unchanged; not the active hotfix)
+
 Issue129 / D-062: AI INTEGRATION PLANNING, NOT IMPLEMENTED/ENABLED.
 Human requests blueprint-aligned AI and identifies.50 alongside IndexCore as
 the execution host. Authoritative software is the user-designated local CodeartsBridge

@@ -195,19 +195,22 @@ const CloudFileSurface=Object.freeze({
   library.category='all';library.layout='cards';node('file-search').value='';node('my-shares').hidden=true;
   if(cloudFilePage)node('download-files').hidden=true;
  },
- async refresh(){
-  if(!library.cloudScope||library.busy||library.quietRefresh)return;
+ async refresh(){return refreshCanonicalQuietly();}
+});
+async function refreshCanonicalQuietly(){
+  if(!library.userID||!library.catalog||library.busy||library.quietRefresh||!library.bindings.length)return;
   const session=library.session,generation=library.request,previous=library.catalog;
   const current=()=>session===library.session&&generation===library.request&&previous===library.catalog;
-  const next=new FileCatalog.Catalog(library.bindings,true);library.quietRefresh=true;
+  const next=new FileCatalog.Catalog(library.bindings,library.wholeRoot);library.quietRefresh=true;
   try{
-   while(!next.complete&&!next.limited&&current())await next.round(scope=>{const query=new URLSearchParams({binding_id:scope.binding,whole_root:'true',limit:'50'});if(scope.cursor)query.set('cursor',scope.cursor);return request('/api/v1/resources?'+query);},current);
+   while(!next.complete&&!next.limited&&current())await next.round(scope=>{const query=new URLSearchParams({binding_id:scope.binding,limit:'50'});if(next.wholeRoot)query.set('whole_root','true');if(scope.parent)query.set('parent_resource_id',scope.parent);if(scope.cursor)query.set('cursor',scope.cursor);return request('/api/v1/resources?'+query);},current);
    if(!current()||!next.complete)return;
-   const after=FileSurface.partition(next.files,library.cloudScope,'downloads');
+   const after=FileSurface.partition(next.files,library.cloudScope,cloudFilePage?'downloads':'library');
    if(library.failed||JSON.stringify(after)!==JSON.stringify(surfaceFiles())){
     library.catalog=next;library.failed=false;clearError('library-error');drawFiles(true);
    }
   }catch(error){if(current()&&error.name!=='AbortError'){library.failed=true;errorAt('library-error',error);}}
   finally{library.quietRefresh=false;}
- }
-});
+}
+// GET-only reconciliation, without resetting playback, details or login.
+if(!cloudFilePage)setInterval(()=>{if(!document.hidden)refreshCanonicalQuietly();},10000);

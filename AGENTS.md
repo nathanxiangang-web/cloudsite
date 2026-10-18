@@ -14,6 +14,14 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-18
 
+User-authorized Issue132 is the current source-deletion hotfix. IndexCore Issue113
+owns the opt-in coverage/removal gate and recurring Root watch; the product only
+reads Canonical and quietly reconciles complete temporary catalogs. No physical
+deletion or hand-edited canonical state. Validate both repositories and public
+API evidence before claiming deployment. AI Issue131 remains unstarted.
+
+### Earlier AI preparation scope (unchanged)
+
 Issue129 / D-062 authorizes AI planning and read-only readiness checks only.
 Read docs/PRODUCT-AI-INTEGRATION.md before any implementation. Human identifies
 192.168.178.50 (IndexCore development host) as the existing AI software/config
