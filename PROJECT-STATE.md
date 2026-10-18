@@ -4,7 +4,7 @@
 
 ## Current phase
 
-REGRESSION: IndexCore Issue115 / PR116, recovery in progress2026-10-18.
+REGRESSION MITIGATED: IndexCore Issue115 / PR116; open parity issue117.
 The user's library dropped to1 file after the initial acceptance below. At08:06Z
 OpenList returned success with only a virtual alias while the real backend list
 failed; mirror incorrectly tombstoned749 unrelated records. Source folders/files
@@ -14,12 +14,22 @@ disabled. A whole-root additive scan timed out300s without positive commit.
 Existing root-scoped RepairBlocked CAS+MergeSignal now restore valid PRESENT
 directories through the existing single writer;300 INVALID_SCOPE blockers are
 being repaired. No SQL resurrection or physical file deletion. Initial actual
-recovery proof:53 files, library51/downloads2; recovery continues, not accepted.
+recovery proof was53 files, library51/downloads2 (historical, not acceptance).
+At11:53Z actual public API:272 total, library270/downloads2; gallery PRESENT0,
+no removals after containment, sample attachment302 without CDN follow, product
+healthy, unrelated service IDs preserved. All300 invalid-scope blockers repaired,
+14 due INTERNAL retries explicitly resumed once and7 parents re-observed. Guard
+399eca4 has full CI39123818119 SUCCESS and is deployed. Product runtime unchanged.
+4 source-present same-hash/different-path files remain unresolved: IndexCore117.
+Do not claim full source parity or full automatic deletion restored.
 
 IndexCore PR116 adds independent bounded before/after storage-topology evidence.
 Nested virtual mounts/unknown or Alias covering drivers/missing credential mean
 additive-only, not deletion. Old unsafe proofs are rejected. No topology secret
-has been configured live; unsafe root deletion remains disabled. Verify library
+has been configured live; unsafe root deletion remains disabled. Native30s watch
+is restored in positive-only mode: mirror_presence requests existing child
+discovery but new snapshots carry no deletion authority, verified over3 cycles.
+Verify library
 AND download partitions, surviving sibling subtrees and later cycles, not only
 gallery absence or a single total. AI remains unstarted.
 

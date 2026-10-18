@@ -22,6 +22,14 @@ filter issue or claim deletion sync fully enabled. Verify separate library and
 download partitions plus surviving sibling trees over subsequent observations.
 No canonical SQL resurrection, physical deletion or provider starts. AI unstarted.
 
+Mitigation evidence11:53Z: public272 = library270/downloads2, gallery PRESENT0,
+no removals since containment, sample attachment302; guard399eca4/full CI passed
+and deployed.300 blockers repaired,14 due retries explicitly resumed once,7 parents
+re-observed. Positive-only30s watch is restored without a topology credential;
+latest3 snapshots have no absence authority. Open IndexCore117 covers4 real
+same-hash/different-path conflicts. Do not describe this as full parity or full
+automatic root deletion acceptance. Product runtime unchanged in this incident.
+
 ### Earlier rollout notes (not current acceptance)
 
 User-authorized Issue132 is the current source-deletion hotfix. IndexCore Issue113
