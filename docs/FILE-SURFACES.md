@@ -28,6 +28,10 @@ be interrupted on each ordinary task poll. Existing arbitrary resource API
 browsing is unchanged; no file move/delete, new acquisition or historical retry.
 
 Future surfaces reuse the controller/policy rather than copy content actions.
+Issue136/D-064: preserve details only while the exact Binding/resource/path
+identity still exists in the complete refreshed surface inventory. Confirmed
+removal/replacement closes the stale player/detail and invalidates callbacks;
+failed/partial/late reads never do. Search/category filtering is not absence.
 Canonical paths use exact slash boundaries, no decoding, case folding or provider
 native IDs. Cursor iteration continues through excluded records without changing
 the upstream cursor; category counts reflect only the active surface.

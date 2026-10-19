@@ -14,6 +14,17 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-18
 
+**Oct19 superseding pointer: Issue136 / D-064 in progress.** A deleted legacy
+Alias file remains Canonical PRESENT; IndexCore115/PR119 owns trusted deletion
+and bounded root-watch recovery. CloudSite only closes selected deleted/replaced
+identity after a COMPLETE successful current canonical refresh. Failed/partial/
+late reads must not clear data; surviving playback stays uninterrupted.60 Node
+tests pass; exact CI and owned rollout remain pending. No provider starts, source
+changes, new scanner, migration or AI work. IndexCore117/PR118 is merged and all4
+copy paths were actually reverified;277 total files before this deletion rollout.
+
+The Oct18 incident snapshots below are historical, not current acceptance.
+
 REGRESSION: IndexCore Issue115/PR116 supersedes the earlier deletion acceptance
 below. The backend incorrectly removed749 rows from a virtual-only successful
 OpenList list, leaving library1. Physical files remain; root mirror/watch disabled

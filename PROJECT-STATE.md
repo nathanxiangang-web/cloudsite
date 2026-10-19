@@ -4,6 +4,23 @@
 
 ## Current phase
 
+**2026-10-19 Issue136 / D-064: deleted preview repair IN PROGRESS.** Actual API
+still returns one source-deleted legacy Alias file. IndexCore root watch is
+HOT but stuck in INTERNAL/RETRY_WAIT, last successful observation Oct18 13:29Z,
+and topology authority is not configured. IndexCore115/PR119 owns that backend
+repair, renewable isolated topology login and bounded retries; no UI fabrication.
+Product closes removed/replaced selected identity only after a full successful
+current canonical refresh; ordinary surviving playback is preserved.60 Node
+tests pass, exact-head CI and live rollout are still required. Schema15 unchanged;
+no acquisition submission, source write, scanner, migration or AI activation.
+
+IndexCore117/PR118 is accepted/merged5d4ee56. Real recheck Oct19 13:24Z confirms
+all4 former copy-conflict paths PRESENT with fresh IDs/Q8 additions and unchanged
+tombstones. Public277 = library275/downloads2 before deletion recovery. That
+identity acceptance was not automatic deletion acceptance.
+
+### Prior incident snapshots (historical)
+
 REGRESSION MITIGATED: IndexCore Issue115 / PR116; open parity issue117.
 The user's library dropped to1 file after the initial acceptance below. At08:06Z
 OpenList returned success with only a virtual alias while the real backend list
