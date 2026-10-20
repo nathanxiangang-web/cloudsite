@@ -4,6 +4,10 @@
 
 ## Current phase
 
+### Current planning priority — Admin Console D-066 / Issue #141 (DESIGN ONLY)
+
+2026-10-20: Human deferred private-user-space Stage A implementation. Issue #139 is now **PAUSED / execution authorization suspended**; keep D-065 and parent Issue #138 as backlog, not underway. Current requested priority is a Chinese management UI and functional product blueprint ([Issue #141](https://github.com/nathanxiangang-web/cloudsite/issues/141), [admin specification](docs/PRODUCT-ADMIN-CONSOLE-BLUEPRINT.md), [offline mock UI](docs/design/CLOUDSITE-ADMIN-UI-PROTOTYPE.html)). D-066 is **proposed**, no admin code, schema/API/provider/IndexCore change or deployment. Existing `/admin` is ADMIN-only for workspace info but still reads only the caller's tasks and ordinary canonical resources; no admin-wide user/job/health/audit/mutation APIs. Existing operation count/concurrency remains; no per-user GB capacity. D-064 production verified snapshot below is unchanged by this new design request.
+
 ### New proposed private-cloud-space blueprint — Issue #138 (DESIGN ONLY)
 
 2026-10-20: User requests real native 115 folders per verified CloudSite user with private-only reads and controlled single-file deletion; **explicitly NO per-user storage capacity/quota/usage meter**. Earlier 520G is an unverified **global account reference only**, not a per-user entitlement or V1 hard cap. The pinned `115driver v1.3.5` source provides `Pan115Client.GetInfo()` for actual account total/used/remain; not executed with a live credential in this plan. Proposed [D-065](docs/DECISIONS.md) / [blueprint](docs/PRODUCT-PRIVATE-CLOUD-SPACES.md) tracks stage A mock/schema groundwork, B server-side ACL before private provider starts, C native directory + frozen target, D independently authorized physical deletion, E controlled acceptance. Planning branch changes no product code, migrations, provider files, production service or IndexCore. Existing current D-064 live pointer below remains authoritative until a later separately accepted PR changes it.
