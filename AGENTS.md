@@ -14,14 +14,15 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-18
 
-**Oct19 superseding pointer: Issue136 / D-064 in progress.** A deleted legacy
-Alias file remains Canonical PRESENT; IndexCore115/PR119 owns trusted deletion
-and bounded root-watch recovery. CloudSite only closes selected deleted/replaced
-identity after a COMPLETE successful current canonical refresh. Failed/partial/
-late reads must not clear data; surviving playback stays uninterrupted.60 Node
-tests pass; exact CI and owned rollout remain pending. No provider starts, source
-changes, new scanner, migration or AI work. IndexCore117/PR118 is merged and all4
-copy paths were actually reverified;277 total files before this deletion rollout.
+**Oct20 superseding pointer: Issue136 / D-064 live verified02:15Z.** PR137
+runtimebf89f5a/CI39261559684 is deployed;60 Node tests PASS, served asset exact.
+IndexCore115/PR119 restores trusted deletion and bounded root-watch recovery:
+three fresh trusted scans, six confirmed Q8 removals, public274/library274/cloud0,
+zero unrelated identity changes and all4 copy-conflict paths preserved. Empty
+legacy Alias disabled only, history and eight reservations retained. CloudSite
+closes deleted/replaced selection only after a COMPLETE successful current read;
+failed/partial/late reads cannot clear data. Live browser playback not claimed.
+No provider starts, source changes, new scanner, migration or AI work.
 
 The Oct18 incident snapshots below are historical, not current acceptance.
 

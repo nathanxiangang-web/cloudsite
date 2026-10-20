@@ -4,15 +4,21 @@
 
 ## Current phase
 
-**2026-10-19 Issue136 / D-064: deleted preview repair IN PROGRESS.** Actual API
-still returns one source-deleted legacy Alias file. IndexCore root watch is
-HOT but stuck in INTERNAL/RETRY_WAIT, last successful observation Oct18 13:29Z,
-and topology authority is not configured. IndexCore115/PR119 owns that backend
-repair, renewable isolated topology login and bounded retries; no UI fabrication.
-Product closes removed/replaced selected identity only after a full successful
-current canonical refresh; ordinary surviving playback is preserved.60 Node
-tests pass, exact-head CI and live rollout are still required. Schema15 unchanged;
-no acquisition submission, source write, scanner, migration or AI activation.
+**2026-10-20 Issue136 / D-064 live verified at02:15Z.** Product runtimebf89f5a
+(image cloudsite:deleted-preview-bf89f5a), exact CI39261559684 SUCCESS,60 Node
+tests PASS; served library.js bytes match reviewed source. A complete successful
+refresh now closes deleted/replaced selected identity; failed/partial/late reads
+and surviving playback are preserved. Browser interaction was not independently
+replayed; live evidence is authenticated API/asset plus DOM regressions.
+IndexCore115/PR119 runtime2d9068e is deployed: root work VERIFIED/failures0 and
+three fresh trusted observations. Six real absence records converged by normal
+Q8; the legacy file and previously deleted gallery have zero public/Q5 matches.
+Two additional cloud files were independently source-confirmed deleted. Public
+274=library274/downloads0, all other canonical identities preserved including4
+copy-conflict regressions; sample download302. Only an empty legacy Alias was
+disabled; retained metadata/history, eight reservations, unrelated mounts/services
+and source credentials unchanged. Protected backups retained. Schema15 unchanged;
+zero new acquisitions/provider starts, physical writes, migrations or AI activation.
 
 IndexCore117/PR118 is accepted/merged5d4ee56. Real recheck Oct19 13:24Z confirms
 all4 former copy-conflict paths PRESENT with fresh IDs/Q8 additions and unchanged

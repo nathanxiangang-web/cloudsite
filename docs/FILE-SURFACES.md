@@ -38,6 +38,13 @@ the upstream cursor; category counts reflect only the active surface.
 
 ## Validation and deployment
 
+Oct20 at02:15Z: runtimebf89f5a deployed, CI39261559684 SUCCESS,60 Node tests
+PASS; live served asset matches source. Authenticated public inventory excludes
+confirmed deleted legacy/cloud files and gallery, preserves274 remaining files;
+IndexCore three fresh trusted scans and Q8 prove backend convergence. DOM tests
+cover both surfaces/player cleanup and failed/partial retention; live browser
+playback was not separately replayed. No provider starts/schema changes.
+
 Boundary and controller tests, shared rendered markup/unique IDs, expiry/racing
 reads, pagination/late READY, and preview/download/share regressions precede CI.
 Product-only rollout preserves accepted schema15/config/graph and one serial

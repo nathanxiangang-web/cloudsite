@@ -2,12 +2,14 @@
 
 > Canonical short-form project memory for Architect/AI sessions.
 
-Latest execution pointer2026-10-19: Issue136 / D-064 fixes retained selected
-details after confirmed canonical deletion. IndexCore115/PR119 repairs actual
-source deletion/root retry; no frontend scanner or invented absence.60 Node
-tests pass, CI/deployment evidence pending. Identity Issue117/PR118 merged and
-all4 paths reverified; actual pre-rollout277 files. Schema15/AI-disabled/provider
-reservations unchanged. The older snapshot block below is historical.
+Latest execution pointer2026-10-20: Issue136 / D-064 runtimebf89f5a deployed,
+CI39261559684 SUCCESS/60 Node tests PASS. At02:15Z public API+asset verification
+passed:274 library files/cloud0, deleted legacy/gallery absent, download302.
+IndexCore115/PR119 runtime2d9068e restores three fresh trusted root scans and
+six confirmed Q8 removals; unrelated identities and all4 copy-conflict paths
+preserved. Empty Alias disabled only; metadata/history and eight reservations
+retained. No frontend scanner, fabricated absence or live-browser playback claim.
+Schema15/AI-disabled/provider reservations unchanged. Older blocks are historical.
 >
 > Active incident: **IndexCore Issue115 / PR116 mitigated, not full parity. Prior Issue132/PR133 acceptance was insufficient: virtual-only success removed749 rows. Guard399eca4/full CI39123818119 SUCCESS is deployed.300 blockers repaired,14 due INTERNAL retries explicitly resumed once,7 parents re-observed through existing CAS APIs. At11:53Z actual public272 = library270/downloads2; gallery PRESENT0, no removals since containment, sample download302 without CDN follow; product healthy/other services unchanged. Native30s root watch restored positive-only: no live topology ref/credential, latest3 root snapshots have no absence authority.4 source-present same-hash/different-path files remain unresolved under R3, open IndexCore117; no hash stripping or SQL resurrection. Full parity/automatic root deletion NOT accepted. No physical deletion/new Provider start. AI #131 remains unstarted.**
 >
