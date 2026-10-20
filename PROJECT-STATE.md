@@ -4,6 +4,29 @@
 
 ## Current phase
 
+**2026-10-20 Issue136 / D-064 live verified at02:15Z.** Product runtimebf89f5a
+(image cloudsite:deleted-preview-bf89f5a), exact CI39261559684 SUCCESS,60 Node
+tests PASS; served library.js bytes match reviewed source. A complete successful
+refresh now closes deleted/replaced selected identity; failed/partial/late reads
+and surviving playback are preserved. Browser interaction was not independently
+replayed; live evidence is authenticated API/asset plus DOM regressions.
+IndexCore115/PR119 runtime2d9068e is deployed: root work VERIFIED/failures0 and
+three fresh trusted observations. Six real absence records converged by normal
+Q8; the legacy file and previously deleted gallery have zero public/Q5 matches.
+Two additional cloud files were independently source-confirmed deleted. Public
+274=library274/downloads0, all other canonical identities preserved including4
+copy-conflict regressions; sample download302. Only an empty legacy Alias was
+disabled; retained metadata/history, eight reservations, unrelated mounts/services
+and source credentials unchanged. Protected backups retained. Schema15 unchanged;
+zero new acquisitions/provider starts, physical writes, migrations or AI activation.
+
+IndexCore117/PR118 is accepted/merged5d4ee56. Real recheck Oct19 13:24Z confirms
+all4 former copy-conflict paths PRESENT with fresh IDs/Q8 additions and unchanged
+tombstones. Public277 = library275/downloads2 before deletion recovery. That
+identity acceptance was not automatic deletion acceptance.
+
+### Prior incident snapshots (historical)
+
 REGRESSION MITIGATED: IndexCore Issue115 / PR116; open parity issue117.
 The user's library dropped to1 file after the initial acceptance below. At08:06Z
 OpenList returned success with only a virtual alias while the real backend list

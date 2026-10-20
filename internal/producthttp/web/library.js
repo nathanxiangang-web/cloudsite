@@ -207,7 +207,9 @@ async function refreshCanonicalQuietly(){
    if(!current()||!next.complete)return;
    const after=FileSurface.partition(next.files,library.cloudScope,cloudFilePage?'downloads':'library');
    if(library.failed||JSON.stringify(after)!==JSON.stringify(surfaceFiles())){
-    library.catalog=next;library.failed=false;clearError('library-error');drawFiles(true);
+    library.catalog=next;library.failed=false;
+    if(library.selected&&!after.some(item=>item.binding_id===library.selected.binding_id&&item.resource_id===library.selected.resource_id&&item.path===library.selected.path))closeDetail();
+    clearError('library-error');drawFiles(true);
    }
   }catch(error){if(current()&&error.name!=='AbortError'){library.failed=true;errorAt('library-error',error);}}
   finally{library.quietRefresh=false;}

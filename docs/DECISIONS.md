@@ -1645,3 +1645,17 @@ reverted, then explicit LF packaging matched existing history and passed readonl
 preflight/health/public checks. Pin SQL LF with .gitattributes and exercise an
 autocrlf=true archive regression. No migration/history rewrite or provider start.
 
+## D-064 - Close only a confirmed removed or replaced selected file
+
+**Status:** Accepted for Issue136, 2026-10-19.
+
+IndexCore remains the only existence authority. A complete, successful current
+canonical refresh may remove cards and must also close the selected detail,
+player and pending preview/share callbacks if the exact Binding/resource/path
+tuple is no longer present. A same-path new resource is not the old identity.
+Compare the full surface inventory, not search/category/page-filtered results.
+Do not interrupt surviving playback. Partial, failed, bounded/incomplete and
+late refreshes cannot claim deletion or close an existing preview. Both file
+surfaces share this controller; no direct OpenList reads or source mutations.
+Backend deletion recovery and topology safety belong to IndexCore115/PR119.
+

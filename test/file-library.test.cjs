@@ -306,3 +306,32 @@ test('failed quiet library reads preserve existing cards instead of claiming del
  req.resolve({ok:false,status:503,json:async()=>({code:'READ_UNAVAILABLE'})});await pending;
  assert.equal(app.elements.get('file-grid').children.length,1);assert.equal(app.run('library.catalog.files.length'),1);
 });
+
+test('confirmed deletion closes the removed file player on both file surfaces',async()=>{
+ for(const surface of ['library','downloads']){
+  const app=workspace(surface);app.ctx.gone=file('gone',{name:'deleted.mp4',path:surface==='downloads'?'/云下载/deleted.mp4':'/deleted.mp4'});
+  app.run("library.userID='owner';library.wholeRoot=true;library.bindings=[{binding_id:'one'}];library.cloudScope={binding_id:'one',path:'/云下载'};library.catalog=new FileCatalog.Catalog(library.bindings,true);library.catalog.files=[gone];library.catalog.pending=[];library.content=true;drawFiles();fileDetail(gone,null);");
+  const player=app.run('library.player');const pending=app.run('refreshCanonicalQuietly()');
+  assert.equal(app.elements.get('file-detail').hidden,false);
+  const read=app.requests.find(r=>r.url.startsWith('/api/v1/resources?'));read.resolve({ok:true,status:200,json:async()=>page([])});await pending;
+  assert.equal(app.run('library.selected'),null);assert.equal(app.elements.get('file-detail').hidden,true);assert.equal(app.elements.get('file-preview').children.length,0);assert.equal(player.paused,true);assert.equal(player.src,undefined);assert.equal(app.elements.get('file-grid').children.length,0);
+  assert.equal(app.requests.some(r=>r.options.method!=='GET'),false);
+ }
+});
+
+test('incomplete or failed quiet refresh never closes an existing preview',async()=>{
+ const app=workspace();app.ctx.keep=file('keep',{name:'keep.mp4',path:'/keep.mp4'});
+ app.run("library.userID='owner';library.wholeRoot=true;library.bindings=[{binding_id:'one'}];library.catalog=new FileCatalog.Catalog(library.bindings,true);library.catalog.files=[keep];library.catalog.pending=[];library.content=true;drawFiles();fileDetail(keep,null);");
+ const player=app.run('library.player');const pending=app.run('refreshCanonicalQuietly()');
+ app.requests.find(r=>r.url.startsWith('/api/v1/resources?')).resolve({ok:true,status:200,json:async()=>page([],'next')});await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(app.elements.get('file-detail').hidden,false);assert.equal(app.run('library.player'),player);
+ app.requests.filter(r=>r.url.startsWith('/api/v1/resources?')).at(-1).resolve({ok:false,status:503,json:async()=>({code:'READ_UNAVAILABLE'})});await pending;
+ assert.equal(app.elements.get('file-detail').hidden,false);assert.equal(app.run('library.player'),player);assert.notEqual(player.paused,true);assert.equal(app.elements.get('file-grid').children.length,1);
+});
+
+test('same-path replacement does not retain a removed resource identity',async()=>{
+ const app=workspace();app.ctx.gone=file('old',{name:'same.mp4',path:'/same.mp4'});app.ctx.replacement=file('new',{name:'same.mp4',path:'/same.mp4'});
+ app.run("library.userID='owner';library.wholeRoot=true;library.bindings=[{binding_id:'one'}];library.catalog=new FileCatalog.Catalog(library.bindings,true);library.catalog.files=[gone];library.catalog.pending=[];library.content=true;drawFiles();fileDetail(gone,null);");
+ const pending=app.run('refreshCanonicalQuietly()');app.requests.find(r=>r.url.startsWith('/api/v1/resources?')).resolve({ok:true,status:200,json:async()=>page([app.ctx.replacement])});await pending;
+ assert.equal(app.run('library.selected'),null);assert.equal(app.elements.get('file-detail').hidden,true);assert.equal(app.elements.get('file-grid').children.length,1);
+});

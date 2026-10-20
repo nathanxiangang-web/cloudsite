@@ -14,6 +14,18 @@ Chat history is not a source of truth.
 
 ## Current execution pointer — 2026-10-18
 
+**Oct20 superseding pointer: Issue136 / D-064 live verified02:15Z.** PR137
+runtimebf89f5a/CI39261559684 is deployed;60 Node tests PASS, served asset exact.
+IndexCore115/PR119 restores trusted deletion and bounded root-watch recovery:
+three fresh trusted scans, six confirmed Q8 removals, public274/library274/cloud0,
+zero unrelated identity changes and all4 copy-conflict paths preserved. Empty
+legacy Alias disabled only, history and eight reservations retained. CloudSite
+closes deleted/replaced selection only after a COMPLETE successful current read;
+failed/partial/late reads cannot clear data. Live browser playback not claimed.
+No provider starts, source changes, new scanner, migration or AI work.
+
+The Oct18 incident snapshots below are historical, not current acceptance.
+
 REGRESSION: IndexCore Issue115/PR116 supersedes the earlier deletion acceptance
 below. The backend incorrectly removed749 rows from a virtual-only successful
 OpenList list, leaving library1. Physical files remain; root mirror/watch disabled

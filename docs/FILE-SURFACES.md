@@ -28,11 +28,22 @@ be interrupted on each ordinary task poll. Existing arbitrary resource API
 browsing is unchanged; no file move/delete, new acquisition or historical retry.
 
 Future surfaces reuse the controller/policy rather than copy content actions.
+Issue136/D-064: preserve details only while the exact Binding/resource/path
+identity still exists in the complete refreshed surface inventory. Confirmed
+removal/replacement closes the stale player/detail and invalidates callbacks;
+failed/partial/late reads never do. Search/category filtering is not absence.
 Canonical paths use exact slash boundaries, no decoding, case folding or provider
 native IDs. Cursor iteration continues through excluded records without changing
 the upstream cursor; category counts reflect only the active surface.
 
 ## Validation and deployment
+
+Oct20 at02:15Z: runtimebf89f5a deployed, CI39261559684 SUCCESS,60 Node tests
+PASS; live served asset matches source. Authenticated public inventory excludes
+confirmed deleted legacy/cloud files and gallery, preserves274 remaining files;
+IndexCore three fresh trusted scans and Q8 prove backend convergence. DOM tests
+cover both surfaces/player cleanup and failed/partial retention; live browser
+playback was not separately replayed. No provider starts/schema changes.
 
 Boundary and controller tests, shared rendered markup/unique IDs, expiry/racing
 reads, pagination/late READY, and preview/download/share regressions precede CI.
