@@ -4,6 +4,10 @@
 
 ## Current phase
 
+### New proposed private-cloud-space blueprint — Issue #138 (DESIGN ONLY)
+
+2026-10-20: User requests real native 115 folders per verified CloudSite user with private-only reads and controlled single-file deletion; **explicitly NO per-user storage capacity/quota/usage meter**. Earlier 520G is an unverified **global account reference only**, not a per-user entitlement or V1 hard cap. The pinned `115driver v1.3.5` source provides `Pan115Client.GetInfo()` for actual account total/used/remain; not executed with a live credential in this plan. Proposed [D-065](docs/DECISIONS.md) / [blueprint](docs/PRODUCT-PRIVATE-CLOUD-SPACES.md) tracks stage A mock/schema groundwork, B server-side ACL before private provider starts, C native directory + frozen target, D independently authorized physical deletion, E controlled acceptance. Planning branch changes no product code, migrations, provider files, production service or IndexCore. Existing current D-064 live pointer below remains authoritative until a later separately accepted PR changes it.
+
 **2026-10-20 Issue136 / D-064 live verified at02:15Z.** Product runtimebf89f5a
 (image cloudsite:deleted-preview-bf89f5a), exact CI39261559684 SUCCESS,60 Node
 tests PASS; served library.js bytes match reviewed source. A complete successful
