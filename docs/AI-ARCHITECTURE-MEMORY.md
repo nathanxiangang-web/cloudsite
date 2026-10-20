@@ -1,5 +1,7 @@
 # cloudsite — AI Architecture Memory
 
+**New proposal (2026-10-20, DESIGN ONLY; no deployment):** User requested private 115-backed CloudSite folders and corrected earlier capacity assumption: **NO personal 520G quota, user usage balances or user byte cap**. The prior 520G is only a shared-account global reference, not a verified total/hard gate. Pinned 115driver v1.3.5 exposes `GetInfo()` for actual **account-level** all_total/all_use/all_remain; only SDK source was checked, no real account API invoked. See [Issue #138](https://github.com/nathanxiangang-web/cloudsite/issues/138), [proposed D-065](DECISIONS.md#d-065--private-cloudsite-user-folders-server-side-ownership-and-no-per-user-storage-quota-proposed) and [private-cloud blueprint](PRODUCT-PRIVATE-CLOUD-SPACES.md). One real folder per verified UUID/login label, server-side private-file ACL and gated single-file physical deletion; legacy files remain unclaimed and the ordinary public library stays unchanged. This is a **docs-only PR proposal**, not accepted implementation, live mkdir, migration, new provider call, role bypass, IndexCore write or production authorization. Gate A (mock/schema only) may be planned under a separate bounded Issue after design review; user capacity metrics are OUT OF SCOPE. Current D-064 live product pointer below remains the running system of record.
+
 > Canonical short-form project memory for Architect/AI sessions.
 
 Latest execution pointer2026-10-20: Issue136 / D-064 runtimebf89f5a deployed,
