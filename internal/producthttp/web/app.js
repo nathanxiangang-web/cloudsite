@@ -15,7 +15,8 @@ const sections = {
 const state = {session:0, principal:null, workspace:null, workspaceRequest:0, tab:'overview', drawer:false,
  binding:'', parent:null, parents:[], resourceCursor:'', resourceNext:'', resourceRequest:0, resourceScope:'',
  resources:[], resourcesLoaded:false, category:'all', layout:'list', taskCursor:'', taskNext:'', taskRequest:0,
- tasksLoaded:false, detailRequest:0, taskDetailRequest:0, resourceFocus:null, taskFocus:null, controller:new AbortController()};
+ tasksLoaded:false, detailRequest:0, taskDetailRequest:0, resourceFocus:null, taskFocus:null, controller:new AbortController(),
+ logoutStatus:'NONE', logoutRequest:0, logoutController:null, logoutInFlight:false, loginInFlight:false};
 const messages = {AUTH_REQUIRED:'登录已失效，请重新登录。',AUTH_CHANGED:'账号或权限已变化，请重新登录。',ADMIN_REQUIRED:'此入口仅供管理员使用，请返回前台文件库。',INVALID_REQUEST:'输入不符合要求，请检查后再试。',ORIGIN_REJECTED:'当前页面来源未获允许。',AUTH_UNAVAILABLE:'登录服务暂时不可用。',AUTH_BUSY:'登录请求过多，请稍候一分钟。',NOT_FOUND:'未找到可见资源或属于你的任务。',RESOURCE_AMBIGUOUS:'资源存在多个匹配，系统不会猜选。',READ_UNAVAILABLE:'查询服务暂时不可用，未确认任何成功结果。',SERVICE_STOPPING:'服务正在安全关闭。'};
 function errorText(error){return error.name==='AbortError'?'请求已取消。':(messages[error.code]||'连接失败，请检查服务状态后重试。');}
 function showError(id,error){el(id).textContent=errorText(error);el(id).hidden=false;}
@@ -46,6 +47,8 @@ function clearTasks(){
  el('task-facts').replaceChildren();el('task-detail').hidden=true;el('tasks-empty').hidden=true;el('more-tasks').disabled=true;
 }
 function signedOut(){
+ state.logoutRequest++;state.logoutController?.abort();state.logoutController=null;state.logoutInFlight=false;state.loginInFlight=false;
+ if(state.logoutStatus==='LOGOUT_PENDING')setLogoutStatus('LOGOUT_UNCONFIRMED','注销未确认。服务器会话可能仍然有效，请重试退出登录。');
  state.session++;state.controller.abort();state.controller=new AbortController();state.resourceRequest++;state.taskRequest++;state.workspaceRequest++;
  state.principal=null;state.workspace=null;clearResources();clearTasks();setDrawer(false,false);
  for(const id of ['user-login','user-role','avatar','schema','binding-select','workspace-facts','identity-facts','overview-binding-list'])el(id).replaceChildren();
@@ -54,10 +57,53 @@ function signedOut(){
  el('workspace-view').hidden=true;el('login-view').hidden=false;el('login-password').value='';el('resource-search').value='';el('resolve-path').value='/';
  el('directory-label').textContent='根层级';el('directory-back').disabled=true;
  el('refresh-resources').disabled=false;el('refresh-tasks').disabled=false;el('refresh-workspace').disabled=false;
- el('login-submit').disabled=false;
+ el('login-submit').disabled=false;el('logout-retry').disabled=false;
  el('resources-footer').textContent='等待查询';el('tasks-footer').textContent='等待查询';
  state.binding='';state.parent=null;state.parents=[];state.resourceCursor='';state.resourceScope='';state.taskCursor='';state.category='all';state.layout='list';
  state.resourceFocus=null;state.taskFocus=null;state.tab='overview';clearError('workspace-error');
+}
+// A non-secret URL fragment retains only logout intent across normal reloads.
+// It never represents revocation, a session identifier, identity or permission.
+function logoutIntent(){return window.location?.hash==='#logout';}
+function rememberLogoutIntent(){window.history?.replaceState(null,'','#logout');}
+function clearLogoutIntent(){if(logoutIntent())window.history?.replaceState(null,'',window.location.pathname+window.location.search);}
+function setLogoutStatus(status,message=''){
+ state.logoutStatus=status;el('logout-feedback').hidden=status==='NONE';el('logout-message').textContent=message;
+ el('logout-feedback').className='logout-notice'+(status==='LOGOUT_CONFIRMED'?' confirmed':'');
+ el('logout-retry').hidden=status!=='LOGOUT_PENDING'&&status!=='LOGOUT_UNCONFIRMED';el('logout-retry').disabled=status==='LOGOUT_PENDING';
+}
+async function revokeLogout(signal){
+ const options={credentials:'same-origin',cache:'no-store',signal};
+ const response=await fetch('/api/v1/auth/logout',{...options,method:'POST'});
+ if(signal.aborted)throw stale();
+ if(response.status===204)return 'REVOKED';
+ if(response.status===401){
+  // POST denial alone is not proof of revocation. At most one read-only check;
+  // do not use api(), whose generic401 handler changes session generation.
+  const check=await fetch('/api/v1/auth/me',{...options,method:'GET'});
+  if(signal.aborted)throw stale();
+  if(check.status===401)return 'ALREADY_INVALID';
+ }
+ throw new Error('Logout not confirmed');
+}
+async function logout(){
+ if(state.logoutInFlight||state.loginInFlight)return; // One explicit attempt, no automatic retry.
+ signedOut();rememberLogoutIntent();clearError('login-error');
+ const generation=state.session,request=++state.logoutRequest,controller=new AbortController();
+ state.logoutController=controller;state.logoutInFlight=true;el('login-submit').disabled=true;
+ setLogoutStatus('LOGOUT_PENDING','正在确认服务器注销…本地管理数据已清空，尚未确认退出。');
+ let timer;
+ try{
+  const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(stale());},15000);});
+  const result=await Promise.race([revokeLogout(controller.signal),timeout]);
+  if(generation!==state.session||request!==state.logoutRequest)return;
+  clearLogoutIntent();setLogoutStatus('LOGOUT_CONFIRMED',result==='REVOKED'?'已退出登录。服务器已确认注销。':'当前会话已失效，服务器已确认无法访问；无需再次退出。');
+ }catch(error){
+  if(generation===state.session&&request===state.logoutRequest)setLogoutStatus('LOGOUT_UNCONFIRMED','注销未确认。服务器会话可能仍然有效，请重试退出登录。重新登录不会替代原会话注销。');
+ }finally{
+  clearTimeout(timer);
+  if(generation===state.session&&request===state.logoutRequest){state.logoutController=null;state.logoutInFlight=false;el('login-submit').disabled=false;el('logout-retry').disabled=false;}
+ }
 }
 function facts(id,rows){
  const list=el(id);list.replaceChildren();
@@ -100,6 +146,7 @@ async function signedIn(principal,generation=state.session){
  current(generation);
  const workspace=await api('/api/v1/admin/workspace','GET',undefined,generation);current(generation);
  if(principal.role!=='ADMIN'){const error=new Error('Admin required');error.code='ADMIN_REQUIRED';signedOut();throw error;}
+ state.logoutRequest++;state.logoutController?.abort();state.logoutController=null;state.logoutInFlight=false;setLogoutStatus('NONE');clearLogoutIntent();
  state.principal=principal;renderWorkspace(workspace,principal);el('login-view').hidden=true;el('workspace-view').hidden=false;
  clearError('login-error');window.scrollTo(0,0);selectTab('overview',false);
 }
@@ -204,17 +251,14 @@ function keyNavigation(event){
  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}
 }
 el('login-form').addEventListener('submit',async event=>{
- event.preventDefault();const loginPassword=el('login-password').value;signedOut();clearError('login-error');const generation=state.session;el('login-submit').disabled=true;
+ event.preventDefault();if(state.logoutInFlight||state.loginInFlight)return;
+ const loginPassword=el('login-password').value;signedOut();clearError('login-error');const generation=state.session;state.loginInFlight=true;el('login-submit').disabled=true;el('logout-retry').disabled=true;
  // Capture password before clearing the form at the session boundary.
  try{const p=await api('/api/v1/auth/login','POST',{login:el('login-name').value,password:loginPassword},generation);await signedIn(p,generation);}
  catch(error){if(generation===state.session){showError('login-error',error);if(error.code==='AUTH_REQUIRED')el('login-error').textContent='账号或密码不正确。';}}
- finally{if(generation===state.session){el('login-password').value='';el('login-submit').disabled=false;}}
+ finally{if(generation===state.session){state.loginInFlight=false;el('login-password').value='';el('login-submit').disabled=false;el('logout-retry').disabled=false;}}
 });
-el('logout').addEventListener('click',async()=>{
- signedOut();const generation=state.session;el('login-submit').disabled=true;
- try{await api('/api/v1/auth/logout','POST',undefined,generation);}catch(error){if(generation===state.session)showError('login-error',error);}
- finally{el('login-submit').disabled=false;}
-});
+el('logout').addEventListener('click',logout);el('logout-retry').addEventListener('click',logout);
 for(const tab of Object.keys(sections))el('nav-'+tab).addEventListener('click',()=>selectTab(tab));
 el('nav-tasks').addEventListener('click',()=>selectTab('tasks'));el('scope-global').addEventListener('click',()=>selectTab('downloads'));
 el('open-resources').addEventListener('click',()=>selectTab('resources'));el('open-my-tasks').addEventListener('click',()=>selectTab('tasks'));
@@ -242,5 +286,9 @@ el('menu-open').addEventListener('click',()=>setDrawer(true));el('menu-close').a
 document.addEventListener?.('keydown',keyNavigation);
 document.addEventListener?.('visibilitychange',()=>{if(document.visibilityState==='visible')refreshWorkspace();});
 window.addEventListener?.('focus',()=>refreshWorkspace());
+window.addEventListener?.('hashchange',()=>{if(state.logoutStatus==='LOGOUT_PENDING'||state.logoutStatus==='LOGOUT_UNCONFIRMED')rememberLogoutIntent();});
 window.addEventListener?.('resize',()=>{if(state.drawer&&window.matchMedia('(min-width:768px)').matches)setDrawer(false);});
-(async()=>{const generation=state.session;try{await signedIn(await api('/api/v1/auth/me'),generation);}catch(error){if(generation===state.session&&error.code!=='AUTH_REQUIRED')showError('login-error',error);}})();
+(async()=>{
+ if(logoutIntent()){signedOut();setLogoutStatus('LOGOUT_UNCONFIRMED','退出状态尚未确认。服务器会话可能仍然有效，请重试退出登录；本页不会自动恢复管理界面。');return;}
+ const generation=state.session;try{await signedIn(await api('/api/v1/auth/me'),generation);}catch(error){if(generation===state.session&&error.code!=='AUTH_REQUIRED')showError('login-error',error);}
+})();

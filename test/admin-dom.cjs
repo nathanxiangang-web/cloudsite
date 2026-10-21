@@ -5,7 +5,7 @@ const web=path.join(__dirname,'../internal/producthttp/web');
 const principal={user_id:'97000000-0000-4000-8000-000000000009',login:'test-admin',role:'ADMIN'};
 const descriptor={schema_version:15,mode:'ACQUISITION',bindings:[{binding_id:'97000000-0000-4000-8000-000000000001',label:'Test files'}],cloud_download_enabled:true,cloud_download_preview_enabled:true,content_access_enabled:true,sharing_enabled:true};
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
-function workspace(){
+function workspace({hash=''}={}){
  const html=fs.readFileSync(path.join(web,'index.html'),'utf8'),requests=[],events={},windowEvents={};
  let document;
  class Element{
@@ -18,8 +18,9 @@ function workspace(){
  }
  const elements=new Map(Array.from(html.matchAll(/<[^>]*\bid="([^"]+)"[^>]*>/g),m=>[m[1],new Element(m[1],m[0])]));
  document={activeElement:null,visibilityState:'visible',body:new Element('body'),getElementById(id){assert.ok(elements.has(id),'unknown DOM id '+id);return elements.get(id);},createElement(){return new Element();},addEventListener(type,fn){(events[type]||=[]).push(fn);}};
- const window={scrollTo(){},addEventListener(type,fn){(windowEvents[type]||=[]).push(fn);},matchMedia(){return{matches:true};}};
- const ctx=vm.createContext({AbortController,URLSearchParams,document,window,fetch(url,options){return new Promise((resolve,reject)=>requests.push({url,options,resolve,reject,done:false}));}});
+ const timers=new Map();let timerID=0;
+ const window={location:{hash,pathname:'/admin/',search:''},history:{replaceState(_state,_unused,url){window.location.hash=url.includes('#')?'#'+url.split('#')[1]:'';}},scrollTo(){},addEventListener(type,fn){(windowEvents[type]||=[]).push(fn);},matchMedia(){return{matches:true};}};
+ const ctx=vm.createContext({AbortController,URLSearchParams,document,window,setTimeout(callback,ms){const id=++timerID;timers.set(id,{callback,ms});return id;},clearTimeout(id){timers.delete(id);},fetch(url,options){return new Promise((resolve,reject)=>requests.push({url,options,resolve,reject,done:false}));}});
  vm.runInContext(fs.readFileSync(path.join(web,'resource-display.js'),'utf8'),ctx);
  vm.runInContext(fs.readFileSync(path.join(web,'app.js'),'utf8'),ctx);
  const run=source=>vm.runInContext(source,ctx);
@@ -32,6 +33,6 @@ function workspace(){
  }
  const click=id=>elements.get(id).listeners.click?.[0]({});
  const text=id=>{function all(n){return n.textContent+n.children.map(all).join(' ');}return all(elements.get(id));};
- return {ctx,run,html,elements,requests,events,windowEvents,document,respond,pending,drain,click,text,tick};
+ return {ctx,run,html,elements,requests,events,windowEvents,document,window,timers,respond,pending,drain,click,text,tick};
 }
 module.exports={workspace,principal,descriptor,tick,web};

@@ -115,3 +115,71 @@ test('descriptor refresh failure retains values as stale and never invents zero 
  const app=await ready();const refresh=app.run('refreshWorkspace();');app.respond(app.pending('/api/v1/admin/workspace'),{code:'READ_UNAVAILABLE'},503);await refresh;
  assert.equal(app.text('overview-bindings'),'1');assert.equal(app.text('overview-schema'),'v15');assert.match(app.text('workspace-status'),/STALE/);assert.equal(app.elements.get('workspace-error').hidden,false);
 });
+test('503/network/unexpected success keep logout explicitly unconfirmed with manual retry204',async()=>{
+ for(const failure of ['503','network','unexpected200']){
+  const app=await ready();app.ctx.page={items:[file],next_cursor:'next'};app.run('renderResources(page);resourceDetail(page.items[0]);');
+  const done=app.click('logout'),post=app.pending('/api/v1/auth/logout');
+  assert.equal(app.elements.get('workspace-view').hidden,true);assert.equal(app.text('file-id'),'');assert.equal(app.text('identity-facts'),'');assert.equal(app.window.location.hash,'#logout');
+  assert.equal(post.options.method,'POST');assert.equal(post.options.credentials,'same-origin');assert.equal(post.options.cache,'no-store');
+  if(failure==='network'){post.done=true;post.reject(Error('connection lost'));}else app.respond(post,{code:'AUTH_UNAVAILABLE'},failure==='503'?503:200);
+  await done;assert.equal(app.run('state.logoutStatus'),'LOGOUT_UNCONFIRMED');assert.match(app.text('logout-message'),/服务器会话可能仍然有效/);
+  assert.equal(app.elements.get('logout-retry').hidden,false);assert.equal(app.elements.get('logout-retry').disabled,false);assert.equal(app.elements.get('login-submit').disabled,false);
+  await tick();assert.equal(app.requests.filter(r=>r.url==='/api/v1/auth/logout').length,1); // No automatic retry.
+  const retried=app.click('logout-retry');app.respond(app.pending('/api/v1/auth/logout'),null,204);await retried;
+  assert.equal(app.run('state.logoutStatus'),'LOGOUT_CONFIRMED');assert.match(app.text('logout-message'),/服务器已确认注销/);assert.equal(app.elements.get('logout-retry').hidden,true);assert.equal(app.window.location.hash,'');assert.equal(app.timers.size,0);
+ }
+});
+test('unconfirmed logout survives reload with a valid server cookie without auth-me auto reentry',async()=>{
+ const app=await ready(),done=app.click('logout');app.respond(app.pending('/api/v1/auth/logout'),{code:'AUTH_UNAVAILABLE'},503);await done;
+ // The previous server-side session/cookie may still be valid. A normal reload
+ // retains only non-secret intent; it must not even ask /me to restore ADMIN.
+ const reloaded=workspace({hash:app.window.location.hash});await tick();
+ assert.equal(reloaded.requests.length,0);assert.equal(reloaded.elements.get('workspace-view').hidden,true);assert.match(reloaded.text('logout-message'),/不会自动恢复/);assert.equal(reloaded.elements.get('logout-retry').hidden,false);
+ reloaded.window.location.hash='#main-content';reloaded.windowEvents.hashchange[0]();assert.equal(reloaded.window.location.hash,'#logout'); // Skip-link must not erase pending logout intent.
+ const retried=reloaded.click('logout-retry');reloaded.respond(reloaded.pending('/api/v1/auth/logout'),null,204);await retried;
+ assert.equal(reloaded.run('state.logoutStatus'),'LOGOUT_CONFIRMED');assert.equal(reloaded.window.location.hash,'');
+});
+test('POST401 alone is not logout success: one GET checks already-invalid vs still-valid/unknown',async()=>{
+ for(const status of [401,200,503,'network']){
+  const app=await ready(),done=app.click('logout');app.respond(app.pending('/api/v1/auth/logout'),{code:'AUTH_REQUIRED'},401);await tick();
+  const check=app.pending('/api/v1/auth/me');assert.ok(check);assert.equal(check.options.method,'GET');
+  if(status==='network'){check.done=true;check.reject(Error('unavailable'));}else app.respond(check,status===200?principal:{code:'AUTH_REQUIRED'},status);
+  await done;assert.equal(app.run('state.logoutStatus'),status===401?'LOGOUT_CONFIRMED':'LOGOUT_UNCONFIRMED');
+  assert.equal(app.window.location.hash,status===401?'':'#logout');assert.equal(app.requests.filter(r=>r.url==='/api/v1/auth/logout').length,1);
+  assert.equal(app.requests.filter(r=>r.url==='/api/v1/auth/me').length,2);assert.equal(app.elements.get('workspace-view').hidden,true);
+  if(status===401)assert.match(app.text('logout-message'),/当前会话已失效/);
+ }
+});
+test('logout deadline is15s, only one attempt runs, timeout retains retry and late204 cannot confirm it',async()=>{
+ const app=await ready(),done=app.click('logout'),old=app.pending('/api/v1/auth/logout');
+ await app.click('logout');await app.click('logout-retry');
+ app.elements.get('login-password').value='abcdef';await app.elements.get('login-form').listeners.submit[0]({preventDefault(){}});
+ assert.equal(app.requests.filter(r=>r.url==='/api/v1/auth/logout').length,1);assert.equal(app.pending('/api/v1/auth/login'),undefined);
+ const timer=Array.from(app.timers.values())[0];assert.equal(timer.ms,15000);timer.callback();await done;
+ assert.equal(old.options.signal.aborted,true);assert.equal(app.run('state.logoutStatus'),'LOGOUT_UNCONFIRMED');
+ const retry=app.click('logout-retry');app.respond(old,null,204);await tick();assert.equal(app.run('state.logoutStatus'),'LOGOUT_PENDING');
+ app.respond(app.pending('/api/v1/auth/logout'),null,204);await retry;assert.equal(app.run('state.logoutStatus'),'LOGOUT_CONFIRMED');assert.equal(app.timers.size,0);
+});
+test('failed explicit login retains logout warning/retry; successful new login clears only intent',async()=>{
+ const app=workspace({hash:'#logout'});app.elements.get('login-name').value='admin';app.elements.get('login-password').value='abcdef';
+ const bad=app.elements.get('login-form').listeners.submit[0]({preventDefault(){}});
+ assert.equal(app.elements.get('logout-retry').disabled,true);await app.click('logout-retry');assert.equal(app.pending('/api/v1/auth/logout'),undefined);
+ app.respond(app.pending('/api/v1/auth/login'),{code:'AUTH_REQUIRED'},401);await bad;
+ assert.equal(app.run('state.logoutStatus'),'LOGOUT_UNCONFIRMED');assert.equal(app.window.location.hash,'#logout');assert.equal(app.elements.get('logout-retry').disabled,false);
+ app.elements.get('login-password').value='abcdef';const good=app.elements.get('login-form').listeners.submit[0]({preventDefault(){}});
+ app.respond(app.pending('/api/v1/auth/login'),principal);await app.drain();await good;
+ assert.equal(app.window.location.hash,'');assert.equal(app.run('state.logoutStatus'),'NONE');assert.equal(app.elements.get('workspace-view').hidden,false);
+});
+test('late logout204/401/503/network after a new login cannot clear identity, warning or controls',async()=>{
+ for(const result of [204,401,503,'network']){
+  const app=await ready(),done=app.click('logout'),old=app.pending('/api/v1/auth/logout');
+  app.run('signedOut();');assert.equal(old.options.signal.aborted,true);
+  app.elements.get('login-name').value='new-admin';app.elements.get('login-password').value='abcdef';const login=app.elements.get('login-form').listeners.submit[0]({preventDefault(){}});
+  app.respond(app.pending('/api/v1/auth/login'),{...principal,user_id:'new-id',login:'new-admin'});await tick();
+  app.respond(app.pending('/api/v1/admin/workspace'),descriptor);await login;assert.equal(old.done,false);
+  assert.equal(app.elements.get('workspace-view').hidden,false);assert.match(app.text('identity-facts'),/new-admin/);
+  if(result==='network'){old.done=true;old.reject(Error('late failure'));}else app.respond(old,null,result);
+  const reads=app.requests.filter(r=>r.url==='/api/v1/auth/me').length;
+  await done;assert.equal(app.requests.filter(r=>r.url==='/api/v1/auth/me').length,reads);assert.equal(app.elements.get('workspace-view').hidden,false);assert.match(app.text('identity-facts'),/new-admin/);assert.equal(app.run('state.logoutStatus'),'NONE');assert.equal(app.window.location.hash,'');assert.equal(app.elements.get('login-submit').disabled,false);
+ }
+});

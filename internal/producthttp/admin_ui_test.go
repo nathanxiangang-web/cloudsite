@@ -1,11 +1,57 @@
 package producthttp
 
 import (
+	"context"
 	"strings"
 	"testing"
 
 	"github.com/nathanxiangang-web/panta/internal/auth"
 )
+
+// Test-only auth port: failed revocation leaves the same session usable.
+type adminLogoutRetryAccess struct {
+	fakeAccess
+	fail    bool
+	revoked bool
+}
+
+func (a *adminLogoutRetryAccess) Logout(context.Context, string) error {
+	if a.fail {
+		return auth.ErrUnavailable
+	}
+	a.revoked = true
+	return nil
+}
+func (a *adminLogoutRetryAccess) Authenticate(ctx context.Context, token string) (auth.Principal, error) {
+	if a.revoked {
+		return auth.Principal{}, auth.ErrUnauthorized
+	}
+	return a.fakeAccess.Authenticate(ctx, token)
+}
+
+func TestAdminUI1FailedLogoutDoesNotConfirmRevocationAndExistingRouteCanRetry(t *testing.T) {
+	access := &adminLogoutRetryAccess{fakeAccess: fakeAccess{p: goodPrincipal()}, fail: true}
+	access.p.Role = auth.RoleAdmin
+	h, err := NewWorkspaceHandler(access, "http://127.0.0.1:8180", &readAccessFake{}, []DisplayBinding{workspaceBinding}, 15)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := request(h, "POST", "/api/v1/auth/logout", "", testToken, "http://127.0.0.1:8180")
+	if w.Code != 503 || len(w.Result().Cookies()) != 0 || access.revoked {
+		t.Fatal("failed logout incorrectly confirmed/cleared cookie", w.Code)
+	}
+	if me := request(h, "GET", "/api/v1/auth/me", "", testToken, ""); me.Code != 200 {
+		t.Fatal("test must retain the original valid server session", me.Code)
+	}
+	access.fail = false
+	w = request(h, "POST", "/api/v1/auth/logout", "", testToken, "http://127.0.0.1:8180")
+	if w.Code != 204 || len(w.Result().Cookies()) != 1 || w.Result().Cookies()[0].MaxAge != -1 {
+		t.Fatal("retry not confirmed", w.Code)
+	}
+	if me := request(h, "GET", "/api/v1/auth/me", "", testToken, ""); me.Code != 401 {
+		t.Fatal("revoked server session restored on reload", me.Code)
+	}
+}
 
 func TestAdminUI1DescriptorRechecksCurrentRoleAndRevokedSession(t *testing.T) {
 	access := &fakeAccess{p: goodPrincipal()}

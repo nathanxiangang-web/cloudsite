@@ -61,7 +61,56 @@ including ADMIN callers. A changed principal or role, observed401/403, or logout
 clears private rows/details/overview and aborts outstanding requests. Every response
 checks the captured session generation; list/detail request counters also fence
 out-of-order navigation/selection. A late401 from an old generation cannot log out
-a new session. Logout clears the UI immediately, even before server acknowledgement.
+a new session. Logout clears the UI immediately, but local clearing is **not**
+reported as server revocation; see the Round2 repair below.
+
+### Round2 — failed-logout repair (review5597886077)
+
+Round1 `21aa00c2fe02729800f370752cfc95c98e1728a2` / CI39577093566 passed
+automation but received **FIX REQUIRED**, not merge authorization. This same-PR
+repair changes only logout presentation/transport and its tests/evidence. Backend
+auth services, session TTL, routes, domain state and production remain unchanged.
+Final exact revision and full three-job CI receipt are recorded in the
+[PR144 handoff](https://github.com/nathanxiangang-web/cloudsite/pull/144), rather
+than a self-referential SHA embedded in that same Git commit.
+
+| Observed result | UI / next action |
+| --- | --- |
+| Explicit logout requested | Immediately clear private admin data; LOGOUT_PENDING, not a success claim |
+| POST204 | LOGOUT_CONFIRMED; show server-confirmed completion, remove retry/intent marker |
+| POST401 | At most one GET auth/me: only GET401 proves the current session already invalid; GET200/error stays unconfirmed |
+| POST503, network/decoding-independent failure, unexpected2xx, whole-attempt15s deadline | LOGOUT_UNCONFIRMED; warn **server session may still be valid**, provide enabled manual retry on login view |
+| Retry | Same existing POST logout, idempotent; one in-flight attempt; no automatic retry |
+| Ordinary reload while unconfirmed | Non-secret `#logout` intent retains warning/retry; do not call auth/me or restore ADMIN automatically |
+| Deliberate new login | Unconfirmed status/marker survives failure; clear intent only after successful authenticated admin admission, not as proof the older token was revoked |
+| Old logout response after session change | Abort + session/request fence; do not alter new identity, marker, notice or controls; no late401 probe against the new session |
+
+The15s limit covers POST and optional401 verification together. Login/retry controls
+prevent overlapping login/logout. The fragment stores **intent only**, no token,
+credential, user ID or authorization, and existing no-token-storage/CSP protections
+are unchanged. In-page hash changes (including skip-link) cannot silently discard
+pending logout intent. An unconfirmed logout is never presented as success.
+The marker is page-local, not a cross-tab revocation channel: manually discarding
+it or opening a fresh URL cannot be made equivalent to server logout while offline.
+Other sessions/tabs remain governed by the actual server session; the warning
+explicitly explains that risk.
+
+Six additional DOM methods (with failure/401/late-response subcases) cover503 and
+rejected fetch while the cookie may remain valid, manual204 retry, reload, deadline,
+401 verification, failed/new login and genuinely delayed old responses. A new
+Go HTTP test demonstrates503 leaves the same authenticated session/cookie intact,
+then existing-route204 clears it and subsequent auth/me returns401, using a test
+auth port. It does not change the real auth implementation.
+
+Rendered browser check used explicit `node test/admin-preview.cjs --logout-review`:
+synthetic first POST503, server still logically signed in; reload with retained
+marker issues **zero new auth/me requests**; clicking retry yields the second and
+only additional POST204. Reload after confirmation stays signed out. This is a
+loopback-only fixture, not a real account or production logout.
+
+![Unconfirmed logout with manual retry — synthetic fixture](design/admin-ui1/logout-unconfirmed.jpg)
+
+![Server-confirmed logout — synthetic fixture](design/admin-ui1/logout-confirmed.jpg)
 
 Focus/visibility return and navigation/explicit refresh revalidate authorization;
 there is **no server-push role/session revocation notification**. The client cannot
@@ -78,16 +127,18 @@ Escape restores the trigger focus. No framework or inline script bypasses CSP.
 Executed on this candidate, not inferred from baseline CI:
 
 - Windows Node: `node --test test/resource-display.test.cjs test/file-library.test.cjs test/cloud-download.test.cjs test/admin-ui.test.cjs`
-  — **71 passed,0 failed,0 skipped**;14 new admin scenarios, existing consumer
+  — **77 passed,0 failed,0 skipped**;20 admin scenarios (14 UI-1 +6 Round2), existing consumer
   playback/share/download/login/deletion-view regressions retained.
 - .50 isolated Go1.27.1 container: `go test ./... -count=1`,
   `go test -race ./... -count=1`, `go vet ./...`,
   `go build ./cmd/panta ./cmd/panta-db ./cmd/panta-staging` — exit0.
-  Architecture import guard is included in full unit/race runs.
-- .50 owned disposable PostgreSQL16 and18, separate network-none containers and
+  Architecture import guard is included in full unit/race runs. Rerun for Round2.
+- Round1 standalone .50 disposable PostgreSQL16 and18, separate network-none containers and
   tmpfs databases. PG16 `go test ./internal/store/postgres -run 'Test(Postgres|GateZero)' -count=1`
   — PASS15.788s; PG18 `-run TestPostgres` — PASS16.515s. No production database,
-  provider connection or real OpenList instance used.
+  provider connection or real OpenList instance used. These standalone timings
+  are retained Round1 evidence, not a claimed Round2 rerun. Current candidate
+  PG16/18 controlled integration/migration evidence comes from its exact-head CI.
 - New Go HTTP tests verify fresh role downgrade/regrant/revocation, no-store/
   redaction, nine static destinations, consumer asset separation and absence of
   future admin read/write routes. Existing product tests prove cross-owner ADMIN
