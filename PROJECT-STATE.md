@@ -4,7 +4,23 @@
 
 ## Current phase
 
-### Current planning priority — Admin Console D-066 / Issue #141 (DESIGN ONLY)
+### Current execution — Admin UI-1 / Issue #143 (implementation candidate; not deployed)
+
+2026-10-21: D-066 design PR #142 merged at exact main
+`25eb7e28a12f452979a52e74cd3767f149f5df53`; its post-merge CI
+[39570998775](https://github.com/nathanxiangang-web/cloudsite/actions/runs/39570998775)
+was independently checked: all three jobs SUCCESS. Issue #141 is closed.
+[Issue #143](https://github.com/nathanxiangang-web/cloudsite/issues/143) authorizes
+one unmerged UI-1 PR only. The candidate adds nine-destination admin navigation,
+responsive drawer, descriptor-only overview, existing Q4/Q5 resources and separate
+owner-only My Tasks. Missing admin-wide APIs stay NOT_CONNECTED. See
+[UI-1 handoff](docs/PRODUCT-ADMIN-UI1-ACCEPTANCE.md) for actual tests and limitations.
+This is not Architect acceptance, merge, deployment, UI-2 authorization or a new
+production observation. D-065 / #139 stays PAUSED; schema15, provider/IndexCore,
+consumer routes, auth TTL and quota policy are untouched. D-064 below is retained
+as its dated historical production evidence, not re-verified by UI-1.
+
+### Historical planning priority — Admin Console D-066 / Issue #141 (DESIGN ONLY at creation)
 
 2026-10-20: Human deferred private-user-space Stage A implementation. Issue #139 is now **PAUSED / execution authorization suspended**; keep D-065 and parent Issue #138 as backlog, not underway. Current requested priority is a Chinese management UI and functional product blueprint ([Issue #141](https://github.com/nathanxiangang-web/cloudsite/issues/141), [admin specification](docs/PRODUCT-ADMIN-CONSOLE-BLUEPRINT.md), [offline mock UI](docs/design/CLOUDSITE-ADMIN-UI-PROTOTYPE.html)). D-066 is **proposed**, no admin code, schema/API/provider/IndexCore change or deployment. Existing `/admin` is ADMIN-only for workspace info but still reads only the caller's tasks and ordinary canonical resources; no admin-wide user/job/health/audit/mutation APIs. Existing operation count/concurrency remains; no per-user GB capacity. D-064 production verified snapshot below is unchanged by this new design request.
 

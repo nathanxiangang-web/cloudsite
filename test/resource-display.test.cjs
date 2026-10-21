@@ -60,6 +60,12 @@ test('late Q5 detail cannot overwrite a changed scope or ended session',async()=
  for(const transition of ['clearResources();', 'signedOut();']){
   const app=workspace();app.run("state.binding='binding-one';");app.elements.get('resolve-path').value='/secret.md';
   const pending=app.elements.get('resolve-form').listeners.submit[0]({preventDefault(){}});
+  // The admin shell now revalidates server-side RoleAdmin and current identity
+  // before using ordinary product read APIs. Preserve the late-Q5 assertion.
+  app.requests.find(r=>r.url==='/api/v1/admin/workspace').resolve({ok:true,status:200,json:async()=>({bindings:[]})});
+  await new Promise(resolve=>setImmediate(resolve));
+  app.requests.filter(r=>r.url==='/api/v1/auth/me').at(-1).resolve({ok:true,status:200,json:async()=>({user_id:'admin',login:'admin',role:'ADMIN'})});
+  await new Promise(resolve=>setImmediate(resolve));
   const request=app.requests.find(r=>r.url.startsWith('/api/v1/resources/resolve?'));assert.ok(request);
   app.run(transition);request.resolve({ok:true,status:200,json:async()=>file('PRIVATE.md',{presence:'PRESENT'})});await pending;
   assert.equal(app.elements.get('file-detail').hidden,true);assert.equal(app.elements.get('file-title').textContent,'');
