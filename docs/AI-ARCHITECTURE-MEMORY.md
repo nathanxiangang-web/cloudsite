@@ -1,5 +1,16 @@
 # cloudsite — AI Architecture Memory
 
+**Current execution (2026-10-21):** D-066 design PR #142 accepted/merged at
+`25eb7e28a12f452979a52e74cd3767f149f5df53`; baseline main CI39570998775
+independently verified all3 SUCCESS. Issue141 closed. **Issue143 UI-1 candidate**
+implements admin-only shell/navigation, descriptor overview, existing paged Q4/Q5
+and owner-only My Tasks; see [handoff](PRODUCT-ADMIN-UI1-ACCEPTANCE.md).
+Future admin APIs/health/global counts remain NOT_CONNECTED. Candidate is not
+Architect-accepted, merged or deployed. One branch/one unmerged PR; stop for review.
+No consumer-controller, schema15, auth TTL, quota, provider, IndexCore or production
+change. UI-2/3/4 remain unauthorized. **D-065 / #139 remains PAUSED.** Older design
+and live blocks below are dated history, not the current execution pointer.
+
 **Latest user priority (2026-10-20; DESIGN ONLY):** Website Admin UI/management feature blueprint [Issue #141](https://github.com/nathanxiangang-web/cloudsite/issues/141), [proposed D-066](DECISIONS.md) and [management UI spec](PRODUCT-ADMIN-CONSOLE-BLUEPRINT.md). Earlier private-user-space Stage A [Issue #139](https://github.com/nathanxiangang-web/cloudsite/issues/139) is **PAUSED by user, authorization suspended**; D-065 remains in Git and parent #138 stays open for later resumption only after a fresh explicit human instruction. Current `/admin/` is ADMIN-gated but only offers read-only resources and own tasks; no admin-wide data, provider status, audit or mutating admin API may be claimed. The new static prototype is offline mock data, not deployed. NO personal storage GB limits, no code/production/provider/IndexCore changes. The D-064 live status pointer below remains true and independent of design priority.
 
 **New proposal (2026-10-20, DESIGN ONLY; no deployment):** User requested private 115-backed CloudSite folders and corrected earlier capacity assumption: **NO personal 520G quota, user usage balances or user byte cap**. The prior 520G is only a shared-account global reference, not a verified total/hard gate. Pinned 115driver v1.3.5 exposes `GetInfo()` for actual **account-level** all_total/all_use/all_remain; only SDK source was checked, no real account API invoked. See [Issue #138](https://github.com/nathanxiangang-web/cloudsite/issues/138), [proposed D-065](DECISIONS.md#d-065--private-cloudsite-user-folders-server-side-ownership-and-no-per-user-storage-quota-proposed) and [private-cloud blueprint](PRODUCT-PRIVATE-CLOUD-SPACES.md). One real folder per verified UUID/login label, server-side private-file ACL and gated single-file physical deletion; legacy files remain unclaimed and the ordinary public library stays unchanged. This is a **docs-only PR proposal**, not accepted implementation, live mkdir, migration, new provider call, role bypass, IndexCore write or production authorization. Gate A (mock/schema only) may be planned under a separate bounded Issue after design review; user capacity metrics are OUT OF SCOPE. Current D-064 live product pointer below remains the running system of record.

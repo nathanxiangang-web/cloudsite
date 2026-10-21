@@ -1667,7 +1667,17 @@ The user explicitly canceled *per-user storage capacity*: there will be no indiv
 
 Implementation order: (A) append-only user-space ownership/mapping state and mock provider contracts; (B) backend cross-user ACL including Q4/Q5/Q6/content/preview/302/anonymous share redemption **before enabling new private downloads**; (C) server-frozen native 115 saveDirID and canonical UserSpace target, original Worker/Manifest semantics and same-info_hash conflict handling; (D) independently authorized one-file physical deletion with native file/parent proof, durable idempotent ledger and IndexCore Q8 confirmation; (E) staged multi-user evidence and rollout. No live mkdir, file delete, migration, source move, provider restart, new acquisition or deploy was performed for this decision. Each implementation gate needs its own Issue/branch/PR and review before merging.
 
-## D-066 — Website admin management console UI & functional blueprint (PROPOSED; NOT IMPLEMENTED)
+## D-066 — Website admin management console UI & functional blueprint (DESIGN ACCEPTED; UI-1 CANDIDATE)
+
+2026-10-21: [PR #142](https://github.com/nathanxiangang-web/cloudsite/pull/142)
+accepted/merged at `25eb7e28a12f452979a52e74cd3767f149f5df53`;
+main CI39570998775 all3 SUCCESS independently verified. Issue141 closed;
+[Issue143](https://github.com/nathanxiangang-web/cloudsite/issues/143) authorizes
+bounded UI-1 implementation using existing authenticated APIs, not new admin-wide
+services. Candidate shell, overview/resources/own-task views and tests are described
+in [UI-1 handoff](PRODUCT-ADMIN-UI1-ACCEPTANCE.md); not yet Architect-accepted,
+merged or deployed. UI-2/3/4 and paused D-065 remain outside this authorization.
+The following paragraph records the original design proposal, not a current block.
 
 2026-10-20, [Issue #141](https://github.com/nathanxiangang-web/cloudsite/issues/141): user explicitly deferred private UserSpace / D-065 Stage A coding until later; [#139](https://github.com/nathanxiangang-web/cloudsite/issues/139) execution authorization is **PAUSED/SUSPENDED** and prior approval to start is superseded. Preserve #138/#139 and all D-065 design, but perform **website management UI and feature blueprint first**. No UserSpace code, migrations, provider calls or private deletion authorized.
 
