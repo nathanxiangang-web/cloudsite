@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nathanxiangang-web/panta/internal/adminread"
 	"github.com/nathanxiangang-web/panta/internal/auth"
 	"github.com/nathanxiangang-web/panta/internal/fileaccess"
 	"github.com/nathanxiangang-web/panta/internal/fileshare"
@@ -18,6 +19,7 @@ import (
 
 type WorkspaceOption func(*workspaceOptions)
 type workspaceOptions struct {
+	adminReads    adminread.Reads
 	sourcePreview *SourcePreviewConfig
 	cloud         *cloudDownloadOptions
 	registration  bool

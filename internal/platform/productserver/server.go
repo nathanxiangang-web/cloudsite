@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/nathanxiangang-web/panta/internal/adminread"
 	"github.com/nathanxiangang-web/panta/internal/auth"
 	"github.com/nathanxiangang-web/panta/internal/fileaccess"
 	"github.com/nathanxiangang-web/panta/internal/filecache"
@@ -151,7 +152,21 @@ func Run(ctx context.Context, action, configFile, userFile string, policies ...c
 		cancel()
 		return ErrStartup
 	}
-	var options []producthttp.WorkspaceOption
+	adminRepo, err := postgres.NewAdminReadRepository(pool)
+	if err != nil {
+		cancel()
+		return ErrStartup
+	}
+	adminBindings := make([]string, len(bindings))
+	for i, id := range bindings {
+		adminBindings[i] = string(id)
+	}
+	adminReads, err := adminread.NewService(adminRepo, adminBindings)
+	if err != nil {
+		cancel()
+		return ErrStartup
+	}
+	options := []producthttp.WorkspaceOption{producthttp.WithAdminReads(adminReads)}
 	if cfg.CloudDownloadPreview != nil {
 		options = append(options, producthttp.WithCloudSourcePreview(*cfg.CloudDownloadPreview))
 	}

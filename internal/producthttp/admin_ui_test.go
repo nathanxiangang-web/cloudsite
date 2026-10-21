@@ -106,7 +106,7 @@ func TestAdminUI1ShellIsIsolatedAndFutureAdminRoutesRemainAbsent(t *testing.T) {
 			t.Fatal("admin assets leaked into consumer", entry)
 		}
 	}
-	for _, name := range []string{"users", "overview", "downloads", "storage", "indexcore", "shares", "audit", "commands/reset"} {
+	for _, name := range []string{"overview", "storage", "indexcore", "shares", "audit", "commands/reset"} {
 		for _, method := range []string{"GET", "POST", "DELETE"} {
 			w := request(h, method, "/api/v1/admin/"+name, "{}", testToken, "http://127.0.0.1:8180")
 			if w.Code != 404 && w.Code != 405 {

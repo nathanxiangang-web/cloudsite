@@ -24,7 +24,7 @@ jobs:
       - name: Unit and contract tests
         run: go test ./... -count=1
       - name: Pure resource presentation tests
-        run: node --test test/resource-display.test.cjs test/file-library.test.cjs test/cloud-download.test.cjs test/admin-ui.test.cjs
+        run: node --test test/resource-display.test.cjs test/file-library.test.cjs test/cloud-download.test.cjs test/admin-ui.test.cjs test/admin-ui2a.test.cjs
       - name: Owned readonly service safety tests
         run: python3 -m unittest discover -s test -p 'readonly_catalog_service_test.py' -v
       - name: cloudsite release deployment safety tests
@@ -141,6 +141,16 @@ jobs:
       - name: Build pinned external IndexCore
         working-directory: .gate1-indexcore
         run: go build -o "$PANTA_GATE1_INDEXCORE_BINARY" ./cmd/indexcore
+      - name: Create isolated admin read projection database
+        shell: bash
+        run: >-
+          docker exec "${{ job.services.postgres.id }}"
+          psql -U panta -d indexcore_e2e -v ON_ERROR_STOP=1
+          -c "CREATE DATABASE panta_admin_test"
+      - name: PostgreSQL 18 admin read isolation and keyset regression
+        env:
+          PANTA_TEST_DATABASE_URL: postgres://panta:panta_e2e@127.0.0.1:5432/panta_admin_test?sslmode=disable
+        run: go test ./internal/store/postgres -run TestPostgresAdmin -count=1 -v
       - name: Run controlled observation E2E
         run: go test ./test/e2e/observation -run TestControlledObservation -count=1 -v
       - name: Create separate Gate 3.8 observation-hint database

@@ -3,9 +3,9 @@
 const el = id => document.getElementById(id);
 const sections = {
  overview:['工作台总览','以明确的数据来源，理解已接入能力与尚缺的证据。'],
- users:['用户管理','全站用户只读聚合与账号管理将在后续阶段接入。','用户管理只读接口尚未接入；当前身份不代表全站用户信息。','用户管理 · 尚未接入'],
+ users:['用户管理','全站产品账号的分页只读列表；账号变更操作尚未接入。'],
  resources:['资源中心','查看配置 allowlist 内的规范资源、目录与 Copy；分类和搜索仅作用于当前页。'],
- downloads:['云下载与任务','全站任务尚未接入；“我的任务”只读取当前登录者的持久任务。'],
+ downloads:['云下载与任务','全站已归属任务与“我的任务”分开读取；查询不发起下载或改变任务状态。'],
  storage:['存储与连接','连接运行状态、原生会话与存储映射聚合尚未接入。','总览仅提供配置 Binding 别名，不证明凭据有效或网盘在线。','连接管理 · 尚未接入'],
  indexcore:['IndexCore 观测','物理事实仍由 IndexCore 负责；本页尚无运行诊断聚合接口。','Q4/Q5 资源读取已在资源中心接入；Root 健康、Q8 游标与诊断未接入。','运行诊断 · 尚未接入'],
  shares:['分享管理','全站分享的脱敏概览尚未接入。','不读取或兑换他人的分享 token、保护码或签名地址。前台已有分享功能不受影响。','分享管理 · 尚未接入'],
@@ -28,7 +28,7 @@ async function api(path,method='GET',body,generation=state.session){
  current(generation);
  if(response.status===204)return null;
  // Authorization invalidates private views even when a proxy returns non-JSON.
- if(response.status===401||(response.status===403&&path==='/api/v1/admin/workspace')){
+ if(response.status===401||(response.status===403&&path.startsWith('/api/v1/admin/'))){
   const error=new Error('Authorization ended');error.code=response.status===401?'AUTH_REQUIRED':'ADMIN_REQUIRED';
   if(method==='GET'){signedOut();showError('login-error',error);}throw error;
  }
@@ -50,7 +50,7 @@ function signedOut(){
  state.logoutRequest++;state.logoutController?.abort();state.logoutController=null;state.logoutInFlight=false;state.loginInFlight=false;
  if(state.logoutStatus==='LOGOUT_PENDING')setLogoutStatus('LOGOUT_UNCONFIRMED','注销未确认。服务器会话可能仍然有效，请重试退出登录。');
  state.session++;state.controller.abort();state.controller=new AbortController();state.resourceRequest++;state.taskRequest++;state.workspaceRequest++;
- state.principal=null;state.workspace=null;clearResources();clearTasks();setDrawer(false,false);
+ state.principal=null;state.workspace=null;clearResources();clearTasks();adminLists.reset();setDrawer(false,false);
  for(const id of ['user-login','user-role','avatar','schema','binding-select','workspace-facts','identity-facts','overview-binding-list'])el(id).replaceChildren();
  for(const id of ['overview-schema','overview-bindings'])el(id).textContent='—';
  el('workspace-observed').textContent='尚未读取';el('workspace-status').textContent='等待查询';
@@ -203,6 +203,7 @@ async function loadResources(){
 }
 const manifestLabels={PENDING:'等待激活',ACTIVE:'执行中',AWAITING_VISIBILITY:'等待观察',AWAITING_CANONICAL:'等待规范确认',READY:'READY',FAILED:'失败',RECOVERY_REQUIRED:'需人工恢复',CANCELED:'已取消'};
 function dateText(value){const d=new Date(value);return value&&Number.isFinite(d.getTime())?d.toLocaleString():'未提供';}
+const adminLists=AdminLists.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,onError:error=>showError('workspace-error',error),dateText,cell,badge,ownerSelected:id=>{el('admin-user-filter').value=id;adminLists.downloads.owner=id;adminLists.downloads.cursor='';selectTab('downloads');}});
 function renderTasks(page){
  el('task-rows').replaceChildren();
  for(const item of page.items){const row=document.createElement('tr'),button=document.createElement('button');button.type='button';button.className='file-button';button.textContent=item.manifest_id.slice(0,8)+'…';button.title=item.manifest_id;button.addEventListener('click',()=>taskDetail(item.manifest_id));cell(row).append(button);
@@ -229,15 +230,15 @@ async function taskDetail(id){
 // Local navigation does not invent routes or request future backend endpoints.
 function selectTab(tab,probe=true){
  const own=tab==='tasks',section=own?'downloads':tab;if(!sections[section])return;
- state.resourceRequest++;state.taskRequest++;state.detailRequest++;closeResourceDetail();closeTaskDetail();state.tab=tab;setDrawer(false,false);
- for(const id of ['overview','resources','downloads'])el(id+'-panel').hidden=section!==id;
+ state.resourceRequest++;state.taskRequest++;state.detailRequest++;adminLists.invalidate();closeResourceDetail();closeTaskDetail();state.tab=tab;setDrawer(false,false);
+ for(const id of ['overview','users','resources','downloads'])el(id+'-panel').hidden=section!==id;
  const planned=Boolean(sections[section][2]);el('planned-panel').hidden=!planned;
  for(const name of Object.keys(sections)){el('nav-'+name).classList.toggle('selected',section===name);el('nav-'+name).setAttribute('aria-current',section===name?'page':'false');}
  el('tasks-panel').hidden=!own;el('global-tasks-placeholder').hidden=own;el('nav-tasks').setAttribute('aria-pressed',String(own));el('scope-global').setAttribute('aria-pressed',String(!own));
  el('page-title').textContent=own?'我的任务':sections[section][0];el('page-caption').textContent=own?'云下载与任务 / 我的任务':sections[section][0];el('page-subtitle').textContent=sections[section][1];
  if(planned){el('planned-title').textContent=sections[section][0]+' · 尚未接入';el('planned-description').textContent=sections[section][2];el('planned-action').textContent=sections[section][3];}
  clearError('workspace-error');if(probe){el('main-content').focus({preventScroll:true});window.scrollTo(0,0);}
- if(tab==='resources')loadResources();else if(own)loadTasks();else if(probe)refreshWorkspace();
+ if(tab==='users')adminLists.users.load();else if(tab==='downloads')adminLists.downloads.load();else if(tab==='resources')loadResources();else if(own)loadTasks();else if(probe)refreshWorkspace();
 }
 function setDrawer(open,returnFocus=true){
  state.drawer=open;el('sidebar').classList.toggle('drawer-open',open);el('menu-backdrop').hidden=!open;
@@ -263,6 +264,12 @@ for(const tab of Object.keys(sections))el('nav-'+tab).addEventListener('click',(
 el('nav-tasks').addEventListener('click',()=>selectTab('tasks'));el('scope-global').addEventListener('click',()=>selectTab('downloads'));
 el('open-resources').addEventListener('click',()=>selectTab('resources'));el('open-my-tasks').addEventListener('click',()=>selectTab('tasks'));
 el('refresh-workspace').addEventListener('click',()=>refreshWorkspace());
+el('refresh-users').addEventListener('click',()=>{clearError('workspace-error');return adminLists.users.refresh();});
+el('more-users').addEventListener('click',()=>adminLists.users.more());
+el('refresh-admin-downloads').addEventListener('click',()=>{clearError('workspace-error');return adminLists.downloads.refresh();});
+el('more-admin-downloads').addEventListener('click',()=>adminLists.downloads.more());
+el('admin-filter-form').addEventListener('submit',event=>{event.preventDefault();clearError('workspace-error');return adminLists.downloads.filter(el('admin-user-filter').value.trim());});
+el('admin-filter-clear').addEventListener('click',()=>{el('admin-user-filter').value='';clearError('workspace-error');return adminLists.downloads.filter('');});
 el('binding-select').addEventListener('change',()=>{
  const id=el('binding-select').value;if(!state.workspace?.bindings.some(b=>b.binding_id===id))return;
  state.binding=id;state.parent=null;state.parents=[];state.resourceCursor='';el('resource-search').value='';el('directory-label').textContent='根层级';el('directory-back').disabled=true;loadResources();
