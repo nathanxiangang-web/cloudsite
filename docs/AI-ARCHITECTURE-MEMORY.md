@@ -1,15 +1,16 @@
 # cloudsite — AI Architecture Memory
 
-**Current execution (2026-10-21):** D-066 design PR #142 accepted/merged at
-`25eb7e28a12f452979a52e74cd3767f149f5df53`; baseline main CI39570998775
-independently verified all3 SUCCESS. Issue141 closed. **Issue143 UI-1 candidate**
-implements admin-only shell/navigation, descriptor overview, existing paged Q4/Q5
-and owner-only My Tasks; see [handoff](PRODUCT-ADMIN-UI1-ACCEPTANCE.md).
-Future admin APIs/health/global counts remain NOT_CONNECTED. Candidate is not
-Architect-accepted, merged or deployed. One branch/one unmerged PR; stop for review.
-No consumer-controller, schema15, auth TTL, quota, provider, IndexCore or production
-change. UI-2/3/4 remain unauthorized. **D-065 / #139 remains PAUSED.** Older design
-and live blocks below are dated history, not the current execution pointer.
+**Current execution (2026-10-21):** UI-1 PR #144 merged at authorized baseline
+`09a53df34de6731b09eb78f3d22db72d2ff53f2c`; merged-main CI39588808706
+independently verified all3 SUCCESS. Issue143 closed. **Issue145 UI-2A candidate**
+adds independent `adminread` ports/projections, read-only PostgreSQL keyset joins,
+fresh server-side ADMIN routes and users/global-owned-download list panels.
+See [handoff](PRODUCT-ADMIN-UI2A-ACCEPTANCE.md). Existing owner-only APIs are not
+cross-user admin APIs and remain unchanged. Counts/health/audit/writes remain
+unconnected. Candidate is not Architect-accepted, merged or deployed. One branch,
+one unmerged PR; stop for review. No consumer-controller, schema15, auth TTL, quota,
+provider, IndexCore or production change. UI-2B/3/4 remain unauthorized.
+**D-065 / #139 remains PAUSED.** Older design/live blocks below are dated history.
 
 **Latest user priority (2026-10-20; DESIGN ONLY):** Website Admin UI/management feature blueprint [Issue #141](https://github.com/nathanxiangang-web/cloudsite/issues/141), [proposed D-066](DECISIONS.md) and [management UI spec](PRODUCT-ADMIN-CONSOLE-BLUEPRINT.md). Earlier private-user-space Stage A [Issue #139](https://github.com/nathanxiangang-web/cloudsite/issues/139) is **PAUSED by user, authorization suspended**; D-065 remains in Git and parent #138 stays open for later resumption only after a fresh explicit human instruction. Current `/admin/` is ADMIN-gated but only offers read-only resources and own tasks; no admin-wide data, provider status, audit or mutating admin API may be claimed. The new static prototype is offline mock data, not deployed. NO personal storage GB limits, no code/production/provider/IndexCore changes. The D-064 live status pointer below remains true and independent of design priority.
 

@@ -1,5 +1,11 @@
 # Admin UI-1 — implementation and review handoff
 
+**Historical handoff:** UI-1 PR144 is now merged at
+`09a53df34de6731b09eb78f3d22db72d2ff53f2c`; merged-main CI39588808706 all3
+SUCCESS independently verified before Issue145. Candidate-era evidence below is
+preserved, not the current execution status. Current work is the separate
+[UI-2A candidate](PRODUCT-ADMIN-UI2A-ACCEPTANCE.md), not a UI-1 redeployment.
+
 2026-10-21 · Issue [143](https://github.com/nathanxiangang-web/cloudsite/issues/143)
 · D-066 · **candidate for Architect review, NOT merged or deployed**.
 

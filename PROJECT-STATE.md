@@ -4,21 +4,21 @@
 
 ## Current phase
 
-### Current execution — Admin UI-1 / Issue #143 (implementation candidate; not deployed)
+### Current execution — Admin UI-2A / Issue #145 (implementation candidate; not deployed)
 
-2026-10-21: D-066 design PR #142 merged at exact main
-`25eb7e28a12f452979a52e74cd3767f149f5df53`; its post-merge CI
-[39570998775](https://github.com/nathanxiangang-web/cloudsite/actions/runs/39570998775)
-was independently checked: all three jobs SUCCESS. Issue #141 is closed.
-[Issue #143](https://github.com/nathanxiangang-web/cloudsite/issues/143) authorizes
-one unmerged UI-1 PR only. The candidate adds nine-destination admin navigation,
-responsive drawer, descriptor-only overview, existing Q4/Q5 resources and separate
-owner-only My Tasks. Missing admin-wide APIs stay NOT_CONNECTED. See
-[UI-1 handoff](docs/PRODUCT-ADMIN-UI1-ACCEPTANCE.md) for actual tests and limitations.
-This is not Architect acceptance, merge, deployment, UI-2 authorization or a new
-production observation. D-065 / #139 stays PAUSED; schema15, provider/IndexCore,
-consumer routes, auth TTL and quota policy are untouched. D-064 below is retained
-as its dated historical production evidence, not re-verified by UI-1.
+2026-10-21: UI-1 PR #144 is merged at authorized baseline
+`09a53df34de6731b09eb78f3d22db72d2ff53f2c`; merged-main CI
+[39588808706](https://github.com/nathanxiangang-web/cloudsite/actions/runs/39588808706)
+was independently checked: all three jobs SUCCESS. Issue #143 is closed.
+[Issue #145](https://github.com/nathanxiangang-web/cloudsite/issues/145) authorizes
+one unmerged UI-2A PR: separate provider-neutral admin read ports, paged users and
+owned Manifest/Job projections, fresh RoleAdmin HTTP enforcement, and two real
+admin list panels. Owner-only My Tasks is unchanged. See
+[UI-2A handoff](docs/PRODUCT-ADMIN-UI2A-ACCEPTANCE.md) for contracts, tests and gaps.
+This candidate is not Architect acceptance, merge, deployment or UI-2B/3/4
+authorization. D-065 / #139 stays PAUSED; schema15, provider/IndexCore, consumer
+controllers, auth TTL and quota policy are untouched. No production observation
+was performed for UI-2A. Historical live records below are not re-verification.
 
 ### Historical planning priority — Admin Console D-066 / Issue #141 (DESIGN ONLY at creation)
 
