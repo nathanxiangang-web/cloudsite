@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/nathanxiangang-web/panta/internal/adminobserve"
 	"github.com/nathanxiangang-web/panta/internal/adminread"
 	"github.com/nathanxiangang-web/panta/internal/auth"
 	"github.com/nathanxiangang-web/panta/internal/fileaccess"
@@ -19,6 +20,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/fileshare"
 	"github.com/nathanxiangang-web/panta/internal/integrations/indexcore"
 	openlistcontent "github.com/nathanxiangang-web/panta/internal/integrations/openlist/content"
+	"github.com/nathanxiangang-web/panta/internal/platform/adminindex"
 	"github.com/nathanxiangang-web/panta/internal/platform/bootstrap"
 	"github.com/nathanxiangang-web/panta/internal/platform/config"
 	"github.com/nathanxiangang-web/panta/internal/product"
@@ -167,6 +169,26 @@ func Run(ctx context.Context, action, configFile, userFile string, policies ...c
 		return ErrStartup
 	}
 	options := []producthttp.WorkspaceOption{producthttp.WithAdminReads(adminReads)}
+	observeRepo, err := postgres.NewAdminObserveRepository(pool)
+	if err != nil {
+		cancel()
+		return ErrStartup
+	}
+	rootReader, err := adminindex.New(index)
+	if err != nil {
+		cancel()
+		return ErrStartup
+	}
+	displays := make([]adminobserve.Display, len(cfg.Bindings))
+	for i, b := range cfg.Bindings {
+		displays[i] = adminobserve.Display{BindingID: string(b.ID), Label: b.Label}
+	}
+	observation, err := adminobserve.NewService(observeRepo, rootReader, displays)
+	if err != nil {
+		cancel()
+		return ErrStartup
+	}
+	options = append(options, producthttp.WithAdminObservation(observation))
 	if cfg.CloudDownloadPreview != nil {
 		options = append(options, producthttp.WithCloudSourcePreview(*cfg.CloudDownloadPreview))
 	}

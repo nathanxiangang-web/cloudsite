@@ -4,21 +4,19 @@
 
 ## Current phase
 
-### Current execution — Admin UI-2A / Issue #145 (implementation candidate; not deployed)
+### Current execution — Admin UI-2B / Issue #147 (implementation candidate; not deployed)
 
-2026-10-21: UI-1 PR #144 is merged at authorized baseline
-`09a53df34de6731b09eb78f3d22db72d2ff53f2c`; merged-main CI
-[39588808706](https://github.com/nathanxiangang-web/cloudsite/actions/runs/39588808706)
-was independently checked: all three jobs SUCCESS. Issue #143 is closed.
-[Issue #145](https://github.com/nathanxiangang-web/cloudsite/issues/145) authorizes
-one unmerged UI-2A PR: separate provider-neutral admin read ports, paged users and
-owned Manifest/Job projections, fresh RoleAdmin HTTP enforcement, and two real
-admin list panels. Owner-only My Tasks is unchanged. See
-[UI-2A handoff](docs/PRODUCT-ADMIN-UI2A-ACCEPTANCE.md) for contracts, tests and gaps.
-This candidate is not Architect acceptance, merge, deployment or UI-2B/3/4
-authorization. D-065 / #139 stays PAUSED; schema15, provider/IndexCore, consumer
-controllers, auth TTL and quota policy are untouched. No production observation
-was performed for UI-2A. Historical live records below are not re-verification.
+2026-10-22 (Asia/Shanghai): UI-2A PR146 is verified MERGED at authorized baseline
+`a645e90229b71209f9a6036f25583113df9f1281`; merged-main CI39639475953 all3
+SUCCESS checked. Issue145 is closed per Architect closeout. Issue147 authorizes
+one UI-2B PR: provider-neutral configuration projections for configured Bindings
+and Connections, plus manual single-root Q9 evidence. ACTIVE means configured,
+not online; native115 session/capacity and OpenList/Q8 freshness stay unchecked.
+See [UI-2B handoff](docs/PRODUCT-ADMIN-UI2B-ACCEPTANCE.md) for contracts and evidence.
+Candidate is not Architect acceptance, merge or deployment. UI-3/4 and private
+UserSpace139 remain unauthorized/PAUSED. Schema15, consumer controllers,
+UI-2A owner boundaries, auth TTL, quota, providers and IndexCore implementation
+are unchanged. Historical live records below are not new production verification.
 
 ### Historical planning priority — Admin Console D-066 / Issue #141 (DESIGN ONLY at creation)
 

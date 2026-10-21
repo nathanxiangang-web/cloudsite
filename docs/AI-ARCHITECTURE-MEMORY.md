@@ -1,16 +1,16 @@
 # cloudsite — AI Architecture Memory
 
-**Current execution (2026-10-21):** UI-1 PR #144 merged at authorized baseline
-`09a53df34de6731b09eb78f3d22db72d2ff53f2c`; merged-main CI39588808706
-independently verified all3 SUCCESS. Issue143 closed. **Issue145 UI-2A candidate**
-adds independent `adminread` ports/projections, read-only PostgreSQL keyset joins,
-fresh server-side ADMIN routes and users/global-owned-download list panels.
-See [handoff](PRODUCT-ADMIN-UI2A-ACCEPTANCE.md). Existing owner-only APIs are not
-cross-user admin APIs and remain unchanged. Counts/health/audit/writes remain
-unconnected. Candidate is not Architect-accepted, merged or deployed. One branch,
-one unmerged PR; stop for review. No consumer-controller, schema15, auth TTL, quota,
-provider, IndexCore or production change. UI-2B/3/4 remain unauthorized.
-**D-065 / #139 remains PAUSED.** Older design/live blocks below are dated history.
+**Current execution (2026-10-22, Asia/Shanghai):** UI-2A PR146 verified merged at
+`a645e90229b71209f9a6036f25583113df9f1281`; merged-main CI39639475953 all3 SUCCESS
+checked. Issue145 closed per Architect. **Issue147 UI-2B candidate** adds a separate
+adminobserve domain/ports, bounded read-only storage projections and manual scoped
+IndexCore Q9 observation via the accepted RootStatusReadPort. Server resolves the
+Root, rechecks mapping after Q9, validates identity/state/counters and redacts all
+errors. Configuration ACTIVE is not online; Q9 evidence is not freshness/Q8/115
+health. See [handoff](PRODUCT-ADMIN-UI2B-ACCEPTANCE.md). One unmerged PR then stop
+for Architect review. No production/credential/provider/Worker/schema/consumer
+change, no per-user GB quota. UI-3/4 remain unauthorized; **D-065 /139 PAUSED**.
+Older design/live blocks below are dated history, not current stage pointers.
 
 **Latest user priority (2026-10-20; DESIGN ONLY):** Website Admin UI/management feature blueprint [Issue #141](https://github.com/nathanxiangang-web/cloudsite/issues/141), [proposed D-066](DECISIONS.md) and [management UI spec](PRODUCT-ADMIN-CONSOLE-BLUEPRINT.md). Earlier private-user-space Stage A [Issue #139](https://github.com/nathanxiangang-web/cloudsite/issues/139) is **PAUSED by user, authorization suspended**; D-065 remains in Git and parent #138 stays open for later resumption only after a fresh explicit human instruction. Current `/admin/` is ADMIN-gated but only offers read-only resources and own tasks; no admin-wide data, provider status, audit or mutating admin API may be claimed. The new static prototype is offline mock data, not deployed. NO personal storage GB limits, no code/production/provider/IndexCore changes. The D-064 live status pointer below remains true and independent of design priority.
 

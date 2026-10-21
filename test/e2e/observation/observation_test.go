@@ -20,7 +20,10 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/nathanxiangang-web/panta/internal/adminobserve"
+	"github.com/nathanxiangang-web/panta/internal/auth"
 	"github.com/nathanxiangang-web/panta/internal/integrations/indexcore"
+	"github.com/nathanxiangang-web/panta/internal/platform/adminindex"
 	"github.com/nathanxiangang-web/panta/internal/projector"
 	"github.com/nathanxiangang-web/panta/internal/storage"
 	"github.com/nathanxiangang-web/panta/internal/store/postgres"
@@ -108,6 +111,24 @@ func TestControlledObservation(t *testing.T) {
 	// Phase A: the real collector observes the initial nested resource.
 	runner.run(t, ctx, "scan", "--root", rootID)
 	client, stopIndexCore := runner.startServer(t, ctx)
+	t.Run("AdminQ9ScopedReadAgainstPinnedIndexCore", func(t *testing.T) {
+		mappingReader, e := postgres.NewAdminObserveRepository(pantaPool)
+		if e != nil {
+			t.Fatal(e)
+		}
+		q9, e := adminindex.New(client)
+		if e != nil {
+			t.Fatal(e)
+		}
+		service, e := adminobserve.NewService(mappingReader, q9, []adminobserve.Display{{BindingID: string(bindingID), Label: "Controlled fixture"}})
+		if e != nil {
+			t.Fatal(e)
+		}
+		result, e := service.Root(ctx, auth.Principal{UserID: "99000000-0000-4000-8000-000000000099", Login: "fixture-admin", Role: auth.RoleAdmin}, string(bindingID))
+		if e != nil || result.BindingID != string(bindingID) || result.Lifecycle != "ACTIVE" || result.Generation < 1 || result.EvidenceSource != adminobserve.EvidenceSource || result.ObservedAt.IsZero() {
+			t.Fatal("real pinned Q9 observation", result, e)
+		}
+	})
 	report := assertHierarchyAndResolve(t, ctx, client, "/library/docs/report.txt")
 	fixture.assertRequested(t, "/library", "/library/docs")
 	initialEvents := readJournal(t, ctx, client, 0)

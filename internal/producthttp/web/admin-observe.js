@@ -1,0 +1,33 @@
+'use strict';
+// Admin-only observation controllers; injected transport never exposes a root URL.
+const AdminObserve={create({el,read,generation,principal,onError,cell,badge,dateText}){
+ const storage={request:0,cursor:'',next:'',key:'',loaded:false,controller:null};
+ const probe={request:0,binding:'',loaded:false,pending:false,controller:null};let scope='';
+ function cancel(view){view.request++;view.controller?.abort();view.controller=null;view.pending=false;}
+ function clearStorage(){storage.loaded=false;storage.next='';storage.key='';el('storage-rows').replaceChildren();el('storage-empty').hidden=true;el('more-storage').disabled=true;el('storage-footer').textContent='等待查询配置';}
+ function clearRoot(){probe.loaded=false;el('root-facts').replaceChildren();el('root-status').textContent='NOT_CHECKED · 尚未手动查询';el('root-status').className='badge neutral';el('root-evidence').textContent='没有 Q9 证据；不会自动探测';}
+ function invalidate(){const wasPending=probe.pending;cancel(storage);cancel(probe);if(wasPending)el('root-status').textContent=(probe.loaded?'STALE':'UNKNOWN')+' · 查询已取消，没有新证据';el('refresh-storage').disabled=false;el('query-root').disabled=!probe.binding;el('more-storage').disabled=!storage.next;}
+ function reset(){invalidate();storage.cursor='';probe.binding='';scope='';clearStorage();clearRoot();el('root-binding').replaceChildren();el('root-binding').value='';el('query-root').disabled=true;}
+ function configure(bindings){if(!scope)clearRoot();const key=bindings.map(b=>b.binding_id+'|'+b.label).join(';');if(scope&&scope!==key){invalidate();clearStorage();clearRoot();storage.cursor='';}scope=key;el('root-binding').replaceChildren();for(const b of bindings){const o=document.createElement('option');o.value=b.binding_id;o.textContent=b.label;el('root-binding').append(o);}if(!bindings.some(b=>b.binding_id===probe.binding))probe.binding=bindings[0]?.binding_id||'';el('root-binding').value=probe.binding;if(!probe.binding){el('root-status').textContent='NOT_CONNECTED · 未配置可查询的 Binding';el('root-evidence').textContent='没有可信映射，不会发起 Q9 请求';}el('query-root').disabled=!probe.binding||probe.pending;}
+ async function loadStorage(){
+  if(!principal())return;cancel(storage);const request=storage.request,gen=generation(),key=storage.cursor,previous=storage.loaded&&storage.key===key;storage.controller=new AbortController();
+  if(!previous)clearStorage();storage.key=key;el('storage-empty').hidden=true;el('refresh-storage').disabled=true;el('more-storage').disabled=true;el('storage-footer').textContent='LOADING · 正在读取配置，非在线检测';
+  const q=new URLSearchParams({limit:'20'});if(storage.cursor)q.set('cursor',storage.cursor);
+  try{const page=await read('/api/v1/admin/storage?'+q,gen,storage.controller.signal);if(gen!==generation()||request!==storage.request)return;if(!page||!Array.isArray(page.items)||page.items.length>20)throw Error('Invalid page');el('storage-rows').replaceChildren();for(const item of page.items){const row=document.createElement('tr');const name=cell(row,item.display_label),id=document.createElement('small');id.textContent=item.binding_id;name.append(id);cell(row,item.provider_type);cell(row).append(badge(item.binding_config_status,'neutral'));cell(row).append(badge(item.connection_config_status,'neutral'));cell(row,item.connection_id);cell(row,item.indexcore_root_configured?'已配置 · 非健康证明':'NOT_CONNECTED');cell(row,dateText(item.binding_updated_at));cell(row,dateText(item.connection_updated_at));el('storage-rows').append(row);}
+   storage.loaded=true;storage.next=page.next_cursor||'';el('more-storage').disabled=!storage.next;el('storage-empty').hidden=page.items.length!==0;el('storage-footer').textContent='CONFIGURED · 本页 '+page.items.length+' 项 · GET /api/v1/admin/storage · 客户端读取于 '+new Date().toLocaleString()+'（非数据库观察时间）';
+  }catch(error){if(gen===generation()&&request===storage.request){el('storage-empty').hidden=true;el('storage-footer').textContent=previous?'STALE · 配置读取失败，保留上次同页数据':'UNKNOWN · 配置查询未完成，不以空结果代替失败';onError(error);}}
+  finally{if(gen===generation()&&request===storage.request)el('refresh-storage').disabled=false;}
+ }
+ async function queryRoot(){
+  if(!principal()||!probe.binding||probe.pending)return;const id=probe.binding,gen=generation(),request=++probe.request,previous=probe.loaded;probe.controller=new AbortController();probe.pending=true;el('query-root').disabled=true;el('root-status').textContent='LOADING · 单次 Q9 查询中';
+  try{const result=await read('/api/v1/admin/indexcore?'+new URLSearchParams({binding_id:id}),gen,probe.controller.signal);if(gen!==generation()||request!==probe.request)return;
+   if(result.binding_id!==id||!['NEW','ACTIVE','DEPRECATED','DELETED'].includes(result.root_lifecycle_state)||!Number.isSafeInteger(result.current_generation)||result.current_generation<0||result.last_applied_admission_seq!==null&&(!Number.isSafeInteger(result.last_applied_admission_seq)||result.last_applied_admission_seq<0)||result.evidence_source!=='INDEXCORE_Q9_ROOT_STATUS'||!Number.isFinite(new Date(result.observed_at).getTime()))throw Error('Invalid Q9 evidence');
+   el('root-facts').replaceChildren();for(const [label,value] of [['Binding ID',result.binding_id],['Root 生命周期',result.root_lifecycle_state],['当前索引代数',result.current_generation],['Last applied admission seq',result.last_applied_admission_seq??'未提供 · null']]){const row=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=String(value);row.append(dt,dd);el('root-facts').append(row);}
+   probe.loaded=true;el('root-status').textContent='Q9_RESPONDED · 仅此 Root 状态接口有响应';el('root-status').className='badge neutral';el('root-evidence').textContent=result.evidence_source+' · CloudSite 成功读取于 '+dateText(result.observed_at)+'（非上游观察时间，不证明文件新鲜度） · 客户端显示于 '+new Date().toLocaleString();
+  }catch(error){if(gen===generation()&&request===probe.request){const kind={NOT_CONNECTED:'NOT_CONNECTED',ROOT_NOT_READY:'UNKNOWN / NOT_READY',ROOT_NOT_FOUND:'UNKNOWN / ROOT_NOT_FOUND',OBSERVATION_BUSY:'UNKNOWN / BUSY'}[error.code]||'UNKNOWN';el('root-status').textContent=(previous?'STALE · ':'')+kind+' · 本次没有成功证据';el('root-status').className='badge warning';if(!previous)el('root-evidence').textContent='未取得成功读取时间或代数，不推测在线/同步状态';onError(error);}}
+  finally{if(gen===generation()&&request===probe.request){probe.pending=false;el('query-root').disabled=!probe.binding;}}
+ }
+ return {configure,reset,invalidate,loadStorage,queryRoot,
+  refreshStorage(){storage.cursor='';return loadStorage();},moreStorage(){if(storage.next){storage.cursor=storage.next;return loadStorage();}},
+  selectBinding(){cancel(probe);probe.binding=el('root-binding').value;clearRoot();el('query-root').disabled=!probe.binding;}};
+}};
