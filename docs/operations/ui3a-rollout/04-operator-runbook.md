@@ -75,12 +75,20 @@ curl -fsS -o /dev/null -w '%{http_code}\n' -H 'Host: cloud.netioi.com' https://c
 ## 7) 真实联机验收
 按 `03-live-acceptance.md` 执行 115 探针与 USER 启停；证据仅记录分类状态与计数。
 
-## 8) 回滚（任一步失败）
+## 8) 回滚（任一步失败）— 状态：`NOT_VERIFIED`（未演练）
+
+> **警告：本节尚不可作为可直接执行的生产步骤。** 在完成反向演练（见 `02-migration-v15-to-v16.md` §9）前，回滚判定 **`NOT_VERIFIED`**，生产切换 **BLOCKED**。
+> **禁止** in-place `pg_restore --clean` 直打到现有 v16 库：它不会删除 v16-only 对象（三张审计表 + `product_users.admin_version`），且可能因外键依赖中途失败，使生产库不可用。
+
+受控恢复流程（须先通过反向演练）：
+
 ```
-docker compose --env-file "$ENVV" -f "$COMPOSE" stop cloudsite
-# 恢复 schema15 备份（回滚会丢失迁移后的写入）
-docker exec -i <product-db> pg_restore -U <db-user> -d <db-name> --clean --if-exists --no-owner --no-privileges --exit-on-error < "$BK/product-db.dump"
-# compose 还原 image: $OLDIMG
-docker compose --env-file "$ENVV" -f "$COMPOSE" up -d --no-deps --force-recreate cloudsite
+docker compose --env-file "$ENVV" -f "$COMPOSE" stop cloudsite     # fence ALL product DB writers
+# 1) 创建全新空库（保留 grants/extensions/owner）——不要覆盖现有库
+docker exec <product-db> psql -U <db-user> -d postgres -c 'CREATE DATABASE panta_mvp_preview_restore OWNER <db-user>'
+# 2) 将【匹配的 schema15 备份】恢复到【新库】
+docker exec -i <product-db> pg_restore -U <db-user> -d panta_mvp_preview_restore --no-owner --no-privileges --exit-on-error < "$BK/product-db.dump"
+# 3) 验证：head=15、历史/checksum 精确匹配、v16-only 对象不存在、关键表数据一致、旧镜像可启动
+# 4) 仅在验证通过后，执行【经过验证的连接切换】到该恢复库（或已测试的 operator 批准流程）
 ```
-禁止：down-migrator；让旧镜像运行在 schema16 上。
+禁止：down-migrator；让旧镜像运行在 schema16 上；in-place `--clean` 直打现有 v16 库。
