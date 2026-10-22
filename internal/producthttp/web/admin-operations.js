@@ -3,16 +3,18 @@
 // again. Storage contains opaque request IDs only, scoped to the verified actor.
 const AdminOperations={create({el,command,read,generation,principal,dateText,onError,onUsersChanged,newID}){
  let busy=false,unconfirmed=false,selected=null,owner='',request=0,currentID='',pendingAction=null,detail=0;
- const ACTION_CODES={
-  CREATE_USER:['USER_CREATED','VERSION_CONFLICT','LOGIN_CONFLICT','TARGET_FORBIDDEN'],
-  SET_USER_ENABLED:['USER_STATE_CHANGED','VERSION_CONFLICT','USER_STATE_CONFLICT','TARGET_FORBIDDEN'],
-  RENAME_USER:['USER_RENAMED','VERSION_CONFLICT','USER_STATE_CONFLICT','LOGIN_CONFLICT','TARGET_FORBIDDEN'],
-  RESET_USER_PASSWORD:['USER_PASSWORD_RESET','VERSION_CONFLICT','USER_STATE_CONFLICT','TARGET_FORBIDDEN'],
-  DELETE_USER:['USER_DELETED','VERSION_CONFLICT','USER_STATE_CONFLICT','ACTIVE_DOWNLOADS','DOWNLOAD_STATE_CONFLICT','TARGET_FORBIDDEN'],
-  RESTORE_USER:['USER_RESTORED','USER_PASSWORD_RESET','VERSION_CONFLICT','USER_STATE_CONFLICT','PASSWORD_UNCHANGED','TARGET_FORBIDDEN'],
-  PROBE_115:['PROBE_RECORDED','NOT_CONNECTED','SCOPE_REJECTED','TARGET_FORBIDDEN']
+ // Strict action×status×code triples. Each action lists the only codes the
+ // backend can return for SUCCEEDED and for REJECTED; UNKNOWN is reservation only.
+ const ACTION_OUTCOMES={
+  CREATE_USER:{SUCCEEDED:['USER_CREATED'],REJECTED:['CONFLICT','LOGIN_CONFLICT','TARGET_FORBIDDEN','INVALID_REQUEST']},
+  SET_USER_ENABLED:{SUCCEEDED:['USER_STATE_CHANGED'],REJECTED:['TARGET_FORBIDDEN','VERSION_CONFLICT','USER_STATE_CONFLICT','INVALID_REQUEST']},
+  RENAME_USER:{SUCCEEDED:['USER_RENAMED'],REJECTED:['TARGET_FORBIDDEN','VERSION_CONFLICT','USER_STATE_CONFLICT','LOGIN_CONFLICT','INVALID_REQUEST']},
+  RESET_USER_PASSWORD:{SUCCEEDED:['USER_PASSWORD_RESET'],REJECTED:['TARGET_FORBIDDEN','VERSION_CONFLICT','USER_STATE_CONFLICT','INVALID_REQUEST']},
+  DELETE_USER:{SUCCEEDED:['USER_DELETED'],REJECTED:['TARGET_FORBIDDEN','VERSION_CONFLICT','USER_STATE_CONFLICT','ACTIVE_DOWNLOADS','DOWNLOAD_STATE_CONFLICT','INVALID_REQUEST']},
+  RESTORE_USER:{SUCCEEDED:['USER_RESTORED'],REJECTED:['TARGET_FORBIDDEN','VERSION_CONFLICT','USER_STATE_CONFLICT','PASSWORD_UNCHANGED','INVALID_REQUEST']},
+  PROBE_115:{SUCCEEDED:['PROBE_RECORDED'],REJECTED:['NOT_CONNECTED','SCOPE_REJECTED','TARGET_FORBIDDEN','RATE_LIMITED','INVALID_REQUEST']}
  };
- const GLOBAL_CODES=['RESERVED_NO_CONFIRMED_RESULT','NOT_FOUND','CONFLICT','RATE_LIMITED','INVALID_REQUEST'];
+ const UNKNOWN_CODES=['RESERVED_NO_CONFIRMED_RESULT'];
  const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
  function remember(){try{if(owner&&currentID)window.sessionStorage.setItem('cloudsite-admin-action:'+owner,currentID);}catch{}}
  function controls(){const has=!!selected&&Number.isSafeInteger(selected.version);const del=!!selected&&Boolean(selected.deleted||selected.deleted_at);const canTarget=busy||unconfirmed||!has;el('create-user-submit').disabled=busy||unconfirmed;el('change-user-submit').disabled=canTarget||del;el('rename-user-submit').disabled=canTarget||del;el('reset-user-submit').disabled=canTarget||del;el('delete-user-submit').disabled=canTarget||del;el('restore-user-submit').disabled=canTarget||!del;el('user-detail-submit').disabled=canTarget||del;el('probe-account').disabled=busy||unconfirmed||!el('probe-binding').value;el('probe-binding').disabled=busy;el('lookup-action').disabled=busy;}
@@ -20,8 +22,11 @@ const AdminOperations={create({el,command,read,generation,principal,dateText,onE
  function clearCapacity(){el('account-capacity').replaceChildren();el('account-session-status').textContent='NOT_CHECKED';el('account-shared-capacity').textContent='NOT_CHECKED';}
  function result(value){
   if(!value||value.request_id!==currentID||!['SUCCEEDED','REJECTED','UNKNOWN'].includes(value.status)||!Number.isFinite(new Date(value.recorded_at).getTime()))throw Error('Invalid action evidence');
-  const codes=ACTION_CODES[value.action];if(!codes||typeof value.code!=='string'||!(codes.includes(value.code)||GLOBAL_CODES.includes(value.code))||(pendingAction&&value.action!==pendingAction))throw Error('Invalid action evidence');
-  if(value.status==='SUCCEEDED'&&value.action!=='PROBE_115'&&(!value.user||value.user.user_id!==value.target_id||!uuid.test(value.target_id)||!Number.isSafeInteger(value.user.version)||value.user.version<0||typeof value.user.enabled!=='boolean'||('deleted' in value.user&&typeof value.user.deleted!=='boolean')))throw Error('Invalid user receipt');
+  const outcomes=ACTION_OUTCOMES[value.action];if(!outcomes)throw Error('Invalid action evidence');
+  const codes=value.status==='UNKNOWN'?UNKNOWN_CODES:outcomes[value.status];
+  if(!codes||typeof value.code!=='string'||!codes.includes(value.code))throw Error('Invalid action evidence');
+  if(pendingAction&&value.action!==pendingAction)throw Error('Invalid action evidence');
+  if(value.status==='SUCCEEDED'&&value.action!=='PROBE_115'&&(!value.user||value.user.user_id!==value.target_id||!uuid.test(value.target_id)||!Number.isSafeInteger(value.user.version)||value.user.version<0||typeof value.user.enabled!=='boolean'||typeof value.user.deleted!=='boolean'))throw Error('Invalid user receipt');
   if(value.capacity&&(!uuid.test(value.target_id)||value.action!=='PROBE_115'||value.capacity.source!=='115_GET_INFO'||!Number.isFinite(new Date(value.capacity.probed_at).getTime())))throw Error('Invalid probe receipt');
   unconfirmed=value.status==='UNKNOWN';note(value.status+' · '+value.code+' · 服务端记录于 '+dateText(value.recorded_at)+' · 请求 '+value.request_id);
   if(value.capacity&&value.target_id!==el('probe-binding').value){clearCapacity();const text=document.createElement('p');text.textContent='历史检测属于 Binding '+value.target_id+'，不作为当前选择的账号状态。';el('account-capacity').append(text);}
