@@ -23,6 +23,7 @@ function workspace({hash=''}={}){
  const ctx=vm.createContext({AbortController,URLSearchParams,document,window,setTimeout(callback,ms){const id=++timerID;timers.set(id,{callback,ms});return id;},clearTimeout(id){timers.delete(id);},fetch(url,options){return new Promise((resolve,reject)=>requests.push({url,options,resolve,reject,done:false}));}});
  vm.runInContext(fs.readFileSync(path.join(web,'resource-display.js'),'utf8'),ctx);
  vm.runInContext(fs.readFileSync(path.join(web,'admin-lists.js'),'utf8'),ctx);
+ vm.runInContext(fs.readFileSync(path.join(web,'admin-observe.js'),'utf8'),ctx);
  vm.runInContext(fs.readFileSync(path.join(web,'app.js'),'utf8'),ctx);
  const run=source=>vm.runInContext(source,ctx);
  function respond(request,body,status=200){assert.ok(request,'expected pending request');request.done=true;request.resolve({ok:status>=200&&status<300,status,json:async()=>body});}

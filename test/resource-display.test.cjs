@@ -43,7 +43,7 @@ function workspace(){
  const elements=new Map(Array.from(ids,id=>[id,new Element()]));
  const requests=[];
  const ctx=vm.createContext({AbortController,URLSearchParams,document:{getElementById(id){assert.ok(elements.has(id),'unknown DOM id '+id);return elements.get(id);},createElement(){return new Element();}},window:{scrollTo(){}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
- vm.runInContext(code,ctx);vm.runInContext(fs.readFileSync(path.join(__dirname,'../internal/producthttp/web/admin-lists.js'),'utf8'),ctx);vm.runInContext(fs.readFileSync(path.join(__dirname,'../internal/producthttp/web/app.js'),'utf8'),ctx);
+ vm.runInContext(code,ctx);vm.runInContext(fs.readFileSync(path.join(__dirname,'../internal/producthttp/web/admin-lists.js'),'utf8'),ctx);vm.runInContext(fs.readFileSync(path.join(__dirname,'../internal/producthttp/web/admin-observe.js'),'utf8'),ctx);vm.runInContext(fs.readFileSync(path.join(__dirname,'../internal/producthttp/web/app.js'),'utf8'),ctx);
  return {ctx,elements,requests,run:(source)=>vm.runInContext(source,ctx)};
 }
 test('DOM presentation stays literal and clears private DTO/detail on logout',()=>{

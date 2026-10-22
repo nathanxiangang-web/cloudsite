@@ -1667,7 +1667,7 @@ The user explicitly canceled *per-user storage capacity*: there will be no indiv
 
 Implementation order: (A) append-only user-space ownership/mapping state and mock provider contracts; (B) backend cross-user ACL including Q4/Q5/Q6/content/preview/302/anonymous share redemption **before enabling new private downloads**; (C) server-frozen native 115 saveDirID and canonical UserSpace target, original Worker/Manifest semantics and same-info_hash conflict handling; (D) independently authorized one-file physical deletion with native file/parent proof, durable idempotent ledger and IndexCore Q8 confirmation; (E) staged multi-user evidence and rollout. No live mkdir, file delete, migration, source move, provider restart, new acquisition or deploy was performed for this decision. Each implementation gate needs its own Issue/branch/PR and review before merging.
 
-## D-066 — Website admin management console UI & functional blueprint (DESIGN/UI-1 ACCEPTED; UI-2A CANDIDATE)
+## D-066 — Website admin management console UI & functional blueprint (DESIGN/UI-1/UI-2A ACCEPTED; UI-2B CANDIDATE)
 
 2026-10-21: [PR #142](https://github.com/nathanxiangang-web/cloudsite/pull/142)
 accepted/merged at `25eb7e28a12f452979a52e74cd3767f149f5df53`;
@@ -1682,7 +1682,17 @@ list panels. Never turn the existing owner-only reads into implicit admin reads.
 No provider/credential payloads, mutations, schema changes or production access.
 See [UI-2A handoff](PRODUCT-ADMIN-UI2A-ACCEPTANCE.md). UI-2B/3/4 and paused D-065
 remain outside authorization; the candidate must stop at an unmerged PR for review.
-The following paragraph records the original design proposal, not a current block.
+2026-10-22 superseding implementation pointer: UI-2A PR146 merged at
+`a645e90229b71209f9a6036f25583113df9f1281`; main CI39639475953 all3 SUCCESS checked.
+Issue145 closed; Issue147 authorizes UI-2B ONLY: allowlisted configuration mappings
+and single-root manual Q9 reads, no provider readiness/115 capacity/freshness claim.
+Use narrow separate read ports, fresh ADMIN authorization, read-only snapshots,
+5s child contexts, maximum2 concurrent probes and8 Q9 operations/minute/process,
+no polling/retry/fan-out. Keep Root IDs server-side, recheck mapping before output,
+redact upstream errors and distinguish client fetch time/server read time from
+upstream observation time. See [UI-2B handoff](PRODUCT-ADMIN-UI2B-ACCEPTANCE.md).
+One candidate PR, no auto-merge/deploy; UI-3/4 and paused139 stay outside scope.
+Earlier implementation pointers and the following design paragraphs are history.
 
 2026-10-20, [Issue #141](https://github.com/nathanxiangang-web/cloudsite/issues/141): user explicitly deferred private UserSpace / D-065 Stage A coding until later; [#139](https://github.com/nathanxiangang-web/cloudsite/issues/139) execution authorization is **PAUSED/SUSPENDED** and prior approval to start is superseded. Preserve #138/#139 and all D-065 design, but perform **website management UI and feature blueprint first**. No UserSpace code, migrations, provider calls or private deletion authorized.
 

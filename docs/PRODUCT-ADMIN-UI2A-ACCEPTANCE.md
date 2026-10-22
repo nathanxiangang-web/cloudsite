@@ -1,5 +1,10 @@
 # Admin UI-2A — implementation and review handoff
 
+**Historical handoff:** PR146 is now verified merged at
+`a645e90229b71209f9a6036f25583113df9f1281`; merged-main CI39639475953 all3 SUCCESS.
+Issue147 separately authorizes the [UI-2B candidate](PRODUCT-ADMIN-UI2B-ACCEPTANCE.md).
+Candidate-era scope/evidence below is preserved, not current execution status.
+
 2026-10-21 · [Issue145](https://github.com/nathanxiangang-web/cloudsite/issues/145)
 · D-066 · **implementation candidate; NOT merged, deployed or Architect accepted**.
 

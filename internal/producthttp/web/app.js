@@ -6,8 +6,8 @@ const sections = {
  users:['用户管理','全站产品账号的分页只读列表；账号变更操作尚未接入。'],
  resources:['资源中心','查看配置 allowlist 内的规范资源、目录与 Copy；分类和搜索仅作用于当前页。'],
  downloads:['云下载与任务','全站已归属任务与“我的任务”分开读取；查询不发起下载或改变任务状态。'],
- storage:['存储与连接','连接运行状态、原生会话与存储映射聚合尚未接入。','总览仅提供配置 Binding 别名，不证明凭据有效或网盘在线。','连接管理 · 尚未接入'],
- indexcore:['IndexCore 观测','物理事实仍由 IndexCore 负责；本页尚无运行诊断聚合接口。','Q4/Q5 资源读取已在资源中心接入；Root 健康、Q8 游标与诊断未接入。','运行诊断 · 尚未接入'],
+ storage:['存储与连接','只读配置映射；ACTIVE 只代表配置启用，不代表网盘在线。'],
+ indexcore:['IndexCore 观测','按配置 Binding 手动读取一个 Root 的 Q9 状态；不是全链路健康检查。'],
  shares:['分享管理','全站分享的脱敏概览尚未接入。','不读取或兑换他人的分享 token、保护码或签名地址。前台已有分享功能不受影响。','分享管理 · 尚未接入'],
  audit:['审计与安全','完整持久审计读模型尚未接入。','不会将临时日志当作完整审计，也不会编造历史操作记录。','查看审计 · 尚未接入'],
  settings:['系统设置','系统设置与管理变更接口尚未接入。','当前 schema 与配置能力可在总览查看；没有配置写入、任意命令或 AI 启用入口。','修改设置 · 尚未接入']
@@ -23,8 +23,9 @@ function showError(id,error){el(id).textContent=errorText(error);el(id).hidden=f
 function clearError(id){el(id).textContent='';el(id).hidden=true;}
 function stale(){const e=new Error('Obsolete request');e.name='AbortError';return e;}
 function current(generation){if(generation!==state.session)throw stale();}
-async function api(path,method='GET',body,generation=state.session){
- const response=await fetch(path,{method,credentials:'same-origin',cache:'no-store',signal:state.controller.signal,headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
+async function api(path,method='GET',body,generation=state.session,signal=state.controller.signal){
+ const response=await fetch(path,{method,credentials:'same-origin',cache:'no-store',signal,headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
+ if(signal.aborted)throw stale();
  current(generation);
  if(response.status===204)return null;
  // Authorization invalidates private views even when a proxy returns non-JSON.
@@ -50,7 +51,7 @@ function signedOut(){
  state.logoutRequest++;state.logoutController?.abort();state.logoutController=null;state.logoutInFlight=false;state.loginInFlight=false;
  if(state.logoutStatus==='LOGOUT_PENDING')setLogoutStatus('LOGOUT_UNCONFIRMED','注销未确认。服务器会话可能仍然有效，请重试退出登录。');
  state.session++;state.controller.abort();state.controller=new AbortController();state.resourceRequest++;state.taskRequest++;state.workspaceRequest++;
- state.principal=null;state.workspace=null;clearResources();clearTasks();adminLists.reset();setDrawer(false,false);
+ state.principal=null;state.workspace=null;clearResources();clearTasks();adminLists.reset();adminObservation.reset();setDrawer(false,false);
  for(const id of ['user-login','user-role','avatar','schema','binding-select','workspace-facts','identity-facts','overview-binding-list'])el(id).replaceChildren();
  for(const id of ['overview-schema','overview-bindings'])el(id).textContent='—';
  el('workspace-observed').textContent='尚未读取';el('workspace-status').textContent='等待查询';
@@ -110,6 +111,7 @@ function facts(id,rows){
  for(const [label,value] of rows){const row=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=value===null||value===undefined?'未提供':String(value);row.append(dt,dd);list.append(row);}
 }
 function renderWorkspace(workspace,principal){
+	adminObservation.configure(workspace.bindings);
  state.workspace=workspace;el('user-login').textContent=principal.login;el('user-role').textContent='ADMIN · 只读';
  el('avatar').textContent=principal.login.charAt(0).toUpperCase();el('schema').textContent='Schema v'+workspace.schema_version;
  el('overview-schema').textContent='v'+workspace.schema_version;el('overview-bindings').textContent=String(workspace.bindings.length);
@@ -139,8 +141,8 @@ async function verifyAdmin(generation=state.session){
  }
  return {workspace,principal};
 }
-async function adminRead(path,generation=state.session){
- await verifyAdmin(generation);current(generation);return api(path,'GET',undefined,generation);
+async function adminRead(path,generation=state.session,signal){
+ await verifyAdmin(generation);current(generation);if(signal?.aborted)throw stale();return api(path,'GET',undefined,generation,signal);
 }
 async function signedIn(principal,generation=state.session){
  current(generation);
@@ -204,6 +206,8 @@ async function loadResources(){
 const manifestLabels={PENDING:'等待激活',ACTIVE:'执行中',AWAITING_VISIBILITY:'等待观察',AWAITING_CANONICAL:'等待规范确认',READY:'READY',FAILED:'失败',RECOVERY_REQUIRED:'需人工恢复',CANCELED:'已取消'};
 function dateText(value){const d=new Date(value);return value&&Number.isFinite(d.getTime())?d.toLocaleString():'未提供';}
 const adminLists=AdminLists.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,onError:error=>showError('workspace-error',error),dateText,cell,badge,ownerSelected:id=>{el('admin-user-filter').value=id;adminLists.downloads.owner=id;adminLists.downloads.cursor='';selectTab('downloads');}});
+const adminObservation=AdminObserve.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,onError:error=>showError('workspace-error',error),dateText,cell,badge});
+Object.assign(messages,{NOT_CONNECTED:'Q9 尚未连接，未执行在线检测。',ROOT_NOT_READY:'Root 状态尚未就绪；没有成功观测。',ROOT_NOT_FOUND:'未取得该 Root 的状态，不能推断文件或网盘已删除。',OBSERVATION_UNKNOWN:'本次观测失败，实际运行状态未知。',OBSERVATION_BUSY:'观测频率或并发已达上限，请稍后手动查询。'});
 function renderTasks(page){
  el('task-rows').replaceChildren();
  for(const item of page.items){const row=document.createElement('tr'),button=document.createElement('button');button.type='button';button.className='file-button';button.textContent=item.manifest_id.slice(0,8)+'…';button.title=item.manifest_id;button.addEventListener('click',()=>taskDetail(item.manifest_id));cell(row).append(button);
@@ -230,15 +234,15 @@ async function taskDetail(id){
 // Local navigation does not invent routes or request future backend endpoints.
 function selectTab(tab,probe=true){
  const own=tab==='tasks',section=own?'downloads':tab;if(!sections[section])return;
- state.resourceRequest++;state.taskRequest++;state.detailRequest++;adminLists.invalidate();closeResourceDetail();closeTaskDetail();state.tab=tab;setDrawer(false,false);
- for(const id of ['overview','users','resources','downloads'])el(id+'-panel').hidden=section!==id;
+ state.resourceRequest++;state.taskRequest++;state.detailRequest++;adminLists.invalidate();adminObservation.invalidate();closeResourceDetail();closeTaskDetail();state.tab=tab;setDrawer(false,false);
+ for(const id of ['overview','users','resources','downloads','storage','indexcore'])el(id+'-panel').hidden=section!==id;
  const planned=Boolean(sections[section][2]);el('planned-panel').hidden=!planned;
  for(const name of Object.keys(sections)){el('nav-'+name).classList.toggle('selected',section===name);el('nav-'+name).setAttribute('aria-current',section===name?'page':'false');}
  el('tasks-panel').hidden=!own;el('global-tasks-placeholder').hidden=own;el('nav-tasks').setAttribute('aria-pressed',String(own));el('scope-global').setAttribute('aria-pressed',String(!own));
  el('page-title').textContent=own?'我的任务':sections[section][0];el('page-caption').textContent=own?'云下载与任务 / 我的任务':sections[section][0];el('page-subtitle').textContent=sections[section][1];
  if(planned){el('planned-title').textContent=sections[section][0]+' · 尚未接入';el('planned-description').textContent=sections[section][2];el('planned-action').textContent=sections[section][3];}
  clearError('workspace-error');if(probe){el('main-content').focus({preventScroll:true});window.scrollTo(0,0);}
- if(tab==='users')adminLists.users.load();else if(tab==='downloads')adminLists.downloads.load();else if(tab==='resources')loadResources();else if(own)loadTasks();else if(probe)refreshWorkspace();
+ if(tab==='storage')adminObservation.loadStorage();else if(tab==='indexcore'){if(probe)refreshWorkspace();}else if(tab==='users')adminLists.users.load();else if(tab==='downloads')adminLists.downloads.load();else if(tab==='resources')loadResources();else if(own)loadTasks();else if(probe)refreshWorkspace();
 }
 function setDrawer(open,returnFocus=true){
  state.drawer=open;el('sidebar').classList.toggle('drawer-open',open);el('menu-backdrop').hidden=!open;
@@ -264,6 +268,10 @@ for(const tab of Object.keys(sections))el('nav-'+tab).addEventListener('click',(
 el('nav-tasks').addEventListener('click',()=>selectTab('tasks'));el('scope-global').addEventListener('click',()=>selectTab('downloads'));
 el('open-resources').addEventListener('click',()=>selectTab('resources'));el('open-my-tasks').addEventListener('click',()=>selectTab('tasks'));
 el('refresh-workspace').addEventListener('click',()=>refreshWorkspace());
+el('refresh-storage').addEventListener('click',()=>{clearError('workspace-error');return adminObservation.refreshStorage();});
+el('more-storage').addEventListener('click',()=>adminObservation.moreStorage());
+el('root-binding').addEventListener('change',()=>{clearError('workspace-error');adminObservation.selectBinding();});
+el('query-root').addEventListener('click',()=>{clearError('workspace-error');return adminObservation.queryRoot();});
 el('refresh-users').addEventListener('click',()=>{clearError('workspace-error');return adminLists.users.refresh();});
 el('more-users').addEventListener('click',()=>adminLists.users.more());
 el('refresh-admin-downloads').addEventListener('click',()=>{clearError('workspace-error');return adminLists.downloads.refresh();});

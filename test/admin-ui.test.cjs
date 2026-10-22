@@ -8,10 +8,10 @@ test('overview is descriptor-only; nine destinations keep real and unavailable s
  const app=await ready();assert.equal(app.elements.get('overview-panel').hidden,false);assert.equal(app.elements.get('overview-schema').textContent,'v15');assert.equal(app.elements.get('overview-bindings').textContent,'1');
  assert.equal(app.requests.some(r=>r.url.startsWith('/api/v1/resources')||r.url.startsWith('/api/v1/tasks')),false);
  for(const id of ['overview','users','resources','downloads','storage','indexcore','shares','audit','settings']){app.click('nav-'+id);await app.drain();assert.equal(app.run('state.tab'),id);assert.equal(app.elements.get('workspace-view').hidden,false);}
- for(const id of ['storage','indexcore','shares','audit','settings']){app.click('nav-'+id);assert.equal(app.elements.get('planned-panel').hidden,false);assert.match(app.text('planned-title'),/尚未接入/);assert.equal(app.elements.get('planned-action').disabled,true);await app.drain();}
+ for(const id of ['shares','audit','settings']){app.click('nav-'+id);assert.equal(app.elements.get('planned-panel').hidden,false);assert.match(app.text('planned-title'),/尚未接入/);assert.equal(app.elements.get('planned-action').disabled,true);await app.drain();}
  app.click('nav-downloads');assert.equal(app.elements.get('global-tasks-placeholder').hidden,false);assert.equal(app.elements.get('tasks-panel').hidden,true);await app.drain();
  app.click('nav-tasks');await app.drain();assert.equal(app.elements.get('tasks-panel').hidden,false);assert.match(app.text('tasks-footer'),/仅当前登录者/);
- assert.ok(app.requests.every(r=>['/api/v1/auth/me','/api/v1/admin/workspace','/api/v1/admin/users','/api/v1/admin/downloads','/api/v1/resources','/api/v1/tasks'].includes(r.url.split('?')[0])));
+ assert.ok(app.requests.every(r=>['/api/v1/auth/me','/api/v1/admin/workspace','/api/v1/admin/users','/api/v1/admin/downloads','/api/v1/admin/storage','/api/v1/resources','/api/v1/tasks'].includes(r.url.split('?')[0])));
  assert.ok(app.requests.every(r=>r.options.method==='GET'&&r.options.credentials==='same-origin'&&r.options.cache==='no-store'));
 });
 test('anonymous, USER, non-JSON 401 and ADMIN_REQUIRED never expose admin facts',async()=>{
