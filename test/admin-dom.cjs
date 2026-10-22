@@ -31,7 +31,7 @@ function workspace({hash=''}={}){
  function pending(url){return requests.find(r=>!r.done&&(typeof url==='string'?r.url===url:url.test(r.url)));}
  async function drain(overrides={}){
   for(let i=0;i<15;i++){await tick();const list=requests.filter(r=>!r.done);if(!list.length)return;
-   for(const request of list){const route=request.url.split('?')[0],value=overrides[route]??(route==='/api/v1/auth/me'?principal:route==='/api/v1/admin/workspace'?descriptor:{items:[],next_cursor:''});respond(request,value);}
+   for(const request of list){const route=request.url.split('?')[0],value=overrides[route]??(route==='/api/v1/auth/me'?principal:route==='/api/v1/admin/workspace'?descriptor:route==='/api/v1/admin/users'?{items:[],next_cursor:'',total:0,read_at:'2026-10-22T00:00:00Z',scope:'FILTERED_PRODUCT_USERS'}:{items:[],next_cursor:''});respond(request,value);}
   }throw Error('request loop');
  }
  const click=id=>elements.get(id).listeners.click?.[0]({});
