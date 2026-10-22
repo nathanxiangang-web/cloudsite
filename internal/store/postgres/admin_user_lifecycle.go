@@ -69,6 +69,21 @@ func (r *AdminOperationsRepository) changeUser(ctx context.Context, tx pgx.Tx, a
 			result.Code = "ACTIVE_DOWNLOADS"
 			return result, nil
 		}
+		// A corrupt terminal-looking Manifest must not hide its live/unknown Job.
+		// One statement observes both sides of every pair at the same MVCC point.
+		var inconsistent bool
+		e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM acquisition_manifests m LEFT JOIN jobs j ON j.job_id=m.job_id
+ WHERE m.user_id=$1 AND ((m.state='READY' AND m.job_id IS NULL) OR (m.job_id IS NOT NULL AND
+ (j.job_id IS NULL OR j.job_type<>'ACQUISITION' OR j.idempotency_key<>'acquisition:'||m.manifest_id::text
+ OR j.payload<>jsonb_build_object('schema_version',1,'manifest_id',m.manifest_id::text) OR NOT (
+ m.state='READY' AND j.state='SUCCEEDED' OR m.state='FAILED' AND j.state='FAILED' OR m.state='CANCELED' AND j.state='CANCELED')))))`, u.UserID).Scan(&inconsistent)
+		if e != nil {
+			return result, e
+		}
+		if inconsistent {
+			result.Code = "DOWNLOAD_STATE_CONFLICT"
+			return result, nil
+		}
 		u.Enabled = false
 		code = "USER_DELETED"
 	default:
@@ -81,11 +96,12 @@ func (r *AdminOperationsRepository) changeUser(ctx context.Context, tx pgx.Tx, a
 		return result, e
 	}
 	defer save.Rollback(context.Background())
-	e = save.QueryRow(ctx, `UPDATE product_users SET login=$2,enabled=$3,
+	e = save.QueryRow(ctx, `WITH stamp AS MATERIALIZED (SELECT clock_timestamp() AS at)
+ UPDATE product_users SET login=$2,enabled=$3,
  password_hash=COALESCE($4::bytea,password_hash),admin_version=admin_version+1,
- deleted_at=CASE WHEN $5='DELETE_USER' THEN clock_timestamp() WHEN $5='RESTORE_USER' THEN NULL ELSE deleted_at END,
+ deleted_at=CASE WHEN $5='DELETE_USER' THEN stamp.at WHEN $5='RESTORE_USER' THEN NULL ELSE deleted_at END,
  deleted_by=CASE WHEN $5='DELETE_USER' THEN $6::uuid WHEN $5='RESTORE_USER' THEN NULL ELSE deleted_by END,
- updated_at=clock_timestamp() WHERE user_id=$1 AND admin_version=$7 RETURNING admin_version`, u.UserID, u.Login, u.Enabled, newHash, c.Action, string(a.Principal.UserID), c.ExpectedVersion).Scan(&u.Version)
+ updated_at=stamp.at FROM stamp WHERE user_id=$1 AND admin_version=$7 RETURNING admin_version`, u.UserID, u.Login, u.Enabled, newHash, c.Action, string(a.Principal.UserID), c.ExpectedVersion).Scan(&u.Version)
 	if e != nil {
 		_ = save.Rollback(ctx)
 		var pe *pgconn.PgError

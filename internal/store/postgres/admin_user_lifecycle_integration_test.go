@@ -76,8 +76,12 @@ func TestPostgresAdminLifecycleRenamePasswordDeleteRestore(t *testing.T) {
 	if removed.Code != "USER_DELETED" || !removed.User.Deleted || removed.User.Enabled || removed.User.Version != 3 {
 		t.Fatal(removed)
 	}
+	var coherentStamp bool
+	if e = pool.QueryRow(ctx, `SELECT deleted_at=updated_at FROM product_users WHERE user_id=$1`, id).Scan(&coherentStamp); e != nil || !coherentStamp {
+		t.Fatal("deletion/update timestamps differ", e)
+	}
 	replay := opRun(t, svc, a, del)
-	if replay.RecordedAt != removed.RecordedAt || replay.User.Version != 3 {
+	if !replay.RecordedAt.Equal(removed.RecordedAt) || replay.User.Version != 3 {
 		t.Fatal("delete replay changed state")
 	}
 	if _, e = accounts.Authenticate(ctx, logged.Token); !errors.Is(e, auth.ErrUnauthorized) {
@@ -402,6 +406,32 @@ func TestPostgresAdminLifecycleAdmissionSerialization(t *testing.T) {
 		if r.Code != "ACTIVE_DOWNLOADS" {
 			t.Fatal(state, r)
 		}
+	}
+	assertAdmissionCounts(t, f, 1, 1, 1)
+	for i, state := range []string{"FAILED", "CANCELED"} {
+		if _, e = f.pool.Exec(f.ctx, `UPDATE acquisition_manifests SET state=$2 WHERE user_id=$1`, string(f.p.UserID), state); e != nil {
+			t.Fatal(e)
+		}
+		r := opRun(t, svc, a, adminops.Command{RequestID: opID(30 + i), Action: adminops.DeleteUser, TargetID: string(f.p.UserID)})
+		if r.Code != "DOWNLOAD_STATE_CONFLICT" {
+			t.Fatal("terminal Manifest hid queued Job", state, r)
+		}
+	}
+	// Make the synthetic pair genuinely terminal; no worker/provider ran.
+	if _, e = f.pool.Exec(f.ctx, `UPDATE jobs SET state='CANCELED' WHERE job_id=(SELECT job_id FROM acquisition_manifests WHERE user_id=$1)`, string(f.p.UserID)); e != nil {
+		t.Fatal(e)
+	}
+	if _, e = f.pool.Exec(f.ctx, `UPDATE jobs SET payload='{}'::jsonb WHERE job_id=(SELECT job_id FROM acquisition_manifests WHERE user_id=$1)`, string(f.p.UserID)); e != nil {
+		t.Fatal(e)
+	}
+	if r := opRun(t, svc, a, adminops.Command{RequestID: opID(39), Action: adminops.DeleteUser, TargetID: string(f.p.UserID)}); r.Code != "DOWNLOAD_STATE_CONFLICT" {
+		t.Fatal("wrong Job/Manifest identity accepted", r)
+	}
+	if _, e = f.pool.Exec(f.ctx, `UPDATE jobs j SET payload=jsonb_build_object('schema_version',1,'manifest_id',m.manifest_id::text) FROM acquisition_manifests m WHERE j.job_id=m.job_id AND m.user_id=$1`, string(f.p.UserID)); e != nil {
+		t.Fatal(e)
+	}
+	if r := opRun(t, svc, a, adminops.Command{RequestID: opID(40), Action: adminops.DeleteUser, TargetID: string(f.p.UserID)}); r.Status != "SUCCEEDED" {
+		t.Fatal("valid terminal pair rejected", r)
 	}
 	assertAdmissionCounts(t, f, 1, 1, 1)
 }

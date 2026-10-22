@@ -35,6 +35,8 @@ Only USER targets are permitted, avoiding administrator/target lock cycles.
 Product admission already locks the owning user before creating an operation;
 deletion takes the conflicting account lock and refuses any nonterminal Manifest,
 including PENDING or RECOVERY_REQUIRED. It never rewrites Job/Manifest/ProviderTask.
+Terminal-looking Manifests with a missing or nonmatching/live linked Job are
+also refused as DOWNLOAD_STATE_CONFLICT, not mistaken for completed work.
 
 Rename preserves immutable user_id, task ownership and future private-path keys.
 The old login is not a persistent identity. Rename/reset/enable/disable revoke all
@@ -87,7 +89,7 @@ is its own coherent snapshot, not a cross-request frozen export.
 
 HTTP200 does not imply success: inspect `status` SUCCEEDED/REJECTED and `code`.
 Expected denials include TARGET_FORBIDDEN, VERSION_CONFLICT, LOGIN_CONFLICT,
-USER_STATE_CONFLICT, ACTIVE_DOWNLOADS and PASSWORD_UNCHANGED. UNKNOWN uses202.
+USER_STATE_CONFLICT, ACTIVE_DOWNLOADS, DOWNLOAD_STATE_CONFLICT and PASSWORD_UNCHANGED. UNKNOWN uses202.
 Transport/commit uncertainty uses503 ACTION_UNCONFIRMED, never an automatic retry.
 Unknown user detail uses404; invalid input400; unauthorized401/forbidden403.
 
@@ -131,6 +133,9 @@ The4 PG18 full-run skips require separate opt-in instances/configuration:
 `TestControlledIndexCoreHintObservation`, and `TestControlledObservation`. GitHub
 CI provisions those separately; no local live-provider/IndexCore D2 claim follows.
 New lifecycle methods/subcases do not skip when the purpose DB is configured.
+Final pair-deletion checks also verify the terminal Job state, ACQUISITION type,
+idempotency key and exact payload linkage, rejecting a terminal-looking Manifest
+that masks queued work or the wrong Job identity.
 
 Initial local harness observations are retained, not hidden: the old DTO field-count
 test needed the two explicitly allowlisted deletion fields; a deployment packaging
@@ -138,3 +143,12 @@ test requires a real Git checkout and cannot run inside a source-only tar stagin
 tree. Its migration head is updated16->17 without weakening byte/LF checks. It is
 run against the committed Git tree, followed by exact-head GitHub CI. CI receipts
 belong to the PR; this development document is not an acceptance or deployment GO.
+The first CI exposed a timezone-sensitive test using Go `time.Time ==` on a
+JSON-round-tripped receipt. It reproduced under TZ=UTC on the owned PG18 before
+repair; the assertion now uses `Time.Equal` (same instant) and still requires the
+unchanged version. Final admin race validation is run with TZ=UTC on both DB versions.
+UTC repetition also exposed separately evaluated SQL clocks: PostgreSQL can
+evaluate updated_at before the newly added deleted_at column (27/1000 synthetic
+probe updates reproduced the inverse order). Account updates now use one
+MATERIALIZED database timestamp; deletion asserts deleted_at=updated_at rather
+than weakening the read DTO's time-order validation.
