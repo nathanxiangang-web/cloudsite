@@ -159,8 +159,13 @@ func TestAdminReadStateMatrixAndDTOAllowlist(t *testing.T) {
 	raw, _ := json.Marshal(user(aid))
 	var fields map[string]any
 	_ = json.Unmarshal(raw, &fields)
-	if len(fields) != 7 {
+	if len(fields) != 9 {
 		t.Fatal(string(raw))
+	}
+	for _, name := range []string{"version", "user_id", "login", "role", "enabled", "created_at", "updated_at", "deleted_at", "deleted_by"} {
+		if _, ok := fields[name]; !ok {
+			t.Fatal("missing allowlisted field", name)
+		}
 	}
 }
 func TestAdminReadCancellationErrorsAndConstructor(t *testing.T) {

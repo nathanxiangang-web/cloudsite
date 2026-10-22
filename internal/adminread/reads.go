@@ -16,6 +16,7 @@ var (
 	ErrInvalid     = errors.New("invalid admin read request")
 	ErrForbidden   = errors.New("admin required")
 	ErrUnavailable = errors.New("admin read unavailable")
+	ErrNotFound    = errors.New("admin user not found")
 	idPattern      = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
 )
 
@@ -28,13 +29,15 @@ func nilPort(port any) bool {
 }
 
 type User struct {
-	Version   int64     `json:"version"`
-	UserID    string    `json:"user_id"`
-	Login     string    `json:"login"`
-	Role      auth.Role `json:"role"`
-	Enabled   bool      `json:"enabled"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Version   int64      `json:"version"`
+	UserID    string     `json:"user_id"`
+	Login     string     `json:"login"`
+	Role      auth.Role  `json:"role"`
+	Enabled   bool       `json:"enabled"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at"`
+	DeletedBy *string    `json:"deleted_by"`
 }
 type Download struct {
 	ManifestID    string    `json:"manifest_id"`
@@ -133,8 +136,7 @@ func (s *Service) Users(ctx context.Context, p auth.Principal, limit int, cursor
 	}
 	previous := cursor
 	for _, row := range rows {
-		login, e := auth.NormalizeLogin(row.Login)
-		if !ValidID(row.UserID) || row.UserID <= previous || e != nil || login != row.Login || !row.Role.Valid() || row.Version < 0 || !validTimes(row.CreatedAt, row.UpdatedAt) {
+		if !validDirectoryUser(row) || row.UserID <= previous {
 			return UserPage{}, ErrUnavailable
 		}
 		previous = row.UserID

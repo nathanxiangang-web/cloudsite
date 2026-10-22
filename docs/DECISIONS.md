@@ -2,6 +2,16 @@
 
 > Append-only architecture/product decision memory. Do not rewrite history silently; supersede an old decision with a new entry.
 
+## Issue155 implementation pointer (candidate; not an acceptance decision)
+
+2026-10-22: The authorized UI-3B scope supersedes UI-3A-only development limits.
+PR-A's [USER lifecycle contract](ADMIN-USER-LIFECYCLE.md) defines immutable user_id,
+USER-only version-fenced commands, audited soft-delete/restore, session/share
+revocation and schema17. It neither enables private139 nor authorizes production
+migration, provider mutation, IndexCore repair or whole-UI3B acceptance. UI and
+homepage aggregation remain a separate PR-B. Earlier D-066 phase restrictions
+are historical for the prior stages, not a reason to keep management read-only.
+
 ## D-001 — MVP before UI
 
 **Status:** Accepted

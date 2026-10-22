@@ -17,7 +17,16 @@ func WithAdminOperations(ops adminops.Operations) WorkspaceOption {
 	return func(o *workspaceOptions) { o.operations = ops }
 }
 func registerAdminOperations(h *Handler, ops adminops.Operations) {
-	for pattern, action := range map[string]string{"POST /api/v1/admin/users": adminops.CreateUser, "PATCH /api/v1/admin/users/{user_id}": adminops.SetEnabled, "POST /api/v1/admin/storage/{binding_id}/probe": adminops.ProbeAccount, "GET /api/v1/admin/actions/{request_id}": "STATUS"} {
+	for pattern, action := range map[string]string{
+		"POST /api/v1/admin/users":                      adminops.CreateUser,
+		"PATCH /api/v1/admin/users/{user_id}":           adminops.SetEnabled,
+		"POST /api/v1/admin/users/{user_id}/rename":     adminops.RenameUser,
+		"POST /api/v1/admin/users/{user_id}/password":   adminops.ResetPassword,
+		"DELETE /api/v1/admin/users/{user_id}":          adminops.DeleteUser,
+		"POST /api/v1/admin/users/{user_id}/restore":    adminops.RestoreUser,
+		"POST /api/v1/admin/storage/{binding_id}/probe": adminops.ProbeAccount,
+		"GET /api/v1/admin/actions/{request_id}":        "STATUS",
+	} {
 		h.mux.Handle(pattern, h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			p, _ := Principal(r.Context())
 			if p.Role != auth.RoleAdmin {
@@ -51,11 +60,17 @@ func registerAdminOperations(h *Handler, ops adminops.Operations) {
 				result, e = ops.Status(r.Context(), actor, r.PathValue("request_id"))
 			} else {
 				fields := []string{"request_id"}
-				if action == adminops.CreateUser {
-					fields = append(fields, "login", "password")
+				if action == adminops.CreateUser || action == adminops.RenameUser {
+					fields = append(fields, "login")
+				}
+				if action == adminops.CreateUser || action == adminops.ResetPassword || action == adminops.RestoreUser {
+					fields = append(fields, "password")
 				}
 				if action == adminops.SetEnabled {
-					fields = append(fields, "enabled", "expected_version")
+					fields = append(fields, "enabled")
+				}
+				if action != adminops.CreateUser && action != adminops.ProbeAccount {
+					fields = append(fields, "expected_version")
 				}
 				body, err := adminCommandBody(w, r, fields)
 				if err != nil {
@@ -70,8 +85,20 @@ func registerAdminOperations(h *Handler, ops adminops.Operations) {
 					failure(w, 400, "INVALID_REQUEST")
 					return
 				}
-				if action == adminops.CreateUser {
-					if json.Unmarshal(body["login"], &c.Login) != nil || json.Unmarshal(body["password"], &c.Password) != nil {
+				if _, ok := body["login"]; ok {
+					if json.Unmarshal(body["login"], &c.Login) != nil {
+						failure(w, 400, "INVALID_REQUEST")
+						return
+					}
+				}
+				if _, ok := body["password"]; ok {
+					if json.Unmarshal(body["password"], &c.Password) != nil {
+						failure(w, 400, "INVALID_REQUEST")
+						return
+					}
+				}
+				if _, ok := body["expected_version"]; ok {
+					if json.Unmarshal(body["expected_version"], &c.ExpectedVersion) != nil {
 						failure(w, 400, "INVALID_REQUEST")
 						return
 					}

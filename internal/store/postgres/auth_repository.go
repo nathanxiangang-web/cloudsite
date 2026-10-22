@@ -50,7 +50,7 @@ VALUES($1,$2,$3,$4,$5,clock_timestamp(),clock_timestamp())`, string(user.ID), us
 func (repo *AuthRepository) UserByLogin(ctx context.Context, login string) (auth.User, error) {
 	var user auth.User
 	var id string
-	err := repo.db.QueryRow(ctx, `SELECT user_id::text,login,password_hash,role,enabled FROM product_users WHERE login=$1`, login).Scan(&id, &user.Login, &user.PasswordHash, &user.Role, &user.Enabled)
+	err := repo.db.QueryRow(ctx, `SELECT user_id::text,login,password_hash,role,enabled FROM product_users WHERE login=$1 AND deleted_at IS NULL`, login).Scan(&id, &user.Login, &user.PasswordHash, &user.Role, &user.Enabled)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return auth.User{}, auth.ErrNotFound
 	}
@@ -72,7 +72,7 @@ func (repo *AuthRepository) CreateSession(ctx context.Context, id auth.UserID, d
 	var principal auth.Principal
 	var storedID string
 	// Coordinate account disabling/password changes with session creation.
-	err = tx.QueryRow(ctx, `SELECT user_id::text,login,role FROM product_users WHERE user_id=$1 AND enabled AND password_hash=$2 FOR SHARE`, string(id), expectedHash).Scan(&storedID, &principal.Login, &principal.Role)
+	err = tx.QueryRow(ctx, `SELECT user_id::text,login,role FROM product_users WHERE user_id=$1 AND enabled AND deleted_at IS NULL AND password_hash=$2 FOR SHARE`, string(id), expectedHash).Scan(&storedID, &principal.Login, &principal.Role)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return auth.Principal{}, time.Time{}, auth.ErrUnauthorized
 	}
@@ -103,7 +103,7 @@ func (repo *AuthRepository) SessionPrincipal(ctx context.Context, digest []byte)
 	var id string
 	err := repo.db.QueryRow(ctx, `SELECT u.user_id::text,u.login,u.role FROM product_sessions s
 JOIN product_users u ON u.user_id=s.user_id
-WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>clock_timestamp() AND u.enabled`, digest).Scan(&id, &principal.Login, &principal.Role)
+WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>clock_timestamp() AND u.enabled AND u.deleted_at IS NULL`, digest).Scan(&id, &principal.Login, &principal.Role)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return auth.Principal{}, auth.ErrUnauthorized
 	}

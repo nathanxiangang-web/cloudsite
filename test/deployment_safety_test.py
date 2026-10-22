@@ -8,8 +8,8 @@ class DeploymentSafety(unittest.TestCase):
   raw=subprocess.check_output(['git','-c','core.autocrlf=true','archive','--format=tar','HEAD','migrations'],cwd=root,timeout=15)
   with tarfile.open(fileobj=io.BytesIO(raw),mode='r:') as archive:
    files=[item for item in archive.getmembers() if item.name.endswith('.sql')]
-   self.assertEqual(len(files),16)  # UI-3A appends migration16; retain byte/LF checks for ALL history.
-   self.assertEqual(sorted(item.name for item in files)[-1],'migrations/0016_product_admin_actions.sql')
+   self.assertEqual(len(files),17)  # UI-3B appends migration17; retain byte/LF checks for ALL history.
+   self.assertEqual(sorted(item.name for item in files)[-1],'migrations/0017_product_user_lifecycle.sql')
    for item in files:
     published=subprocess.check_output(['git','cat-file','blob','HEAD:'+item.name],cwd=root,timeout=5)
     self.assertNotIn(b'\r\n',published)

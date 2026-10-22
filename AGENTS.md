@@ -14,6 +14,12 @@ Chat history is not a source of truth.
 
 ## Superseding current task — 2026-10-22
 
+Issue155 supersedes the UI-3A-only development scope below. PR-A implements
+USER lifecycle CRUD/search/detail and append-only schema17 in isolation. Read
+`docs/ADMIN-USER-LIFECYCLE.md`. No private139, provider actions, production
+migration/deployment, IndexCore recovery, or UI-3B whole-program acceptance.
+UI/homepage PR-B and other operating modules remain separate reviewable PRs.
+
 Issue149 / LIVE UI-3A authorizes one implementation PR from
 `97cb94fee932e231147c25c74bcbf773f27538fe` (UI-2B148 merged;
 main CI39701070318 all3 SUCCESS checked). Implement manual real protected115

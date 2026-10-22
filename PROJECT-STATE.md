@@ -4,7 +4,18 @@
 
 ## Current phase
 
-### Current execution — Issue #153 production rollout (NO-GO; not deployed)
+### Current development — Issue #155 / Admin UI-3B PR-A candidate
+
+2026-10-22: Issue155 authorizes an isolated USER lifecycle backend slice from
+`c26678a87ca4`. Added rename/reset/soft-delete/restore, bounded search/detail and
+append-only schema17. See [module contract](docs/ADMIN-USER-LIFECYCLE.md).
+PR-A is implementation for review, not acceptance, merge or production migration.
+UI/homepage aggregation is PR-B; task/share/storage management follows separately.
+Private139 remains PAUSED. IndexCore130/D2 and production153 remain independent.
+The Issue155 report of live UI-3A/schema16 is not independently reverified by this
+development run; the older preflight below is a dated observation, not live truth.
+
+### Historical execution — Issue #153 preflight snapshot (NO-GO at that observation)
 
 2026-10-22: UI-3A PR150 merged as `c43408bb61722fb3d575063b8da79c04d736abdc`.
 PR151/152 archive isolated forward/reverse drills; main `fe6ec170126c` CI39728366064
