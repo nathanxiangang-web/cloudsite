@@ -1,6 +1,18 @@
 # cloudsite — AI Architecture Memory
 
-**Current execution (2026-10-22, Asia/Shanghai):** UI-2B PR148 merged at
+**Current execution (2026-10-22):** Issue153 production rollout, NOW window
+approved; UI-3A150 merged `c43408bb`, docs151/152 main `fe6ec170`, CI39728366064
+all3 SUCCESS. Password SSH authenticated; fresh production remains old
+`deleted-preview-bf89f5a` + schema15/15, five READY/SUCCEEDED and five
+RECOVERY_REQUIRED pairs. Candidate image/binary/migrator hashes verified.
+Pre-cutover IndexCore stability gate NO-GO:61 restarts, repeated cycle/executor
+fatal exits; last failure followed reconcile error, underlying cause unverified.
+No product stop attempted this pass, no migration/cutover/live canary. Previous
+host-guard refusal remains a historical report, not a current reproduced denial.
+See [fresh preflight](operations/ui3a-rollout/07-live-preflight.md). No IndexCore
+repair or historical task replay authorized by this rollout. Private139 PAUSED.
+
+**Historical UI-3A implementation handoff (now merged):** UI-2B PR148 merged at
 `97cb94fee932e231147c25c74bcbf773f27538fe`; main CI39701070318 all3 SUCCESS
 checked. Issue149 / LIVE UI-3A now authorizes real protected native115 GetInfo
 and audited USER creation/enable/disable. One separate implementation PR, not

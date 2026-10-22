@@ -75,9 +75,9 @@ curl -fsS -o /dev/null -w '%{http_code}\n' -H 'Host: cloud.netioi.com' https://c
 ## 7) 真实联机验收
 按 `03-live-acceptance.md` 执行 115 探针与 USER 启停；证据仅记录分类状态与计数。
 
-## 8) 回滚（任一步失败）— 状态：`NOT_VERIFIED`（未演练）
+## 8) 回滚（任一步失败）— `DRILL-VERIFIED`（隔离；不是生产回滚验收）
 
-> **警告：本节尚不可作为可直接执行的生产步骤。** 在完成反向演练（见 `02-migration-v15-to-v16.md` §9）前，回滚判定 **`NOT_VERIFIED`**，生产切换 **BLOCKED**。
+> PR #152 / `06-reverse-cutover-drill.md` 已报告隔离反向演练通过；此前 `NOT_VERIFIED` 已被该证据取代。但旧 live 快照不能替代本次冻结后的备份与恢复验证。Issue #153 的 NOW 窗口已经批准，实际切换仍须逐项通过现场准入；最新检查见 `07-live-preflight.md`。
 > **禁止** in-place `pg_restore --clean` 直打到现有 v16 库：它不会删除 v16-only 对象（三张审计表 + `product_users.admin_version`），且可能因外键依赖中途失败，使生产库不可用。
 
 受控恢复流程（须先通过反向演练）：

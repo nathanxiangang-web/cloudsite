@@ -4,7 +4,24 @@
 
 ## Current phase
 
-### Current execution — LIVE Admin UI-3A / Issue #149 (implementation candidate; not deployed)
+### Current execution — Issue #153 production rollout (NO-GO; not deployed)
+
+2026-10-22: UI-3A PR150 merged as `c43408bb61722fb3d575063b8da79c04d736abdc`.
+PR151/152 archive isolated forward/reverse drills; main `fe6ec170126c` CI39728366064
+all3 SUCCESS independently checked. The human approved the NOW window. Password
+SSH now works; the previous BatchMode authentication failure was not a failed
+password login. Fresh production reads confirm old `deleted-preview-bf89f5a`,
+schema15/15, acquisition mode, five READY/SUCCEEDED and five RECOVERY_REQUIRED
+pairs. Candidate image/binary/migrator hashes match the reviewed artifacts.
+IndexCore has repeated `incremental_runtime_fatal` cycle/executor exits and
+restart count61; last observed failure followed a reconcile error. Underlying
+cause and sustained stability are NOT verified. This dependency gate is NO-GO,
+not a newly observed SSH/host-safety rejection. No stop was attempted this pass;
+frozen backup/restore, migration, cutover and live canaries remain NOT_RUN.
+See [fresh preflight](docs/operations/ui3a-rollout/07-live-preflight.md).
+Private139 remains PAUSED; no historical task replay or IndexCore repair.
+
+### Historical UI-3A implementation handoff (merged; not deployment evidence)
 
 2026-10-22: UI-2B PR148 verified merged at authorized baseline
 `97cb94fee932e231147c25c74bcbf773f27538fe`; merged-main CI39701070318 all3

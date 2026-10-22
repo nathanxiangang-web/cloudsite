@@ -1,5 +1,14 @@
 # CloudSite UI-3A 生产 Rollout — 部署准备工作与验收证据
 
+## 当前执行指针（Issue #153，2026-10-22）
+
+UI-3A PR #150、文档 PR #151/#152 均已合并，NOW 维护窗口已批准。
+密码 SSH 已成功；最新实测仍是旧产品镜像和 schema15。候选产物哈希通过，
+但 IndexCore 重复 cycle/executor 致命退出，重启计数61，稳定性准入 NO-GO。
+冻结备份、生产迁移、镜像切换与真实 canary 均未执行。见
+[07 · 最新只读现场核查](07-live-preflight.md)。下文为历史准备/演练记录，
+其中“未授权”仅描述当时状态，不覆盖 Issue #153 的后续维护授权。
+
 > 状态：**部署准备（pre-cutover）已完成并通过隔离验证；生产变更尚未执行。**
 > 本文档仅供架构审查与部署准入评审，**不包含任何凭据**（无口令、Token、Cookie、密钥、数据库连接串、受保护配置内容、二进制）。
 
@@ -46,6 +55,7 @@
 | `04-operator-runbook.md` | 剩余生产步骤的可执行 runbook（脱敏占位） |
 | `05-findings-and-blockers.md` | 发现的问题、阻断点、遗留项与 UNKNOWN |
 | `06-reverse-cutover-drill.md` | 反向恢复演练（v16→v15）证据与结果（PASS，隔离） |
+| `07-live-preflight.md` | Issue #153 最新现场准入结果（NO-GO；不是部署收据） |
 
 ## 4. 脱敏声明
 
