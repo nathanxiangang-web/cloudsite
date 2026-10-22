@@ -31,7 +31,7 @@ var _ adminops.Store = (*AdminOperationsRepository)(nil)
 func adminActor(ctx context.Context, tx pgx.Tx, a adminops.Actor) error {
 	var login, role string
 	var enabled bool
-	e := tx.QueryRow(ctx, `SELECT login,role,enabled FROM product_users WHERE user_id=$1 FOR SHARE`, string(a.Principal.UserID)).Scan(&login, &role, &enabled)
+	e := tx.QueryRow(ctx, `SELECT login,role,enabled FROM product_users WHERE user_id=$1 AND deleted_at IS NULL FOR SHARE`, string(a.Principal.UserID)).Scan(&login, &role, &enabled)
 	if errors.Is(e, pgx.ErrNoRows) {
 		return auth.ErrUnauthorized
 	}
@@ -224,33 +224,9 @@ func (r *AdminOperationsRepository) ApplyUser(ctx context.Context, a adminops.Ac
 			}
 		}
 	} else {
-		var id, login, role string
-		var enabled bool
-		var version int64
-		e = tx.QueryRow(ctx, `SELECT user_id::text,login,role,enabled,admin_version FROM product_users WHERE user_id=$1 AND role='USER' AND user_id<>$2 FOR UPDATE`, c.TargetID, string(a.Principal.UserID)).Scan(&id, &login, &role, &enabled, &version)
-		if e != nil && !errors.Is(e, pgx.ErrNoRows) {
+		result, e = r.changeUser(ctx, tx, a, c)
+		if e != nil {
 			return adminops.Result{}, e
-		}
-		switch {
-		case errors.Is(e, pgx.ErrNoRows):
-			result.Code = "TARGET_FORBIDDEN"
-		case role != "USER" || id == string(a.Principal.UserID):
-			result.Code = "TARGET_FORBIDDEN"
-		case version != c.ExpectedVersion:
-			result.Code = "VERSION_CONFLICT"
-		default:
-			// Enabling a legacy disabled account must not resurrect pre-disable tokens.
-			_, e = tx.Exec(ctx, `UPDATE product_sessions SET revoked_at=clock_timestamp() WHERE user_id=$1 AND revoked_at IS NULL`, id)
-			if e != nil {
-				return adminops.Result{}, e
-			}
-			e = tx.QueryRow(ctx, `UPDATE product_users SET enabled=$2,admin_version=admin_version+1,updated_at=clock_timestamp() WHERE user_id=$1 AND admin_version=$3 RETURNING admin_version`, id, c.Enabled, version).Scan(&version)
-			if e != nil {
-				return adminops.Result{}, e
-			}
-			result.Status = "SUCCEEDED"
-			result.Code = "USER_STATE_CHANGED"
-			result.User = &adminops.User{UserID: id, Login: login, Enabled: c.Enabled, Version: version}
 		}
 	}
 	if r.beforeUserCommit != nil {

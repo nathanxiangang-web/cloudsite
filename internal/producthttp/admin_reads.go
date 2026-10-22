@@ -22,6 +22,7 @@ func adminReadsConfigured(reads adminread.Reads) bool {
 // Authorization is fresh per request, not inferred from a previous descriptor.
 // Absent composition fails closed instead of returning a fabricated empty list.
 func registerAdminReads(h *Handler, reads adminread.Reads) {
+	registerAdminUserDetail(h, reads)
 	for _, kind := range []string{"users", "downloads"} {
 		h.mux.Handle("GET /api/v1/admin/"+kind, h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			p, _ := Principal(r.Context())
@@ -39,6 +40,9 @@ func registerAdminReads(h *Handler, reads adminread.Reads) {
 				return
 			}
 			keys := []string{"limit", "cursor"}
+			if kind == "users" {
+				keys = append(keys, "q", "status")
+			}
 			if kind == "downloads" {
 				keys = append(keys, "user_id")
 			}
@@ -57,6 +61,19 @@ func registerAdminReads(h *Handler, reads adminread.Reads) {
 				return
 			}
 			if kind == "users" {
+				if directory, ok := reads.(adminread.DirectoryReads); ok {
+					page, e := directory.SearchUsers(r.Context(), p, adminread.UserFilter{Limit: limit, Cursor: query.Get("cursor"), Search: strings.ToLower(query.Get("q")), Status: query.Get("status")})
+					if e != nil {
+						adminReadFailure(w, e)
+						return
+					}
+					respond(w, 200, page)
+					return
+				}
+				if query.Has("q") || query.Has("status") {
+					adminReadFailure(w, adminread.ErrUnavailable)
+					return
+				}
 				page, err := reads.Users(r.Context(), p, limit, query.Get("cursor"))
 				if err != nil {
 					adminReadFailure(w, err)
@@ -82,6 +99,8 @@ func adminReadFailure(w http.ResponseWriter, err error) {
 		failure(w, 403, "ADMIN_REQUIRED")
 	case errors.Is(err, adminread.ErrInvalid):
 		failure(w, 400, "INVALID_REQUEST")
+	case errors.Is(err, adminread.ErrNotFound):
+		failure(w, 404, "USER_NOT_FOUND")
 	default:
 		failure(w, 503, "READ_UNAVAILABLE")
 	}

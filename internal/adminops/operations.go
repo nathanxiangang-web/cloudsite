@@ -23,9 +23,13 @@ var (
 )
 
 const (
-	CreateUser   = "CREATE_USER"
-	SetEnabled   = "SET_USER_ENABLED"
-	ProbeAccount = "PROBE_115"
+	CreateUser    = "CREATE_USER"
+	SetEnabled    = "SET_USER_ENABLED"
+	ProbeAccount  = "PROBE_115"
+	RenameUser    = "RENAME_USER"
+	ResetPassword = "RESET_USER_PASSWORD"
+	DeleteUser    = "DELETE_USER"
+	RestoreUser   = "RESTORE_USER"
 )
 
 // Actor carries the authenticated session digest, never the session bearer.
@@ -53,6 +57,13 @@ func (c Command) Valid() bool {
 		return e == nil && login == c.Login && auth.ValidPassword(c.Password) && c.TargetID == "" && c.ExpectedVersion == 0 && !c.Enabled
 	case SetEnabled:
 		return adminread.ValidID(c.TargetID) && c.ExpectedVersion >= 0 && c.Login == "" && c.Password == ""
+	case RenameUser:
+		login, e := auth.NormalizeLogin(c.Login)
+		return adminread.ValidID(c.TargetID) && c.ExpectedVersion >= 0 && e == nil && login == c.Login && c.Password == "" && !c.Enabled
+	case ResetPassword, RestoreUser:
+		return adminread.ValidID(c.TargetID) && c.ExpectedVersion >= 0 && auth.ValidPassword(c.Password) && c.Login == "" && !c.Enabled
+	case DeleteUser:
+		return adminread.ValidID(c.TargetID) && c.ExpectedVersion >= 0 && c.Login == "" && c.Password == "" && !c.Enabled
 	case ProbeAccount:
 		return adminread.ValidID(c.TargetID) && c.Login == "" && c.Password == "" && c.ExpectedVersion == 0 && !c.Enabled
 	}
@@ -72,6 +83,7 @@ type User struct {
 	Login   string `json:"login"`
 	Enabled bool   `json:"enabled"`
 	Version int64  `json:"version"`
+	Deleted bool   `json:"deleted"`
 }
 type Capacity struct {
 	Status         string    `json:"status"`

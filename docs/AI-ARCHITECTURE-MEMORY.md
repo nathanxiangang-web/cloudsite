@@ -1,6 +1,14 @@
 # cloudsite — AI Architecture Memory
 
-**Current execution (2026-10-22):** Issue153 production rollout, NOW window
+**Current development (2026-10-22):** Issue155 / Admin UI-3B PR-A candidate,
+USER-only lifecycle/search/detail with append-only schema17. Read
+[module contract](ADMIN-USER-LIFECYCLE.md). No ADMIN-target changes, provider
+calls, private139, task replay or production migration. UI/homepage PR-B remains
+separate. Do not treat code/tests as acceptance or deployment. Production153 and
+IndexCore D2 stability have separate evidence gates; this run does not reverify
+the Issue155 report of live schema16. The snapshot below is historical.
+
+**Historical preflight (2026-10-22):** Issue153 production rollout, NOW window
 approved; UI-3A150 merged `c43408bb`, docs151/152 main `fe6ec170`, CI39728366064
 all3 SUCCESS. Password SSH authenticated; fresh production remains old
 `deleted-preview-bf89f5a` + schema15/15, five READY/SUCCEEDED and five
