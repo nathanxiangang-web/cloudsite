@@ -52,14 +52,14 @@ func (r *AdminReadRepository) ListUsers(ctx context.Context, limit int, cursor s
 		return nil, adminReadError(err)
 	}
 	defer func() { _ = tx.Rollback(context.Background()) }()
-	rows, err := tx.Query(ctx, `SELECT user_id::text,login,role,enabled,created_at,updated_at FROM product_users WHERE ($1::uuid IS NULL OR user_id>$1::uuid) ORDER BY user_id ASC LIMIT $2`, adminNullable(cursor), limit)
+	rows, err := tx.Query(ctx, `SELECT user_id::text,login,role,enabled,created_at,updated_at,admin_version FROM product_users WHERE ($1::uuid IS NULL OR user_id>$1::uuid) ORDER BY user_id ASC LIMIT $2`, adminNullable(cursor), limit)
 	if err != nil {
 		return nil, adminReadError(err)
 	}
 	result := make([]adminread.User, 0, limit)
 	for rows.Next() {
 		var item adminread.User
-		if err = rows.Scan(&item.UserID, &item.Login, &item.Role, &item.Enabled, &item.CreatedAt, &item.UpdatedAt); err != nil {
+		if err = rows.Scan(&item.UserID, &item.Login, &item.Role, &item.Enabled, &item.CreatedAt, &item.UpdatedAt, &item.Version); err != nil {
 			rows.Close()
 			return nil, adminReadError(err)
 		}

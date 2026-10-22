@@ -141,7 +141,7 @@ func TestWorkspaceStaticJSContainsNoTokenStorageOrHTMLInjection(t *testing.T) {
 		}
 	}
 	data, _ = workspaceFiles.ReadFile("web/index.html")
-	if !strings.Contains(string(data), "只读预览") || !strings.Contains(string(data), "尚未接入") {
+	if !strings.Contains(string(data), "受控管理") || !strings.Contains(string(data), "尚未接入") {
 		t.Fatal("unimplemented features presented as real")
 	}
 }

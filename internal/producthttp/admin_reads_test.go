@@ -116,7 +116,11 @@ func TestAdminHTTPFreshRoleDisabledMethodsAndOptionalPort(t *testing.T) {
 		a.err = nil
 		for _, method := range []string{"POST", "PUT", "PATCH", "DELETE", "HEAD"} {
 			w := request(h, method, "/api/v1/admin/"+route, "", testToken, "http://127.0.0.1:8180")
-			if w.Code != 405 || f.calls != before {
+			expected := 405
+			if route == "users" && method == "POST" {
+				expected = 503
+			} // UI-3A: distinct optional command port.
+			if w.Code != expected || f.calls != before {
 				t.Fatal(method, w.Code)
 			}
 		}

@@ -159,7 +159,7 @@ func TestAdminReadStateMatrixAndDTOAllowlist(t *testing.T) {
 	raw, _ := json.Marshal(user(aid))
 	var fields map[string]any
 	_ = json.Unmarshal(raw, &fields)
-	if len(fields) != 6 {
+	if len(fields) != 7 {
 		t.Fatal(string(raw))
 	}
 }
