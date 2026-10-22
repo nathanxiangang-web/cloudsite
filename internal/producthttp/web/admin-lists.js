@@ -54,6 +54,18 @@ const AdminLists={create({el,read,generation,principal,onError,dateText,cell,bad
   if(!/^[a-z0-9._-]{0,64}$/.test(q)||status&&!['ALL','ENABLED','DISABLED','DELETED'].includes(status)){const error=Error('Invalid user filter');error.code='INVALID_REQUEST';onError(error);return;}
   views.users.search=q;views.users.status=status||'ALL';views.users.cursor='';return views.users.load();
  };
+ // Minimal server-aggregated total: one-item page. Never infers from a page sample.
+ // Returns a safe integer only when the server provides a validated DirectoryReads total; otherwise null ("未提供").
+ views.users.total=async()=>{
+  if(!principal())return null;
+  const gen=generation();
+  try{
+   const page=await read('/api/v1/admin/users?limit=1',gen);
+   if(gen!==generation())return null;
+   if(!page||!Array.isArray(page.items)||typeof page.total!=='number'||!Number.isSafeInteger(page.total)||page.total<0||page.total<page.items.length||page.scope!=='FILTERED_PRODUCT_USERS')return null;
+   return page.total;
+  }catch{return null;}
+ };
  return {...views,reset(){for(const view of Object.values(views))view.reset();view_search_reset();},invalidate(){for(const view of Object.values(views))view.invalidate();}};
  function view_search_reset(){views.users.search='';views.users.status='ALL';el('admin-user-filter').value='';el('users-search').value='';el('users-status').value='ALL';}
 }};
