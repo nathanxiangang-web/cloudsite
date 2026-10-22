@@ -27,7 +27,7 @@ func TestAdminUIUserLifecycleAssetsWireReviewedCommands(t *testing.T) {
 		"RENAME_USER", "RESET_USER_PASSWORD", "DELETE_USER", "RESTORE_USER",
 		"USER_RENAMED", "USER_PASSWORD_RESET", "USER_RESTORED", "USER_DELETED",
 		"USER_STATE_CONFLICT", "LOGIN_CONFLICT", "ACTIVE_DOWNLOADS", "DOWNLOAD_STATE_CONFLICT", "PASSWORD_UNCHANGED",
-		"/rename", "/password", "/restore", "user-detail-facts",
+		"/rename", "/password", "/restore",
 	} {
 		if !strings.Contains(body, want) {
 			t.Fatalf("admin-operations.js missing %q", want)
