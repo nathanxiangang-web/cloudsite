@@ -65,7 +65,7 @@ go test ./internal/store/postgres -run TestPostgresAdminOperationsMigration15To1
 > - 并发写入条件下**生产恢复正确性**的证明；
 > - v16→v15 **反向迁移演练**的证明。
 >
-> 因此**生产回滚仍为 `NOT_VERIFIED`**（见 §7、§9）。最终须以「冻结 writer 备份 + 验证恢复」的可复核证据为准。
+> 因此生产回滚在 Round 1 时为 `NOT_VERIFIED`；**隔离反向演练已于 2026-10-22 通过**（见 §9 与 `06-reverse-cutover-drill.md`）。最终仍须以「冻结 writer 备份 + 验证恢复」的可复核证据为准。
 
 ## 6. 备份方案（生产权威备份）
 
@@ -83,10 +83,10 @@ go test ./internal/store/postgres -run TestPostgresAdminOperationsMigration15To1
 3. 记录切换前 `head-before`（期望 15）。
 4. 恢复验证：将备份恢复到隔离 PG，校验 `head=15` 且**逐表行数与生产一致**。
 
-## 7. 回滚步骤（gate6）— 状态：`NOT_VERIFIED` / PRODUCTION CUTOVER BLOCKED
+## 7. 回滚步骤（gate6）— 状态：`DRILL-VERIFIED（隔离演练通过）` / 生产切换未授权
 
-> **警告：回滚方案尚未演练，禁止将其作为可直接执行的生产步骤。**
-> 在完成 §9 的隔离**反向演练**并取得可复核证据之前，rollback 判定为 **`NOT_VERIFIED`**，生产切换 **BLOCKED**。
+> **反向演练已于 2026-10-22 在隔离容器内通过（见 `06-reverse-cutover-drill.md`）**：v15 备份恢复到全新空库 → `head=15`、**v16-only 对象不存在**、关键表行数一致；**旧镜像在该库上正常启动**（`GET /`=200）。
+> 但生产切换**仍未授权**；实际回滚须在**冻结 writer 的生产窗口**内执行，且权威备份须在冻结后重取并验证。
 
 ### 7.1 为什么不能用 `pg_restore --clean` 直接就打到现有 v16 库
 
@@ -114,7 +114,7 @@ go test ./internal/store/postgres -run TestPostgresAdminOperationsMigration15To1
 - 一旦生产切到 schema16 且运行新镜像，回退到旧镜像必须先恢复 schema15 备份（迁移后产生的写入将丢失）。
 - 该风险已通过第 5 节的隔离 dry-run（真实数据 + 新镜像启动）**部分**降低，但**真实生产切换仍属不可逆窗口**，必须按第 6/7 节准备。
 
-## 9. 反向演练（reverse-cutover drill）要求 — 状态：`NOT_RUN`
+## 9. 反向演练（reverse-cutover drill）— 状态：`PASS（隔离）`（证据：`06-reverse-cutover-drill.md`）
 
 在授予生产切换之前，须在隔离环境完成并留证：
 
@@ -124,6 +124,6 @@ go test ./internal/store/postgres -run TestPostgresAdminOperationsMigration15To1
    - `schema_migrations` 精确回到 **head=15**，历史与 checksum 全部匹配，且 **v16-only 对象已完全不存在**；
    - 关键表数据与备份一致；
    - **旧镜像**（`cloudsite:deleted-preview-bf89f5a`）能在该库上正常启动。
-4. 只有通过上述演练后，才可把 §7.2 的回滚流程标记为可执行；否则维持 **`NOT_VERIFIED` / PRODUCTION CUTOVER BLOCKED**。
+4. 演练已于 2026-10-22 **通过**（见 `06-reverse-cutover-drill.md`）；§7.2 的回滚流程**已在隔离环境验证**，但生产切换**仍未授权**。
 
-> 本 PR 仅记录该要求，**不执行任何远程命令**。
+> 已于 2026-10-22 在生产主机**隔离容器**内完成（`head=15`、`v16_objects_present=0`、`admin_version_col=0`、行数一致、旧镜像启动 `200`；见 `06-reverse-cutover-drill.md`）。**未在生产环境执行任何变更**；生产切换仍未授权。
