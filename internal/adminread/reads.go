@@ -28,6 +28,7 @@ func nilPort(port any) bool {
 }
 
 type User struct {
+	Version   int64     `json:"version"`
 	UserID    string    `json:"user_id"`
 	Login     string    `json:"login"`
 	Role      auth.Role `json:"role"`
@@ -133,7 +134,7 @@ func (s *Service) Users(ctx context.Context, p auth.Principal, limit int, cursor
 	previous := cursor
 	for _, row := range rows {
 		login, e := auth.NormalizeLogin(row.Login)
-		if !ValidID(row.UserID) || row.UserID <= previous || e != nil || login != row.Login || !row.Role.Valid() || !validTimes(row.CreatedAt, row.UpdatedAt) {
+		if !ValidID(row.UserID) || row.UserID <= previous || e != nil || login != row.Login || !row.Role.Valid() || row.Version < 0 || !validTimes(row.CreatedAt, row.UpdatedAt) {
 			return UserPage{}, ErrUnavailable
 		}
 		previous = row.UserID

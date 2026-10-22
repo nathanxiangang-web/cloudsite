@@ -12,6 +12,20 @@ Before planning, changing, or reviewing code, **read these files first**:
 
 Chat history is not a source of truth.
 
+## Superseding current task — 2026-10-22
+
+Issue149 / LIVE UI-3A authorizes one implementation PR from
+`97cb94fee932e231147c25c74bcbf773f27538fe` (UI-2B148 merged;
+main CI39701070318 all3 SUCCESS checked). Implement manual real protected115
+GetInfo and audited USER create/enable/disable commands. Read
+`docs/PRODUCT-ADMIN-LIVE-OPERATIONS-ACCEPTANCE.md` for module/port, audit,
+idempotency, schema16 and deployment gates. Tests are isolated; runtime uses
+real configured PG/session bindings with no fixture fallback. No production
+deployment/migration or live canary yet. No native download/directory/delete,
+Root repair, task commands, per-user GB quotas or private139 work. UI-2B's old
+read-only scope paragraphs are historical, not a prohibition of Issue149.
+Stop at an unmerged implementation PR for Architect review.
+
 ## Current execution pointer — 2026-10-18
 
 **Oct20 superseding pointer: Issue136 / D-064 live verified02:15Z.** PR137

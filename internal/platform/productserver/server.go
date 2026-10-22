@@ -12,6 +12,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nathanxiangang-web/panta/internal/adminobserve"
+	"github.com/nathanxiangang-web/panta/internal/adminops"
 	"github.com/nathanxiangang-web/panta/internal/adminread"
 	"github.com/nathanxiangang-web/panta/internal/auth"
 	"github.com/nathanxiangang-web/panta/internal/fileaccess"
@@ -21,6 +22,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/integrations/indexcore"
 	openlistcontent "github.com/nathanxiangang-web/panta/internal/integrations/openlist/content"
 	"github.com/nathanxiangang-web/panta/internal/platform/adminindex"
+	"github.com/nathanxiangang-web/panta/internal/platform/adminprovider"
 	"github.com/nathanxiangang-web/panta/internal/platform/bootstrap"
 	"github.com/nathanxiangang-web/panta/internal/platform/config"
 	"github.com/nathanxiangang-web/panta/internal/product"
@@ -189,6 +191,29 @@ func Run(ctx context.Context, action, configFile, userFile string, policies ...c
 		return ErrStartup
 	}
 	options = append(options, producthttp.WithAdminObservation(observation))
+	opsRepo, err := postgres.NewAdminOperationsRepository(pool)
+	if err != nil {
+		cancel()
+		return ErrStartup
+	}
+	var accountProbe adminops.AccountProbe
+	probeFile := cfg.AdminProbeBootstrapFile
+	if probeFile == "" && cfg.CloudDownload != nil {
+		probeFile = cfg.CloudDownload.BootstrapFile
+	}
+	if probeFile != "" {
+		accountProbe, err = adminprovider.New(startupCtx, probeFile)
+		if err != nil {
+			cancel()
+			return ErrConfig
+		}
+	}
+	ops, err := adminops.NewService(opsRepo, accountProbe, adminBindings)
+	if err != nil {
+		cancel()
+		return ErrStartup
+	}
+	options = append(options, producthttp.WithAdminOperations(ops))
 	if cfg.CloudDownloadPreview != nil {
 		options = append(options, producthttp.WithCloudSourcePreview(*cfg.CloudDownloadPreview))
 	}

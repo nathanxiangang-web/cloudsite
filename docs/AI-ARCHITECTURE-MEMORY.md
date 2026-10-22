@@ -1,6 +1,18 @@
 # cloudsite — AI Architecture Memory
 
-**Current execution (2026-10-22, Asia/Shanghai):** UI-2A PR146 verified merged at
+**Current execution (2026-10-22, Asia/Shanghai):** UI-2B PR148 merged at
+`97cb94fee932e231147c25c74bcbf773f27538fe`; main CI39701070318 all3 SUCCESS
+checked. Issue149 / LIVE UI-3A now authorizes real protected native115 GetInfo
+and audited USER creation/enable/disable. One separate implementation PR, not
+deployment. Runtime has real configured PG/session binding, never fixture data.
+Read [current handoff](PRODUCT-ADMIN-LIVE-OPERATIONS-ACCEPTANCE.md): typed ports,
+fresh ADMIN/session locks, durable non-replayed intents, atomic USER/outcome/
+session revocation, version CAS, single-call connection cooldown and fail-closed
+capacity evidence. Schema16 added only in development; live canary/USER writes/
+production migration NOT_RUN. Private139 PAUSED, no user GB quota, no native
+file/download action, IndexCore repair or task command. Architect review pending.
+
+**Historical UI-2B candidate handoff (now merged):** UI-2A PR146 verified merged at
 `a645e90229b71209f9a6036f25583113df9f1281`; merged-main CI39639475953 all3 SUCCESS
 checked. Issue145 closed per Architect. **Issue147 UI-2B candidate** adds a separate
 adminobserve domain/ports, bounded read-only storage projections and manual scoped

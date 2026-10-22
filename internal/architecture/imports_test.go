@@ -17,6 +17,7 @@ func TestGateZeroDomainImportBoundaries(t *testing.T) {
 		packagePath string
 		forbidden   []string
 	}{
+		{packagePath: "github.com/nathanxiangang-web/panta/internal/adminops", forbidden: []string{"github.com/jackc/pgx", "database/sql", "net/http", "/internal/providers", "/internal/integrations", "/internal/store", "/internal/platform", "/internal/runtime", "/internal/acquisition", "/internal/jobs", "/internal/product"}},
 		{packagePath: "github.com/nathanxiangang-web/panta/internal/adminobserve", forbidden: []string{"github.com/jackc/pgx", "database/sql", "net/http", "/internal/providers", "/internal/integrations", "/internal/store", "/internal/platform", "/internal/runtime", "/internal/acquisition", "/internal/jobs", "/internal/product"}},
 		{
 			packagePath: "github.com/nathanxiangang-web/panta/internal/adminread",

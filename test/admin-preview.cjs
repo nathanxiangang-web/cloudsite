@@ -37,7 +37,7 @@ const server=http.createServer((req,res)=>{
  if(url.pathname==='/api/v1/resources')return json({items:[{...file,resource_id:'fixture-folder',name:'文档',path:'/文档',directory:true,size_bytes:null,copy_id:null},file,{...file,resource_id:'fixture-video',name:'示例视频.mp4',path:'/示例视频.mp4',size_bytes:2147483648,copy_id:null}],next_cursor:''});
  if(url.pathname==='/api/v1/tasks')return json({items:[task],next_cursor:''});
  if(url.pathname==='/api/v1/tasks/'+task.manifest_id)return json(task);
- const assets={'/admin/':['index.html','text/html'],'/assets/app.css':['app.css','text/css'],'/assets/app.js':['app.js','text/javascript'],'/assets/admin-lists.js':['admin-lists.js','text/javascript'],'/assets/admin-observe.js':['admin-observe.js','text/javascript'],'/assets/resource-display.js':['resource-display.js','text/javascript']};
+ const assets={'/admin/':['index.html','text/html'],'/assets/app.css':['app.css','text/css'],'/assets/app.js':['app.js','text/javascript'],'/assets/admin-lists.js':['admin-lists.js','text/javascript'],'/assets/admin-observe.js':['admin-observe.js','text/javascript'],'/assets/admin-operations.js':['admin-operations.js','text/javascript'],'/assets/resource-display.js':['resource-display.js','text/javascript']};
  const asset=assets[url.pathname];if(!asset){res.statusCode=404;return res.end();}
  res.setHeader('Content-Type',asset[1]+'; charset=utf-8');let data=fs.readFileSync(path.join(web,asset[0]),'utf8');
  if(asset[0]==='index.html')data=data.replace('<body>','<body><aside class="scope-banner" aria-label="测试数据标记">ISOLATED UI FIXTURE · 所有记录为测试数据 · 不连接真实网盘、数据库或生产服务</aside>');

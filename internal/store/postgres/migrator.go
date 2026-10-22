@@ -18,7 +18,7 @@ const migrationLockID int64 = 0x50414e5441
 
 // CurrentSchemaVersion is the supported head of append-only product history.
 // Runtime admission still requires compatible history at this exact head.
-const CurrentSchemaVersion int64 = 15
+const CurrentSchemaVersion int64 = 16
 
 type MigrationStatus struct {
 	Version  int64  `json:"version"`

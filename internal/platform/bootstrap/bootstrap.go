@@ -139,6 +139,42 @@ func safeLeaf(name string) bool {
 		!strings.ContainsAny(name, "/\\\x00")
 }
 
+// LoadAccountSessions reuses the existing protected session binding format but
+// does not load a Hint token, build a runtime or perform any provider request.
+// Secrets remain lazy: a missing/rotated credential fails the manual probe closed.
+func LoadAccountSessions(ctx context.Context, path string) (contracts.SecretResolver, []runtime.RuntimeSession, error) {
+	if e := ctx.Err(); e != nil {
+		return nil, nil, e
+	}
+	raw, e := ReadProtectedFile(path, maxConfigBytes)
+	if e != nil {
+		return nil, nil, ErrUnsafeBootstrap
+	}
+	defer clear(raw)
+	decoder := json.NewDecoder(strings.NewReader(string(raw)))
+	decoder.DisallowUnknownFields()
+	var cfg fileConfig
+	if decoder.Decode(&cfg) != nil || decoder.Decode(new(any)) != io.EOF || validateRoot(cfg.SecretDir) != nil || len(cfg.Sessions) < 1 || len(cfg.Sessions) > 64 {
+		return nil, nil, ErrUnsafeBootstrap
+	}
+	resolver := &FileResolver{root: cfg.SecretDir, files: map[contracts.CredentialRef]string{}}
+	sessions := []runtime.RuntimeSession{}
+	seen := map[string]bool{}
+	for _, s := range cfg.Sessions {
+		ref := contracts.CredentialRef(s.CredentialRef)
+		if s.ProviderID != "115" || s.ConnectionID == "" || seen[s.ConnectionID] || ref == "" || strings.TrimSpace(s.CredentialRef) != s.CredentialRef || !safeLeaf(s.SecretFile) {
+			return nil, nil, ErrUnsafeBootstrap
+		}
+		if old, ok := resolver.files[ref]; ok && old != s.SecretFile {
+			return nil, nil, ErrUnsafeBootstrap
+		}
+		seen[s.ConnectionID] = true
+		resolver.files[ref] = s.SecretFile
+		sessions = append(sessions, runtime.RuntimeSession{ProviderID: "115", ConnectionID: storage.ConnectionID(s.ConnectionID), CredentialRef: ref})
+	}
+	return resolver, sessions, nil
+}
+
 func validateRoot(path string) error {
 	if !filepath.IsAbs(path) || filepath.Clean(path) != path {
 		return ErrUnsafeBootstrap

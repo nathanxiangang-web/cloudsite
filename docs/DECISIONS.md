@@ -1667,7 +1667,19 @@ The user explicitly canceled *per-user storage capacity*: there will be no indiv
 
 Implementation order: (A) append-only user-space ownership/mapping state and mock provider contracts; (B) backend cross-user ACL including Q4/Q5/Q6/content/preview/302/anonymous share redemption **before enabling new private downloads**; (C) server-frozen native 115 saveDirID and canonical UserSpace target, original Worker/Manifest semantics and same-info_hash conflict handling; (D) independently authorized one-file physical deletion with native file/parent proof, durable idempotent ledger and IndexCore Q8 confirmation; (E) staged multi-user evidence and rollout. No live mkdir, file delete, migration, source move, provider restart, new acquisition or deploy was performed for this decision. Each implementation gate needs its own Issue/branch/PR and review before merging.
 
-## D-066 — Website admin management console UI & functional blueprint (DESIGN/UI-1/UI-2A ACCEPTED; UI-2B CANDIDATE)
+## D-066 — Website admin management console UI & functional blueprint (UI-2B MERGED; LIVE UI-3A CANDIDATE)
+
+2026-10-22 superseding pointer: UI-2B148 merged at97cb94fee932e231147c25c74bcbf773f27538fe,
+main CI39701070318 all3 SUCCESS checked. [Issue149](https://github.com/nathanxiangang-web/cloudsite/issues/149)
+authorizes narrowly typed real115 GetInfo and USER create/enable/disable with
+fresh ADMIN session authorization, durable intent/result, no automatic replay,
+atomic account/session/audit commit, version CAS and DB-time connection cooldown.
+Shared account bytes are not user capacity quotas. Append migration16; no
+production deployment/migration follows from this implementation or merge.
+See [LIVE contract/handoff](PRODUCT-ADMIN-LIVE-OPERATIONS-ACCEPTANCE.md).
+Private139 remains PAUSED. One unmerged PR for Architect review; no arbitrary
+SDK/SQL, native file/download writes, storage editing, task repair or UI-3B/4.
+Earlier stage-limited read-only authorizations below are dated history.
 
 2026-10-21: [PR #142](https://github.com/nathanxiangang-web/cloudsite/pull/142)
 accepted/merged at `25eb7e28a12f452979a52e74cd3767f149f5df53`;

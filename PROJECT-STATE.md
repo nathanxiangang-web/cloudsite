@@ -4,7 +4,21 @@
 
 ## Current phase
 
-### Current execution — Admin UI-2B / Issue #147 (implementation candidate; not deployed)
+### Current execution — LIVE Admin UI-3A / Issue #149 (implementation candidate; not deployed)
+
+2026-10-22: UI-2B PR148 verified merged at authorized baseline
+`97cb94fee932e231147c25c74bcbf773f27538fe`; merged-main CI39701070318 all3
+SUCCESS checked. Issue149 authorizes real protected115 GetInfo and audited
+USER create/enable/disable commands in one PR. Separate adminops/PG/provider/
+composition/HTTP/UI modules implement durable intent/result, no blind replay,
+DB-time per-connection cooldown, USER CAS and coherent session revocation.
+Append-only migration16 is development-only; no production migration/deployment,
+live canary or real user mutation. Runtime is actual PG/protected configured
+sessions; synthetic data is tests only. See [handoff](docs/PRODUCT-ADMIN-LIVE-OPERATIONS-ACCEPTANCE.md).
+Architect review/merge pending. Private139 PAUSED; no personal GB quota,
+native file/download mutation, IndexCore changes or UI-3B/4 work.
+
+### Historical UI-2B implementation handoff (now merged; not deployment evidence)
 
 2026-10-22 (Asia/Shanghai): UI-2A PR146 is verified MERGED at authorized baseline
 `a645e90229b71209f9a6036f25583113df9f1281`; merged-main CI39639475953 all3

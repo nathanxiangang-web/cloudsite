@@ -1,7 +1,7 @@
 'use strict';
 // Admin-only paged view module. Authentication and HTTP are injected ports;
 // consumer controllers and owner-only task handling are independent.
-const AdminLists={create({el,read,generation,principal,onError,dateText,cell,badge,ownerSelected}){
+const AdminLists={create({el,read,generation,principal,onError,dateText,cell,badge,ownerSelected,userSelected}){
  const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
  const views={};
  for(const kind of ['users','downloads']){
@@ -28,7 +28,8 @@ const AdminLists={create({el,read,generation,principal,onError,dateText,cell,bad
       const name=cell(row,item.login),id=document.createElement('small');id.textContent=item.user_id;name.append(id);
       cell(row).append(badge(item.role,'neutral'));cell(row).append(badge(item.enabled?'启用':'停用',item.enabled?'':'warning'));
       cell(row,dateText(item.created_at));cell(row,dateText(item.updated_at));
-      const button=document.createElement('button');button.type='button';button.className='quiet';button.textContent='查看该用户任务';button.addEventListener('click',()=>ownerSelected(item.user_id));cell(row).append(button);
+      const button=document.createElement('button');button.type='button';button.className='quiet';button.textContent='查看该用户任务';button.addEventListener('click',()=>ownerSelected(item.user_id));const actions=cell(row);actions.append(button);
+      if(item.role==='USER'&&userSelected){const edit=document.createElement('button');edit.type='button';edit.className='quiet';edit.textContent='管理此 USER';edit.addEventListener('click',()=>userSelected(item));actions.append(edit);}
      }else{
       cell(row,item.manifest_id);cell(row,item.owner_user_id);cell(row).append(badge(item.manifest_state,item.manifest_state==='RECOVERY_REQUIRED'?'warning':'neutral'));cell(row,item.job_state??'未创建 Job');
       cell(row,String(item.claim_attempts)+' / '+String(item.failure_count));cell(row,dateText(item.updated_at));cell(row,item.binding_id);cell(row,item.job_id??'未创建 Job');cell(row,item.result_copy_id??'未提供');cell(row,dateText(item.created_at));
