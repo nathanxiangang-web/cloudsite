@@ -40,3 +40,15 @@ test('RESTORE_USER success posts /restore with expected_version and never echoes
 test('RESTORE_USER failure renders REJECTED/USER_STATE_CONFLICT without a second submit',async()=>{const app=await ready();pick(app,{deleted:true});app.elements.get('restore-user-password').value='NEW-secret-value';const done=submitForm(app,'restore-user-form');await auth(app);const r=app.pending('/api/v1/admin/users/'+user.user_id+'/restore');app.respond(r,outcome(JSON.parse(r.options.body).request_id,{action:'RESTORE_USER',status:'REJECTED',code:'USER_STATE_CONFLICT',target_id:user.user_id}));await done;await app.drain();assert.match(app.text('action-status'),/REJECTED.*USER_STATE_CONFLICT/);assert.equal(app.requests.filter(x=>x.url==='/api/v1/admin/users/'+user.user_id+'/restore'&&x.options.method==='POST').length,1);});
 
 test('a SUCCEEDED user receipt whose deleted is absent or non-boolean is not rendered as SUCCEEDED',async()=>{for(const bad of [{user_id:user.user_id,login:user.login,enabled:true,version:0},{...user,deleted:'no'}]){const app=await ready();createValues(app);const done=submit(app);await auth(app);const r=app.pending('/api/v1/admin/users'),b=JSON.parse(r.options.body);app.respond(r,outcome(b.request_id,{target_id:user.user_id,user:bad}));await done;assert.doesNotMatch(app.text('action-status'),/SUCCEEDED/);assert.match(app.text('action-status'),/UNKNOWN/);assert.equal(app.elements.get('create-user-submit').disabled,true);}});
+test('switching selected USER clears the previous detail immediately without a new GET',async()=>{
+ const app=await ready();app.ctx.user=user;app.run('adminOperations.selectUser(user)');
+ const done=app.click('user-detail-submit');await auth(app);await tick();
+ const r=app.pending('/api/v1/admin/users/'+user.user_id);assert.ok(r,'first user detail');
+ app.respond(r,{...user,download_count:7,active_downloads:2,admin_version:2,updated_at:'2026-10-22T00:00:00Z'});
+ await done;assert.match(app.text('user-detail-facts'),/下载任务总数 7/);
+ const before=app.requests.length;
+ app.ctx.other={...user,user_id:'99500000-0000-4000-8000-000000000003',login:'second-user'};
+ app.run('adminOperations.selectUser(other)');
+ assert.equal(app.text('user-detail-facts'),'');
+ assert.equal(app.requests.length,before,'selection must not trigger a background detail GET');
+});
