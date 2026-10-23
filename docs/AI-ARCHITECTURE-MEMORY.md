@@ -1,6 +1,19 @@
 # cloudsite — AI Architecture Memory
 
-**Current development (2026-10-22):** Issue155 / Admin UI-3B PR-A candidate,
+**Current code integration (2026-10-23):** Issue155 USER lifecycle backend156,
+UI157, server-side search158, actual-DTO details159 and overview user total160
+are merged. PR159/main `bf931b18417b` and PR160/main `1a86e5c4d458` have successful
+merged-main CI39921715814 and39922283505. User totals are the actual endpoint's
+product-account count, not enabled USER-only counts or estimated page lengths;
+task aggregation remains unavailable. This tree adds PR161 share-list and
+audited-revoke backend/schema18; [module contract](ADMIN-SHARE-MANAGEMENT.md)
+defines ports, transactions and preserved history. Verify PR161 exact-head and
+merge CI before claiming its acceptance. No shares management UI is included.
+UI-3B remains incomplete. No production/schema rollout or live user/provider
+mutation is certified here. AI131/private139 remain paused, and cloud-download
+incident investigation is outside the current execution priority.
+
+**Historical development pointer (2026-10-22):** Issue155 / Admin UI-3B PR-A candidate,
 USER-only lifecycle/search/detail with append-only schema17. Read
 [module contract](ADMIN-USER-LIFECYCLE.md). No ADMIN-target changes, provider
 calls, private139, task replay or production migration. UI/homepage PR-B remains

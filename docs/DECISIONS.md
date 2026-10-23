@@ -2,7 +2,26 @@
 
 > Append-only architecture/product decision memory. Do not rewrite history silently; supersede an old decision with a new entry.
 
-## Issue155 implementation pointer (candidate; not an acceptance decision)
+## Issue155 integration update - 2026-10-23 (superseding pointer)
+
+USER lifecycle/backend156, UI157, search158, exact-DTO details159 and aggregate
+user-count160 are merged. The last two merged-main CI runs39921715814 and
+39922283505 succeeded. A real DTO fixture is shared between Go and Node to
+prevent browser tests from validating invented server fields. User totals come
+from the existing DirectoryReads COUNT; unavailable task totals are not inferred.
+
+This tree extends the modular boundary with PR161's additive ShareReads and
+ShareApplier ports, audited DB-time revoke and append-only schema18; see
+[share contract](ADMIN-SHARE-MANAGEMENT.md). It preserves share/grant history,
+existing USER command receipts and migration bytes1..17. Exact-head CI and a
+separate review phase remain merge gates. This pointer does not itself grant
+PR161 acceptance, production rollout or whole-program UI-3B completion.
+
+Existing continuous non-AI development authorization does not enable AI131,
+private139, arbitrary provider actions, production migrations or SQL/shell UI.
+The current task is admin delivery, not the paused cloud-download investigation.
+
+## Historical Issue155 implementation pointer (2026-10-22 candidate)
 
 2026-10-22: The authorized UI-3B scope supersedes UI-3A-only development limits.
 PR-A's [USER lifecycle contract](ADMIN-USER-LIFECYCLE.md) defines immutable user_id,
