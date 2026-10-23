@@ -276,6 +276,7 @@ el('root-binding').addEventListener('change',()=>{clearError('workspace-error');
 el('query-root').addEventListener('click',()=>{clearError('workspace-error');return adminObservation.queryRoot();});
 el('refresh-users').addEventListener('click',()=>{clearError('workspace-error');return adminLists.users.refresh();});
 el('users-apply-filter').addEventListener('click',()=>{clearError('workspace-error');return adminLists.users.filter(el('users-search').value,el('users-status').value);});
+el('user-detail-submit').addEventListener('click',()=>{clearError('workspace-error');return adminOperations.loadUserDetail();});
 el('more-users').addEventListener('click',()=>adminLists.users.more());
 el('refresh-admin-downloads').addEventListener('click',()=>{clearError('workspace-error');return adminLists.downloads.refresh();});
 el('more-admin-downloads').addEventListener('click',()=>adminLists.downloads.more());
