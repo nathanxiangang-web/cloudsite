@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+
 	"github.com/nathanxiangang-web/panta/internal/adminops"
 	"github.com/nathanxiangang-web/panta/internal/adminread"
 	"github.com/nathanxiangang-web/panta/internal/auth"
@@ -211,5 +213,152 @@ func TestPostgresAdminShareDirectoryPaginationFiltersAndTotal(t *testing.T) {
 	raw, _ := json.Marshal(all)
 	if strings.Contains(string(raw), "token_hash") || strings.Contains(string(raw), "code_hash") {
 		t.Fatal("directory leaked hashes")
+	}
+}
+
+func TestPostgresAdminShareRollbackKeepsGrantAndUnknownIntent(t *testing.T) {
+	ctx, pool, accounts, actor, _, repo := opFixture(t)
+	owner, e := accounts.Provision(ctx, "share-rollback-owner", "isolated-password", auth.RoleUser)
+	if e != nil {
+		t.Fatal(e)
+	}
+	shares, _ := NewShareRepository(pool)
+	share := seedShare(t, ctx, shares, opID(720), owner.UserID, "rollback-token")
+	grant := fileshare.SecretHash("rollback-grant")
+	if e = shares.IssueGrant(ctx, share.ID, grant); e != nil {
+		t.Fatal(e)
+	}
+	command := adminops.Command{RequestID: opID(721), Action: adminops.RevokeShare, TargetID: share.ID}
+	svc, _ := adminops.NewService(repo, nil, []string{adminBinding})
+	repo.beforeUserCommit = func(context.Context, pgx.Tx) error { return errors.New("isolated commit failure") }
+	if _, e = svc.Execute(ctx, actor, command); !errors.Is(e, adminops.ErrUnavailable) {
+		t.Fatal("failure not surfaced", e)
+	}
+	var revoked, outcome bool
+	if e = pool.QueryRow(ctx, `SELECT revoked_at IS NOT NULL,EXISTS(SELECT 1 FROM product_admin_action_results WHERE actor_id=$2 AND request_id=$3) FROM product_file_shares WHERE share_id=$1`, share.ID, string(actor.Principal.UserID), command.RequestID).Scan(&revoked, &outcome); e != nil || revoked || outcome {
+		t.Fatal("partial revoke committed", revoked, outcome, e)
+	}
+	if _, _, e = shares.Granted(ctx, share.ID, grant); e != nil {
+		t.Fatal("grant revoked despite rollback", e)
+	}
+	// A reserved but unconfirmed operation is never automatically applied again.
+	repo.beforeUserCommit = nil
+	result, e := svc.Execute(ctx, actor, command)
+	if e != nil || result.Status != "UNKNOWN" || result.Code != "RESERVED_NO_CONFIRMED_RESULT" {
+		t.Fatal("intent replay", result, e)
+	}
+	if _, _, e = shares.Granted(ctx, share.ID, grant); e != nil {
+		t.Fatal("replay mutated share", e)
+	}
+}
+
+func TestPostgresAdminShareRechecksSessionAndIntentBeforeWrite(t *testing.T) {
+	ctx, pool, accounts, actor, token, repo := opFixture(t)
+	owner, e := accounts.Provision(ctx, "share-session-owner", "isolated-password", auth.RoleUser)
+	if e != nil {
+		t.Fatal(e)
+	}
+	shares, _ := NewShareRepository(pool)
+	share := seedShare(t, ctx, shares, opID(730), owner.UserID, "session-token")
+	command := adminops.Command{RequestID: opID(731), Action: adminops.RevokeShare, TargetID: share.ID}
+	if _, fresh, e := repo.Reserve(ctx, actor, command, []string{adminBinding}); e != nil || !fresh {
+		t.Fatal("reserve", fresh, e)
+	}
+	changed := command
+	changed.TargetID = opID(732)
+	if _, e = repo.ApplyShare(ctx, actor, changed); !errors.Is(e, adminops.ErrConflict) {
+		t.Fatal("changed intent accepted", e)
+	}
+	if e = accounts.Logout(ctx, token); e != nil {
+		t.Fatal(e)
+	}
+	if _, e = repo.ApplyShare(ctx, actor, command); !errors.Is(e, auth.ErrUnauthorized) {
+		t.Fatal("revoked session accepted", e)
+	}
+	var unchanged bool
+	if e = pool.QueryRow(ctx, `SELECT revoked_at IS NULL AND NOT EXISTS(SELECT 1 FROM product_admin_action_results WHERE actor_id=$2 AND request_id=$3) FROM product_file_shares WHERE share_id=$1`, share.ID, string(actor.Principal.UserID), command.RequestID).Scan(&unchanged); e != nil || !unchanged {
+		t.Fatal("unauthorized mutation", unchanged, e)
+	}
+}
+
+func TestPostgresAdminShareConcurrentRevokesSerializeAtShareRow(t *testing.T) {
+	ctx, pool, accounts, actor, _, first := opFixture(t)
+	owner, e := accounts.Provision(ctx, "share-lock-owner", "isolated-password", auth.RoleUser)
+	if e != nil {
+		t.Fatal(e)
+	}
+	shares, _ := NewShareRepository(pool)
+	share := seedShare(t, ctx, shares, opID(740), owner.UserID, "concurrent-token")
+	entered, release := make(chan struct{}), make(chan struct{})
+	defer func() {
+		select {
+		case <-release:
+		default:
+			close(release)
+		}
+	}()
+	first.beforeUserCommit = func(ctx context.Context, _ pgx.Tx) error {
+		close(entered)
+		select {
+		case <-release:
+			return nil
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+	second, _ := NewAdminOperationsRepository(pool)
+	svcA, _ := adminops.NewService(first, nil, []string{adminBinding})
+	svcB, _ := adminops.NewService(second, nil, []string{adminBinding})
+	type outcome struct {
+		result adminops.Result
+		err    error
+	}
+	resultA, resultB := make(chan outcome, 1), make(chan outcome, 1)
+	go func() {
+		r, e := svcA.Execute(ctx, actor, adminops.Command{RequestID: opID(741), Action: adminops.RevokeShare, TargetID: share.ID})
+		resultA <- outcome{r, e}
+	}()
+	select {
+	case <-entered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("first revoke never held its transaction")
+	}
+	go func() {
+		r, e := svcB.Execute(ctx, actor, adminops.Command{RequestID: opID(742), Action: adminops.RevokeShare, TargetID: share.ID})
+		resultB <- outcome{r, e}
+	}()
+	// Observe a real blocked SELECT FOR UPDATE, not a sleep-based ordering guess.
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		var waiting bool
+		if e = pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock' AND query LIKE 'SELECT revoked_at FROM product_file_shares%')`).Scan(&waiting); e != nil {
+			t.Fatal(e)
+		}
+		if waiting {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("second revoke did not wait on share row")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	close(release)
+	for index, ch := range []chan outcome{resultA, resultB} {
+		select {
+		case got := <-ch:
+			want := "SHARE_REVOKED"
+			if index == 1 {
+				want = "SHARE_ALREADY_REVOKED"
+			}
+			if got.err != nil || got.result.Code != want {
+				t.Fatal("serialized outcome", got.result, got.err)
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatal("revoke did not finish")
+		}
+	}
+	var receipts int
+	if e = pool.QueryRow(ctx, `SELECT count(*) FROM product_admin_action_results WHERE actor_id=$1`, string(actor.Principal.UserID)).Scan(&receipts); e != nil || receipts != 2 {
+		t.Fatal("missing terminal audit", receipts, e)
 	}
 }

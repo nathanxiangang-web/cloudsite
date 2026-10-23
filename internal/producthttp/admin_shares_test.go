@@ -2,6 +2,7 @@ package producthttp
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -45,6 +46,7 @@ func (f *shareDirectoryFake) SearchShares(_ context.Context, p auth.Principal, f
 type shareOperationsFake struct {
 	calls        int
 	status, code string
+	command      adminops.Command
 }
 
 func (f *shareOperationsFake) Execute(_ context.Context, a adminops.Actor, c adminops.Command) (adminops.Result, error) {
@@ -52,6 +54,7 @@ func (f *shareOperationsFake) Execute(_ context.Context, a adminops.Actor, c adm
 		panic("wrong actor")
 	}
 	f.calls++
+	f.command = c
 	return adminops.Result{RequestID: c.RequestID, Action: c.Action, TargetID: c.TargetID, Status: f.status, Code: f.code}, nil
 }
 func (f *shareOperationsFake) Status(context.Context, adminops.Actor, string) (adminops.Result, error) {
@@ -108,6 +111,15 @@ func TestAdminShareRevokeHTTPBoundaryAndResultCodes(t *testing.T) {
 			h.ServeHTTP(w, r)
 			if w.Code != tc.want || ops.calls != tc.calls {
 				t.Fatal(w.Code, ops.calls, w.Body.String())
+			}
+			if tc.calls == 1 {
+				if ops.command.Action != adminops.RevokeShare || ops.command.TargetID != shareRouteID || ops.command.RequestID != shareRouteID {
+					t.Fatal("wrong command dispatched", ops.command)
+				}
+				var receipt adminops.Result
+				if e := json.Unmarshal(w.Body.Bytes(), &receipt); e != nil || receipt.Status != tc.status || receipt.Code != tc.code || receipt.Action != adminops.RevokeShare || receipt.TargetID != shareRouteID || receipt.RequestID != shareRouteID {
+					t.Fatal("wrong receipt", receipt, e)
+				}
 			}
 			out := w.Body.String()
 			for _, secret := range []string{"token_hash", "code_hash"} {
