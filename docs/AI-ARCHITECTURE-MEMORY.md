@@ -7,8 +7,10 @@ merged-main CI39921715814 and39922283505. User totals are the actual endpoint's
 product-account count, not enabled USER-only counts or estimated page lengths;
 task aggregation remains unavailable. This tree adds PR161 share-list and
 audited-revoke backend/schema18; [module contract](ADMIN-SHARE-MANAGEMENT.md)
-defines ports, transactions and preserved history. Verify PR161 exact-head and
-merge CI before claiming its acceptance. No shares management UI is included.
+defines ports, transactions and preserved history. PR161 merged205c28e6619e;
+exact-head CI39922782277 and main CI39923298349 succeeded. This tree implements
+the separate PR-D2 shares UI for review, using the existing list/revoke/status
+ports, strict receipt and session fencing; verify its actual PR/CI for acceptance.
 UI-3B remains incomplete. No production/schema rollout or live user/provider
 mutation is certified here. AI131/private139 remain paused, and cloud-download
 incident investigation is outside the current execution priority.

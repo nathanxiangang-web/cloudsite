@@ -20,7 +20,10 @@ total160 are merged. PR159 merged `bf931b18417b`; PR160 merged `1a86e5c4d458`;
 their merged-main CI39921715814/39922283505 succeeded. This tree additionally
 implements PR161 share-list/audited-revoke backend with append-only schema18;
 read `docs/ADMIN-SHARE-MANAGEMENT.md`. Check the actual PR/head CI for acceptance.
-The administrator shares UI is NOT implemented by that backend slice.
+PR161 merged205c28e6619e; exact-head CI39922782277 and main CI39923298349
+succeeded. The separate PR-D2 UI implementation in this tree consumes those
+existing ports; verify its actual PR/head review and CI before acceptance.
+No new migration, USER receipt widening, production rollout or provider write.
 
 Existing Issue155 authorization permits separate same-agent code review and
 merge after exact-head CI; label it honestly, not independent human approval.

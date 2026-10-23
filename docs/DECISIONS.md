@@ -2,7 +2,18 @@
 
 > Append-only architecture/product decision memory. Do not rewrite history silently; supersede an old decision with a new entry.
 
-## Issue155 integration update - 2026-10-23 (superseding pointer)
+## Issue155 shares UI implementation - 2026-10-23 (superseding pointer)
+
+PR161 backend merged205c28e6619e with successful exact-head39922782277 and
+main39923298349 CI. The separate PR-D2 UI uses additive AdminShares state and
+injected auth/HTTP ports; no USER receipt widening or new business route/schema.
+It validates the actual ShareDirectory DTO with a Go/Node shared fixture and
+preserves unknown outcomes through explicit actor-scoped request-ID lookup,
+not automatic POST replay. UI active flags are not health/physical availability.
+See [module contract](ADMIN-SHARE-MANAGEMENT.md). This records implementation,
+not PR-D2 acceptance, production delivery or whole-Issue155 completion.
+
+## Issue155 integration update - 2026-10-23 (earlier backend pointer)
 
 USER lifecycle/backend156, UI157, search158, exact-DTO details159 and aggregate
 user-count160 are merged. The last two merged-main CI runs39921715814 and

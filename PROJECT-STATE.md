@@ -10,11 +10,13 @@
   159 DTO-backed explicit user details (`bf931b18417b`, exact-head CI39921303732,
   merged-main CI39921715814 SUCCESS);160 server-aggregated user total
   (`1a86e5c4d458`, exact-head CI39921850373, merged-main CI39922283505 SUCCESS).
-- This tree implements PR161 share-list/audited-revoke backend/schema18; verify
-  its current PR/CI state for acceptance. See the
-  [module contract](docs/ADMIN-SHARE-MANAGEMENT.md). Shares management UI is still
-  a separate delivery; no administrator share action button is claimed here.
-- Remaining Issue155 work includes richer overview aggregates, shares UI,
+- PR161 share-list/audited-revoke backend/schema18 merged205c28e6619e;
+  exact-head CI39922782277 and merged-main CI39923298349 SUCCESS. The separate
+  PR-D2 shares UI is implemented in this tree for review, consuming existing
+  list/revoke/action-status ports; no new schema/backend command. See the
+  [module contract](docs/ADMIN-SHARE-MANAGEMENT.md). Verify its actual PR/head CI
+  and review for acceptance; implementation does not mean production delivery.
+- Remaining Issue155 work includes richer overview aggregates,
   bounded task/resource/storage management and audit/settings. The full program
   is NOT complete. Unknown metrics remain unknown, not fabricated zero/healthy.
 - These are code integration facts, NOT a production migration or deployment.
