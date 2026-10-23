@@ -33,7 +33,10 @@ func (r *AdminReadRepository) ReadOverview(ctx context.Context, bindings []strin
 	// schema spelling (JSON numeric 1.0 must not masquerade as frozen version 1).
 	err = tx.QueryRow(ctx, `WITH pairs AS (
  SELECT m.state AS ms,j.state AS js,m.job_id,
- COALESCE(m.created_at<=m.updated_at AND
+ COALESCE(pg_catalog.isfinite(m.created_at) AND pg_catalog.isfinite(m.updated_at)
+ AND m.created_at<>'0001-01-01 00:00:00+00'::timestamptz
+ AND m.updated_at<>'0001-01-01 00:00:00+00'::timestamptz
+ AND m.created_at<=m.updated_at AND
  ((m.state='READY' AND m.result_copy_id IS NOT NULL) OR (m.state<>'READY' AND m.result_copy_id IS NULL)) AND
  CASE WHEN m.state='PENDING' THEN m.job_id IS NULL ELSE
  j.job_id=m.job_id AND j.job_type='ACQUISITION'

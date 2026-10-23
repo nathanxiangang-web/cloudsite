@@ -162,6 +162,17 @@ func TestPostgresAdminOverviewCorruptionIsUnavailable(t *testing.T) {
 			t.Fatal(e)
 		}
 	}
+	for _, timestamp := range []string{"0001-01-01 00:00:00+00", "infinity", "-infinity"} {
+		if _, e := pool.Exec(ctx, `UPDATE acquisition_manifests SET created_at=$2::timestamptz,updated_at=$2::timestamptz WHERE manifest_id=$1`, id, timestamp); e != nil {
+			t.Fatal(e)
+		}
+		if _, e := s.Overview(ctx, p, ""); !errors.Is(e, adminread.ErrUnavailable) {
+			t.Fatal("invalid timestamp accepted", timestamp, e)
+		}
+	}
+	if _, e := pool.Exec(ctx, `UPDATE acquisition_manifests SET created_at=now(),updated_at=now() WHERE manifest_id=$1`, id); e != nil {
+		t.Fatal(e)
+	}
 	// Emulate drifted/legacy data only in this isolated DB: future unknown state.
 	if _, e := pool.Exec(ctx, `ALTER TABLE acquisition_manifests DROP CONSTRAINT acquisition_manifests_state_check; UPDATE acquisition_manifests SET state='UNKNOWN'`); e != nil {
 		t.Fatal(e)
