@@ -4,7 +4,25 @@
 
 ## Current phase
 
-### Current development — Issue #155 / Admin UI-3B PR-A candidate
+### Current code integration - Issue155 / Admin UI-3B (2026-10-23)
+
+- Merged:156 USER lifecycle/schema17;157 lifecycle UI;158 server-side search;
+  159 DTO-backed explicit user details (`bf931b18417b`, exact-head CI39921303732,
+  merged-main CI39921715814 SUCCESS);160 server-aggregated user total
+  (`1a86e5c4d458`, exact-head CI39921850373, merged-main CI39922283505 SUCCESS).
+- This tree implements PR161 share-list/audited-revoke backend/schema18; verify
+  its current PR/CI state for acceptance. See the
+  [module contract](docs/ADMIN-SHARE-MANAGEMENT.md). Shares management UI is still
+  a separate delivery; no administrator share action button is claimed here.
+- Remaining Issue155 work includes richer overview aggregates, shares UI,
+  bounded task/resource/storage management and audit/settings. The full program
+  is NOT complete. Unknown metrics remain unknown, not fabricated zero/healthy.
+- These are code integration facts, NOT a production migration or deployment.
+  Production153 and IndexCore stability retain separate live evidence gates.
+  AI131/private139 remain paused. Current work does not investigate cloud-download
+  incidents or mutate provider reservations/unrelated services.
+
+### Historical development - Issue155 / PR-A candidate (2026-10-22)
 
 2026-10-22: Issue155 authorizes an isolated USER lifecycle backend slice from
 `c26678a87ca4`. Added rename/reset/soft-delete/restore, bounded search/detail and

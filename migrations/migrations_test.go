@@ -27,7 +27,7 @@ func TestAllReturnsOrderedMigrationHistory(t *testing.T) {
 // assertions in the PostgreSQL integration tests honest: adding a migration
 // without updating them fails here first, in a unit test with no database.
 func TestMigrationHistoryEndsAtExpectedVersion(t *testing.T) {
-	const expectedLatestVersion = 17
+	const expectedLatestVersion = 18
 	all, err := All()
 	if err != nil {
 		t.Fatalf("All() error = %v", err)
@@ -39,8 +39,40 @@ func TestMigrationHistoryEndsAtExpectedVersion(t *testing.T) {
 	if latest.Version != expectedLatestVersion {
 		t.Fatalf("latest migration version = %d, want %d", latest.Version, expectedLatestVersion)
 	}
-	if latest.Filename != "0017_product_user_lifecycle.sql" {
-		t.Fatalf("latest migration = %q, want product operations append-only migration", latest.Filename)
+	if latest.Filename != "0018_admin_share_management.sql" {
+		t.Fatalf("latest migration = %q, want admin share management append-only migration", latest.Filename)
+	}
+}
+
+// TestAdminShareManagementMigrationExtendsActionAllowlistOnly asserts the
+// append-only 0018 migration changes only the admin action CHECK constraint:
+// no new table, column, index or database-side UUID/timestamp generation.
+func TestAdminShareManagementMigrationExtendsActionAllowlistOnly(t *testing.T) {
+	all, err := All()
+	if err != nil {
+		t.Fatalf("All() error = %v", err)
+	}
+	var sql string
+	for _, migration := range all {
+		if migration.Version == 18 {
+			sql = strings.ToLower(migration.SQL)
+		}
+		if migration.Version == 17 && migration.Filename != "0017_product_user_lifecycle.sql" {
+			t.Fatalf("migration 17 renamed: %q", migration.Filename)
+		}
+	}
+	if sql == "" {
+		t.Fatal("migration 18 is missing")
+	}
+	for _, forbidden := range []string{"create table", "add column", "create index", "create extension", "gen_random_uuid", "uuid_generate"} {
+		if strings.Contains(sql, forbidden) {
+			t.Fatalf("migration 18 contains forbidden %q", forbidden)
+		}
+	}
+	for _, required := range []string{"drop constraint", "add constraint", "product_admin_actions_action_check", "'revoke_share'"} {
+		if !strings.Contains(sql, required) {
+			t.Fatalf("migration 18 missing %q", required)
+		}
 	}
 }
 

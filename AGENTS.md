@@ -12,7 +12,25 @@ Before planning, changing, or reviewing code, **read these files first**:
 
 Chat history is not a source of truth.
 
-## Superseding current task — 2026-10-22
+## Superseding execution pointer - 2026-10-23
+
+Issue155 Admin UI-3B continues as bounded non-AI slices. USER lifecycle backend
+PR156/schema17, lifecycle UI157, search158, DTO-backed details159 and real user
+total160 are merged. PR159 merged `bf931b18417b`; PR160 merged `1a86e5c4d458`;
+their merged-main CI39921715814/39922283505 succeeded. This tree additionally
+implements PR161 share-list/audited-revoke backend with append-only schema18;
+read `docs/ADMIN-SHARE-MANAGEMENT.md`. Check the actual PR/head CI for acceptance.
+The administrator shares UI is NOT implemented by that backend slice.
+
+Existing Issue155 authorization permits separate same-agent code review and
+merge after exact-head CI; label it honestly, not independent human approval.
+No production deployment/migration is implied. AI131 and private139 remain
+paused; cloud-acquisition incident investigation is not the current work item.
+Preserve provider reservations, canonical data and unrelated .50 services.
+Read current code/contracts rather than treating historical pointers below as
+unfinished current tasks. UI-3B as a whole is not accepted or complete.
+
+## Historical task pointer - 2026-10-22
 
 Issue155 supersedes the UI-3A-only development scope below. PR-A implements
 USER lifecycle CRUD/search/detail and append-only schema17 in isolation. Read
