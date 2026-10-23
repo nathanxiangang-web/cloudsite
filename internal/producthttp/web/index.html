@@ -26,7 +26,7 @@
   <div class="metric-grid">
    <article class="metric"><p>产品 schema</p><strong id="overview-schema">—</strong><span class="badge neutral">配置描述</span><small>source: admin/workspace · coverage: 当前进程</small></article>
    <article class="metric"><p>配置展示空间</p><strong id="overview-bindings">—</strong><span class="badge neutral">仅配置数量</span><small>不是资源总数，也不是全盘挂载数</small></article>
-   <article class="metric"><p>全站用户 / 全站任务总数</p><strong>—</strong><span class="badge neutral">聚合统计尚未接入</span><small>列表页不代表全站总数，不据样本推算</small></article>
+   <article class="metric"><p>全站用户 / 全站任务总数</p><strong id="overview-users-total">—</strong><span id="overview-tasks-total">—</span><span class="badge neutral">用户 total 来自服务端 · 任务无聚合端点</span><small>用户总数来自服务端 DirectoryReads 聚合（仅当服务端返回 total 时展示）；任务总数后端未提供聚合端点，不据样本推算</small></article>
    <article class="metric"><p>115 / IndexCore 实时健康</p><strong>—</strong><span class="badge neutral">NOT_CHECKED · 按需检测</span><small>115 检测与 Q9 独立，不据配置推断在线</small></article>
   </div>
   <div class="overview-grid"><section class="panel"><div class="panel-head"><div><h2>已连接的读取边界</h2><p class="muted">GET /api/v1/admin/workspace · 当前配置，不是健康探测</p></div><span id="workspace-status" class="badge neutral">等待查询</span></div><dl id="workspace-facts" class="facts"></dl><div class="panel-footer"><span id="workspace-observed" class="muted">尚未读取</span></div></section>

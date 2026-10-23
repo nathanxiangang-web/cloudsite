@@ -53,7 +53,8 @@ function signedOut(){
  state.session++;state.controller.abort();state.controller=new AbortController();state.resourceRequest++;state.taskRequest++;state.workspaceRequest++;
  state.principal=null;state.workspace=null;clearResources();clearTasks();adminLists.reset();adminObservation.reset();adminOperations.reset();setDrawer(false,false);
  for(const id of ['user-login','user-role','avatar','schema','binding-select','workspace-facts','identity-facts','overview-binding-list'])el(id).replaceChildren();
- for(const id of ['overview-schema','overview-bindings'])el(id).textContent='—';
+ for(const id of ['overview-schema','overview-bindings','overview-users-total'])el(id).textContent='—';
+ el('overview-tasks-total').textContent='未提供';
  el('workspace-observed').textContent='尚未读取';el('workspace-status').textContent='等待查询';
  el('workspace-view').hidden=true;el('login-view').hidden=false;el('login-password').value='';el('resource-search').value='';el('resolve-path').value='/';
  el('directory-label').textContent='根层级';el('directory-back').disabled=true;
@@ -115,6 +116,7 @@ function renderWorkspace(workspace,principal){
  state.workspace=workspace;el('user-login').textContent=principal.login;el('user-role').textContent='ADMIN · 受控管理';
  el('avatar').textContent=principal.login.charAt(0).toUpperCase();el('schema').textContent='Schema v'+workspace.schema_version;
  el('overview-schema').textContent='v'+workspace.schema_version;el('overview-bindings').textContent=String(workspace.bindings.length);
+ el('overview-tasks-total').textContent='未提供';
  el('workspace-status').textContent='已读取配置 · 非健康探测';el('workspace-status').className='badge neutral';
  const flag=value=>value===true?'配置启用 · 未验证运行结果':value===false?'配置未启用':'未提供';
  facts('workspace-facts',[['产品模式',workspace.mode],['云下载能力',flag(workspace.cloud_download_enabled)],['来源检查能力',flag(workspace.cloud_download_preview_enabled)],['文件访问能力',flag(workspace.content_access_enabled)],['分享能力',flag(workspace.sharing_enabled)],['覆盖范围','当前产品进程的配置能力描述；非全站业务统计']]);
@@ -155,7 +157,15 @@ async function signedIn(principal,generation=state.session){
 async function refreshWorkspace(){
  if(!state.principal)return;const generation=state.session,request=++state.workspaceRequest;
  el('refresh-workspace').disabled=true;el('workspace-status').textContent='正在读取配置…';
- try{const {workspace,principal}=await verifyAdmin(generation);if(generation===state.session&&request===state.workspaceRequest){renderWorkspace(workspace,principal);clearError('workspace-error');}}
+ try{
+  const {workspace,principal}=await verifyAdmin(generation);
+  if(generation!==state.session||request!==state.workspaceRequest)return;
+  renderWorkspace(workspace,principal);clearError('workspace-error');
+  // Server-aggregated user total only; tasks have no aggregate endpoint and are never derived.
+  const total=await adminLists.users.total();
+  if(generation!==state.session||request!==state.workspaceRequest)return;
+  el('overview-users-total').textContent=Number.isSafeInteger(total)?String(total):'未提供';el('overview-tasks-total').textContent='未提供';
+ }
  catch(error){if(generation===state.session&&request===state.workspaceRequest){el('workspace-status').textContent='STALE · 配置读取失败';el('workspace-status').className='badge warning';showError('workspace-error',error);}}
  finally{if(generation===state.session&&request===state.workspaceRequest)el('refresh-workspace').disabled=false;}
 }
