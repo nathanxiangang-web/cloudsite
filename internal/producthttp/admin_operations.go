@@ -25,6 +25,7 @@ func registerAdminOperations(h *Handler, ops adminops.Operations) {
 		"DELETE /api/v1/admin/users/{user_id}":          adminops.DeleteUser,
 		"POST /api/v1/admin/users/{user_id}/restore":    adminops.RestoreUser,
 		"POST /api/v1/admin/storage/{binding_id}/probe": adminops.ProbeAccount,
+		"POST /api/v1/admin/shares/{share_id}/revoke":   adminops.RevokeShare,
 		"GET /api/v1/admin/actions/{request_id}":        "STATUS",
 	} {
 		h.mux.Handle(pattern, h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +70,7 @@ func registerAdminOperations(h *Handler, ops adminops.Operations) {
 				if action == adminops.SetEnabled {
 					fields = append(fields, "enabled")
 				}
-				if action != adminops.CreateUser && action != adminops.ProbeAccount {
+				if action != adminops.CreateUser && action != adminops.ProbeAccount && action != adminops.RevokeShare {
 					fields = append(fields, "expected_version")
 				}
 				body, err := adminCommandBody(w, r, fields)
@@ -80,6 +81,9 @@ func registerAdminOperations(h *Handler, ops adminops.Operations) {
 				c := adminops.Command{Action: action, TargetID: r.PathValue("user_id")}
 				if action == adminops.ProbeAccount {
 					c.TargetID = r.PathValue("binding_id")
+				}
+				if action == adminops.RevokeShare {
+					c.TargetID = r.PathValue("share_id")
 				}
 				if json.Unmarshal(body["request_id"], &c.RequestID) != nil {
 					failure(w, 400, "INVALID_REQUEST")

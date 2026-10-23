@@ -23,6 +23,7 @@ func adminReadsConfigured(reads adminread.Reads) bool {
 // Absent composition fails closed instead of returning a fabricated empty list.
 func registerAdminReads(h *Handler, reads adminread.Reads) {
 	registerAdminUserDetail(h, reads)
+	registerAdminShareReads(h, reads)
 	for _, kind := range []string{"users", "downloads"} {
 		h.mux.Handle("GET /api/v1/admin/"+kind, h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			p, _ := Principal(r.Context())
@@ -90,6 +91,52 @@ func registerAdminReads(h *Handler, reads adminread.Reads) {
 			}
 		})))
 	}
+}
+
+// Whole-site share directory. Absent port fails closed instead of fabricating
+// an empty list; every response is a fresh ADMIN authorization.
+func registerAdminShareReads(h *Handler, reads adminread.Reads) {
+	h.mux.Handle("GET /api/v1/admin/shares", h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		p, _ := Principal(r.Context())
+		if p.Role != auth.RoleAdmin {
+			failure(w, 403, "ADMIN_REQUIRED")
+			return
+		}
+		if r.Method != http.MethodGet {
+			w.Header().Set("Allow", "GET")
+			failure(w, 405, "METHOD_NOT_ALLOWED")
+			return
+		}
+		if !adminAcceptsJSON(r.Header.Values("Accept")) {
+			failure(w, 406, "NOT_ACCEPTABLE")
+			return
+		}
+		query, err := strictQuery(r, "limit", "cursor", "owner", "status")
+		if err != nil {
+			adminReadFailure(w, adminread.ErrInvalid)
+			return
+		}
+		limit, err := readLimit(query)
+		if err != nil || !adminread.ValidPage(limit, query.Get("cursor")) || query.Has("cursor") && query.Get("cursor") == "" || query.Has("owner") && !adminread.ValidID(query.Get("owner")) {
+			adminReadFailure(w, adminread.ErrInvalid)
+			return
+		}
+		if !adminReadsConfigured(reads) {
+			adminReadFailure(w, adminread.ErrUnavailable)
+			return
+		}
+		directory, ok := reads.(adminread.ShareReads)
+		if !ok {
+			adminReadFailure(w, adminread.ErrUnavailable)
+			return
+		}
+		page, e := directory.SearchShares(r.Context(), p, adminread.ShareFilter{Limit: limit, Cursor: query.Get("cursor"), Owner: query.Get("owner"), Status: query.Get("status")})
+		if e != nil {
+			adminReadFailure(w, e)
+			return
+		}
+		respond(w, 200, page)
+	})))
 }
 func adminReadFailure(w http.ResponseWriter, err error) {
 	switch {

@@ -30,6 +30,7 @@ const (
 	ResetPassword = "RESET_USER_PASSWORD"
 	DeleteUser    = "DELETE_USER"
 	RestoreUser   = "RESTORE_USER"
+	RevokeShare   = "REVOKE_SHARE"
 )
 
 // Actor carries the authenticated session digest, never the session bearer.
@@ -66,6 +67,8 @@ func (c Command) Valid() bool {
 		return adminread.ValidID(c.TargetID) && c.ExpectedVersion >= 0 && c.Login == "" && c.Password == "" && !c.Enabled
 	case ProbeAccount:
 		return adminread.ValidID(c.TargetID) && c.Login == "" && c.Password == "" && c.ExpectedVersion == 0 && !c.Enabled
+	case RevokeShare:
+		return adminread.ValidID(c.TargetID) && c.ExpectedVersion == 0 && c.Login == "" && c.Password == "" && !c.Enabled
 	}
 	return false
 }
@@ -113,6 +116,12 @@ type Store interface {
 	ProbeTarget(context.Context, Actor, string) (ProbeTarget, error)
 	CompleteProbe(context.Context, Actor, Command, ProbeTarget, Capacity) (Result, error)
 	Status(context.Context, Actor, string) (Result, error)
+}
+
+// ShareApplier is the additive, share-scoped write port. Keeping it separate
+// from Store avoids widening the user lifecycle contract for a non-user action.
+type ShareApplier interface {
+	ApplyShare(context.Context, Actor, Command) (Result, error)
 }
 type AccountProbe interface {
 	Probe(context.Context, ProbeTarget) Capacity
@@ -163,6 +172,14 @@ func (s *Service) Execute(ctx context.Context, a Actor, c Command) (Result, erro
 	defer cancel()
 	result, fresh, e := s.store.Reserve(ctx, a, c, s.bindings)
 	if e != nil || !fresh {
+		return result, safe(e)
+	}
+	if c.Action == RevokeShare {
+		shares, ok := s.store.(ShareApplier)
+		if !ok {
+			return Result{}, ErrUnavailable
+		}
+		result, e = shares.ApplyShare(ctx, a, c)
 		return result, safe(e)
 	}
 	if c.Action != ProbeAccount {
