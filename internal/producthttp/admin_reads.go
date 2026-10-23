@@ -22,6 +22,7 @@ func adminReadsConfigured(reads adminread.Reads) bool {
 // Authorization is fresh per request, not inferred from a previous descriptor.
 // Absent composition fails closed instead of returning a fabricated empty list.
 func registerAdminReads(h *Handler, reads adminread.Reads) {
+	registerAdminOverview(h, reads)
 	registerAdminUserDetail(h, reads)
 	registerAdminShareReads(h, reads)
 	for _, kind := range []string{"users", "downloads"} {

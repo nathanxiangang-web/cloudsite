@@ -106,9 +106,9 @@ func TestAdminUI1ShellIsIsolatedAndFutureAdminRoutesRemainAbsent(t *testing.T) {
 			t.Fatal("admin assets leaked into consumer", entry)
 		}
 	}
-	// "shares" moved out of the future-route list: UI-3B implements share management
-	// (covered by admin_shares_test.go). The remaining names stay unimplemented.
-	for _, name := range []string{"overview", "audit", "commands/reset"} {
+	// Shares and overview have protected read routes with their own tests.
+	// The remaining names stay unimplemented.
+	for _, name := range []string{"audit", "commands/reset"} {
 		for _, method := range []string{"GET", "POST", "DELETE"} {
 			w := request(h, method, "/api/v1/admin/"+name, "{}", testToken, "http://127.0.0.1:8180")
 			if w.Code != 404 && w.Code != 405 {
