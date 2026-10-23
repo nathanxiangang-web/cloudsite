@@ -111,10 +111,13 @@ test('failure is announced without claiming an empty or complete library',async(
  const read=app.requests.find(r=>r.url.startsWith('/api/v1/resources?'));read.resolve({ok:false,status:503,json:async()=>({code:'READ_UNAVAILABLE'})});await pending;
  assert.equal(app.elements.get('library-error').hidden,false);assert.equal(app.elements.get('files-empty').hidden,true);assert.ok(app.elements.get('load-status').textContent.includes('不完整'));
 });
-test('detail close restores focus; admin link follows authenticated role only',async()=>{
+test('detail close restores focus; consumer navigation omits admin entry for every role',async()=>{
  const app=workspace();app.ctx.item=file('name');app.run("fileDetail(item,node('refresh'));closeDetail(true);");assert.equal(app.elements.get('refresh').focused,true);
- const pending=app.run("signIn({login:'test',role:'USER'});");const read=app.requests.find(r=>r.url==='/api/v1/workspace');read.resolve({ok:true,status:200,json:async()=>({bindings:[{binding_id:'one'}]})});
- await new Promise(resolve=>setImmediate(resolve));const files=app.requests.find(r=>r.url.startsWith('/api/v1/resources?'));files.resolve({ok:true,status:200,json:async()=>page()});await pending;assert.equal(app.elements.get('admin-link').hidden,true);
+ for(const role of ['USER','ADMIN']){
+ const current=workspace();current.ctx.principal={login:'test',role};const pending=current.run('signIn(principal)');const read=current.requests.find(r=>r.url==='/api/v1/workspace');read.resolve({ok:true,status:200,json:async()=>({bindings:[{binding_id:'one'}]})});
+ await new Promise(resolve=>setImmediate(resolve));const files=current.requests.find(r=>r.url.startsWith('/api/v1/resources?'));files.resolve({ok:true,status:200,json:async()=>page()});await pending;assert.equal(current.elements.has('admin-link'),false);current.run('signOut()');
+ }
+ for(const surface of ['library.html','downloads.html'])assert.ok(!fs.readFileSync(path.join(web,surface),'utf8').includes('href="/admin/"'));
 });
 
 test('whole-root library scope does not hardcode a physical folder or promise the entire drive',async()=>{
