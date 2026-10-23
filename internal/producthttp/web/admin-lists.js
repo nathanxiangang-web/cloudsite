@@ -62,7 +62,7 @@ const AdminLists={create({el,read,generation,principal,onError,dateText,cell,bad
   try{
    const page=await read('/api/v1/admin/users?limit=1',gen);
    if(gen!==generation())return null;
-   if(!page||!Array.isArray(page.items)||typeof page.total!=='number'||!Number.isSafeInteger(page.total)||page.total<0||page.total<page.items.length||page.scope!=='FILTERED_PRODUCT_USERS')return null;
+   if(!page||!Array.isArray(page.items)||page.items.length>1||typeof page.next_cursor!=='string'||page.next_cursor!==''&&!uuid.test(page.next_cursor)||!Number.isSafeInteger(page.total)||page.total<0||page.total<page.items.length||page.scope!=='FILTERED_PRODUCT_USERS'||typeof page.read_at!=='string'||!Number.isFinite(new Date(page.read_at).getTime()))return null;
    return page.total;
   }catch{return null;}
  };
