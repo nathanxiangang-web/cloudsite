@@ -4,7 +4,18 @@
 
 ## Current phase
 
-### Current code integration - Issue155 / Admin UI-3B (2026-10-23)
+### Current bounded implementation - Issue166 (2026-10-26)
+
+Backend PR164 is merged at025813ca; consumer navigation PR165 is merged in main
+a8acd3479198, whose CI39969748311 succeeded. This branch implements the separate
+operator homepage using existing protected GET ports, not new counts or commands.
+Users, Manifest intents and linked Job execution remain separate, with validated
+database read times and fail-closed unavailable states. Candidate awaits Architect
+review; no acceptance or deployment is claimed. Parent155 remains OPEN; AI131,
+private139 and production153 migration/rollout are outside this slice.
+See [module and validation contract](docs/ADMIN-OVERVIEW.md).
+
+### Historical code integration - Issue155 / Admin UI-3B (2026-10-23)
 
 - Merged:156 USER lifecycle/schema17;157 lifecycle UI;158 server-side search;
   159 DTO-backed explicit user details (`bf931b18417b`, exact-head CI39921303732,

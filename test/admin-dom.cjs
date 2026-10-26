@@ -27,11 +27,13 @@ function workspace({hash='',storage}={}){
  vm.runInContext(fs.readFileSync(path.join(web,'admin-observe.js'),'utf8'),ctx);
  vm.runInContext(fs.readFileSync(path.join(web,'admin-operations.js'),'utf8'),ctx);
  vm.runInContext(fs.readFileSync(path.join(web,'admin-shares.js'),'utf8'),ctx);
+ vm.runInContext(fs.readFileSync(path.join(web,'admin-overview.js'),'utf8'),ctx);
  vm.runInContext(fs.readFileSync(path.join(web,'app.js'),'utf8'),ctx);
  const run=source=>vm.runInContext(source,ctx);
  function respond(request,body,status=200){assert.ok(request,'expected pending request');request.done=true;request.resolve({ok:status>=200&&status<300,status,json:async()=>body});}
  function pending(url){return requests.find(r=>!r.done&&(typeof url==='string'?r.url===url:url.test(r.url)));}
  async function drain(overrides={}){
+  overrides={'/api/v1/admin/overview':require('./fixtures/admin-overview.json'),...overrides};
   for(let i=0;i<15;i++){await tick();const list=requests.filter(r=>!r.done);if(!list.length)return;
    for(const request of list){const route=request.url.split('?')[0],value=overrides[route]??(route==='/api/v1/auth/me'?principal:route==='/api/v1/admin/workspace'?descriptor:route==='/api/v1/admin/users'?{items:[],next_cursor:'',total:0,read_at:'2026-10-22T00:00:00Z',scope:'FILTERED_PRODUCT_USERS'}:route==='/api/v1/admin/shares'?{items:[],next_cursor:'',total:0,read_at:'2026-10-23T00:00:00Z',scope:'FILTERED_PRODUCT_SHARES'}:{items:[],next_cursor:''});respond(request,value);}
   }throw Error('request loop');

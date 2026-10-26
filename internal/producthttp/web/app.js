@@ -2,8 +2,8 @@
 // Session boundary: no token storage, no admin API inference, no domain mutations.
 const el = id => document.getElementById(id);
 const sections = {
- overview:['工作台总览','以明确的数据来源，理解已接入能力与尚缺的证据。'],
- users:['用户管理','创建产品 USER、启用或停用；变更结果与审计以服务器为准。'],
+ overview:['工作台总览','查看产品账号与下载任务，及时发现失败和需要处理的记录。'],
+ users:['用户管理','搜索和查看用户，创建、重命名、重置密码、启停、删除及恢复普通账号。'],
  resources:['资源中心','查看配置 allowlist 内的规范资源、目录与 Copy；分类和搜索仅作用于当前页。'],
  downloads:['云下载与任务','全站已归属任务与“我的任务”分开读取；查询不发起下载或改变任务状态。'],
  storage:['存储与连接','真实配置映射与手动 115 检测；ACTIVE 不代表网盘在线。'],
@@ -51,10 +51,9 @@ function signedOut(){
  state.logoutRequest++;state.logoutController?.abort();state.logoutController=null;state.logoutInFlight=false;state.loginInFlight=false;
  if(state.logoutStatus==='LOGOUT_PENDING')setLogoutStatus('LOGOUT_UNCONFIRMED','注销未确认。服务器会话可能仍然有效，请重试退出登录。');
  state.session++;state.controller.abort();state.controller=new AbortController();state.resourceRequest++;state.taskRequest++;state.workspaceRequest++;
- state.principal=null;state.workspace=null;clearResources();clearTasks();adminLists.reset();adminObservation.reset();adminOperations.reset();adminShares.reset();setDrawer(false,false);
+ state.principal=null;state.workspace=null;clearResources();clearTasks();adminLists.reset();adminObservation.reset();adminOperations.reset();adminShares.reset();adminOverview.reset();setDrawer(false,false);
  for(const id of ['user-login','user-role','avatar','schema','binding-select','workspace-facts','identity-facts','overview-binding-list'])el(id).replaceChildren();
  for(const id of ['overview-schema','overview-bindings','overview-users-total'])el(id).textContent='—';
- el('overview-tasks-total').textContent='未提供';
  el('workspace-observed').textContent='尚未读取';el('workspace-status').textContent='等待查询';
  el('workspace-view').hidden=true;el('login-view').hidden=false;el('login-password').value='';el('resource-search').value='';el('resolve-path').value='/';
  el('directory-label').textContent='根层级';el('directory-back').disabled=true;
@@ -113,10 +112,9 @@ function facts(id,rows){
 }
 function renderWorkspace(workspace,principal){
 	adminObservation.configure(workspace.bindings);adminOperations.configure(workspace.bindings);adminShares.configure();
- state.workspace=workspace;el('user-login').textContent=principal.login;el('user-role').textContent='ADMIN · 受控管理';
+ state.workspace=workspace;el('user-login').textContent=principal.login;el('user-role').textContent='ADMIN · 管理中心';
  el('avatar').textContent=principal.login.charAt(0).toUpperCase();el('schema').textContent='Schema v'+workspace.schema_version;
  el('overview-schema').textContent='v'+workspace.schema_version;el('overview-bindings').textContent=String(workspace.bindings.length);
- el('overview-tasks-total').textContent='未提供';
  el('workspace-status').textContent='已读取配置 · 非健康探测';el('workspace-status').className='badge neutral';
  const flag=value=>value===true?'配置启用 · 未验证运行结果':value===false?'配置未启用':'未提供';
  facts('workspace-facts',[['产品模式',workspace.mode],['云下载能力',flag(workspace.cloud_download_enabled)],['来源检查能力',flag(workspace.cloud_download_preview_enabled)],['文件访问能力',flag(workspace.content_access_enabled)],['分享能力',flag(workspace.sharing_enabled)],['覆盖范围','当前产品进程的配置能力描述；非全站业务统计']]);
@@ -156,18 +154,15 @@ async function signedIn(principal,generation=state.session){
 }
 async function refreshWorkspace(){
  if(!state.principal)return;const generation=state.session,request=++state.workspaceRequest;
+ const summary=state.tab==='overview'?adminOverview.load():Promise.resolve();
  el('refresh-workspace').disabled=true;el('workspace-status').textContent='正在读取配置…';
  try{
   const {workspace,principal}=await verifyAdmin(generation);
   if(generation!==state.session||request!==state.workspaceRequest)return;
   renderWorkspace(workspace,principal);clearError('workspace-error');
-  // Server-aggregated user total only; tasks have no aggregate endpoint and are never derived.
-  const total=await adminLists.users.total();
-  if(generation!==state.session||request!==state.workspaceRequest)return;
-  el('overview-users-total').textContent=Number.isSafeInteger(total)?String(total):'未提供';el('overview-tasks-total').textContent='未提供';
  }
  catch(error){if(generation===state.session&&request===state.workspaceRequest){el('workspace-status').textContent='STALE · 配置读取失败';el('workspace-status').className='badge warning';showError('workspace-error',error);}}
- finally{if(generation===state.session&&request===state.workspaceRequest)el('refresh-workspace').disabled=false;}
+ finally{await summary;if(generation===state.session&&request===state.workspaceRequest)el('refresh-workspace').disabled=false;}
 }
 
 // Canonical resource presentation reuses the consumer-compatible pure helper.
@@ -216,6 +211,7 @@ async function loadResources(){
 const manifestLabels={PENDING:'等待激活',ACTIVE:'执行中',AWAITING_VISIBILITY:'等待观察',AWAITING_CANONICAL:'等待规范确认',READY:'READY',FAILED:'失败',RECOVERY_REQUIRED:'需人工恢复',CANCELED:'已取消'};
 function dateText(value){const d=new Date(value);return value&&Number.isFinite(d.getTime())?d.toLocaleString():'未提供';}
 const adminLists=AdminLists.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,onError:error=>showError('workspace-error',error),dateText,cell,badge,userSelected:item=>adminOperations.selectUser(item),ownerSelected:id=>{el('admin-user-filter').value=id;adminLists.downloads.owner=id;adminLists.downloads.cursor='';selectTab('downloads');}});
+const adminOverview=AdminOverview.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='overview',dateText});
 const adminObservation=AdminObserve.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,onError:error=>showError('workspace-error',error),dateText,cell,badge});
 const adminOperations=AdminOperations.create({el,read:adminRead,command:async(path,method,body,gen)=>{await verifyAdmin(gen);current(gen);return api(path,method,body,gen);},generation:()=>state.session,principal:()=>state.principal,dateText,onError:error=>{if(error.code==='AUTH_REQUIRED'||error.code==='ADMIN_REQUIRED')signedOut();showError('workspace-error',error);},onUsersChanged:()=>adminLists.users.load(),newID:()=>window.crypto.randomUUID()});
 const adminShares=AdminShares.create({el,read:adminRead,command:async(path,method,body,gen)=>{await verifyAdmin(gen);current(gen);return api(path,method,body,gen);},generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='shares',dateText,cell,badge,onStart:()=>clearError('workspace-error'),onError:error=>{if(error.code==='AUTH_REQUIRED'||error.code==='ADMIN_REQUIRED')signedOut();showError('workspace-error',error);},newID:()=>window.crypto.randomUUID()});
@@ -246,7 +242,7 @@ async function taskDetail(id){
 // Local navigation does not invent routes or request future backend endpoints.
 function selectTab(tab,probe=true){
  const own=tab==='tasks',section=own?'downloads':tab;if(!sections[section])return;
- state.resourceRequest++;state.taskRequest++;state.detailRequest++;adminLists.invalidate();adminObservation.invalidate();adminShares.invalidate();closeResourceDetail();closeTaskDetail();state.tab=tab;setDrawer(false,false);
+ state.resourceRequest++;state.taskRequest++;state.detailRequest++;state.workspaceRequest++;adminOverview.invalidate();adminLists.invalidate();adminObservation.invalidate();adminShares.invalidate();closeResourceDetail();closeTaskDetail();state.tab=tab;setDrawer(false,false);el('refresh-workspace').disabled=false;
  for(const id of ['overview','users','resources','downloads','storage','indexcore','shares'])el(id+'-panel').hidden=section!==id;
  el('user-commands-panel').hidden=section!=='users';el('account-probe-panel').hidden=section!=='storage';el('admin-action-panel').hidden=!['users','storage'].includes(section);
  const planned=Boolean(sections[section][2]);el('planned-panel').hidden=!planned;
@@ -255,7 +251,7 @@ function selectTab(tab,probe=true){
  el('page-title').textContent=own?'我的任务':sections[section][0];el('page-caption').textContent=own?'云下载与任务 / 我的任务':sections[section][0];el('page-subtitle').textContent=sections[section][1];
  if(planned){el('planned-title').textContent=sections[section][0]+' · 尚未接入';el('planned-description').textContent=sections[section][2];el('planned-action').textContent=sections[section][3];}
  clearError('workspace-error');if(probe){el('main-content').focus({preventScroll:true});window.scrollTo(0,0);}
- if(tab==='shares')adminShares.load();else if(tab==='storage')adminObservation.loadStorage();else if(tab==='indexcore'){if(probe)refreshWorkspace();}else if(tab==='users')adminLists.users.load();else if(tab==='downloads')adminLists.downloads.load();else if(tab==='resources')loadResources();else if(own)loadTasks();else if(probe)refreshWorkspace();
+ if(tab==='overview'){if(probe)refreshWorkspace();else adminOverview.load();}else if(tab==='shares')adminShares.load();else if(tab==='storage')adminObservation.loadStorage();else if(tab==='indexcore'){if(probe)refreshWorkspace();}else if(tab==='users')adminLists.users.load();else if(tab==='downloads')adminLists.downloads.load();else if(tab==='resources')loadResources();else if(own)loadTasks();else if(probe)refreshWorkspace();
 }
 function setDrawer(open,returnFocus=true){
  state.drawer=open;el('sidebar').classList.toggle('drawer-open',open);el('menu-backdrop').hidden=!open;
@@ -280,6 +276,7 @@ el('logout').addEventListener('click',logout);el('logout-retry').addEventListene
 for(const tab of Object.keys(sections))el('nav-'+tab).addEventListener('click',()=>selectTab(tab));
 el('nav-tasks').addEventListener('click',()=>selectTab('tasks'));el('scope-global').addEventListener('click',()=>selectTab('downloads'));
 el('open-resources').addEventListener('click',()=>selectTab('resources'));el('open-my-tasks').addEventListener('click',()=>selectTab('tasks'));
+for(const [id,tab] of [['open-users','users'],['open-admin-downloads','downloads'],['open-shares','shares'],['open-diagnostics','indexcore'],['open-storage','storage']])el(id).addEventListener('click',()=>selectTab(tab));
 el('refresh-workspace').addEventListener('click',()=>refreshWorkspace());
 el('refresh-storage').addEventListener('click',()=>{clearError('workspace-error');return adminObservation.refreshStorage();});
 el('more-storage').addEventListener('click',()=>adminObservation.moreStorage());

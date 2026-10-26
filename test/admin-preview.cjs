@@ -50,7 +50,8 @@ const server=http.createServer((req,res)=>{
   if(more)visible.pop();return json({items:visible,total:items.length,next_cursor:more?visible.at(-1).share_id:'',read_at:new Date().toISOString(),scope:'FILTERED_PRODUCT_SHARES'});
  }
  if(shareReview&&url.pathname.startsWith('/api/v1/admin/actions/')){const value=shareActions.get(url.pathname.split('/').at(-1));if(!value){res.statusCode=404;return json({code:'ACTION_NOT_FOUND'});}return json(value);}
- if(url.pathname==='/api/v1/admin/users')return json({items:users,next_cursor:''});
+ if(url.pathname==='/api/v1/admin/overview')return json(require('./fixtures/admin-overview.json'));
+ if(url.pathname==='/api/v1/admin/users'){const limit=Number(url.searchParams.get('limit')||20);return json({items:users.slice(0,limit),next_cursor:limit<users.length?users[limit-1].user_id:'',total:users.length,read_at:'2026-10-26T03:00:00Z',scope:'FILTERED_PRODUCT_USERS'});}
  if(url.pathname==='/api/v1/admin/storage')return json({items:[{binding_id:binding,display_label:'隔离配置示例',connection_id:'99000000-0000-4000-8000-000000000002',provider_type:'115',binding_config_status:'ACTIVE',connection_config_status:'DISABLED',binding_updated_at:task.updated_at,connection_updated_at:task.updated_at,indexcore_root_configured:true}],next_cursor:''});
  if(url.pathname==='/api/v1/admin/indexcore')return json({binding_id:binding,root_lifecycle_state:'ACTIVE',current_generation:7,last_applied_admission_seq:null,observed_at:new Date().toISOString(),evidence_source:'INDEXCORE_Q9_ROOT_STATUS'});
  if(url.pathname==='/api/v1/admin/downloads'){
@@ -63,6 +64,7 @@ const server=http.createServer((req,res)=>{
  if(url.pathname==='/api/v1/tasks/'+task.manifest_id)return json(task);
  const assets={'/admin/':['index.html','text/html'],'/assets/app.css':['app.css','text/css'],'/assets/app.js':['app.js','text/javascript'],'/assets/admin-lists.js':['admin-lists.js','text/javascript'],'/assets/admin-observe.js':['admin-observe.js','text/javascript'],'/assets/admin-operations.js':['admin-operations.js','text/javascript'],'/assets/resource-display.js':['resource-display.js','text/javascript']};
  assets['/assets/admin-shares.js']=['admin-shares.js','text/javascript'];
+ assets['/assets/admin-overview.js']=['admin-overview.js','text/javascript'];
  const asset=assets[url.pathname];if(!asset){res.statusCode=404;return res.end();}
  res.setHeader('Content-Type',asset[1]+'; charset=utf-8');let data=fs.readFileSync(path.join(web,asset[0]),'utf8');
  if(asset[0]==='index.html')data=data.replace('<body>','<body><aside class="scope-banner" aria-label="测试数据标记">ISOLATED UI FIXTURE · 所有记录为测试数据 · 不连接真实网盘、数据库或生产服务</aside>');

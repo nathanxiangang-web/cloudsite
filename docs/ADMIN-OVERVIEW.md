@@ -1,7 +1,40 @@
 # Admin overview read module (Issue 163 / PR-A)
 
 Implementation contract, not production deployment or whole UI-3B acceptance.
-The separate homepage/UI slice must wait for this backend slice's acceptance.
+Backend PR164 is merged (025813ca). Issue166 is the separate homepage/UI candidate;
+its implementation/tests do not imply Architect acceptance or production rollout.
+
+## Homepage module (Issue166 candidate)
+
+Dependency graph: `app.js -> AdminOverview -> injected verified ADMIN GET port ->
+existing overview / DirectoryReads endpoints`. AdminOverview owns only homepage
+read state, strict DTO allowlisting and rendering. Authentication, transport,
+navigation and server aggregation retain their existing owners. The module has no
+command, provider, IndexCore or persistence dependency and is independently tested
+through the real HTML/JS DOM boundary. Never reuse write-command ports for reads.
+
+Initial verified ADMIN entry and explicit refresh fetch unfiltered overview and
+the existing one-item DirectoryReads page with its authoritative total, separately.
+Both datasets display their own database read_at; neither is presented as a shared
+snapshot. Validate exact source/scope, timestamp, every safe nonnegative integer,
+bucket sums, incomplete definition, Job denominator and paired terminal counts.
+Render only allowlisted fields; malformed/missing/503 responses are unavailable.
+Real zero is visible as 0. Refresh clears old counts and timestamps while loading;
+failure leaves dashes and UNAVAILABLE, never stale numbers labelled current.
+
+Each read is fenced by current ADMIN identity, session generation, latest request
+and active tab. Supersession/navigation/logout aborts the local read controller,
+invalidates callbacks and clears counts. Existing server authorization rechecks
+remain mandatory. No background task/status POST or automatic provider probe.
+Homepage links navigate only to existing users, shares, downloads, resources,
+manual storage checks and Q9 observation panels. Audit/settings remain honest
+placeholders; consumer navigation remains independent (PR165).
+
+Extensions must update this contract and boundary tests when adding states or
+sources; do not infer metrics from list samples or combine Manifest/Job totals.
+Synthetic browser fixture data is isolated in test/admin-preview.cjs and explicitly
+labelled on screenshots, never shipped as runtime fallback. No migration or
+production change is authorized by this UI slice.
 
 ## Modules and dependencies
 
