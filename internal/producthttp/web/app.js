@@ -51,7 +51,7 @@ function signedOut(){
  state.logoutRequest++;state.logoutController?.abort();state.logoutController=null;state.logoutInFlight=false;state.loginInFlight=false;
  if(state.logoutStatus==='LOGOUT_PENDING')setLogoutStatus('LOGOUT_UNCONFIRMED','注销未确认。服务器会话可能仍然有效，请重试退出登录。');
  state.session++;state.controller.abort();state.controller=new AbortController();state.resourceRequest++;state.taskRequest++;state.workspaceRequest++;
- state.principal=null;state.workspace=null;clearResources();clearTasks();adminLists.reset();adminObservation.reset();adminOperations.reset();adminShares.reset();adminOverview.reset();setDrawer(false,false);
+ state.principal=null;state.workspace=null;clearResources();clearTasks();adminLists.reset();adminDownloadDetail.reset();adminObservation.reset();adminOperations.reset();adminShares.reset();adminOverview.reset();setDrawer(false,false);
  for(const id of ['user-login','user-role','avatar','schema','binding-select','workspace-facts','identity-facts','overview-binding-list'])el(id).replaceChildren();
  for(const id of ['overview-schema','overview-bindings','overview-users-total'])el(id).textContent='—';
  el('workspace-observed').textContent='尚未读取';el('workspace-status').textContent='等待查询';
@@ -210,8 +210,9 @@ async function loadResources(){
 }
 const manifestLabels={PENDING:'等待激活',ACTIVE:'执行中',AWAITING_VISIBILITY:'等待观察',AWAITING_CANONICAL:'等待规范确认',READY:'READY',FAILED:'失败',RECOVERY_REQUIRED:'需人工恢复',CANCELED:'已取消'};
 function dateText(value){const d=new Date(value);return value&&Number.isFinite(d.getTime())?d.toLocaleString():'未提供';}
-const adminLists=AdminLists.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,onError:error=>showError('workspace-error',error),dateText,cell,badge,userSelected:item=>adminOperations.selectUser(item),ownerSelected:id=>{el('admin-user-filter').value=id;adminLists.downloads.owner=id;adminLists.downloads.cursor='';selectTab('downloads');}});
+const adminLists=AdminLists.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,onError:error=>showError('workspace-error',error),dateText,cell,badge,downloadSelected:id=>adminDownloadDetail.load(id),downloadsChanged:()=>adminDownloadDetail.close(),bindingAllowed:id=>state.workspace?.bindings.some(b=>b.binding_id===id)===true,userSelected:item=>adminOperations.selectUser(item),ownerSelected:id=>{el('admin-user-filter').value=id;adminLists.downloads.owner=id;adminLists.downloads.cursor='';selectTab('downloads');}});
 const adminOverview=AdminOverview.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='overview',dateText});
+const adminDownloadDetail=AdminDownloadDetail.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='downloads',dateText,bindingAllowed:id=>state.workspace?.bindings.some(b=>b.binding_id===id)===true});
 const adminObservation=AdminObserve.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,onError:error=>showError('workspace-error',error),dateText,cell,badge});
 const adminOperations=AdminOperations.create({el,read:adminRead,command:async(path,method,body,gen)=>{await verifyAdmin(gen);current(gen);return api(path,method,body,gen);},generation:()=>state.session,principal:()=>state.principal,dateText,onError:error=>{if(error.code==='AUTH_REQUIRED'||error.code==='ADMIN_REQUIRED')signedOut();showError('workspace-error',error);},onUsersChanged:()=>adminLists.users.load(),newID:()=>window.crypto.randomUUID()});
 const adminShares=AdminShares.create({el,read:adminRead,command:async(path,method,body,gen)=>{await verifyAdmin(gen);current(gen);return api(path,method,body,gen);},generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='shares',dateText,cell,badge,onStart:()=>clearError('workspace-error'),onError:error=>{if(error.code==='AUTH_REQUIRED'||error.code==='ADMIN_REQUIRED')signedOut();showError('workspace-error',error);},newID:()=>window.crypto.randomUUID()});
@@ -242,7 +243,7 @@ async function taskDetail(id){
 // Local navigation does not invent routes or request future backend endpoints.
 function selectTab(tab,probe=true){
  const own=tab==='tasks',section=own?'downloads':tab;if(!sections[section])return;
- state.resourceRequest++;state.taskRequest++;state.detailRequest++;state.workspaceRequest++;adminOverview.invalidate();adminLists.invalidate();adminObservation.invalidate();adminShares.invalidate();closeResourceDetail();closeTaskDetail();state.tab=tab;setDrawer(false,false);el('refresh-workspace').disabled=false;
+ state.resourceRequest++;state.taskRequest++;state.detailRequest++;state.workspaceRequest++;adminOverview.invalidate();adminDownloadDetail.invalidate();adminLists.invalidate();adminObservation.invalidate();adminShares.invalidate();closeResourceDetail();closeTaskDetail();state.tab=tab;setDrawer(false,false);el('refresh-workspace').disabled=false;
  for(const id of ['overview','users','resources','downloads','storage','indexcore','shares'])el(id+'-panel').hidden=section!==id;
  el('user-commands-panel').hidden=section!=='users';el('account-probe-panel').hidden=section!=='storage';el('admin-action-panel').hidden=!['users','storage'].includes(section);
  const planned=Boolean(sections[section][2]);el('planned-panel').hidden=!planned;
@@ -260,7 +261,7 @@ function setDrawer(open,returnFocus=true){
  if(open)el('menu-close').focus();else if(returnFocus)el('menu-open').focus();
 }
 function keyNavigation(event){
- if(event.key==='Escape'){if(state.drawer)setDrawer(false);else if(!el('task-detail').hidden)closeTaskDetail(true);else if(!el('file-detail').hidden){state.detailRequest++;closeResourceDetail(true);}return;}
+ if(event.key==='Escape'){if(state.drawer)setDrawer(false);else if(!el('admin-download-detail').hidden)adminDownloadDetail.close(true);else if(!el('task-detail').hidden)closeTaskDetail(true);else if(!el('file-detail').hidden){state.detailRequest++;closeResourceDetail(true);}return;}
  if(event.key==='Tab'&&state.drawer){const buttons=Array.from(el('sidebar').querySelectorAll('a[href],button:not([disabled])'));const first=buttons[0],last=buttons[buttons.length-1];
  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}
 }
@@ -288,8 +289,11 @@ el('user-detail-submit').addEventListener('click',()=>{clearError('workspace-err
 el('more-users').addEventListener('click',()=>adminLists.users.more());
 el('refresh-admin-downloads').addEventListener('click',()=>{clearError('workspace-error');return adminLists.downloads.refresh();});
 el('more-admin-downloads').addEventListener('click',()=>adminLists.downloads.more());
-el('admin-filter-form').addEventListener('submit',event=>{event.preventDefault();clearError('workspace-error');return adminLists.downloads.filter(el('admin-user-filter').value.trim());});
-el('admin-filter-clear').addEventListener('click',()=>{el('admin-user-filter').value='';clearError('workspace-error');return adminLists.downloads.filter('');});
+el('admin-filter-form').addEventListener('submit',event=>{event.preventDefault();clearError('workspace-error');return adminLists.downloads.filter(el('admin-user-filter').value.trim(),el('admin-download-status').value);});
+el('admin-filter-clear').addEventListener('click',()=>{el('admin-user-filter').value='';el('admin-download-status').value='ALL';clearError('workspace-error');return adminLists.downloads.filter('','ALL');});
+el('admin-download-lookup').addEventListener('submit',event=>{event.preventDefault();return adminDownloadDetail.load(el('admin-download-id').value.trim());});
+el('admin-download-detail-refresh').addEventListener('click',()=>adminDownloadDetail.refresh());
+el('admin-download-detail-close').addEventListener('click',()=>adminDownloadDetail.close(true));
 el('binding-select').addEventListener('change',()=>{
  const id=el('binding-select').value;if(!state.workspace?.bindings.some(b=>b.binding_id===id))return;
  state.binding=id;state.parent=null;state.parents=[];state.resourceCursor='';el('resource-search').value='';el('directory-label').textContent='根层级';el('directory-back').disabled=true;loadResources();

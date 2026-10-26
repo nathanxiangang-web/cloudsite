@@ -4,7 +4,16 @@
 
 ## Current phase
 
-### Current bounded implementation - Issue166 (2026-10-26)
+### Current bounded implementation - Issue168 (2026-10-26)
+
+Homepage167 is merged at8094ff36704f; exact main CI40329349106 succeeded. This
+branch adds read-only ADMIN exact task diagnosis and server Manifest-state/owner
+filters, reusing current linkage checks and preserving overview and consumer nav.
+See [module/route/evidence contract](docs/ADMIN-DOWNLOAD-DIAGNOSTICS.md).
+Candidate awaits Architect review; no merge, deployment, migration or task action
+is claimed. Parent155 remains OPEN; AI131/private139 and production153 are separate.
+
+### Historical bounded implementation - Issue166 (2026-10-26)
 
 Backend PR164 is merged at025813ca; consumer navigation PR165 is merged in main
 a8acd3479198, whose CI39969748311 succeeded. This branch implements the separate

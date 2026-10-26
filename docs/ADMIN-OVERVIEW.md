@@ -1,8 +1,10 @@
 # Admin overview read module (Issue 163 / PR-A)
 
 Implementation contract, not production deployment or whole UI-3B acceptance.
-Backend PR164 is merged (025813ca). Issue166 is the separate homepage/UI candidate;
-its implementation/tests do not imply Architect acceptance or production rollout.
+Backend PR164 is merged (025813ca). Homepage167 is merged in8094ff36704f,
+main CI40329349106 SUCCESS. Current Issue168 adds a separate read-only task-detail
+and status-filter candidate; see [module contract](ADMIN-DOWNLOAD-DIAGNOSTICS.md).
+No whole UI-3B acceptance or production rollout is implied by either slice.
 
 ## Homepage module (Issue166 candidate)
 

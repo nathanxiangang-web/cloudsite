@@ -24,7 +24,7 @@ jobs:
       - name: Unit and contract tests
         run: go test ./... -count=1
       - name: Pure resource presentation tests
-        run: node --test test/resource-display.test.cjs test/file-library.test.cjs test/cloud-download.test.cjs test/admin-ui.test.cjs test/admin-ui2a.test.cjs test/admin-ui2b.test.cjs test/admin-ui3a.test.cjs test/admin-ui3a-layout.test.cjs test/admin-shares.test.cjs test/admin-overview.test.cjs
+        run: node --test test/resource-display.test.cjs test/file-library.test.cjs test/cloud-download.test.cjs test/admin-ui.test.cjs test/admin-ui2a.test.cjs test/admin-ui2b.test.cjs test/admin-ui3a.test.cjs test/admin-ui3a-layout.test.cjs test/admin-shares.test.cjs test/admin-overview.test.cjs test/admin-download-detail.test.cjs
       - name: Owned readonly service safety tests
         run: python3 -m unittest discover -s test -p 'readonly_catalog_service_test.py' -v
       - name: cloudsite release deployment safety tests
@@ -154,7 +154,7 @@ jobs:
       - name: PostgreSQL 18 user lifecycle, share and overview concurrency race
         env:
           PANTA_TEST_DATABASE_URL: postgres://panta:panta_e2e@127.0.0.1:5432/panta_admin_test?sslmode=disable
-        run: go test -race ./internal/store/postgres -run 'TestPostgresAdminLifecycle|TestPostgresAdminShare|TestPostgresAdminOverview' -count=1 -v
+        run: go test -race ./internal/store/postgres -run 'TestPostgresAdminLifecycle|TestPostgresAdminShare|TestPostgresAdminOverview|TestPostgresAdminDownload' -count=1 -v
       - name: Run controlled observation E2E
         run: go test ./test/e2e/observation -run TestControlledObservation -count=1 -v
       - name: Create separate Gate 3.8 observation-hint database
