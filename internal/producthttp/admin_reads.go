@@ -23,6 +23,7 @@ func adminReadsConfigured(reads adminread.Reads) bool {
 // Absent composition fails closed instead of returning a fabricated empty list.
 func registerAdminReads(h *Handler, reads adminread.Reads) {
 	registerAdminOverview(h, reads)
+	registerAdminDownloadDetail(h, reads)
 	registerAdminUserDetail(h, reads)
 	registerAdminShareReads(h, reads)
 	for _, kind := range []string{"users", "downloads"} {
@@ -46,7 +47,7 @@ func registerAdminReads(h *Handler, reads adminread.Reads) {
 				keys = append(keys, "q", "status")
 			}
 			if kind == "downloads" {
-				keys = append(keys, "user_id")
+				keys = append(keys, "user_id", "status")
 			}
 			query, err := strictQuery(r, keys...)
 			if err != nil {
@@ -54,7 +55,11 @@ func registerAdminReads(h *Handler, reads adminread.Reads) {
 				return
 			}
 			limit, err := readLimit(query)
-			if err != nil || !adminread.ValidPage(limit, query.Get("cursor")) || query.Has("cursor") && query.Get("cursor") == "" || query.Has("user_id") && !adminread.ValidID(query.Get("user_id")) {
+			validCursor := adminread.ValidPage(limit, query.Get("cursor"))
+			if _, ok := reads.(adminread.DownloadDiagnosticReads); kind == "downloads" && ok {
+				validCursor = len(query.Get("cursor")) <= 1024
+			}
+			if err != nil || !validCursor || query.Has("cursor") && query.Get("cursor") == "" || query.Has("user_id") && !adminread.ValidID(query.Get("user_id")) || kind == "downloads" && query.Has("status") && (query.Get("status") == "" || !adminread.ValidDownloadStatus(query.Get("status"))) {
 				adminReadFailure(w, adminread.ErrInvalid)
 				return
 			}
@@ -83,6 +88,19 @@ func registerAdminReads(h *Handler, reads adminread.Reads) {
 				}
 				respond(w, 200, page)
 			} else {
+				if diagnostic, ok := reads.(adminread.DownloadDiagnosticReads); ok {
+					page, e := diagnostic.SearchDownloads(r.Context(), p, adminread.DownloadFilter{Limit: limit, Cursor: query.Get("cursor"), Owner: query.Get("user_id"), Status: query.Get("status")})
+					if e != nil {
+						adminReadFailure(w, e)
+						return
+					}
+					respond(w, 200, page)
+					return
+				}
+				if query.Has("status") {
+					adminReadFailure(w, adminread.ErrUnavailable)
+					return
+				}
 				page, err := reads.Downloads(r.Context(), p, limit, query.Get("cursor"), query.Get("user_id"))
 				if err != nil {
 					adminReadFailure(w, err)
@@ -149,6 +167,8 @@ func adminReadFailure(w http.ResponseWriter, err error) {
 		failure(w, 400, "INVALID_REQUEST")
 	case errors.Is(err, adminread.ErrNotFound):
 		failure(w, 404, "USER_NOT_FOUND")
+	case errors.Is(err, adminread.ErrDownloadNotFound):
+		failure(w, 404, "DOWNLOAD_NOT_FOUND")
 	default:
 		failure(w, 503, "READ_UNAVAILABLE")
 	}

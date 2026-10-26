@@ -1709,6 +1709,13 @@ Implementation order: (A) append-only user-space ownership/mapping state and moc
 
 ## D-066 — Website admin management console UI & functional blueprint (UI-2B MERGED; LIVE UI-3A CANDIDATE)
 
+2026-10-26 current pointer: homepage167 merged8094ff36704f with main CI40329349106
+SUCCESS. Issue168 is a separate read-only acquisition diagnosis candidate using
+existing ADMIN scope and additive ports, exact Manifest/Job/Copy evidence and
+status-bound pagination. See ADMIN-DOWNLOAD-DIAGNOSTICS.md. No command, migration,
+production153 rollout, AI131/private139 or IndexCore work. Await Architect review;
+do not self-merge. Earlier Issue166 candidate statements below are history.
+
 2026-10-26 current implementation pointer: Issue166 is a bounded homepage UI
 candidate from main a8acd3479198. Backend overview164/025813ca and consumer-nav165
 are merged; verified main CI39969748311 succeeded. Reuse existing protected GET

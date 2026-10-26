@@ -14,7 +14,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
 
-//go:embed web/index.html web/app.css web/resource-display.js web/admin-lists.js web/admin-observe.js web/admin-operations.js web/admin-shares.js web/admin-overview.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js web/library-sharing.js web/share.html web/share.js web/downloads.html web/downloads.css web/downloads.js web/download-model.js web/file-browser.html web/file-surface.js
+//go:embed web/index.html web/app.css web/resource-display.js web/admin-lists.js web/admin-observe.js web/admin-operations.js web/admin-shares.js web/admin-overview.js web/admin-download-detail.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js web/library-sharing.js web/share.html web/share.js web/downloads.html web/downloads.css web/downloads.js web/download-model.js web/file-browser.html web/file-surface.js
 var workspaceFiles embed.FS
 
 type DisplayBinding struct {
@@ -196,6 +196,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		{"GET /assets/admin-operations.js", "web/admin-operations.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/admin-shares.js", "web/admin-shares.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/admin-overview.js", "web/admin-overview.js", "text/javascript; charset=utf-8"},
+		{"GET /assets/admin-download-detail.js", "web/admin-download-detail.js", "text/javascript; charset=utf-8"},
 	} {
 		content, err := workspaceFiles.ReadFile(asset.file)
 		if err != nil {

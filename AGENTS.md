@@ -12,7 +12,17 @@ Before planning, changing, or reviewing code, **read these files first**:
 
 Chat history is not a source of truth.
 
-## Current bounded task - Issue166 (2026-10-26)
+## Current bounded task - Issue168 (2026-10-26)
+
+Homepage167 merged in8094ff36704f; exact main CI40329349106 SUCCESS verified.
+Issue168 adds only ADMIN acquisition detail and Manifest-state/owner filters,
+with narrow read ports, coherent PG snapshots and cursor/session/UI fences.
+Read docs/ADMIN-DOWNLOAD-DIAGNOSTICS.md. One unmerged implementation PR for
+Architect review; do not self-merge. No task/provider mutations, migration,
+production153 upgrade, AI131, paused private139 or unrelated IndexCore work.
+Parent155 stays OPEN. Earlier candidate pointers below are historical.
+
+## Historical task - Issue166 (2026-10-26)
 
 Base main a8acd3479198 includes backend overview PR164 (025813ca) and consumer
 navigation PR165. Issue166 implements only the read-only operator homepage in

@@ -1,6 +1,14 @@
 # cloudsite — AI Architecture Memory
 
-**Current bounded implementation (2026-10-26):** Issue166 homepage candidate
+**Current bounded implementation (2026-10-26):** Issue168 acquisition diagnosis
+candidate starts from8094ff36704f, homepage167 merged and main CI40329349106
+SUCCESS verified. Optional read ports add exact Manifest/Job/Copy detail and
+owner/Manifest-state filters, with coherent snapshots and scope-bound cursors.
+Read ADMIN-DOWNLOAD-DIAGNOSTICS.md. No mutation ports, migration, provider or
+production work. Await independent Architect review; do not self-merge or claim
+whole UI-3B completion. Parent155 OPEN; AI131/private139 stay paused.
+
+**Historical bounded implementation (2026-10-26):** Issue166 homepage candidate
 starts from main a8acd3479198 (CI39969748311 SUCCESS). Backend164/025813ca and
 consumer-nav165 are merged. AdminOverview owns validated homepage read state,
 using existing verified ADMIN GET and DirectoryReads ports; no duplicated backend

@@ -81,6 +81,23 @@ func (r *AdminReadRepository) ListUsers(ctx context.Context, limit int, cursor s
 	return result, nil
 }
 func (r *AdminReadRepository) ListDownloads(ctx context.Context, bindings []string, limit int, cursor, user string) ([]adminread.DownloadRecord, error) {
+	return r.FilterDownloads(ctx, bindings, limit, cursor, user, "ALL")
+}
+
+const adminDownloadColumns = `m.manifest_id::text,m.user_id::text,m.target_storage_binding_id::text,
+ m.job_id::text,m.state,j.state,m.result_copy_id::text,
+ COALESCE(j.claim_attempts,0),COALESCE(j.attempt_count,0),m.created_at,m.updated_at,
+ CASE WHEN m.job_id IS NULL THEN m.state='PENDING' ELSE COALESCE(
+ j.job_id=m.job_id AND j.job_type='ACQUISITION'
+ AND j.idempotency_key='acquisition:'||m.manifest_id::text
+ AND j.payload=jsonb_build_object('schema_version',1,'manifest_id',m.manifest_id::text)
+ AND j.payload->>'schema_version'='1',false) END,
+ COALESCE(j.max_attempts,0)`
+
+func (r *AdminReadRepository) FilterDownloads(ctx context.Context, bindings []string, limit int, cursor, user, status string) ([]adminread.DownloadRecord, error) {
+	if !adminread.ValidDownloadStatus(status) {
+		return nil, adminread.ErrInvalid
+	}
 	if !adminQuery(limit, cursor) || user != "" && !adminread.ValidID(user) || len(bindings) < 1 || len(bindings) > 64 {
 		return nil, adminread.ErrInvalid
 	}
@@ -96,19 +113,12 @@ func (r *AdminReadRepository) ListDownloads(ctx context.Context, bindings []stri
 	defer func() { _ = tx.Rollback(context.Background()) }()
 	// One bounded SELECT gives both sides of each pair the same MVCC snapshot.
 	// Secret columns participate only in a boolean linkage check; none are returned.
-	rows, err := tx.Query(ctx, `SELECT m.manifest_id::text,m.user_id::text,m.target_storage_binding_id::text,
- m.job_id::text,m.state,j.state,m.result_copy_id::text,
- COALESCE(j.claim_attempts,0),COALESCE(j.attempt_count,0),m.created_at,m.updated_at,
- CASE WHEN m.job_id IS NULL THEN m.state='PENDING' ELSE COALESCE(
- j.job_id=m.job_id AND j.job_type='ACQUISITION'
- AND j.idempotency_key='acquisition:'||m.manifest_id::text
- AND j.payload=jsonb_build_object('schema_version',1,'manifest_id',m.manifest_id::text)
- AND j.payload->>'schema_version'='1',false) END,
- COALESCE(j.max_attempts,0)
+	rows, err := tx.Query(ctx, `SELECT `+adminDownloadColumns+`
  FROM acquisition_manifests m LEFT JOIN jobs j ON j.job_id=m.job_id
  WHERE m.user_id IS NOT NULL AND m.target_storage_binding_id=ANY($1::uuid[])
  AND ($2::uuid IS NULL OR m.manifest_id>$2::uuid) AND ($3::uuid IS NULL OR m.user_id=$3::uuid)
- ORDER BY m.manifest_id ASC LIMIT $4`, bindings, adminNullable(cursor), adminNullable(user), limit)
+ AND ($5='' OR $5='ALL' OR m.state=$5)
+ ORDER BY m.manifest_id ASC LIMIT $4`, bindings, adminNullable(cursor), adminNullable(user), limit, status)
 	if err != nil {
 		return nil, adminReadError(err)
 	}
