@@ -1709,6 +1709,15 @@ Implementation order: (A) append-only user-space ownership/mapping state and moc
 
 ## D-066 — Website admin management console UI & functional blueprint (UI-2B MERGED; LIVE UI-3A CANDIDATE)
 
+2026-10-26 current implementation pointer: Issue166 is a bounded homepage UI
+candidate from main a8acd3479198. Backend overview164/025813ca and consumer-nav165
+are merged; verified main CI39969748311 succeeded. Reuse existing protected GET
+and DirectoryReads ports, keeping product users, Manifest intent and linked Job
+execution as separate denominators. docs/ADMIN-OVERVIEW.md records frontend
+validation/fencing boundaries. Candidate requires independent Architect review;
+no self-merge, production153 migration/rollout, provider writes, AI131 or private139.
+Earlier stage-limited D-066 entries below remain historical evidence.
+
 2026-10-22 superseding pointer: UI-2B148 merged at97cb94fee932e231147c25c74bcbf773f27538fe,
 main CI39701070318 all3 SUCCESS checked. [Issue149](https://github.com/nathanxiangang-web/cloudsite/issues/149)
 authorizes narrowly typed real115 GetInfo and USER create/enable/disable with

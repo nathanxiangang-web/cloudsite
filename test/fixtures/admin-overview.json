@@ -1,0 +1,15 @@
+{
+  "source": "CLOUDSITE_POSTGRES_MANIFESTS_AND_JOBS",
+  "scope": "PRODUCT_ACQUISITIONS_IN_CONFIGURED_BINDINGS",
+  "read_at": "2026-10-26T03:00:00Z",
+  "manifests": {
+    "total": 15, "pending": 1, "active": 3,
+    "awaiting_visibility": 1, "awaiting_canonical": 1,
+    "ready": 4, "failed": 2, "canceled": 1,
+    "recovery_required": 2, "incomplete": 6
+  },
+  "jobs": {
+    "total": 14, "queued": 2, "running": 1, "retry_wait": 2,
+    "succeeded": 4, "failed": 2, "canceled": 1, "recovery_required": 2
+  }
+}

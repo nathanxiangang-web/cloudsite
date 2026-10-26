@@ -4,14 +4,14 @@ const {workspace,principal,descriptor,tick,web}=require('./admin-dom.cjs');
 const file={binding_id:descriptor.bindings[0].binding_id,resource_id:'stable-resource',name:'真实文档.md',path:'/文档/真实文档.md',directory:false,size_bytes:321,presence:'PRESENT',copy_id:'stable-copy',copy_availability:'PRESENT'};
 const task={manifest_id:'97000000-0000-4000-8000-000000000005',job_id:'stable-job',manifest_state:'AWAITING_CANONICAL',job_state:'RETRY_WAIT',result_copy_id:null,claim_attempts:3,failure_count:0,created_at:'2026-10-20T00:00:00Z',updated_at:'2026-10-20T00:01:00Z'};
 async function ready(){const app=workspace();await app.drain();return app;}
-test('overview is descriptor-only; nine destinations keep real and unavailable scopes distinct',async()=>{
+test('overview and nine destinations keep real and unavailable scopes distinct',async()=>{
  const app=await ready();assert.equal(app.elements.get('overview-panel').hidden,false);assert.equal(app.elements.get('overview-schema').textContent,'v15');assert.equal(app.elements.get('overview-bindings').textContent,'1');
  assert.equal(app.requests.some(r=>r.url.startsWith('/api/v1/resources')||r.url.startsWith('/api/v1/tasks')),false);
  for(const id of ['overview','users','resources','downloads','storage','indexcore','shares','audit','settings']){app.click('nav-'+id);await app.drain();assert.equal(app.run('state.tab'),id);assert.equal(app.elements.get('workspace-view').hidden,false);}
  for(const id of ['audit','settings']){app.click('nav-'+id);assert.equal(app.elements.get('planned-panel').hidden,false);assert.match(app.text('planned-title'),/尚未接入/);assert.equal(app.elements.get('planned-action').disabled,true);await app.drain();}
  app.click('nav-downloads');assert.equal(app.elements.get('global-tasks-placeholder').hidden,false);assert.equal(app.elements.get('tasks-panel').hidden,true);await app.drain();
  app.click('nav-tasks');await app.drain();assert.equal(app.elements.get('tasks-panel').hidden,false);assert.match(app.text('tasks-footer'),/仅当前登录者/);
- assert.ok(app.requests.every(r=>['/api/v1/auth/me','/api/v1/admin/workspace','/api/v1/admin/users','/api/v1/admin/downloads','/api/v1/admin/storage','/api/v1/admin/shares','/api/v1/resources','/api/v1/tasks'].includes(r.url.split('?')[0])));
+ assert.ok(app.requests.every(r=>['/api/v1/auth/me','/api/v1/admin/workspace','/api/v1/admin/overview','/api/v1/admin/users','/api/v1/admin/downloads','/api/v1/admin/storage','/api/v1/admin/shares','/api/v1/resources','/api/v1/tasks'].includes(r.url.split('?')[0])));
  assert.ok(app.requests.every(r=>r.options.method==='GET'&&r.options.credentials==='same-origin'&&r.options.cache==='no-store'));
 });
 test('anonymous, USER, non-JSON 401 and ADMIN_REQUIRED never expose admin facts',async()=>{
@@ -112,7 +112,7 @@ test('resource browse requests and task detail cannot land after navigation or l
  assert.equal(app.text('task-facts'),'');assert.equal(app.elements.get('task-detail').hidden,true);
 });
 test('descriptor refresh failure retains values as stale and never invents zero metrics',async()=>{
- const app=await ready();const refresh=app.run('refreshWorkspace();');app.respond(app.pending('/api/v1/admin/workspace'),{code:'READ_UNAVAILABLE'},503);await refresh;
+ const app=await ready();const refresh=app.run('refreshWorkspace();');for(const r of app.requests.filter(r=>!r.done&&r.url==='/api/v1/admin/workspace'))app.respond(r,{code:'READ_UNAVAILABLE'},503);await refresh;
  assert.equal(app.text('overview-bindings'),'1');assert.equal(app.text('overview-schema'),'v15');assert.match(app.text('workspace-status'),/STALE/);assert.equal(app.elements.get('workspace-error').hidden,false);
 });
 test('503/network/unexpected success keep logout explicitly unconfirmed with manual retry204',async()=>{
@@ -141,12 +141,12 @@ test('unconfirmed logout survives reload with a valid server cookie without auth
 });
 test('POST401 alone is not logout success: one GET checks already-invalid vs still-valid/unknown',async()=>{
  for(const status of [401,200,503,'network']){
-  const app=await ready(),done=app.click('logout');app.respond(app.pending('/api/v1/auth/logout'),{code:'AUTH_REQUIRED'},401);await tick();
+  const app=await ready(),before=app.requests.filter(r=>r.url==='/api/v1/auth/me').length,done=app.click('logout');app.respond(app.pending('/api/v1/auth/logout'),{code:'AUTH_REQUIRED'},401);await tick();
   const check=app.pending('/api/v1/auth/me');assert.ok(check);assert.equal(check.options.method,'GET');
   if(status==='network'){check.done=true;check.reject(Error('unavailable'));}else app.respond(check,status===200?principal:{code:'AUTH_REQUIRED'},status);
   await done;assert.equal(app.run('state.logoutStatus'),status===401?'LOGOUT_CONFIRMED':'LOGOUT_UNCONFIRMED');
   assert.equal(app.window.location.hash,status===401?'':'#logout');assert.equal(app.requests.filter(r=>r.url==='/api/v1/auth/logout').length,1);
-  assert.equal(app.requests.filter(r=>r.url==='/api/v1/auth/me').length,2);assert.equal(app.elements.get('workspace-view').hidden,true);
+  assert.equal(app.requests.filter(r=>r.url==='/api/v1/auth/me').length,before+1);assert.equal(app.elements.get('workspace-view').hidden,true);
   if(status===401)assert.match(app.text('logout-message'),/当前会话已失效/);
  }
 });

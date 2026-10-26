@@ -12,7 +12,17 @@ Before planning, changing, or reviewing code, **read these files first**:
 
 Chat history is not a source of truth.
 
-## Superseding execution pointer - 2026-10-23
+## Current bounded task - Issue166 (2026-10-26)
+
+Base main a8acd3479198 includes backend overview PR164 (025813ca) and consumer
+navigation PR165. Issue166 implements only the read-only operator homepage in
+one candidate PR, with separate DirectoryReads users and validated Manifest/Job
+counts. Read docs/ADMIN-OVERVIEW.md. Await independent Architect review; do not
+self-merge, claim deployment/full UI-3B acceptance or close parent155. No migration
+or production153 rollout, provider probe/write, AI131 or paused private139 work.
+The dated integration pointers below are history, not current unfinished tasks.
+
+## Historical integration pointer - 2026-10-23
 
 Issue155 Admin UI-3B continues as bounded non-AI slices. USER lifecycle backend
 PR156/schema17, lifecycle UI157, search158, DTO-backed details159 and real user

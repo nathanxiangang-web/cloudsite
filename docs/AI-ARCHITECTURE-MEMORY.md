@@ -1,6 +1,15 @@
 # cloudsite — AI Architecture Memory
 
-**Current code integration (2026-10-23):** Issue155 USER lifecycle backend156,
+**Current bounded implementation (2026-10-26):** Issue166 homepage candidate
+starts from main a8acd3479198 (CI39969748311 SUCCESS). Backend164/025813ca and
+consumer-nav165 are merged. AdminOverview owns validated homepage read state,
+using existing verified ADMIN GET and DirectoryReads ports; no duplicated backend
+aggregation or commands. Separate user/Manifest/Job totals, database read times,
+unavailable states and session/request/navigation fences are under test. Await
+independent Architect review; no self-merge, whole UI-3B acceptance, production
+rollout or schema change. Parent155 OPEN; AI131/private139 remain paused.
+
+**Historical code integration (2026-10-23):** Issue155 USER lifecycle backend156,
 UI157, server-side search158, actual-DTO details159 and overview user total160
 are merged. PR159/main `bf931b18417b` and PR160/main `1a86e5c4d458` have successful
 merged-main CI39921715814 and39922283505. User totals are the actual endpoint's
