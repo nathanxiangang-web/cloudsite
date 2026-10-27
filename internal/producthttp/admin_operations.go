@@ -17,6 +17,7 @@ func WithAdminOperations(ops adminops.Operations) WorkspaceOption {
 	return func(o *workspaceOptions) { o.operations = ops }
 }
 func registerAdminOperations(h *Handler, ops adminops.Operations) {
+	registerAdminCopyPresentation(h, ops)
 	for pattern, action := range map[string]string{
 		"POST /api/v1/admin/users":                                  adminops.CreateUser,
 		"PATCH /api/v1/admin/users/{user_id}":                       adminops.SetEnabled,

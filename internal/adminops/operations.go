@@ -12,6 +12,7 @@ import (
 
 	"github.com/nathanxiangang-web/panta/internal/adminread"
 	"github.com/nathanxiangang-web/panta/internal/auth"
+	"github.com/nathanxiangang-web/panta/internal/copypresentation"
 )
 
 var (
@@ -40,14 +41,15 @@ type Actor struct {
 	SessionDigest [32]byte
 }
 type Command struct {
-	RequestID       string               `json:"request_id"`
-	Action          string               `json:"action"`
-	TargetID        string               `json:"target_id"`
-	Login           string               `json:"login"`
-	Password        string               `json:"-"`
-	Enabled         bool                 `json:"enabled"`
-	ExpectedVersion int64                `json:"expected_version"`
-	Pending         *PendingPrecondition `json:"pending,omitempty"`
+	RequestID       string                   `json:"request_id"`
+	Action          string                   `json:"action"`
+	TargetID        string                   `json:"target_id"`
+	Login           string                   `json:"login"`
+	Password        string                   `json:"-"`
+	Enabled         bool                     `json:"enabled"`
+	ExpectedVersion int64                    `json:"expected_version"`
+	Presentation    *copypresentation.Change `json:"presentation,omitempty"`
+	Pending         *PendingPrecondition     `json:"pending,omitempty"`
 }
 
 func (c Command) Valid() bool {
@@ -57,7 +59,12 @@ func (c Command) Valid() bool {
 	if c.Action != CancelPending && c.Pending != nil {
 		return false
 	}
+	if c.Action != SetCopyPresentation && c.Presentation != nil {
+		return false
+	}
 	switch c.Action {
+	case SetCopyPresentation:
+		return adminread.ValidID(c.TargetID) && c.ExpectedVersion >= 0 && c.ExpectedVersion < copypresentation.MaxVersion && c.Presentation != nil && adminread.ValidID(c.Presentation.BindingID) && c.Presentation.Valid() && c.Login == "" && c.Password == "" && !c.Enabled
 	case CancelPending:
 		return adminread.ValidID(c.TargetID) && c.Pending.valid() && c.ExpectedVersion == 0 && c.Login == "" && c.Password == "" && !c.Enabled
 	case CreateUser:
@@ -109,16 +116,17 @@ type Capacity struct {
 	ProbedAt       time.Time `json:"probed_at"`
 }
 type Result struct {
-	ProbeTarget *ProbeTarget     `json:"-"`
-	RequestID   string           `json:"request_id"`
-	Action      string           `json:"action"`
-	TargetID    string           `json:"target_id,omitempty"`
-	Status      string           `json:"status"` // UNKNOWN means reserved, never permission to retry.
-	Code        string           `json:"code"`
-	RecordedAt  time.Time        `json:"recorded_at"`
-	User        *User            `json:"user,omitempty"`
-	Capacity    *Capacity        `json:"capacity,omitempty"`
-	Manifest    *ManifestOutcome `json:"manifest,omitempty"`
+	PresentationVersion *int64           `json:"presentation_version,omitempty"`
+	ProbeTarget         *ProbeTarget     `json:"-"`
+	RequestID           string           `json:"request_id"`
+	Action              string           `json:"action"`
+	TargetID            string           `json:"target_id,omitempty"`
+	Status              string           `json:"status"` // UNKNOWN means reserved, never permission to retry.
+	Code                string           `json:"code"`
+	RecordedAt          time.Time        `json:"recorded_at"`
+	User                *User            `json:"user,omitempty"`
+	Capacity            *Capacity        `json:"capacity,omitempty"`
+	Manifest            *ManifestOutcome `json:"manifest,omitempty"`
 }
 
 // ProbeTarget is server-only exact protected Connection+CredentialRef binding.
@@ -188,8 +196,19 @@ func (s *Service) Execute(ctx context.Context, a Actor, c Command) (Result, erro
 			return Result{}, ErrUnavailable
 		}
 	}
+	if c.Action == SetCopyPresentation {
+		if _, ok := s.store.(CopyPresentationApplier); !ok {
+			return Result{}, ErrUnavailable
+		}
+		frozen := *c.Presentation
+		c.Presentation = &frozen
+	}
 	result, fresh, e := s.store.Reserve(ctx, a, c, s.bindings)
 	if e != nil || !fresh {
+		return result, safe(e)
+	}
+	if c.Action == SetCopyPresentation {
+		result, e = s.store.(CopyPresentationApplier).ApplyCopyPresentation(ctx, a, c, append([]string(nil), s.bindings...))
 		return result, safe(e)
 	}
 	if c.Action == CancelPending {

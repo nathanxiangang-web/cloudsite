@@ -27,7 +27,7 @@ func TestAllReturnsOrderedMigrationHistory(t *testing.T) {
 // assertions in the PostgreSQL integration tests honest: adding a migration
 // without updating them fails here first, in a unit test with no database.
 func TestMigrationHistoryEndsAtExpectedVersion(t *testing.T) {
-	const expectedLatestVersion = 19
+	const expectedLatestVersion = 20
 	all, err := All()
 	if err != nil {
 		t.Fatalf("All() error = %v", err)
@@ -39,8 +39,8 @@ func TestMigrationHistoryEndsAtExpectedVersion(t *testing.T) {
 	if latest.Version != expectedLatestVersion {
 		t.Fatalf("latest migration version = %d, want %d", latest.Version, expectedLatestVersion)
 	}
-	if latest.Filename != "0019_admin_pending_cancellation.sql" {
-		t.Fatalf("latest migration = %q, want pending cancellation append-only migration", latest.Filename)
+	if latest.Filename != "0020_product_copy_presentation.sql" {
+		t.Fatalf("latest migration = %q, want product Copy presentation append-only migration", latest.Filename)
 	}
 }
 
@@ -49,7 +49,7 @@ func TestAdminPendingCancellationMigrationAllowlistOnly(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	sql := strings.ToLower(all[len(all)-1].SQL)
+	sql := strings.ToLower(all[18].SQL)
 	if strings.Count(sql, "alter table product_admin_actions") != 2 || strings.Count(sql, ";") != 2 {
 		t.Fatal("unexpected migration scope")
 	}
