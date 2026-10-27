@@ -6,6 +6,16 @@ import (
 	"time"
 )
 
+// PendingCancellationEnabled describes the actual optional port, not a schema
+// inference. HTTP combines it with the exact read port and runtime schema.
+func (s *Service) PendingCancellationEnabled() bool {
+	if s == nil {
+		return false
+	}
+	_, ok := s.store.(PendingCanceler)
+	return ok
+}
+
 // PendingPrecondition comes from the exact detail read, not a list-page guess.
 // UpdatedAt is a PostgreSQL timestamp CAS, not a caller-supplied wall clock.
 type PendingPrecondition struct {

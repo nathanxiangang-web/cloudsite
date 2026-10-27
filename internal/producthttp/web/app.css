@@ -20,3 +20,7 @@ body.drawer-lock{overflow:hidden}
 #admin-download-lookup{margin:0 0 20px;padding:16px 22px}#admin-download-detail .panel-head>div{display:flex;flex-wrap:wrap;gap:8px}#admin-download-detail .scope-note{padding-top:18px}#admin-download-detail .facts>div{grid-template-columns:180px minmax(0,1fr)}
 @media(max-width:767px){#admin-download-detail .facts>div{grid-template-columns:110px minmax(0,1fr)}#admin-filter-form select{max-width:100%}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}[hidden]{display:none!important}
+
+.pending-confirm-overlay{position:fixed;inset:0;z-index:1000;background:#101828b8;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}.pending-confirm-overlay[hidden]{display:none}.pending-confirm-card{padding:24px;max-width:540px;width:100%;max-height:calc(100dvh - 40px);overflow:auto;margin:auto;box-shadow:0 24px 72px #0005}.pending-confirm-card code{display:block;overflow-wrap:anywhere}.pending-confirm-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:12px;margin-top:24px}.pending-confirm-open{overflow:hidden}@media(max-width:480px){.pending-confirm-overlay{padding:12px}.pending-confirm-card{padding:20px;max-height:calc(100dvh - 24px)}.pending-confirm-actions{flex-direction:column}.pending-confirm-actions button{width:100%}}
+
+.pending-confirm-actions #pending-cancel-confirm{background:#b42318;color:#fff;border-color:#b42318}

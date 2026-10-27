@@ -9,12 +9,13 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/nathanxiangang-web/panta/internal/adminread"
 	"github.com/nathanxiangang-web/panta/internal/auth"
 	"github.com/nathanxiangang-web/panta/internal/product"
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
 
-//go:embed web/index.html web/app.css web/resource-display.js web/admin-lists.js web/admin-observe.js web/admin-operations.js web/admin-shares.js web/admin-overview.js web/admin-download-detail.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js web/library-sharing.js web/share.html web/share.js web/downloads.html web/downloads.css web/downloads.js web/download-model.js web/file-browser.html web/file-surface.js
+//go:embed web/index.html web/app.css web/resource-display.js web/admin-lists.js web/admin-observe.js web/admin-operations.js web/admin-shares.js web/admin-overview.js web/admin-download-detail.js web/admin-pending-cancel.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js web/library-sharing.js web/share.html web/share.js web/downloads.html web/downloads.css web/downloads.js web/download-model.js web/file-browser.html web/file-surface.js
 var workspaceFiles embed.FS
 
 type DisplayBinding struct {
@@ -33,17 +34,18 @@ type cloudFileScope struct {
 }
 
 type workspaceInfo struct {
-	CloudDownloadFiles             *cloudFileScope  `json:"cloud_download_files,omitempty"`
-	CloudDownloadPreviewEnabled    bool             `json:"cloud_download_preview_enabled"`
-	CloudDownloadUnavailableReason string           `json:"cloud_download_unavailable_reason,omitempty"`
-	CloudDownloadEnabled           bool             `json:"cloud_download_enabled"`
-	CloudDownloadLabel             string           `json:"cloud_download_label,omitempty"`
-	WholeRootLibrary               bool             `json:"whole_root_library"`
-	SharingEnabled                 bool             `json:"sharing_enabled"`
-	ContentAccess                  bool             `json:"content_access_enabled"`
-	Mode                           string           `json:"mode"`
-	SchemaVersion                  int64            `json:"schema_version"`
-	Bindings                       []DisplayBinding `json:"bindings"`
+	AdminPendingCancellationEnabled bool             `json:"admin_pending_cancellation_enabled"`
+	CloudDownloadFiles              *cloudFileScope  `json:"cloud_download_files,omitempty"`
+	CloudDownloadPreviewEnabled     bool             `json:"cloud_download_preview_enabled"`
+	CloudDownloadUnavailableReason  string           `json:"cloud_download_unavailable_reason,omitempty"`
+	CloudDownloadEnabled            bool             `json:"cloud_download_enabled"`
+	CloudDownloadLabel              string           `json:"cloud_download_label,omitempty"`
+	WholeRootLibrary                bool             `json:"whole_root_library"`
+	SharingEnabled                  bool             `json:"sharing_enabled"`
+	ContentAccess                   bool             `json:"content_access_enabled"`
+	Mode                            string           `json:"mode"`
+	SchemaVersion                   int64            `json:"schema_version"`
+	Bindings                        []DisplayBinding `json:"bindings"`
 }
 type loginGate struct {
 	mu     sync.Mutex
@@ -115,7 +117,12 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 	if settings.shares != nil {
 		registerSharing(h, settings.shares)
 	}
-	info := workspaceInfo{SharingEnabled: settings.shares != nil, ContentAccess: settings.files != nil, Mode: "READ_ONLY", SchemaVersion: version, Bindings: append([]DisplayBinding(nil), bindings...)}
+	_, diagnosticsReady := settings.adminReads.(adminread.DownloadDiagnosticReads)
+	cancellationReady := false
+	if capability, ok := settings.operations.(interface{ PendingCancellationEnabled() bool }); ok {
+		cancellationReady = version >= 19 && diagnosticsReady && capability.PendingCancellationEnabled()
+	}
+	info := workspaceInfo{AdminPendingCancellationEnabled: cancellationReady, SharingEnabled: settings.shares != nil, ContentAccess: settings.files != nil, Mode: "READ_ONLY", SchemaVersion: version, Bindings: append([]DisplayBinding(nil), bindings...)}
 	if settings.sourcePreview != nil {
 		if settings.cloud != nil || !settings.sourcePreview.Valid() {
 			return nil, product.ErrInvalid
@@ -139,6 +146,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		info.Mode = "ACQUISITION"
 	}
 	consumer := info
+	consumer.AdminPendingCancellationEnabled = false
 	consumer.WholeRootLibrary = settings.wholeRoot
 	if len(settings.libraryIDs) > 0 {
 		consumer.Bindings = nil
@@ -197,6 +205,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		{"GET /assets/admin-shares.js", "web/admin-shares.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/admin-overview.js", "web/admin-overview.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/admin-download-detail.js", "web/admin-download-detail.js", "text/javascript; charset=utf-8"},
+		{"GET /assets/admin-pending-cancel.js", "web/admin-pending-cancel.js", "text/javascript; charset=utf-8"},
 	} {
 		content, err := workspaceFiles.ReadFile(asset.file)
 		if err != nil {

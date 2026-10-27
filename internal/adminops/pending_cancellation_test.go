@@ -53,11 +53,17 @@ func TestPendingCancellationCommandValidationDigestAndOptionalPort(t *testing.T)
 	}
 	missing := &opStore{fresh: true}
 	s, _ := NewService(missing, nil, []string{aid})
+	if s.PendingCancellationEnabled() {
+		t.Fatal("missing port advertised")
+	}
 	if _, e := s.Execute(context.Background(), admin(), pendingCommand()); !errors.Is(e, ErrUnavailable) || missing.calls != 0 {
 		t.Fatal("missing port reserved/applied", e)
 	}
 	st := &pendingStore{opStore: opStore{fresh: true}}
 	s, _ = NewService(st, nil, []string{aid})
+	if !s.PendingCancellationEnabled() {
+		t.Fatal("implemented port not advertised")
+	}
 	if _, e := s.Execute(context.Background(), admin(), pendingCommand()); e != nil || st.applied != 1 || st.calls != 1 || st.bindings[0] != aid || s.bindings[0] != aid {
 		t.Fatal("wrong port or scope", e)
 	}
