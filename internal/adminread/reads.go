@@ -202,8 +202,8 @@ func validDownload(r DownloadRecord) bool {
 	} else if r.ResultCopyID != nil {
 		return false
 	}
-	if r.ManifestState == "PENDING" {
-		return r.JobID == nil && r.JobState == nil && r.ClaimAttempts == 0 && r.FailureCount == 0 && r.LinkValid
+	if r.ManifestState == "PENDING" || r.ManifestState == "CANCELED" && r.JobID == nil {
+		return r.JobID == nil && r.JobState == nil && r.ClaimAttempts == 0 && r.FailureCount == 0 && r.MaxAttempts == 0 && r.LinkValid
 	}
 	if r.JobID == nil || !ValidID(*r.JobID) || r.JobState == nil || !r.LinkValid || r.MaxAttempts < 1 || r.FailureCount > r.MaxAttempts {
 		return false

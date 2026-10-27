@@ -18,15 +18,16 @@ func WithAdminOperations(ops adminops.Operations) WorkspaceOption {
 }
 func registerAdminOperations(h *Handler, ops adminops.Operations) {
 	for pattern, action := range map[string]string{
-		"POST /api/v1/admin/users":                      adminops.CreateUser,
-		"PATCH /api/v1/admin/users/{user_id}":           adminops.SetEnabled,
-		"POST /api/v1/admin/users/{user_id}/rename":     adminops.RenameUser,
-		"POST /api/v1/admin/users/{user_id}/password":   adminops.ResetPassword,
-		"DELETE /api/v1/admin/users/{user_id}":          adminops.DeleteUser,
-		"POST /api/v1/admin/users/{user_id}/restore":    adminops.RestoreUser,
-		"POST /api/v1/admin/storage/{binding_id}/probe": adminops.ProbeAccount,
-		"POST /api/v1/admin/shares/{share_id}/revoke":   adminops.RevokeShare,
-		"GET /api/v1/admin/actions/{request_id}":        "STATUS",
+		"POST /api/v1/admin/users":                                  adminops.CreateUser,
+		"PATCH /api/v1/admin/users/{user_id}":                       adminops.SetEnabled,
+		"POST /api/v1/admin/users/{user_id}/rename":                 adminops.RenameUser,
+		"POST /api/v1/admin/users/{user_id}/password":               adminops.ResetPassword,
+		"DELETE /api/v1/admin/users/{user_id}":                      adminops.DeleteUser,
+		"POST /api/v1/admin/users/{user_id}/restore":                adminops.RestoreUser,
+		"POST /api/v1/admin/storage/{binding_id}/probe":             adminops.ProbeAccount,
+		"POST /api/v1/admin/shares/{share_id}/revoke":               adminops.RevokeShare,
+		"GET /api/v1/admin/actions/{request_id}":                    "STATUS",
+		"POST /api/v1/admin/downloads/{manifest_id}/cancel-pending": adminops.CancelPending,
 	} {
 		h.mux.Handle(pattern, h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			p, _ := Principal(r.Context())
@@ -70,8 +71,11 @@ func registerAdminOperations(h *Handler, ops adminops.Operations) {
 				if action == adminops.SetEnabled {
 					fields = append(fields, "enabled")
 				}
-				if action != adminops.CreateUser && action != adminops.ProbeAccount && action != adminops.RevokeShare {
+				if action != adminops.CreateUser && action != adminops.ProbeAccount && action != adminops.RevokeShare && action != adminops.CancelPending {
 					fields = append(fields, "expected_version")
+				}
+				if action == adminops.CancelPending {
+					fields = append(fields, "expected_owner_user_id", "expected_binding_id", "expected_updated_at")
 				}
 				body, err := adminCommandBody(w, r, fields)
 				if err != nil {
@@ -79,6 +83,14 @@ func registerAdminOperations(h *Handler, ops adminops.Operations) {
 					return
 				}
 				c := adminops.Command{Action: action, TargetID: r.PathValue("user_id")}
+				if action == adminops.CancelPending {
+					c.TargetID = r.PathValue("manifest_id")
+					c.Pending = &adminops.PendingPrecondition{}
+					if json.Unmarshal(body["expected_owner_user_id"], &c.Pending.OwnerUserID) != nil || json.Unmarshal(body["expected_binding_id"], &c.Pending.BindingID) != nil || json.Unmarshal(body["expected_updated_at"], &c.Pending.UpdatedAt) != nil {
+						failure(w, 400, "INVALID_REQUEST")
+						return
+					}
+				}
 				if action == adminops.ProbeAccount {
 					c.TargetID = r.PathValue("binding_id")
 				}
@@ -128,6 +140,12 @@ func registerAdminOperations(h *Handler, ops adminops.Operations) {
 			status := 200
 			if result.Status == "UNKNOWN" {
 				status = 202
+			}
+			if action != "STATUS" && result.Action == adminops.CancelPending && result.Status == "REJECTED" {
+				status = 409
+				if result.Code == "MANIFEST_NOT_FOUND" {
+					status = 404
+				}
 			}
 			respond(w, status, result)
 		})))

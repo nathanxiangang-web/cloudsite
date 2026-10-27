@@ -15,6 +15,7 @@ import (
 type AdminOperationsRepository struct {
 	db               authDB
 	beforeUserCommit func(context.Context, pgx.Tx) error
+	afterPendingLock func(context.Context, pgx.Tx) error // Isolated concurrency test seam only.
 }
 
 func NewAdminOperationsRepository(db authDB) (*AdminOperationsRepository, error) {
@@ -182,7 +183,7 @@ func lockedAdminAction(ctx context.Context, tx pgx.Tx, a adminops.Actor, c admin
 	return result, result.Status != "UNKNOWN", e
 }
 func (r *AdminOperationsRepository) ApplyUser(ctx context.Context, a adminops.Actor, c adminops.Command) (adminops.Result, error) {
-	if !c.Valid() || c.Action == adminops.ProbeAccount {
+	if !c.Valid() || c.Action == adminops.ProbeAccount || c.Action == adminops.CancelPending {
 		return adminops.Result{}, adminops.ErrInvalid
 	}
 	tx, e := r.begin(ctx, a)

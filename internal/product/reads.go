@@ -216,7 +216,7 @@ func (s *ReadService) taskView(record TaskRecord, p auth.Principal) (Task, error
 		return Task{}, ErrUnavailable
 	}
 	dto := Task{ManifestID: m.ID, JobID: m.JobID, ManifestState: m.State, ResultCopyID: m.ResultCopyID, CreatedAt: m.CreatedAt, UpdatedAt: m.UpdatedAt}
-	if m.State == acquisition.StatePending {
+	if m.State == acquisition.StatePending || m.State == acquisition.StateCanceled && m.JobID == nil {
 		if j != nil {
 			return Task{}, ErrUnavailable
 		}

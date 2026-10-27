@@ -20,6 +20,7 @@ type ManifestCounts struct {
 	Ready              int64 `json:"ready"`
 	Failed             int64 `json:"failed"`
 	Canceled           int64 `json:"canceled"`
+	CanceledWithoutJob int64 `json:"canceled_without_job,omitempty"`
 	RecoveryRequired   int64 `json:"recovery_required"`
 	Incomplete         int64 `json:"incomplete"`
 }
@@ -99,6 +100,7 @@ func validOverviewCounts(o Overview) bool {
 	jt, jok := countSum(j.Queued, j.Running, j.RetryWait, j.Succeeded, j.Failed, j.Canceled, j.RecoveryRequired)
 	incomplete, iok := countSum(m.Pending, m.Active, m.AwaitingVisibility, m.AwaitingCanonical)
 	return mok && jok && iok && m.Total == mt && j.Total == jt && m.Incomplete == incomplete &&
-		jt == mt-m.Pending && j.Queued <= m.Active && j.Succeeded == m.Ready &&
-		j.Failed == m.Failed && j.Canceled == m.Canceled && j.RecoveryRequired == m.RecoveryRequired
+		m.CanceledWithoutJob >= 0 && m.CanceledWithoutJob <= m.Canceled &&
+		jt == mt-m.Pending-m.CanceledWithoutJob && j.Queued <= m.Active && j.Succeeded == m.Ready &&
+		j.Failed == m.Failed && j.Canceled == m.Canceled-m.CanceledWithoutJob && j.RecoveryRequired == m.RecoveryRequired
 }

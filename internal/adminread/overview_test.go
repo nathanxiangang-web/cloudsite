@@ -126,3 +126,24 @@ func TestOverviewMixedStatesAndSafeIntegerBoundary(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestOverviewCanceledWithoutJobKeepsSeparateDenominators(t *testing.T) {
+	r := emptyOverview()
+	r.Manifests = ManifestCounts{Total: 4, Pending: 1, Active: 1, Canceled: 2, CanceledWithoutJob: 1, Incomplete: 2}
+	r.Jobs = JobCounts{Total: 2, Queued: 1, Canceled: 1}
+	if !validOverviewCounts(r.Overview) {
+		t.Fatal("mixed pending/canceled intents and real Jobs refused")
+	}
+	for _, change := range []func(*Overview){
+		func(o *Overview) { o.Manifests.CanceledWithoutJob = -1 },
+		func(o *Overview) { o.Manifests.CanceledWithoutJob = 3 },
+		func(o *Overview) { o.Manifests.CanceledWithoutJob = 0 },
+		func(o *Overview) { o.Jobs.Canceled = 2; o.Jobs.Total = 3 },
+	} {
+		o := r.Overview
+		change(&o)
+		if validOverviewCounts(o) {
+			t.Fatal("inconsistent no-Job count accepted", o)
+		}
+	}
+}

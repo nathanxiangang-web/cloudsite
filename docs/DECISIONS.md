@@ -1709,6 +1709,18 @@ Implementation order: (A) append-only user-space ownership/mapping state and moc
 
 ## D-066 — Website admin management console UI & functional blueprint (UI-2B MERGED; LIVE UI-3A CANDIDATE)
 
+## Current bounded task - Issue170 backend (2026-10-27)
+
+PR169 is merged at9903279e4ee7; exact main CI40342381266 completed SUCCESS
+in all three jobs, and Issue168 is CLOSED. Issue170 adds only audited conditional
+cancellation of a persisted PENDING intent with no Job/provider/admission evidence.
+Read docs/ADMIN-PENDING-CANCELLATION.md for ports, lock order, schema19 and tests.
+Backend candidate only: one PR for independent Architect review, no self-merge,
+UI button, production migration/deployment, provider action or IndexCore changes.
+Parent155/production153 remain OPEN. AI131 and private139 remain paused.
+
+
+
 2026-10-26 current pointer: homepage167 merged8094ff36704f with main CI40329349106
 SUCCESS. Issue168 is a separate read-only acquisition diagnosis candidate using
 existing ADMIN scope and additive ports, exact Manifest/Job/Copy evidence and

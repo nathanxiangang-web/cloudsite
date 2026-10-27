@@ -154,3 +154,15 @@ func equalVersions(first, second []int64) bool {
 	}
 	return true
 }
+
+// A new embedded migration without a matching runtime head otherwise passes
+// unit tests but makes real integration fixtures and runtime admission fail.
+func TestCurrentSchemaVersionMatchesEmbeddedHistory(t *testing.T) {
+	history, err := migrations.All()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(history) == 0 || history[len(history)-1].Version != CurrentSchemaVersion {
+		t.Fatalf("runtime schema head %d does not match embedded migration history", CurrentSchemaVersion)
+	}
+}

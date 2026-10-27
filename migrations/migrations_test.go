@@ -27,7 +27,7 @@ func TestAllReturnsOrderedMigrationHistory(t *testing.T) {
 // assertions in the PostgreSQL integration tests honest: adding a migration
 // without updating them fails here first, in a unit test with no database.
 func TestMigrationHistoryEndsAtExpectedVersion(t *testing.T) {
-	const expectedLatestVersion = 18
+	const expectedLatestVersion = 19
 	all, err := All()
 	if err != nil {
 		t.Fatalf("All() error = %v", err)
@@ -39,8 +39,29 @@ func TestMigrationHistoryEndsAtExpectedVersion(t *testing.T) {
 	if latest.Version != expectedLatestVersion {
 		t.Fatalf("latest migration version = %d, want %d", latest.Version, expectedLatestVersion)
 	}
-	if latest.Filename != "0018_admin_share_management.sql" {
-		t.Fatalf("latest migration = %q, want admin share management append-only migration", latest.Filename)
+	if latest.Filename != "0019_admin_pending_cancellation.sql" {
+		t.Fatalf("latest migration = %q, want pending cancellation append-only migration", latest.Filename)
+	}
+}
+
+func TestAdminPendingCancellationMigrationAllowlistOnly(t *testing.T) {
+	all, err := All()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sql := strings.ToLower(all[len(all)-1].SQL)
+	if strings.Count(sql, "alter table product_admin_actions") != 2 || strings.Count(sql, ";") != 2 {
+		t.Fatal("unexpected migration scope")
+	}
+	for _, required := range []string{"'create_user'", "'set_user_enabled'", "'probe_115'", "'rename_user'", "'reset_user_password'", "'delete_user'", "'restore_user'", "'revoke_share'", "'cancel_pending_manifest'"} {
+		if !strings.Contains(sql, required) {
+			t.Fatal("lost action", required)
+		}
+	}
+	for _, forbidden := range []string{"create table", "add column", "create index", "update ", "delete from", "acquisition_manifests", "jobs"} {
+		if strings.Contains(sql, forbidden) {
+			t.Fatal("unexpected schema mutation", forbidden)
+		}
 	}
 }
 
