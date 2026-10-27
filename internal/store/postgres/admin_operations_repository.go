@@ -9,13 +9,15 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/nathanxiangang-web/panta/internal/adminops"
+	"github.com/nathanxiangang-web/panta/internal/adminread"
 	"github.com/nathanxiangang-web/panta/internal/auth"
 )
 
 type AdminOperationsRepository struct {
-	db               authDB
-	beforeUserCommit func(context.Context, pgx.Tx) error
-	afterPendingLock func(context.Context, pgx.Tx) error // Isolated concurrency test seam only.
+	afterCopyPresentationLock func(context.Context, pgx.Tx) error
+	db                        authDB
+	beforeUserCommit          func(context.Context, pgx.Tx) error
+	afterPendingLock          func(context.Context, pgx.Tx) error // Isolated concurrency test seam only.
 }
 
 func NewAdminOperationsRepository(db authDB) (*AdminOperationsRepository, error) {
@@ -27,8 +29,8 @@ func NewAdminOperationsRepository(db authDB) (*AdminOperationsRepository, error)
 
 var _ adminops.Store = (*AdminOperationsRepository)(nil)
 
-// Account first, session second. Target is USER-only, so two administrators
-// never lock each other's target rows. Login creation uses the same account lock.
+// Actor account first, session second. User lifecycle targets remain USER-only.
+// Resource/share actions own separate target locks; no actor-to-actor write cycle.
 func adminActor(ctx context.Context, tx pgx.Tx, a adminops.Actor) error {
 	var login, role string
 	var enabled bool
@@ -65,7 +67,8 @@ func actionResult(ctx context.Context, tx pgx.Tx, a adminops.Actor, id string) (
 	var result adminops.Result
 	var target *string
 	var raw []byte
-	e := tx.QueryRow(ctx, `SELECT a.request_id::text,a.action,a.target_id::text,a.created_at,r.outcome FROM product_admin_actions a LEFT JOIN product_admin_action_results r USING(actor_id,request_id) WHERE a.actor_id=$1 AND a.request_id=$2`, string(a.Principal.UserID), id).Scan(&result.RequestID, &result.Action, &target, &result.RecordedAt, &raw)
+	var terminalAt *time.Time
+	e := tx.QueryRow(ctx, `SELECT a.request_id::text,a.action,a.target_id::text,a.created_at,r.outcome,r.recorded_at FROM product_admin_actions a LEFT JOIN product_admin_action_results r USING(actor_id,request_id) WHERE a.actor_id=$1 AND a.request_id=$2`, string(a.Principal.UserID), id).Scan(&result.RequestID, &result.Action, &target, &result.RecordedAt, &raw, &terminalAt)
 	if errors.Is(e, pgx.ErrNoRows) {
 		return result, adminops.ErrNotFound
 	}
@@ -73,11 +76,24 @@ func actionResult(ctx context.Context, tx pgx.Tx, a adminops.Actor, id string) (
 		return result, e
 	}
 	if raw != nil {
+		if result.Action == adminops.SetCopyPresentation {
+			header := result
+			if target != nil {
+				header.TargetID = *target
+			}
+			if json.Unmarshal(raw, &result) != nil || !validCopyPresentationReceipt(raw, header, result, terminalAt) {
+				return adminops.Result{}, adminops.ErrUnavailable
+			}
+			return result, nil
+		}
 		e = json.Unmarshal(raw, &result)
 		return result, e
 	}
 	if target != nil {
 		result.TargetID = *target
+	}
+	if result.Action == adminops.SetCopyPresentation && (target == nil || !adminread.ValidID(*target)) {
+		return adminops.Result{}, adminops.ErrUnavailable
 	}
 	result.Status = "UNKNOWN"
 	result.Code = "RESERVED_NO_CONFIRMED_RESULT"
@@ -183,7 +199,7 @@ func lockedAdminAction(ctx context.Context, tx pgx.Tx, a adminops.Actor, c admin
 	return result, result.Status != "UNKNOWN", e
 }
 func (r *AdminOperationsRepository) ApplyUser(ctx context.Context, a adminops.Actor, c adminops.Command) (adminops.Result, error) {
-	if !c.Valid() || c.Action == adminops.ProbeAccount || c.Action == adminops.CancelPending {
+	if !c.Valid() || c.Action == adminops.ProbeAccount || c.Action == adminops.CancelPending || c.Action == adminops.SetCopyPresentation {
 		return adminops.Result{}, adminops.ErrInvalid
 	}
 	tx, e := r.begin(ctx, a)

@@ -37,7 +37,7 @@ type Filter struct {
 
 func ValidAction(s string) bool {
 	switch s {
-	case "", "ALL", adminops.CreateUser, adminops.SetEnabled, adminops.RenameUser, adminops.ResetPassword, adminops.DeleteUser, adminops.RestoreUser, adminops.RevokeShare, adminops.ProbeAccount, adminops.CancelPending:
+	case "", "ALL", adminops.CreateUser, adminops.SetEnabled, adminops.RenameUser, adminops.ResetPassword, adminops.DeleteUser, adminops.RestoreUser, adminops.RevokeShare, adminops.ProbeAccount, adminops.CancelPending, adminops.SetCopyPresentation:
 		return true
 	}
 	return false
@@ -132,7 +132,7 @@ func ValidCode(action, status, code string) bool {
 	if status == "UNKNOWN" {
 		return code == "RESERVED_NO_CONFIRMED_RESULT"
 	}
-	successes := map[string]string{adminops.CreateUser: "USER_CREATED", adminops.SetEnabled: "USER_STATE_CHANGED", adminops.RenameUser: "USER_RENAMED", adminops.ResetPassword: "USER_PASSWORD_RESET", adminops.DeleteUser: "USER_DELETED", adminops.RestoreUser: "USER_RESTORED", adminops.RevokeShare: "SHARE_REVOKED", adminops.ProbeAccount: "PROBE_RECORDED", adminops.CancelPending: "PENDING_CANCELED"}
+	successes := map[string]string{adminops.CreateUser: "USER_CREATED", adminops.SetEnabled: "USER_STATE_CHANGED", adminops.RenameUser: "USER_RENAMED", adminops.ResetPassword: "USER_PASSWORD_RESET", adminops.DeleteUser: "USER_DELETED", adminops.RestoreUser: "USER_RESTORED", adminops.RevokeShare: "SHARE_REVOKED", adminops.ProbeAccount: "PROBE_RECORDED", adminops.CancelPending: "PENDING_CANCELED", adminops.SetCopyPresentation: "COPY_PRESENTATION_SET"}
 	if status == "SUCCEEDED" {
 		return successes[action] == code && code != ""
 	}
@@ -140,6 +140,8 @@ func ValidCode(action, status, code string) bool {
 		return false
 	}
 	switch action {
+	case adminops.SetCopyPresentation:
+		return code == "COPY_NOT_FOUND" || code == "COPY_UNAVAILABLE" || code == "VERSION_CONFLICT"
 	case adminops.CreateUser:
 		return code == "CONFLICT"
 	case adminops.ProbeAccount:

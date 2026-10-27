@@ -60,3 +60,10 @@ test('an exact-read deadline becomes unavailable and re-enables refresh instead 
 test('fresh descriptor Binding changes erase old-scope rows and abort the pending audit query',async()=>{
  const app=await ready();assert.match(app.text('audit-rows'),/结果未确认/);const done=app.click('audit-refresh');await auth(app,{...cap,bindings:[{binding_id:'99500000-0000-4000-8000-000000000099',label:'Changed fixture scope'}]});await done;assert.equal(app.text('audit-rows'),'');assert.equal(app.text('audit-facts'),'');assert.equal(app.elements.get('audit-empty').hidden,true);assert.match(app.text('audit-footer'),/等待查询/);
 });
+test('copy presentation action remains a redacted GET-only audit event, including honest UNKNOWN',async()=>{
+ for(const [status,code] of [['SUCCEEDED','COPY_PRESENTATION_SET'],['REJECTED','COPY_NOT_FOUND'],['REJECTED','COPY_UNAVAILABLE'],['REJECTED','VERSION_CONFLICT'],['UNKNOWN','RESERVED_NO_CONFIRMED_RESULT']]){
+ const v={...row(),action:'SET_COPY_PRESENTATION',status,code,recorded_at:status==='UNKNOWN'?null:'2026-10-27T01:00:00Z',target_status:'REDACTED'};
+ const app=await ready(page([v]));assert.match(app.text('audit-rows'),/修改资源展示信息/);await detail(app,evidence(v));assert.match(app.text('audit-facts'),/修改资源展示信息/);assert.ok(app.requests.every(r=>r.options.method==='GET'));
+ }
+ for(const code of ['USER_STATE_CONFLICT','PENDING_CANCELED','SECRET']){const app=await ready(page([{...row(),action:'SET_COPY_PRESENTATION',status:'REJECTED',code,recorded_at:'2026-10-27T01:00:00Z'}]));assert.match(app.text('audit-footer'),/UNAVAILABLE/);assert.equal(app.text('audit-rows'),'');}
+});

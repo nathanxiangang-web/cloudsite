@@ -63,6 +63,7 @@ const auditProjection = `WITH scoped AS (
  AND ($7::uuid IS NULL OR a.request_id=$7)
  AND ($8::timestamptz IS NULL OR (a.created_at,a.request_id)<($8,$9::uuid))
  AND CASE a.action
+ WHEN 'SET_COPY_PRESENTATION' THEN EXISTS(SELECT 1 FROM copies c JOIN storage_bindings b ON b.storage_binding_id=c.storage_binding_id AND b.indexcore_root_id=c.indexcore_root_id JOIN indexcore_projection_cursors pc ON pc.storage_binding_id=b.storage_binding_id WHERE c.copy_id=a.target_id AND c.storage_binding_id=ANY($2::uuid[]) AND pc.last_event_seq>0)
  WHEN 'PROBE_115' THEN EXISTS(SELECT 1 FROM storage_bindings b WHERE b.storage_binding_id=a.target_id AND b.storage_binding_id=ANY($2::uuid[]))
  WHEN 'REVOKE_SHARE' THEN EXISTS(SELECT 1 FROM product_file_shares s WHERE s.share_id=a.target_id AND s.binding_id=ANY($2::uuid[]))
  WHEN 'CANCEL_PENDING_MANIFEST' THEN EXISTS(SELECT 1 FROM acquisition_manifests m WHERE m.manifest_id=a.target_id AND m.user_id IS NOT NULL AND m.target_storage_binding_id=ANY($2::uuid[]))
@@ -71,9 +72,9 @@ const auditProjection = `WITH scoped AS (
  SELECT actor_id,request_id,action,created_at,recorded_at,
  CASE WHEN NOT terminal THEN 'UNKNOWN' WHEN o->>'status' IN ('SUCCEEDED','REJECTED') THEN o->>'status' ELSE '' END AS status,
  CASE WHEN NOT terminal THEN 'RESERVED_NO_CONFIRMED_RESULT' WHEN o->>'code' IN (
- 'USER_CREATED','USER_STATE_CHANGED','USER_RENAMED','USER_PASSWORD_RESET','USER_DELETED','USER_RESTORED','SHARE_REVOKED','PROBE_RECORDED','PENDING_CANCELED',
+ 'USER_CREATED','USER_STATE_CHANGED','USER_RENAMED','USER_PASSWORD_RESET','USER_DELETED','USER_RESTORED','SHARE_REVOKED','PROBE_RECORDED','PENDING_CANCELED','COPY_PRESENTATION_SET',
  'CONFLICT','TARGET_FORBIDDEN','VERSION_CONFLICT','USER_STATE_CONFLICT','PASSWORD_UNCHANGED','ACTIVE_DOWNLOADS','DOWNLOAD_STATE_CONFLICT','LOGIN_CONFLICT',
- 'SCOPE_REJECTED','NOT_CONNECTED','RATE_LIMITED','SHARE_NOT_FOUND','SHARE_ALREADY_REVOKED','MANIFEST_NOT_FOUND','OWNER_UNAVAILABLE','PENDING_CHANGED','PENDING_NOT_ISOLATED','MANIFEST_UNAVAILABLE') THEN o->>'code' ELSE '' END AS code,
+ 'SCOPE_REJECTED','NOT_CONNECTED','RATE_LIMITED','SHARE_NOT_FOUND','SHARE_ALREADY_REVOKED','MANIFEST_NOT_FOUND','OWNER_UNAVAILABLE','PENDING_CHANGED','PENDING_NOT_ISOLATED','MANIFEST_UNAVAILABLE','COPY_NOT_FOUND','COPY_UNAVAILABLE') THEN o->>'code' ELSE '' END AS code,
  CASE WHEN target_id IS NULL AND NOT (terminal AND o ? 'target_id') THEN 'NOT_RECORDED'
  WHEN action IN ('CREATE_USER','SET_USER_ENABLED','RENAME_USER','RESET_USER_PASSWORD','DELETE_USER','RESTORE_USER') AND NOT EXISTS(
  SELECT 1 FROM product_users u WHERE u.user_id=COALESCE(target_id,CASE WHEN o->>'target_id' ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN (o->>'target_id')::uuid END)
@@ -87,7 +88,9 @@ const auditProjection = `WITH scoped AS (
  AND jsonb_typeof(o->'code')='string'
  AND CASE WHEN jsonb_typeof(o->'recorded_at')='string' AND o->>'recorded_at' ~ '^\d{4}-\d{2}-\d{2}T' THEN (o->>'recorded_at')::timestamptz=recorded_at ELSE false END
  AND recorded_at>=created_at
- AND NOT EXISTS(SELECT 1 FROM jsonb_object_keys(o) k WHERE k NOT IN ('request_id','action','target_id','status','code','recorded_at','user','capacity','manifest'))
+ AND NOT EXISTS(SELECT 1 FROM jsonb_object_keys(o) k WHERE k NOT IN ('request_id','action','target_id','status','code','recorded_at','user','capacity','manifest','presentation_version'))
+ AND (NOT o ? 'presentation_version' OR action='SET_COPY_PRESENTATION' AND o->>'status'='SUCCEEDED' AND jsonb_typeof(o->'presentation_version')='number' AND o->>'presentation_version' ~ '^[0-9]{1,16}$' AND (o->>'presentation_version')::numeric BETWEEN 1 AND 9007199254740991)
+ AND (action<>'SET_COPY_PRESENTATION' OR o->>'status'<>'SUCCEEDED' OR o ? 'presentation_version')
  AND (NOT o ? 'user' OR action IN ('CREATE_USER','SET_USER_ENABLED','RENAME_USER','RESET_USER_PASSWORD','DELETE_USER','RESTORE_USER')
  AND jsonb_typeof(o->'user')='object'
  AND jsonb_typeof(o->'user'->'user_id')='string' AND o->'user'->>'user_id'=o->>'target_id'

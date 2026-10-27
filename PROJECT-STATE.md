@@ -1,10 +1,22 @@
 # cloudsite — Project State
 
+## Current bounded task - Issue 176 Copy presentation backend (2026-10-28)
+
+PR 175 is merged at f868da264255ddf93457c8f8f67117bb8bb33349. Exact main
+CI 40532208171 completed SUCCESS in all three jobs before this implementation.
+Issue 176 Stage 1 adds a CopyID-keyed product-owned alias/category/presentation-only
+hidden overlay, protected exact read and specific audited CAS action. Read
+`docs/ADMIN-COPY-PRESENTATION.md`. Append-only schema20; old 0001-0019 unchanged.
+One backend draft PR for independent review; no self-merge or editor UI. No
+provider/IndexCore mutation or access/share policy change. Parent155 remains OPEN;
+production153 owns the separate upgrade/backup/rollback; AI131/private139 excluded.
+Earlier pointers below are historical, not current unfinished work.
+
 > This file is the current execution pointer. Update it at every accepted gate.
 
 ## Current phase
 
-### Current bounded implementation - Issue174 audit reads (2026-10-27)
+### Historical bounded implementation - Issue174 audit reads (2026-10-27)
 
 PR173 merged atbb603f7e1dbe and exact main CI40465107546 completed SUCCESS
 in all three jobs. Backend170/UI172 are integrated, not production activation.
