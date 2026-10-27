@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/nathanxiangang-web/panta/internal/adminaudit"
 	"github.com/nathanxiangang-web/panta/internal/adminobserve"
 	"github.com/nathanxiangang-web/panta/internal/adminops"
 	"github.com/nathanxiangang-web/panta/internal/adminread"
@@ -170,7 +171,17 @@ func Run(ctx context.Context, action, configFile, userFile string, policies ...c
 		cancel()
 		return ErrStartup
 	}
-	options := []producthttp.WorkspaceOption{producthttp.WithAdminReads(adminReads)}
+	auditRepo, err := postgres.NewAdminAuditRepository(pool)
+	if err != nil {
+		cancel()
+		return ErrStartup
+	}
+	audit, err := adminaudit.New(auditRepo, adminBindings)
+	if err != nil {
+		cancel()
+		return ErrStartup
+	}
+	options := []producthttp.WorkspaceOption{producthttp.WithAdminReads(adminReads), producthttp.WithAdminAuditReads(audit)}
 	observeRepo, err := postgres.NewAdminObserveRepository(pool)
 	if err != nil {
 		cancel()

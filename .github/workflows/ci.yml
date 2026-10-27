@@ -154,7 +154,7 @@ jobs:
       - name: PostgreSQL 18 user lifecycle, share and overview concurrency race
         env:
           PANTA_TEST_DATABASE_URL: postgres://panta:panta_e2e@127.0.0.1:5432/panta_admin_test?sslmode=disable
-        run: go test -race ./internal/store/postgres -run 'TestPostgresAdminLifecycle|TestPostgresAdminShare|TestPostgresAdminOverview|TestPostgresAdminDownload|TestPostgresAdminPending' -count=1 -v
+        run: go test -race ./internal/store/postgres -run 'TestPostgresAdminLifecycle|TestPostgresAdminShare|TestPostgresAdminOverview|TestPostgresAdminDownload|TestPostgresAdminPending|TestPostgresAdminAudit' -count=1 -v
       - name: Run controlled observation E2E
         run: go test ./test/e2e/observation -run TestControlledObservation -count=1 -v
       - name: Create separate Gate 3.8 observation-hint database

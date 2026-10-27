@@ -15,7 +15,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
 
-//go:embed web/index.html web/app.css web/resource-display.js web/admin-lists.js web/admin-observe.js web/admin-operations.js web/admin-shares.js web/admin-overview.js web/admin-download-detail.js web/admin-pending-cancel.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js web/library-sharing.js web/share.html web/share.js web/downloads.html web/downloads.css web/downloads.js web/download-model.js web/file-browser.html web/file-surface.js
+//go:embed web/index.html web/app.css web/resource-display.js web/admin-lists.js web/admin-observe.js web/admin-operations.js web/admin-shares.js web/admin-overview.js web/admin-download-detail.js web/admin-pending-cancel.js web/admin-audit.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js web/library-sharing.js web/share.html web/share.js web/downloads.html web/downloads.css web/downloads.js web/download-model.js web/file-browser.html web/file-surface.js
 var workspaceFiles embed.FS
 
 type DisplayBinding struct {
@@ -34,6 +34,7 @@ type cloudFileScope struct {
 }
 
 type workspaceInfo struct {
+	AdminAuditEnabled               bool             `json:"admin_audit_enabled"`
 	AdminPendingCancellationEnabled bool             `json:"admin_pending_cancellation_enabled"`
 	CloudDownloadFiles              *cloudFileScope  `json:"cloud_download_files,omitempty"`
 	CloudDownloadPreviewEnabled     bool             `json:"cloud_download_preview_enabled"`
@@ -106,6 +107,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		}
 	}
 	registerAdminReads(h, settings.adminReads)
+	registerAdminAudit(h, settings.audit)
 	registerAdminObservation(h, settings.observation)
 	registerAdminOperations(h, settings.operations)
 	if settings.files != nil {
@@ -122,7 +124,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 	if capability, ok := settings.operations.(interface{ PendingCancellationEnabled() bool }); ok {
 		cancellationReady = version >= 19 && diagnosticsReady && capability.PendingCancellationEnabled()
 	}
-	info := workspaceInfo{AdminPendingCancellationEnabled: cancellationReady, SharingEnabled: settings.shares != nil, ContentAccess: settings.files != nil, Mode: "READ_ONLY", SchemaVersion: version, Bindings: append([]DisplayBinding(nil), bindings...)}
+	info := workspaceInfo{AdminAuditEnabled: version >= 16 && auditReady(settings.audit), AdminPendingCancellationEnabled: cancellationReady, SharingEnabled: settings.shares != nil, ContentAccess: settings.files != nil, Mode: "READ_ONLY", SchemaVersion: version, Bindings: append([]DisplayBinding(nil), bindings...)}
 	if settings.sourcePreview != nil {
 		if settings.cloud != nil || !settings.sourcePreview.Valid() {
 			return nil, product.ErrInvalid
@@ -146,6 +148,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		info.Mode = "ACQUISITION"
 	}
 	consumer := info
+	consumer.AdminAuditEnabled = false
 	consumer.AdminPendingCancellationEnabled = false
 	consumer.WholeRootLibrary = settings.wholeRoot
 	if len(settings.libraryIDs) > 0 {
@@ -206,6 +209,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		{"GET /assets/admin-overview.js", "web/admin-overview.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/admin-download-detail.js", "web/admin-download-detail.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/admin-pending-cancel.js", "web/admin-pending-cancel.js", "text/javascript; charset=utf-8"},
+		{"GET /assets/admin-audit.js", "web/admin-audit.js", "text/javascript; charset=utf-8"},
 	} {
 		content, err := workspaceFiles.ReadFile(asset.file)
 		if err != nil {
