@@ -34,7 +34,7 @@ async function api(path,method='GET',body,generation=state.session,signal=state.
   if(method==='GET'){signedOut();showError('login-error',error);}throw error;
  }
  const data=await response.json();current(generation);
- if(!response.ok){const error=new Error('Request refused');error.code=data.code;throw error;}
+ if(!response.ok){const error=new Error('Request refused');error.code=data.code;error.status=response.status;if(path.endsWith('/cancel-pending'))error.receipt=data;throw error;}
  return data;
 }
 function clearResources(){
@@ -51,7 +51,7 @@ function signedOut(){
  state.logoutRequest++;state.logoutController?.abort();state.logoutController=null;state.logoutInFlight=false;state.loginInFlight=false;
  if(state.logoutStatus==='LOGOUT_PENDING')setLogoutStatus('LOGOUT_UNCONFIRMED','注销未确认。服务器会话可能仍然有效，请重试退出登录。');
  state.session++;state.controller.abort();state.controller=new AbortController();state.resourceRequest++;state.taskRequest++;state.workspaceRequest++;
- state.principal=null;state.workspace=null;clearResources();clearTasks();adminLists.reset();adminDownloadDetail.reset();adminObservation.reset();adminOperations.reset();adminShares.reset();adminOverview.reset();setDrawer(false,false);
+ state.principal=null;state.workspace=null;clearResources();clearTasks();adminLists.reset();adminDownloadDetail.reset();adminPendingCancel.reset();adminObservation.reset();adminOperations.reset();adminShares.reset();adminOverview.reset();setDrawer(false,false);
  for(const id of ['user-login','user-role','avatar','schema','binding-select','workspace-facts','identity-facts','overview-binding-list'])el(id).replaceChildren();
  for(const id of ['overview-schema','overview-bindings','overview-users-total'])el(id).textContent='—';
  el('workspace-observed').textContent='尚未读取';el('workspace-status').textContent='等待查询';
@@ -139,6 +139,10 @@ async function verifyAdmin(generation=state.session){
  if(principal.role!=='ADMIN'||(state.principal&&state.principal.user_id!==principal.user_id)){
   const error=new Error('Identity changed');error.code='AUTH_CHANGED';signedOut();showError('login-error',error);throw error;
  }
+ if(state.principal){const previous=state.workspace;state.workspace=workspace;
+  const scope=w=>JSON.stringify([w?.schema_version,w?.admin_pending_cancellation_enabled,(w?.bindings||[]).map(b=>b.binding_id).sort()]);
+  if(scope(previous)!==scope(workspace))adminPendingCancel.invalidate();
+ }
  return {workspace,principal};
 }
 async function adminRead(path,generation=state.session,signal){
@@ -212,7 +216,8 @@ const manifestLabels={PENDING:'等待激活',ACTIVE:'执行中',AWAITING_VISIBIL
 function dateText(value){const d=new Date(value);return value&&Number.isFinite(d.getTime())?d.toLocaleString():'未提供';}
 const adminLists=AdminLists.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,onError:error=>showError('workspace-error',error),dateText,cell,badge,downloadSelected:id=>adminDownloadDetail.load(id),downloadsChanged:()=>adminDownloadDetail.close(),bindingAllowed:id=>state.workspace?.bindings.some(b=>b.binding_id===id)===true,userSelected:item=>adminOperations.selectUser(item),ownerSelected:id=>{el('admin-user-filter').value=id;adminLists.downloads.owner=id;adminLists.downloads.cursor='';selectTab('downloads');}});
 const adminOverview=AdminOverview.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='overview',dateText});
-const adminDownloadDetail=AdminDownloadDetail.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='downloads',dateText,bindingAllowed:id=>state.workspace?.bindings.some(b=>b.binding_id===id)===true});
+const adminDownloadDetail=AdminDownloadDetail.create({onChange:d=>adminPendingCancel.observe(d),el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='downloads',dateText,bindingAllowed:id=>state.workspace?.bindings.some(b=>b.binding_id===id)===true});
+const adminPendingCancel=AdminPendingCancel.create({el,read:adminRead,readExact:id=>adminDownloadDetail.load(id,true),generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='downloads',bindingAllowed:id=>state.workspace?.bindings.some(b=>b.binding_id===id)===true,capable:()=>state.workspace?.schema_version>=19&&state.workspace?.admin_pending_cancellation_enabled===true,newID:()=>window.crypto.randomUUID(),onError:error=>{signedOut();showError('login-error',error);},onMissing:()=>adminDownloadDetail.close(),onTerminal:async(id,missing)=>{const gen=state.session;await Promise.all([adminLists.downloads.load(),adminOverview.load(true)]);if(gen===state.session&&state.tab==='downloads'&&!missing)await adminDownloadDetail.load(id,true);},command:async(path,body,gen,signal,guard)=>{const {workspace}=await verifyAdmin(gen);current(gen);if(!guard()||signal.aborted||workspace.schema_version<19||workspace.admin_pending_cancellation_enabled!==true||!workspace.bindings.some(b=>b.binding_id===body.expected_binding_id)){throw stale();}return api(path,'POST',body,gen,signal);}});
 const adminObservation=AdminObserve.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,onError:error=>showError('workspace-error',error),dateText,cell,badge});
 const adminOperations=AdminOperations.create({el,read:adminRead,command:async(path,method,body,gen)=>{await verifyAdmin(gen);current(gen);return api(path,method,body,gen);},generation:()=>state.session,principal:()=>state.principal,dateText,onError:error=>{if(error.code==='AUTH_REQUIRED'||error.code==='ADMIN_REQUIRED')signedOut();showError('workspace-error',error);},onUsersChanged:()=>adminLists.users.load(),newID:()=>window.crypto.randomUUID()});
 const adminShares=AdminShares.create({el,read:adminRead,command:async(path,method,body,gen)=>{await verifyAdmin(gen);current(gen);return api(path,method,body,gen);},generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='shares',dateText,cell,badge,onStart:()=>clearError('workspace-error'),onError:error=>{if(error.code==='AUTH_REQUIRED'||error.code==='ADMIN_REQUIRED')signedOut();showError('workspace-error',error);},newID:()=>window.crypto.randomUUID()});
@@ -243,7 +248,7 @@ async function taskDetail(id){
 // Local navigation does not invent routes or request future backend endpoints.
 function selectTab(tab,probe=true){
  const own=tab==='tasks',section=own?'downloads':tab;if(!sections[section])return;
- state.resourceRequest++;state.taskRequest++;state.detailRequest++;state.workspaceRequest++;adminOverview.invalidate();adminDownloadDetail.invalidate();adminLists.invalidate();adminObservation.invalidate();adminShares.invalidate();closeResourceDetail();closeTaskDetail();state.tab=tab;setDrawer(false,false);el('refresh-workspace').disabled=false;
+ state.resourceRequest++;state.taskRequest++;state.detailRequest++;state.workspaceRequest++;adminOverview.invalidate();adminDownloadDetail.invalidate();adminPendingCancel.invalidate();adminLists.invalidate();adminObservation.invalidate();adminShares.invalidate();closeResourceDetail();closeTaskDetail();state.tab=tab;setDrawer(false,false);el('refresh-workspace').disabled=false;
  for(const id of ['overview','users','resources','downloads','storage','indexcore','shares'])el(id+'-panel').hidden=section!==id;
  el('user-commands-panel').hidden=section!=='users';el('account-probe-panel').hidden=section!=='storage';el('admin-action-panel').hidden=!['users','storage'].includes(section);
  const planned=Boolean(sections[section][2]);el('planned-panel').hidden=!planned;
@@ -261,6 +266,7 @@ function setDrawer(open,returnFocus=true){
  if(open)el('menu-close').focus();else if(returnFocus)el('menu-open').focus();
 }
 function keyNavigation(event){
+ if(adminPendingCancel.key(event))return;
  if(event.key==='Escape'){if(state.drawer)setDrawer(false);else if(!el('admin-download-detail').hidden)adminDownloadDetail.close(true);else if(!el('task-detail').hidden)closeTaskDetail(true);else if(!el('file-detail').hidden){state.detailRequest++;closeResourceDetail(true);}return;}
  if(event.key==='Tab'&&state.drawer){const buttons=Array.from(el('sidebar').querySelectorAll('a[href],button:not([disabled])'));const first=buttons[0],last=buttons[buttons.length-1];
  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}

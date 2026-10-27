@@ -88,6 +88,10 @@ or resurrect canceled intents. Use the separately reviewed restore gate.
 
 ## Stage 2 and extension constraints
 
+Issue172 implements the separate UI candidate described in ADMIN-PENDING-CANCEL-UI.md;
+backend171 is merged, but UI review/merge/main-CI and production153 are separate.
+The paragraphs below describe the backend-only PR boundary at its acceptance.
+
 No frontend file, button, automatic command replay or capability claim is added.
 The separate UI PR after backend merge + green main CI must consume the new
 no-Job CANCELED read shape and overview arithmetic, implement a capability-aware

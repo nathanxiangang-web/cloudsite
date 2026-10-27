@@ -42,8 +42,8 @@ function workspace(){
  }
  const elements=new Map(Array.from(ids,id=>[id,new Element()]));
  const requests=[];
- const ctx=vm.createContext({AbortController,URLSearchParams,document:{getElementById(id){assert.ok(elements.has(id),'unknown DOM id '+id);return elements.get(id);},createElement(){return new Element();}},window:{scrollTo(){}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
- vm.runInContext(code,ctx);for(const script of ['admin-lists.js','admin-observe.js','admin-operations.js','admin-shares.js','admin-overview.js','admin-download-detail.js','app.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../internal/producthttp/web',script),'utf8'),ctx);
+ const ctx=vm.createContext({AbortController,URLSearchParams,setTimeout(){return 0;},clearTimeout(){},document:{body:new Element(),getElementById(id){assert.ok(elements.has(id),'unknown DOM id '+id);return elements.get(id);},createElement(){return new Element();}},window:{scrollTo(){}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
+ vm.runInContext(code,ctx);for(const script of ['admin-lists.js','admin-observe.js','admin-operations.js','admin-shares.js','admin-overview.js','admin-download-detail.js','admin-pending-cancel.js','app.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../internal/producthttp/web',script),'utf8'),ctx);
  return {ctx,elements,requests,run:(source)=>vm.runInContext(source,ctx)};
 }
 test('DOM presentation stays literal and clears private DTO/detail on logout',()=>{
