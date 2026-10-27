@@ -87,7 +87,7 @@ func (r *AdminReadRepository) ListDownloads(ctx context.Context, bindings []stri
 const adminDownloadColumns = `m.manifest_id::text,m.user_id::text,m.target_storage_binding_id::text,
  m.job_id::text,m.state,j.state,m.result_copy_id::text,
  COALESCE(j.claim_attempts,0),COALESCE(j.attempt_count,0),m.created_at,m.updated_at,
- CASE WHEN m.job_id IS NULL THEN m.state='PENDING' ELSE COALESCE(
+ CASE WHEN m.job_id IS NULL THEN m.state IN ('PENDING','CANCELED') ELSE COALESCE(
  j.job_id=m.job_id AND j.job_type='ACQUISITION'
  AND j.idempotency_key='acquisition:'||m.manifest_id::text
  AND j.payload=jsonb_build_object('schema_version',1,'manifest_id',m.manifest_id::text)

@@ -1,6 +1,16 @@
 # cloudsite — AI Architecture Memory
 
-**Current bounded implementation (2026-10-26):** Issue168 acquisition diagnosis
+## Current bounded task - Issue170 backend (2026-10-27)
+
+PR169 is merged at9903279e4ee7; exact main CI40342381266 completed SUCCESS
+in all three jobs, and Issue168 is CLOSED. Issue170 adds only audited conditional
+cancellation of a persisted PENDING intent with no Job/provider/admission evidence.
+Read docs/ADMIN-PENDING-CANCELLATION.md for ports, lock order, schema19 and tests.
+Backend candidate only: one PR for independent Architect review, no self-merge,
+UI button, production migration/deployment, provider action or IndexCore changes.
+Parent155/production153 remain OPEN. AI131 and private139 remain paused.
+
+**Historical bounded implementation (2026-10-26):** Issue168 acquisition diagnosis
 candidate starts from8094ff36704f, homepage167 merged and main CI40329349106
 SUCCESS verified. Optional read ports add exact Manifest/Job/Copy detail and
 owner/Manifest-state filters, with coherent snapshots and scope-bound cursors.

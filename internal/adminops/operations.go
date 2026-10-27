@@ -31,6 +31,7 @@ const (
 	DeleteUser    = "DELETE_USER"
 	RestoreUser   = "RESTORE_USER"
 	RevokeShare   = "REVOKE_SHARE"
+	CancelPending = "CANCEL_PENDING_MANIFEST"
 )
 
 // Actor carries the authenticated session digest, never the session bearer.
@@ -39,20 +40,26 @@ type Actor struct {
 	SessionDigest [32]byte
 }
 type Command struct {
-	RequestID       string `json:"request_id"`
-	Action          string `json:"action"`
-	TargetID        string `json:"target_id"`
-	Login           string `json:"login"`
-	Password        string `json:"-"`
-	Enabled         bool   `json:"enabled"`
-	ExpectedVersion int64  `json:"expected_version"`
+	RequestID       string               `json:"request_id"`
+	Action          string               `json:"action"`
+	TargetID        string               `json:"target_id"`
+	Login           string               `json:"login"`
+	Password        string               `json:"-"`
+	Enabled         bool                 `json:"enabled"`
+	ExpectedVersion int64                `json:"expected_version"`
+	Pending         *PendingPrecondition `json:"pending,omitempty"`
 }
 
 func (c Command) Valid() bool {
 	if !adminread.ValidID(c.RequestID) {
 		return false
 	}
+	if c.Action != CancelPending && c.Pending != nil {
+		return false
+	}
 	switch c.Action {
+	case CancelPending:
+		return adminread.ValidID(c.TargetID) && c.Pending.valid() && c.ExpectedVersion == 0 && c.Login == "" && c.Password == "" && !c.Enabled
 	case CreateUser:
 		login, e := auth.NormalizeLogin(c.Login)
 		return e == nil && login == c.Login && auth.ValidPassword(c.Password) && c.TargetID == "" && c.ExpectedVersion == 0 && !c.Enabled
@@ -77,6 +84,11 @@ func (c Command) Digest() [32]byte {
 	// A repeated create key refers to the original creation, not a password reset.
 	c.Password = ""
 	c.RequestID = ""
+	if c.Pending != nil {
+		p := *c.Pending
+		p.UpdatedAt = p.UpdatedAt.UTC()
+		c.Pending = &p
+	}
 	raw, _ := json.Marshal(c)
 	return sha256.Sum256(raw)
 }
@@ -97,15 +109,16 @@ type Capacity struct {
 	ProbedAt       time.Time `json:"probed_at"`
 }
 type Result struct {
-	ProbeTarget *ProbeTarget `json:"-"`
-	RequestID   string       `json:"request_id"`
-	Action      string       `json:"action"`
-	TargetID    string       `json:"target_id,omitempty"`
-	Status      string       `json:"status"` // UNKNOWN means reserved, never permission to retry.
-	Code        string       `json:"code"`
-	RecordedAt  time.Time    `json:"recorded_at"`
-	User        *User        `json:"user,omitempty"`
-	Capacity    *Capacity    `json:"capacity,omitempty"`
+	ProbeTarget *ProbeTarget     `json:"-"`
+	RequestID   string           `json:"request_id"`
+	Action      string           `json:"action"`
+	TargetID    string           `json:"target_id,omitempty"`
+	Status      string           `json:"status"` // UNKNOWN means reserved, never permission to retry.
+	Code        string           `json:"code"`
+	RecordedAt  time.Time        `json:"recorded_at"`
+	User        *User            `json:"user,omitempty"`
+	Capacity    *Capacity        `json:"capacity,omitempty"`
+	Manifest    *ManifestOutcome `json:"manifest,omitempty"`
 }
 
 // ProbeTarget is server-only exact protected Connection+CredentialRef binding.
@@ -170,8 +183,17 @@ func (s *Service) Execute(ctx context.Context, a Actor, c Command) (Result, erro
 	}
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
+	if c.Action == CancelPending {
+		if _, ok := s.store.(PendingCanceler); !ok {
+			return Result{}, ErrUnavailable
+		}
+	}
 	result, fresh, e := s.store.Reserve(ctx, a, c, s.bindings)
 	if e != nil || !fresh {
+		return result, safe(e)
+	}
+	if c.Action == CancelPending {
+		result, e = s.store.(PendingCanceler).ApplyPendingCancellation(ctx, a, c, append([]string(nil), s.bindings...))
 		return result, safe(e)
 	}
 	if c.Action == RevokeShare {

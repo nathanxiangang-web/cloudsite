@@ -38,7 +38,7 @@ func (r *AdminReadRepository) ReadOverview(ctx context.Context, bindings []strin
  AND m.updated_at<>'0001-01-01 00:00:00+00'::timestamptz
  AND m.created_at<=m.updated_at AND
  ((m.state='READY' AND m.result_copy_id IS NOT NULL) OR (m.state<>'READY' AND m.result_copy_id IS NULL)) AND
- CASE WHEN m.state='PENDING' THEN m.job_id IS NULL ELSE
+ CASE WHEN m.state='PENDING' OR (m.state='CANCELED' AND m.job_id IS NULL) THEN m.job_id IS NULL ELSE
  j.job_id=m.job_id AND j.job_type='ACQUISITION'
  AND j.idempotency_key='acquisition:'||m.manifest_id::text
  AND j.payload=jsonb_build_object('schema_version',1,'manifest_id',m.manifest_id::text)
@@ -58,13 +58,13 @@ func (r *AdminReadRepository) ReadOverview(ctx context.Context, bindings []strin
  count(*) FILTER(WHERE ms='PENDING'),count(*) FILTER(WHERE ms='ACTIVE'),
  count(*) FILTER(WHERE ms='AWAITING_VISIBILITY'),count(*) FILTER(WHERE ms='AWAITING_CANONICAL'),
  count(*) FILTER(WHERE ms='READY'),count(*) FILTER(WHERE ms='FAILED'),
- count(*) FILTER(WHERE ms='CANCELED'),count(*) FILTER(WHERE ms='RECOVERY_REQUIRED'),
+ count(*) FILTER(WHERE ms='CANCELED'),count(*) FILTER(WHERE ms='CANCELED' AND job_id IS NULL),count(*) FILTER(WHERE ms='RECOVERY_REQUIRED'),
  count(*) FILTER(WHERE ms IN ('PENDING','ACTIVE','AWAITING_VISIBILITY','AWAITING_CANONICAL')),
  count(job_id),count(*) FILTER(WHERE js='QUEUED'),count(*) FILTER(WHERE js='RUNNING'),
  count(*) FILTER(WHERE js='RETRY_WAIT'),count(*) FILTER(WHERE js='SUCCEEDED'),
  count(*) FILTER(WHERE js='FAILED'),count(*) FILTER(WHERE js='CANCELED'),
  count(*) FILTER(WHERE js='RECOVERY_REQUIRED'),count(*) FILTER(WHERE NOT valid) FROM pairs`, bindings, adminNullable(owner)).Scan(
-		&result.ReadAt, &m.Total, &m.Pending, &m.Active, &m.AwaitingVisibility, &m.AwaitingCanonical, &m.Ready, &m.Failed, &m.Canceled, &m.RecoveryRequired, &m.Incomplete,
+		&result.ReadAt, &m.Total, &m.Pending, &m.Active, &m.AwaitingVisibility, &m.AwaitingCanonical, &m.Ready, &m.Failed, &m.Canceled, &m.CanceledWithoutJob, &m.RecoveryRequired, &m.Incomplete,
 		&j.Total, &j.Queued, &j.Running, &j.RetryWait, &j.Succeeded, &j.Failed, &j.Canceled, &j.RecoveryRequired, &result.InvalidRecords)
 	if err != nil {
 		return adminread.OverviewRecord{}, adminReadError(err)
