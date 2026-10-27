@@ -15,6 +15,13 @@ const fixtureUUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
 const pendingReview=process.argv.includes('--pending-cancel-review'),pendingUncertain=process.argv.includes('--pending-cancel-uncertain');
 const pendingActions=new Map();let pendingWrites=0;
 const pendingTask={...require('./fixtures/admin-download-detail.json'),...task,owner_user_id:principal.user_id,binding_id:binding,manifest_state:'PENDING',job_id:null,job_state:null,result_copy_id:null,claim_attempts:0,failure_count:0,max_attempts:0,job_created_at:null,job_updated_at:null,started_at:null,finished_at:null,next_attempt_at:null,error_recorded:false,error_code:'NONE',copy:null};
+const auditReview=process.argv.includes('--audit-review');
+const auditSource='CLOUDSITE_POSTGRES_ADMIN_ACTION_LEDGER',auditScope='CURRENT_ADMIN_ACTIONS_IN_CONFIGURED_BINDINGS';
+const auditItems=[
+ {actor_id:principal.user_id,request_id:'99500000-0000-4000-8000-000000000004',action:'CREATE_USER',status:'UNKNOWN',code:'RESERVED_NO_CONFIRMED_RESULT',created_at:'2026-10-27T05:00:00.123456Z',recorded_at:null,target_status:'NOT_RECORDED'},
+ {actor_id:principal.user_id,request_id:'99500000-0000-4000-8000-000000000003',action:'DELETE_USER',status:'SUCCEEDED',code:'USER_DELETED',created_at:'2026-10-27T04:00:00Z',recorded_at:'2026-10-27T04:00:01Z',target_status:'DELETED_OR_MISSING'},
+ {actor_id:principal.user_id,request_id:'99500000-0000-4000-8000-000000000002',action:'RENAME_USER',status:'REJECTED',code:'LOGIN_CONFLICT',created_at:'2026-10-27T03:00:00Z',recorded_at:'2026-10-27T03:00:01Z',target_status:'REDACTED'}
+];
 const server=http.createServer((req,res)=>{
  res.setHeader('Cache-Control','no-store');res.setHeader('X-CloudSite-Test-Fixture','1');
  res.setHeader('Content-Security-Policy',"default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'");
@@ -59,7 +66,7 @@ const server=http.createServer((req,res)=>{
   if(!sessionValid){res.statusCode=401;return json({code:'AUTH_REQUIRED'});}
   return json({...principal,login:'fixture-admin'});
  }
- if(url.pathname==='/api/v1/admin/workspace')return json({...descriptor,schema_version:pendingReview?19:shareReview?18:descriptor.schema_version,admin_pending_cancellation_enabled:pendingReview,admin_reads_enabled:true,bindings:[{binding_id:binding,label:'隔离浏览器测试数据'}]});
+ if(url.pathname==='/api/v1/admin/workspace')return json({...descriptor,admin_audit_enabled:auditReview,schema_version:auditReview?19:pendingReview?19:shareReview?18:descriptor.schema_version,admin_pending_cancellation_enabled:pendingReview,admin_reads_enabled:true,bindings:[{binding_id:binding,label:'隔离浏览器测试数据'}]});
  if(shareReview&&url.pathname==='/api/v1/admin/shares'){
   const owner=url.searchParams.get('owner'),status=url.searchParams.get('status')||'ALL',cursor=url.searchParams.get('cursor')||'',limit=Number(url.searchParams.get('limit')||20);
   const items=shareDTO.items.map(item=>({...item,active:item.active&&!shareRevoked.has(item.share_id)})).filter(item=>(!owner||item.owner_id===owner)&&(status==='ALL'||status==='ACTIVE'&&item.active||status==='REVOKED'&&shareRevoked.has(item.share_id)||status==='EXPIRED'&&!item.active&&!shareRevoked.has(item.share_id)));
@@ -76,6 +83,15 @@ const server=http.createServer((req,res)=>{
  }
  if(pendingReview&&url.pathname==='/api/v1/admin/downloads')return json({items:[pendingTask].filter(item=>!url.searchParams.get('status')||url.searchParams.get('status')==='ALL'||item.manifest_state===url.searchParams.get('status')),next_cursor:''});
  if(pendingReview&&url.pathname==='/api/v1/admin/downloads/'+pendingTask.manifest_id)return json({...pendingTask,read_at:new Date().toISOString()});
+ if(auditReview&&url.pathname==='/api/v1/admin/audit/actions'){
+  if(url.searchParams.get('actor_id')&&url.searchParams.get('actor_id')!==principal.user_id){res.statusCode=403;return json({code:'ADMIN_REQUIRED'});}
+  const items=auditItems.filter(v=>(!url.searchParams.get('action')||url.searchParams.get('action')==='ALL'||v.action===url.searchParams.get('action'))&&(!url.searchParams.get('status')||url.searchParams.get('status')==='ALL'||v.status===url.searchParams.get('status'))&&(!url.searchParams.get('from')||Date.parse(v.created_at)>=Date.parse(url.searchParams.get('from')))&&(!url.searchParams.get('before')||Date.parse(v.created_at)<Date.parse(url.searchParams.get('before'))));
+  return json({items,next_cursor:'',source:auditSource,scope:auditScope,read_at:new Date().toISOString()});
+ }
+ if(auditReview&&url.pathname.startsWith('/api/v1/admin/audit/actions/')){
+  const parts=url.pathname.split('/'),actor=parts.at(-2),id=parts.at(-1),item=auditItems.find(v=>v.actor_id===actor&&v.request_id===id);
+  if(!item){res.statusCode=404;return json({code:'AUDIT_NOT_FOUND'});}return json({...item,source:auditSource,scope:auditScope,read_at:new Date().toISOString()});
+ }
  if(url.pathname==='/api/v1/admin/overview')return json(require('./fixtures/admin-overview.json'));
  if(url.pathname==='/api/v1/admin/users'){const limit=Number(url.searchParams.get('limit')||20);return json({items:users.slice(0,limit),next_cursor:limit<users.length?users[limit-1].user_id:'',total:users.length,read_at:'2026-10-26T03:00:00Z',scope:'FILTERED_PRODUCT_USERS'});}
  if(url.pathname==='/api/v1/admin/storage')return json({items:[{binding_id:binding,display_label:'隔离配置示例',connection_id:'99000000-0000-4000-8000-000000000002',provider_type:'115',binding_config_status:'ACTIVE',connection_config_status:'DISABLED',binding_updated_at:task.updated_at,connection_updated_at:task.updated_at,indexcore_root_configured:true}],next_cursor:''});
@@ -97,12 +113,14 @@ const server=http.createServer((req,res)=>{
  const assets={'/admin/':['index.html','text/html'],'/assets/app.css':['app.css','text/css'],'/assets/app.js':['app.js','text/javascript'],'/assets/admin-lists.js':['admin-lists.js','text/javascript'],'/assets/admin-observe.js':['admin-observe.js','text/javascript'],'/assets/admin-operations.js':['admin-operations.js','text/javascript'],'/assets/resource-display.js':['resource-display.js','text/javascript']};
  assets['/assets/admin-shares.js']=['admin-shares.js','text/javascript'];
  assets['/assets/admin-overview.js']=['admin-overview.js','text/javascript'];
+ assets['/assets/admin-audit.js']=['admin-audit.js','text/javascript'];
  assets['/assets/admin-pending-cancel.js']=['admin-pending-cancel.js','text/javascript'];
  assets['/assets/admin-download-detail.js']=['admin-download-detail.js','text/javascript'];
  const asset=assets[url.pathname];if(!asset){res.statusCode=404;return res.end();}
  res.setHeader('Content-Type',asset[1]+'; charset=utf-8');let data=fs.readFileSync(path.join(web,asset[0]),'utf8');
  if(asset[0]==='index.html')data=data.replace('<body>','<body><aside class="scope-banner" aria-label="测试数据标记">ISOLATED UI FIXTURE · 所有记录为测试数据 · 不连接真实网盘、数据库或生产服务</aside>');
  if(pendingReview&&asset[0]==='index.html')data=data.replace('<h2 id="pending-cancel-title">','<p class="scope-note">ISOLATED UI FIXTURE · 合成记录，非生产</p><h2 id="pending-cancel-title">');
+ if(auditReview&&asset[0]==='index.html')data=data.replace('id="audit-title">管理操作审计','id="audit-title">管理操作审计 · ISOLATED FIXTURE').replace('id="audit-detail-title">脱敏审计证据','id="audit-detail-title">脱敏审计证据 · ISOLATED FIXTURE');
  res.end(data);
 });
 server.listen(0,'127.0.0.1',()=>console.log('Admin UI fixture: http://127.0.0.1:'+server.address().port+'/admin/'));

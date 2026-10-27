@@ -9,7 +9,7 @@ const sections = {
  storage:['存储与连接','真实配置映射与手动 115 检测；ACTIVE 不代表网盘在线。'],
  indexcore:['IndexCore 观测','按配置 Binding 手动读取一个 Root 的 Q9 状态；不是全链路健康检查。'],
  shares:['分享管理','查找全站分享、查看文件信息，并撤销不再需要的分享。'],
- audit:['审计与安全','完整持久审计读模型尚未接入。','不会将临时日志当作完整审计，也不会编造历史操作记录。','查看审计 · 尚未接入'],
+ audit:['审计与安全','查询当前管理员自己的持久管理操作与脱敏回执；本页只读，不执行或重放任何操作。'],
  settings:['系统设置','系统设置与管理变更接口尚未接入。','当前 schema 与配置能力可在总览查看；没有配置写入、任意命令或 AI 启用入口。','修改设置 · 尚未接入']
 };
 const state = {session:0, principal:null, workspace:null, workspaceRequest:0, tab:'overview', drawer:false,
@@ -51,7 +51,7 @@ function signedOut(){
  state.logoutRequest++;state.logoutController?.abort();state.logoutController=null;state.logoutInFlight=false;state.loginInFlight=false;
  if(state.logoutStatus==='LOGOUT_PENDING')setLogoutStatus('LOGOUT_UNCONFIRMED','注销未确认。服务器会话可能仍然有效，请重试退出登录。');
  state.session++;state.controller.abort();state.controller=new AbortController();state.resourceRequest++;state.taskRequest++;state.workspaceRequest++;
- state.principal=null;state.workspace=null;clearResources();clearTasks();adminLists.reset();adminDownloadDetail.reset();adminPendingCancel.reset();adminObservation.reset();adminOperations.reset();adminShares.reset();adminOverview.reset();setDrawer(false,false);
+ state.principal=null;state.workspace=null;clearResources();clearTasks();adminLists.reset();adminDownloadDetail.reset();adminPendingCancel.reset();adminObservation.reset();adminOperations.reset();adminShares.reset();adminOverview.reset();adminAudit.reset();setDrawer(false,false);
  for(const id of ['user-login','user-role','avatar','schema','binding-select','workspace-facts','identity-facts','overview-binding-list'])el(id).replaceChildren();
  for(const id of ['overview-schema','overview-bindings','overview-users-total'])el(id).textContent='—';
  el('workspace-observed').textContent='尚未读取';el('workspace-status').textContent='等待查询';
@@ -140,8 +140,8 @@ async function verifyAdmin(generation=state.session){
   const error=new Error('Identity changed');error.code='AUTH_CHANGED';signedOut();showError('login-error',error);throw error;
  }
  if(state.principal){const previous=state.workspace;state.workspace=workspace;
-  const scope=w=>JSON.stringify([w?.schema_version,w?.admin_pending_cancellation_enabled,(w?.bindings||[]).map(b=>b.binding_id).sort()]);
-  if(scope(previous)!==scope(workspace))adminPendingCancel.invalidate();
+  const scope=w=>JSON.stringify([w?.schema_version,w?.admin_pending_cancellation_enabled,w?.admin_audit_enabled,(w?.bindings||[]).map(b=>b.binding_id).sort()]);
+  if(scope(previous)!==scope(workspace)){adminPendingCancel.invalidate();adminAudit.reset();}
  }
  return {workspace,principal};
 }
@@ -218,6 +218,7 @@ const adminLists=AdminLists.create({el,read:adminRead,generation:()=>state.sessi
 const adminOverview=AdminOverview.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='overview',dateText});
 const adminDownloadDetail=AdminDownloadDetail.create({onChange:d=>adminPendingCancel.observe(d),el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='downloads',dateText,bindingAllowed:id=>state.workspace?.bindings.some(b=>b.binding_id===id)===true});
 const adminPendingCancel=AdminPendingCancel.create({el,read:adminRead,readExact:id=>adminDownloadDetail.load(id,true),generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='downloads',bindingAllowed:id=>state.workspace?.bindings.some(b=>b.binding_id===id)===true,capable:()=>state.workspace?.schema_version>=19&&state.workspace?.admin_pending_cancellation_enabled===true,newID:()=>window.crypto.randomUUID(),onError:error=>{signedOut();showError('login-error',error);},onMissing:()=>adminDownloadDetail.close(),onTerminal:async(id,missing)=>{const gen=state.session;await Promise.all([adminLists.downloads.load(),adminOverview.load(true)]);if(gen===state.session&&state.tab==='downloads'&&!missing)await adminDownloadDetail.load(id,true);},command:async(path,body,gen,signal,guard)=>{const {workspace}=await verifyAdmin(gen);current(gen);if(!guard()||signal.aborted||workspace.schema_version<19||workspace.admin_pending_cancellation_enabled!==true||!workspace.bindings.some(b=>b.binding_id===body.expected_binding_id)){throw stale();}return api(path,'POST',body,gen,signal);}});
+const adminAudit=AdminAudit.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='audit',capable:()=>state.workspace?.schema_version>=16&&state.workspace?.admin_audit_enabled===true,dateText,cell,badge,onError:error=>showError('workspace-error',error)});
 const adminObservation=AdminObserve.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,onError:error=>showError('workspace-error',error),dateText,cell,badge});
 const adminOperations=AdminOperations.create({el,read:adminRead,command:async(path,method,body,gen)=>{await verifyAdmin(gen);current(gen);return api(path,method,body,gen);},generation:()=>state.session,principal:()=>state.principal,dateText,onError:error=>{if(error.code==='AUTH_REQUIRED'||error.code==='ADMIN_REQUIRED')signedOut();showError('workspace-error',error);},onUsersChanged:()=>adminLists.users.load(),newID:()=>window.crypto.randomUUID()});
 const adminShares=AdminShares.create({el,read:adminRead,command:async(path,method,body,gen)=>{await verifyAdmin(gen);current(gen);return api(path,method,body,gen);},generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='shares',dateText,cell,badge,onStart:()=>clearError('workspace-error'),onError:error=>{if(error.code==='AUTH_REQUIRED'||error.code==='ADMIN_REQUIRED')signedOut();showError('workspace-error',error);},newID:()=>window.crypto.randomUUID()});
@@ -248,8 +249,8 @@ async function taskDetail(id){
 // Local navigation does not invent routes or request future backend endpoints.
 function selectTab(tab,probe=true){
  const own=tab==='tasks',section=own?'downloads':tab;if(!sections[section])return;
- state.resourceRequest++;state.taskRequest++;state.detailRequest++;state.workspaceRequest++;adminOverview.invalidate();adminDownloadDetail.invalidate();adminPendingCancel.invalidate();adminLists.invalidate();adminObservation.invalidate();adminShares.invalidate();closeResourceDetail();closeTaskDetail();state.tab=tab;setDrawer(false,false);el('refresh-workspace').disabled=false;
- for(const id of ['overview','users','resources','downloads','storage','indexcore','shares'])el(id+'-panel').hidden=section!==id;
+ state.resourceRequest++;state.taskRequest++;state.detailRequest++;state.workspaceRequest++;adminOverview.invalidate();adminAudit.invalidate();adminDownloadDetail.invalidate();adminPendingCancel.invalidate();adminLists.invalidate();adminObservation.invalidate();adminShares.invalidate();closeResourceDetail();closeTaskDetail();state.tab=tab;setDrawer(false,false);el('refresh-workspace').disabled=false;
+ for(const id of ['overview','users','resources','downloads','storage','indexcore','shares','audit'])el(id+'-panel').hidden=section!==id;
  el('user-commands-panel').hidden=section!=='users';el('account-probe-panel').hidden=section!=='storage';el('admin-action-panel').hidden=!['users','storage'].includes(section);
  const planned=Boolean(sections[section][2]);el('planned-panel').hidden=!planned;
  for(const name of Object.keys(sections)){el('nav-'+name).classList.toggle('selected',section===name);el('nav-'+name).setAttribute('aria-current',section===name?'page':'false');}
@@ -257,7 +258,7 @@ function selectTab(tab,probe=true){
  el('page-title').textContent=own?'我的任务':sections[section][0];el('page-caption').textContent=own?'云下载与任务 / 我的任务':sections[section][0];el('page-subtitle').textContent=sections[section][1];
  if(planned){el('planned-title').textContent=sections[section][0]+' · 尚未接入';el('planned-description').textContent=sections[section][2];el('planned-action').textContent=sections[section][3];}
  clearError('workspace-error');if(probe){el('main-content').focus({preventScroll:true});window.scrollTo(0,0);}
- if(tab==='overview'){if(probe)refreshWorkspace();else adminOverview.load();}else if(tab==='shares')adminShares.load();else if(tab==='storage')adminObservation.loadStorage();else if(tab==='indexcore'){if(probe)refreshWorkspace();}else if(tab==='users')adminLists.users.load();else if(tab==='downloads')adminLists.downloads.load();else if(tab==='resources')loadResources();else if(own)loadTasks();else if(probe)refreshWorkspace();
+ if(tab==='overview'){if(probe)refreshWorkspace();else adminOverview.load();}else if(tab==='audit')adminAudit.load();else if(tab==='shares')adminShares.load();else if(tab==='storage')adminObservation.loadStorage();else if(tab==='indexcore'){if(probe)refreshWorkspace();}else if(tab==='users')adminLists.users.load();else if(tab==='downloads')adminLists.downloads.load();else if(tab==='resources')loadResources();else if(own)loadTasks();else if(probe)refreshWorkspace();
 }
 function setDrawer(open,returnFocus=true){
  state.drawer=open;el('sidebar').classList.toggle('drawer-open',open);el('menu-backdrop').hidden=!open;
@@ -267,6 +268,7 @@ function setDrawer(open,returnFocus=true){
 }
 function keyNavigation(event){
  if(adminPendingCancel.key(event))return;
+ if(event.key==='Escape'&&!el('audit-detail').hidden){adminAudit.close(true);return;}
  if(event.key==='Escape'){if(state.drawer)setDrawer(false);else if(!el('admin-download-detail').hidden)adminDownloadDetail.close(true);else if(!el('task-detail').hidden)closeTaskDetail(true);else if(!el('file-detail').hidden){state.detailRequest++;closeResourceDetail(true);}return;}
  if(event.key==='Tab'&&state.drawer){const buttons=Array.from(el('sidebar').querySelectorAll('a[href],button:not([disabled])'));const first=buttons[0],last=buttons[buttons.length-1];
  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}

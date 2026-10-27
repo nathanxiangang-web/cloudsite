@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nathanxiangang-web/panta/internal/adminaudit"
 	"github.com/nathanxiangang-web/panta/internal/adminobserve"
 	"github.com/nathanxiangang-web/panta/internal/adminops"
 	"github.com/nathanxiangang-web/panta/internal/adminread"
@@ -21,6 +22,7 @@ import (
 
 type WorkspaceOption func(*workspaceOptions)
 type workspaceOptions struct {
+	audit         adminaudit.Reads
 	operations    adminops.Operations
 	observation   adminobserve.Reads
 	adminReads    adminread.Reads

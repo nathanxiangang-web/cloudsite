@@ -4,7 +4,17 @@
 
 ## Current phase
 
-### Current bounded implementation - Issue172 UI (2026-10-27)
+### Current bounded implementation - Issue174 audit reads (2026-10-27)
+
+PR173 merged atbb603f7e1dbe and exact main CI40465107546 completed SUCCESS
+in all three jobs. Backend170/UI172 are integrated, not production activation.
+Issue174 adds only the current ADMIN's persisted product action ledger, strict
+filters/keyset paging and safe evidence detail. Read docs/ADMIN-AUDIT-HISTORY.md.
+One draft PR for independent review; no self-merge, new commands, migration,
+provider/IndexCore calls or production changes. Parent155/production153 remain
+OPEN; AI131/private139 remain paused. Earlier candidate pointers are historical.
+
+### Historical bounded implementation - Issue172 UI (2026-10-27)
 
 Backend PR171 merged at4b1329a47ee2; exact main CI40457606174 is SUCCESS
 in all three jobs. Issue172 adds strict no-Job CANCELED compatibility and a
