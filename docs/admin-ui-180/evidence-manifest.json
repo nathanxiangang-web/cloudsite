@@ -1,0 +1,273 @@
+{
+  "baseline": "750f5281217d92bc2ed48b71bb28256bd0101e82",
+  "baseline_ci": {
+    "run": 40652403381,
+    "result": "3/3 success"
+  },
+  "environment": "loopback synthetic fixture, NOT PRODUCTION",
+  "requested_css_viewports": {
+    "desktop": [
+      1440,
+      900
+    ],
+    "mobile": [
+      390,
+      844
+    ]
+  },
+  "capture_note": "Native Chrome screenshots; no image editing. Image16 uses the native viewport capture API and has a slightly different raster size from its CSS viewport.",
+  "screenshots": [
+    {
+      "path": "before/01-overview-desktop.jpg",
+      "sha256": "8b5afdf4678104970b7b99cd467c1bf5fcbd5216dcb4ba07bae7ea47e0efd6d5",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "before/02-users-desktop.jpg",
+      "sha256": "1a8e37c9fc44d5c6ceeae3b71d30ffcbab4cd3a100b86b93621a47cf83f8ca6e",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "before/03-resources-desktop.jpg",
+      "sha256": "c66db4f65eda6ca47531ccb7d65e9e6598b852c0a979a882bf0956f87e19faa5",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "before/04-resource-detail-desktop.jpg",
+      "sha256": "7cdcc13f987f5371036764ba49907eda4865deb334cc3e13252a5a087c98ec35",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "before/05-downloads-desktop.jpg",
+      "sha256": "7fb08ed382862e5720efd02dd9a86a27be3d8e49480c1a041ba639575bf0977e",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "before/06-connections-desktop.jpg",
+      "sha256": "cad56c9c81061c80cc09b1fd239355f93ac558d19ae8e17aa24f3f9fb56f1bb2",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "before/07-audit-desktop.jpg",
+      "sha256": "5b91648e300bb5bc5946a429ae6e31f16c0ff820d711c37c775b56024ab53891",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "before/08-shares-desktop.jpg",
+      "sha256": "3c6ec70ad0f2c68978db78abe492d93aad4b1f532a7bcfd102458a37df4242f4",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "before/09-overview-mobile.jpg",
+      "sha256": "72d4fab058e74ccdfaea3dbb83dc532326f1ac4c0c3f5330e3214940ad79b533",
+      "raster_size": [
+        390,
+        844
+      ]
+    },
+    {
+      "path": "before/10-navigation-mobile.jpg",
+      "sha256": "7a39afcb5e3f64720bb4966ab1775f6947db33d00019b71b12d84f635c87298d",
+      "raster_size": [
+        390,
+        844
+      ]
+    },
+    {
+      "path": "before/11-resources-mobile.jpg",
+      "sha256": "2c8ccea48018640cc8d2ab80df91dff8bac4f753cd82452121d05af7bebe50e8",
+      "raster_size": [
+        390,
+        844
+      ]
+    },
+    {
+      "path": "before/12-downloads-mobile.jpg",
+      "sha256": "a7d64bacd31d7e26d16de7b4860b50d3ec964de110d28fbda35b43ca14d9937f",
+      "raster_size": [
+        390,
+        844
+      ]
+    },
+    {
+      "path": "after/01-overview-desktop.jpg",
+      "sha256": "6bc4679fb99f7f50641792a5c29e8620d348e47f1834c9f48b54f03dc8b7b205",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "after/02-users-desktop.jpg",
+      "sha256": "e6850f351f13ec9e27831970f92353c50c04b606cea6862043c75fb89797bb9e",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "after/03-resources-desktop.jpg",
+      "sha256": "ce3a5a4c16e7be2e8de3856b3dd10b7cbf552391658ab2d77f92b9919e1112bc",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "after/04-resource-detail-desktop.jpg",
+      "sha256": "d42b018d4c52811da2bf2c6f688519af2a4f9d9bf095c55676a9012574008805",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "after/05-downloads-desktop.jpg",
+      "sha256": "262a5aab826962e0c5c43bae998ac50f415aec2e9dced8a614f4f44db813755f",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "after/06-connections-desktop.jpg",
+      "sha256": "be8e876f6997a2bc468e246aa6d0b994f10a7112e16d7ec952e21dbd4efbef26",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "after/07-audit-desktop.jpg",
+      "sha256": "5b3ca35b957b34ac41cb3457706f476ee9a719afe1e01cf36fb4a4172d39dd48",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "after/08-shares-desktop.jpg",
+      "sha256": "87f8493a787864d53da2e2eacfc5ab7be79a865328c6ffcd871e5c4c0556194a",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "after/09-overview-mobile.jpg",
+      "sha256": "b72e5bbdfb6cab338a7c32bd3deac086eca313893882456f130c04f25edaf3de",
+      "raster_size": [
+        390,
+        844
+      ]
+    },
+    {
+      "path": "after/10-navigation-mobile.jpg",
+      "sha256": "b17147f1923de7eaaddaa2906049763a1f005fc03aca65d6b92c8682a668912c",
+      "raster_size": [
+        390,
+        844
+      ]
+    },
+    {
+      "path": "after/11-resources-mobile.jpg",
+      "sha256": "4c0849ade966a1340f6451d583e77968a36bc48f748ce6124131eeea9e9d30a2",
+      "raster_size": [
+        390,
+        844
+      ]
+    },
+    {
+      "path": "after/12-downloads-mobile.jpg",
+      "sha256": "e993589d9e3cd2206f4851e9f503baba8ecbc85791577186ad2fd626c26eb318",
+      "raster_size": [
+        390,
+        844
+      ]
+    },
+    {
+      "path": "after/13-user-controls-focus-desktop.jpg",
+      "sha256": "999459509b5d132c94ef5c7e464b8d96e61a7b0827a6b07878f5487f09396f84",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "after/14-resource-confirmation-desktop.jpg",
+      "sha256": "1e1c635c46326f1616f477ddf8762380ebb324427367b713e3a03d37796e3de8",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "after/15-unknown-lock-desktop.jpg",
+      "sha256": "29f09635e9bd42292ce94f5f0a00ef1e815538151e59eac35a33dd6e8c251da8",
+      "raster_size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "path": "after/16-receipt-reconciled-desktop.jpg",
+      "sha256": "15776d4f7ae0088dda27d429c21b408ebb051cbde62112c77030c3d12e89ebca",
+      "raster_size": [
+        1425,
+        891
+      ]
+    }
+  ],
+  "web_sources": {
+    "admin-audit.js": "69f37eced201ea2494564695b4b90519df01867519f01212c5b42c6ed757b921",
+    "admin-download-detail.js": "2bc216bbb82da28741ae108fb0833ece772e79b832d2931c585b0e14568b831a",
+    "admin-lists.js": "4d8397d635255ecdb9ad3eeb16bfb046a207f98e90f70cbf5580908c63c11899",
+    "admin-observe.js": "b62ac744cc83596b49c4a67a38b6596ec0fea067a8fdb2139d28d9c0b93d51af",
+    "admin-operations.js": "8180883aeabc03b39c8f98272e8ea91de4df0f329156b43036454be5816fe6be",
+    "admin-overview.js": "f078b4308c2d6332527b9f4cb74fe7fec965dcb8d86375e475b036c76be4216b",
+    "admin-pending-cancel.js": "80a8b6fefa09abe1e0b7df5eaf157207926cd638aceb702abc63aadc6fa35041",
+    "admin-resource-editor.js": "951e3e0a950c75b19881b740d70c18830433038ebeab44b87515b03530df51f8",
+    "admin-shares.js": "5023251c0512b8f31ad73f4522611246c45e8489470eb09b5ac4a76bc853f7f2",
+    "app.css": "b71408fbfb1f43270c9470c36e0057c1e8d02953b271be33a0d74531c5c18934",
+    "app.js": "06ae59014a75e5bb7c7daa56dfa252f6a2ff28062aec22bb85af4f3f90635e5c",
+    "download-model.js": "b28c23947f21c8bd30833104287fff8a8f04b5cd20b977f2c7712f1cf973ddd7",
+    "downloads.css": "a00076c8b6672fcaa94f5ba712192ce1acebb4f1c2fe9278d3bebfd33d401c89",
+    "downloads.html": "96e5e00539e5873c7dd7190f6df92040c6f8db9f7b7560f03117a998041e3fc1",
+    "downloads.js": "279c4a2c53b0d49be373efc0b60b0e8bfc9c6658ee6367f58b20ca546273b3ba",
+    "file-browser.html": "f225fecd101aed9ee82266336dba06ac03f56b0e6259c2a733d714217f4960d8",
+    "file-catalog.js": "18ca526990e64e1ba8c1054ce3fdad60d8d056168358a44aeefa2388d085324e",
+    "file-surface.js": "6360d4a2352860eca03743fcb7617ee58aeea16c19ce645ce7dd492441cc79e2",
+    "index.html": "73a0ae87090c891ee9a64352aa8cf48a6d68215fc2a924cfa155a58fe4cd619b",
+    "library-sharing.js": "334aeb904e3a0b188d834aa6fb0f3fb58b3c6216ce1e7061629ce4e93367f11a",
+    "library.css": "426a988776831de29044dd947d7a94ee8325d547569a83c4a3de8cfdd4aa0087",
+    "library.html": "afe9b8fd791ec8390f383498b7e21f7d5fbd0e2d9b25de5d37a1007f1ebfd3cd",
+    "library.js": "add73ea076bcff3f92ee58c58c15719393c0d83ea29d82003ba680f20e6989a0",
+    "resource-display.js": "f5d9d09fd194cfad8ce80fe333f7a10031bffcf8d4f1b7c725d4ad29e73556d6",
+    "share.html": "7998793d2e13cbff90017c2a0dcff56c1a18c617d2e9df557c9d7c364154a0fb",
+    "share.js": "f220ac512a76a23186fdd7baaab04f20a976e5d469693f16893df307f01c1500"
+  }
+}

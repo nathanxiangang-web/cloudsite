@@ -1,7 +1,7 @@
 'use strict';
 // Share presentation and operation state only. Auth/HTTP are injected ports;
 // neither user lifecycle commands nor provider/IndexCore operations live here.
-const AdminShares={create({el,read,command,generation,principal,isActive,dateText,cell,badge,onError,onStart,newID}){
+const AdminShares={create({present,rowLabels,el,read,command,generation,principal,isActive,dateText,cell,badge,onError,onStart,newID}){
  const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
  const validID=value=>typeof value==='string'&&uuid.test(value);
  const state={owner:'',status:'ALL',cursor:'',next:'',read:0,operation:0,actor:'',loaded:false,key:'',items:[],selected:null,busy:false,unknown:false,intent:null};
@@ -77,8 +77,8 @@ const AdminShares={create({el,read,command,generation,principal,isActive,dateTex
    if(gen!==generation()||seq!==state.read||!isActive())return;
    const items=pageItems(page);el('shares-rows').replaceChildren();state.items=items;state.next=page.next_cursor;state.loaded=true;
    for(const item of items){
-    const row=document.createElement('tr');cell(row,item.file_name);cell(row,item.owner_id);cell(row).append(badge(item.active?'未撤销且未到期':'已撤销或到期',item.active?'':'neutral'));cell(row,dateText(item.created_at));cell(row,dateText(item.expires_at));
-    const button=document.createElement('button');button.type='button';button.className='quiet';button.textContent='查看详情';button.setAttribute('aria-label','查看分享 '+item.file_name);button.addEventListener('click',()=>select(item));cell(row).append(button);el('shares-rows').append(row);
+    const row=document.createElement('tr');cell(row,item.file_name);present(cell(row),'',item.owner_id,'用户编号');cell(row).append(badge(item.active?'未撤销且未到期':'已撤销或到期',item.active?'':'neutral'));cell(row,dateText(item.created_at));cell(row,dateText(item.expires_at));
+    const button=document.createElement('button');button.type='button';button.className='quiet';button.textContent='查看详情';button.setAttribute('aria-label','查看分享 '+item.file_name);button.addEventListener('click',()=>select(item));cell(row).append(button);rowLabels(row,['文件','所属用户','状态','创建时间','到期时间','操作']);el('shares-rows').append(row);
    }
    if(state.selected){const updated=items.find(item=>item.share_id===state.selected.share_id);if(updated&&!state.busy)select(updated,false);else if(!state.busy)clearDetail();}
    el('shares-empty').hidden=items.length!==0;el('shares-total').textContent=String(page.total);el('shares-footer').textContent='本页 '+items.length+' 项 · 匹配总数 '+page.total+' · 数据库读取于 '+dateText(page.read_at);controls();
@@ -89,7 +89,7 @@ const AdminShares={create({el,read,command,generation,principal,isActive,dateTex
   const intent=state.intent,codes={SUCCEEDED:['SHARE_REVOKED'],REJECTED:['SHARE_ALREADY_REVOKED','SHARE_NOT_FOUND','TARGET_FORBIDDEN'],UNKNOWN:['RESERVED_NO_CONFIRMED_RESULT']};
   if(!intent||!value||value.request_id!==intent.request_id||value.target_id!==intent.target_id||value.action!=='REVOKE_SHARE'||!codes[value.status]?.includes(value.code)||!validTime(value.recorded_at))throw Error('Invalid share receipt');
   state.unknown=value.status==='UNKNOWN';
-  el('share-action-status').textContent=({SHARE_REVOKED:'分享已撤销',SHARE_ALREADY_REVOKED:'分享此前已撤销',SHARE_NOT_FOUND:'未找到该分享',TARGET_FORBIDDEN:'不允许操作此分享',RESERVED_NO_CONFIRMED_RESULT:'撤销仍未确认，请查询原操作结果；不要重复提交。'}[value.code])+' · '+value.status+' / '+value.code+' · 服务端记录于 '+dateText(value.recorded_at);
+  const message=({SHARE_REVOKED:'分享已撤销',SHARE_ALREADY_REVOKED:'分享此前已撤销',SHARE_NOT_FOUND:'未找到该分享',TARGET_FORBIDDEN:'不允许操作此分享',RESERVED_NO_CONFIRMED_RESULT:'撤销仍未确认，请查询原操作结果；不要重复提交。'}[value.code]);present(el('share-action-status'),message+' · '+dateText(value.recorded_at),value.status+' / '+value.code,'原始回执');
   if(!state.unknown)forget();
   return !state.unknown;
  }

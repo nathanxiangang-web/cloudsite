@@ -141,7 +141,7 @@ func TestWorkspaceStaticJSContainsNoTokenStorageOrHTMLInjection(t *testing.T) {
 		}
 	}
 	data, _ = workspaceFiles.ReadFile("web/index.html")
-	if !strings.Contains(string(data), "管理中心") || !strings.Contains(string(data), "尚未接入") {
-		t.Fatal("unimplemented features presented as real")
+	if !strings.Contains(string(data), "系统与诊断") || !strings.Contains(string(data), "nav-users") || strings.Contains(string(data), "nav-settings") || strings.Contains(string(data), "file-primary-action") {
+		t.Fatal("admin information architecture contains an unfinished affordance")
 	}
 }

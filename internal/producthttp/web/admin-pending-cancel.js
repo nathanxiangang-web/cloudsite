@@ -1,6 +1,6 @@
 'use strict';
 // One audited intent at a time. No provider ports, command retry or disk storage.
-const AdminPendingCancel={create({el,read,command,readExact,generation,principal,isActive,bindingAllowed,capable,onTerminal,onMissing,onError,newID,now=()=>Date.now()}){
+const AdminPendingCancel={create({present,el,read,command,readExact,generation,principal,isActive,bindingAllowed,capable,onTerminal,onMissing,onError,newID,now=()=>Date.now()}){
  let selected=null,observed=0,confirmation=null,intent=null,busy=false,preparing=false,seq=0,prepareSeq=0,expiry,controller;
  const context=()=>({gen:generation(),actor:principal()?.user_id});
  let session=context();
@@ -59,7 +59,7 @@ const AdminPendingCancel={create({el,read,command,readExact,generation,principal
  function receipt(r){
   validReceipt(r);intent.terminal=r.status!=='UNKNOWN';
   const messages={PENDING_CANCELED:'取消已记录；任务详情以服务器重新读取为准',PENDING_CHANGED:'请求已变化，未执行此次取消',MANIFEST_NOT_FOUND:'任务不存在或不在管理范围',OWNER_UNAVAILABLE:'所属用户不可用，未执行取消',PENDING_NOT_ISOLATED:'已有执行或准入证据，不能取消',MANIFEST_UNAVAILABLE:'任务关联异常，不能取消',RESERVED_NO_CONFIRMED_RESULT:'结果未确认，请查询原审计回执，不要重复提交'};
-  el('pending-cancel-status').textContent=messages[r.code]+' · '+r.status+' / '+r.code;
+  present(el('pending-cancel-status'),messages[r.code],r.status+' / '+r.code,'原始回执');
   return r.status!=='UNKNOWN';
  }
  async function operation(lookup=false){
