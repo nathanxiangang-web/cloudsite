@@ -39,3 +39,13 @@ func (s *Service) CopyPresentation(ctx context.Context, a Actor, copyID, binding
 	d, e := reader.ReadCopyPresentation(ctx, a, copyID, bindingID, append([]string(nil), s.bindings...))
 	return d, safe(e)
 }
+
+// Runtime capability is based on actual optional ports, never schema inference.
+func (s *Service) CopyPresentationEnabled() bool {
+	if s == nil {
+		return false
+	}
+	_, reader := s.store.(CopyPresentationReader)
+	_, writer := s.store.(CopyPresentationApplier)
+	return reader && writer
+}

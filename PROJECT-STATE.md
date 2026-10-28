@@ -1,6 +1,18 @@
 # cloudsite — Project State
 
-## Current bounded task - Issue 176 Copy presentation backend (2026-10-28)
+## Current delivery - Issue176 complete resource editor (2026-10-28)
+
+PR177 merged as1611d37bd443e01b82c1eb66381bb91ecc3ee0d2; main CI40549771841
+completed SUCCESS3/3. Issue176 accelerated instruction supersedes backend-only
+pointers: deliver the actual row/detail editor, strict capability/exact GET,
+confirmation and single audited PUT with scoped GET-only UNKNOWN recovery in
+ONE complete PR. Read docs/ADMIN-RESOURCE-EDITOR-UI.md. No new migration, provider,
+IndexCore or consumer/share access change. Stop for one independent review; no
+self-merge. Parent155 OPEN; completed170/172/174 are not reopened. AI131/private139
+excluded. Production153 prep may overlap; live16->20 mutation requires a separate
+scoped release decision and actual backup/restore gates. Earlier pointers are history.
+
+## Historical bounded task - Issue 176 Copy presentation backend (2026-10-28)
 
 PR 175 is merged at f868da264255ddf93457c8f8f67117bb8bb33349. Exact main
 CI 40532208171 completed SUCCESS in all three jobs before this implementation.

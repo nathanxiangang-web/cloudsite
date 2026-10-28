@@ -4,7 +4,7 @@ const el = id => document.getElementById(id);
 const sections = {
  overview:['工作台总览','查看产品账号与下载任务，及时发现失败和需要处理的记录。'],
  users:['用户管理','搜索和查看用户，创建、重命名、重置密码、启停、删除及恢复普通账号。'],
- resources:['资源中心','查看配置 allowlist 内的规范资源、目录与 Copy；分类和搜索仅作用于当前页。'],
+ resources:['资源中心','查看规范资源，编辑产品展示名称与类别；不修改网盘文件名或当前分享权限。'],
  downloads:['云下载与任务','全站已归属任务与“我的任务”分开读取；查询不发起下载或改变任务状态。'],
  storage:['存储与连接','真实配置映射与手动 115 检测；ACTIVE 不代表网盘在线。'],
  indexcore:['IndexCore 观测','按配置 Binding 手动读取一个 Root 的 Q9 状态；不是全链路健康检查。'],
@@ -34,7 +34,7 @@ async function api(path,method='GET',body,generation=state.session,signal=state.
   if(method==='GET'){signedOut();showError('login-error',error);}throw error;
  }
  const data=await response.json();current(generation);
- if(!response.ok){const error=new Error('Request refused');error.code=data.code;error.status=response.status;if(path.endsWith('/cancel-pending'))error.receipt=data;throw error;}
+ if(!response.ok){const error=new Error('Request refused');error.code=data.code;error.status=response.status;if(path.endsWith('/cancel-pending')||/\/admin\/copies\/[^/]+\/presentation$/.test(path))error.receipt=data;throw error;}
  return data;
 }
 function clearResources(){
@@ -51,7 +51,7 @@ function signedOut(){
  state.logoutRequest++;state.logoutController?.abort();state.logoutController=null;state.logoutInFlight=false;state.loginInFlight=false;
  if(state.logoutStatus==='LOGOUT_PENDING')setLogoutStatus('LOGOUT_UNCONFIRMED','注销未确认。服务器会话可能仍然有效，请重试退出登录。');
  state.session++;state.controller.abort();state.controller=new AbortController();state.resourceRequest++;state.taskRequest++;state.workspaceRequest++;
- state.principal=null;state.workspace=null;clearResources();clearTasks();adminLists.reset();adminDownloadDetail.reset();adminPendingCancel.reset();adminObservation.reset();adminOperations.reset();adminShares.reset();adminOverview.reset();adminAudit.reset();setDrawer(false,false);
+ state.principal=null;state.workspace=null;clearResources();clearTasks();adminLists.reset();adminDownloadDetail.reset();adminPendingCancel.reset();adminObservation.reset();adminOperations.reset();adminShares.reset();adminOverview.reset();adminAudit.reset();adminResourceEditor.reset();setDrawer(false,false);
  for(const id of ['user-login','user-role','avatar','schema','binding-select','workspace-facts','identity-facts','overview-binding-list'])el(id).replaceChildren();
  for(const id of ['overview-schema','overview-bindings','overview-users-total'])el(id).textContent='—';
  el('workspace-observed').textContent='尚未读取';el('workspace-status').textContent='等待查询';
@@ -112,7 +112,7 @@ function facts(id,rows){
 }
 function renderWorkspace(workspace,principal){
 	adminObservation.configure(workspace.bindings);adminOperations.configure(workspace.bindings);adminShares.configure();
- state.workspace=workspace;el('user-login').textContent=principal.login;el('user-role').textContent='ADMIN · 管理中心';
+ state.workspace=workspace;adminResourceEditor.controls();el('user-login').textContent=principal.login;el('user-role').textContent='ADMIN · 管理中心';
  el('avatar').textContent=principal.login.charAt(0).toUpperCase();el('schema').textContent='Schema v'+workspace.schema_version;
  el('overview-schema').textContent='v'+workspace.schema_version;el('overview-bindings').textContent=String(workspace.bindings.length);
  el('workspace-status').textContent='已读取配置 · 非健康探测';el('workspace-status').className='badge neutral';
@@ -140,8 +140,8 @@ async function verifyAdmin(generation=state.session){
   const error=new Error('Identity changed');error.code='AUTH_CHANGED';signedOut();showError('login-error',error);throw error;
  }
  if(state.principal){const previous=state.workspace;state.workspace=workspace;
-  const scope=w=>JSON.stringify([w?.schema_version,w?.admin_pending_cancellation_enabled,w?.admin_audit_enabled,(w?.bindings||[]).map(b=>b.binding_id).sort()]);
-  if(scope(previous)!==scope(workspace)){adminPendingCancel.invalidate();adminAudit.reset();}
+  const scope=w=>JSON.stringify([w?.schema_version,w?.admin_pending_cancellation_enabled,w?.admin_audit_enabled,w?.admin_copy_presentation_enabled,(w?.bindings||[]).map(b=>b.binding_id).sort()]);
+  if(scope(previous)!==scope(workspace)){adminPendingCancel.invalidate();adminAudit.reset();adminResourceEditor.invalidate();}
  }
  return {workspace,principal};
 }
@@ -174,15 +174,15 @@ function badge(value,kind=''){const node=document.createElement('span');node.cla
 function cell(row,text){const node=document.createElement('td');if(text!==undefined)node.textContent=text;row.append(node);return node;}
 function size(value){return ResourceDisplay.size(value);}
 function resourceName(item){return ResourceDisplay.name(item);}
-function closeResourceDetail(returnFocus=false){el('file-detail').hidden=true;el('resource-identities').replaceChildren();for(const id of ['file-title','file-type','file-path','file-size','file-presence','file-copy','file-id','file-note','file-glyph'])el(id).textContent='';if(returnFocus)state.resourceFocus?.focus();}
-function resourceDetail(item){
+function closeResourceDetail(returnFocus=false){adminResourceEditor.invalidate();el('file-detail').hidden=true;el('resource-identities').replaceChildren();for(const id of ['file-title','file-type','file-path','file-size','file-presence','file-copy','file-id','file-note','file-glyph'])el(id).textContent='';if(returnFocus)state.resourceFocus?.focus();}
+function resourceDetail(item,edit=false){
  const type=ResourceDisplay.classify(item);el('file-title').textContent=resourceName(item);el('file-type').textContent=type.label+(type.extension?' · .'+type.extension:'');el('file-path').textContent=item.path||'路径未提供';el('file-size').textContent=size(item.size_bytes);el('file-presence').textContent=item.presence;el('file-copy').textContent=item.copy_id?(item.copy_availability||'状态未提供')+' · '+item.copy_id:'当前产品库未投影';el('file-id').textContent=item.resource_id;el('file-note').textContent=ResourceDisplay.accessNote(item);el('file-glyph').textContent=type.glyph;el('file-glyph').className='file-hero '+type.key;el('file-primary-action').textContent=type.action+' · 待接入';
  facts('resource-identities',[['Binding ID',item.binding_id],['Root ID','当前 Resource DTO 未提供'],['Asset ID',item.asset_id],['Release ID',item.release_id],['Variant ID',item.variant_id],['来源 / 覆盖','产品 Q4 当前页或 Q5 精确定位；不推测物理删除']]);
- el('file-detail').hidden=false;el('file-detail').focus?.();el('file-detail').scrollIntoView({block:'nearest'});
+ el('file-detail').hidden=false;adminResourceEditor.open(item,edit);el('file-detail').focus?.();el('file-detail').scrollIntoView({block:'nearest'});
 }
-function openResource(item){
+function openResource(item,edit=false){
  if(item.directory===true){state.parents.push({parent:state.parent,label:el('directory-label').textContent});state.parent=item.resource_id;state.resourceCursor='';el('directory-label').textContent=item.path||resourceName(item);el('directory-back').disabled=false;loadResources();}
- else{state.detailRequest++;state.resourceFocus=document.activeElement;resourceDetail(item);}
+ else{state.detailRequest++;state.resourceFocus=document.activeElement;resourceDetail(item,edit);}
 }
 function drawResources(){
  if(!state.resourcesLoaded)return;
@@ -191,7 +191,8 @@ function drawResources(){
  el('resource-rows').replaceChildren();el('resource-cards').replaceChildren();
  for(const item of items){
   const type=ResourceDisplay.classify(item);const row=document.createElement('tr');const name=cell(row);const title=document.createElement('button');title.type='button';title.className='file-button';title.textContent=resourceName(item);title.addEventListener('click',()=>openResource(item));const icon=document.createElement('span');icon.className='file-icon '+type.key;icon.textContent=type.glyph;name.append(icon,title);if(item.path){const path=document.createElement('small');path.textContent=item.path;name.append(path);}
-  cell(row,type.label);cell(row,size(item.size_bytes));cell(row).append(badge(item.presence));cell(row).append(badge(item.copy_id?item.copy_availability:'当前库未投影',item.copy_id?'':'neutral'));el('resource-rows').append(row);
+  cell(row,type.label);cell(row,size(item.size_bytes));cell(row).append(badge(item.presence));cell(row).append(badge(item.copy_id?item.copy_availability:'当前库未投影',item.copy_id?'':'neutral'));if(state.workspace?.schema_version>=20&&state.workspace?.admin_copy_presentation_enabled===true&&AdminResourceEditor.uuid(item.copy_id)&&item.copy_availability==='PRESENT'&&state.workspace.bindings.some(b=>b.binding_id===item.binding_id)&&item.directory!==true){const edit=document.createElement('button');edit.type='button';edit.className='quiet';edit.textContent='编辑展示信息';edit.addEventListener('click',()=>openResource(item,true));name.append(edit);}
+ el('resource-rows').append(row);
   const card=document.createElement('button');card.type='button';card.className='resource-card';card.addEventListener('click',()=>openResource(item));const art=document.createElement('span');art.className='card-art '+type.key;art.textContent=type.glyph;const label=document.createElement('strong');label.textContent=resourceName(item);const meta=document.createElement('small');meta.textContent=type.label+' · '+size(item.size_bytes);const path=document.createElement('small');path.className='card-path';path.textContent=item.path||'路径未提供';card.append(art,label,meta,path,badge(item.presence),badge(item.copy_id?item.copy_availability:'当前库未投影','neutral'));el('resource-cards').append(card);
  }
  el('resource-table').hidden=state.layout!=='list';el('resource-cards').hidden=state.layout!=='cards';el('view-list').setAttribute('aria-pressed',String(state.layout==='list'));el('view-cards').setAttribute('aria-pressed',String(state.layout==='cards'));el('resources-empty').hidden=items.length!==0;
@@ -216,6 +217,7 @@ const manifestLabels={PENDING:'等待激活',ACTIVE:'执行中',AWAITING_VISIBIL
 function dateText(value){const d=new Date(value);return value&&Number.isFinite(d.getTime())?d.toLocaleString():'未提供';}
 const adminLists=AdminLists.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,onError:error=>showError('workspace-error',error),dateText,cell,badge,downloadSelected:id=>adminDownloadDetail.load(id),downloadsChanged:()=>adminDownloadDetail.close(),bindingAllowed:id=>state.workspace?.bindings.some(b=>b.binding_id===id)===true,userSelected:item=>adminOperations.selectUser(item),ownerSelected:id=>{el('admin-user-filter').value=id;adminLists.downloads.owner=id;adminLists.downloads.cursor='';selectTab('downloads');}});
 const adminOverview=AdminOverview.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='overview',dateText});
+const adminResourceEditor=AdminResourceEditor.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='resources',bindingAllowed:id=>state.workspace?.bindings.some(b=>b.binding_id===id)===true,capable:()=>state.workspace?.schema_version>=20&&state.workspace?.admin_copy_presentation_enabled===true,dateText,newID:()=>window.crypto.randomUUID(),onError:error=>{if(['AUTH_REQUIRED','ADMIN_REQUIRED','AUTH_CHANGED'].includes(error.code)){signedOut();showError('login-error',error);}},command:async(path,body,gen,signal,guard)=>{const {workspace}=await verifyAdmin(gen);current(gen);if(signal.aborted||!guard()||workspace.schema_version<20||workspace.admin_copy_presentation_enabled!==true||!workspace.bindings.some(b=>b.binding_id===body.binding_id))throw stale();return api(path,'PUT',body,gen,signal);}});
 const adminDownloadDetail=AdminDownloadDetail.create({onChange:d=>adminPendingCancel.observe(d),el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='downloads',dateText,bindingAllowed:id=>state.workspace?.bindings.some(b=>b.binding_id===id)===true});
 const adminPendingCancel=AdminPendingCancel.create({el,read:adminRead,readExact:id=>adminDownloadDetail.load(id,true),generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='downloads',bindingAllowed:id=>state.workspace?.bindings.some(b=>b.binding_id===id)===true,capable:()=>state.workspace?.schema_version>=19&&state.workspace?.admin_pending_cancellation_enabled===true,newID:()=>window.crypto.randomUUID(),onError:error=>{signedOut();showError('login-error',error);},onMissing:()=>adminDownloadDetail.close(),onTerminal:async(id,missing)=>{const gen=state.session;await Promise.all([adminLists.downloads.load(),adminOverview.load(true)]);if(gen===state.session&&state.tab==='downloads'&&!missing)await adminDownloadDetail.load(id,true);},command:async(path,body,gen,signal,guard)=>{const {workspace}=await verifyAdmin(gen);current(gen);if(!guard()||signal.aborted||workspace.schema_version<19||workspace.admin_pending_cancellation_enabled!==true||!workspace.bindings.some(b=>b.binding_id===body.expected_binding_id)){throw stale();}return api(path,'POST',body,gen,signal);}});
 const adminAudit=AdminAudit.create({el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='audit',capable:()=>state.workspace?.schema_version>=16&&state.workspace?.admin_audit_enabled===true,dateText,cell,badge,onError:error=>showError('workspace-error',error)});
@@ -267,7 +269,7 @@ function setDrawer(open,returnFocus=true){
  if(open)el('menu-close').focus();else if(returnFocus)el('menu-open').focus();
 }
 function keyNavigation(event){
- if(adminPendingCancel.key(event))return;
+ if(adminResourceEditor.key(event)||adminPendingCancel.key(event))return;
  if(event.key==='Escape'&&!el('audit-detail').hidden){adminAudit.close(true);return;}
  if(event.key==='Escape'){if(state.drawer)setDrawer(false);else if(!el('admin-download-detail').hidden)adminDownloadDetail.close(true);else if(!el('task-detail').hidden)closeTaskDetail(true);else if(!el('file-detail').hidden){state.detailRequest++;closeResourceDetail(true);}return;}
  if(event.key==='Tab'&&state.drawer){const buttons=Array.from(el('sidebar').querySelectorAll('a[href],button:not([disabled])'));const first=buttons[0],last=buttons[buttons.length-1];
