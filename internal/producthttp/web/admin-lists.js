@@ -30,8 +30,8 @@ const AdminLists={create({present,rowLabels,el,read,generation,principal,onError
       const name=cell(row);present(name,item.login,item.user_id,'账号编号');
       cell(row).append(badge(({ADMIN:'管理员',USER:'普通用户'}[item.role]||'未知角色'),'neutral'));cell(row).append(badge(item.enabled?'启用':'停用',item.enabled?'':'warning'));
       cell(row,dateText(item.created_at));
-      const button=document.createElement('button');button.type='button';button.className='quiet';button.textContent='下载任务';button.addEventListener('click',()=>ownerSelected(item.user_id));const actions=cell(row);actions.append(button);
-      if(item.role==='USER'&&userSelected){const edit=document.createElement('button');edit.type='button';edit.className='quiet';edit.textContent='管理用户';edit.addEventListener('click',()=>userSelected(item));actions.append(edit);}
+      const button=document.createElement('button');button.type='button';button.className='quiet';button.textContent='下载任务';button.setAttribute('aria-label','查看 '+item.login+' 的下载任务');button.addEventListener('click',()=>ownerSelected(item.user_id));const actions=cell(row);actions.append(button);
+      if(item.role==='USER'&&userSelected){const edit=document.createElement('button');edit.type='button';edit.className='quiet';edit.textContent='管理用户';edit.setAttribute('aria-label','管理用户 '+item.login);edit.addEventListener('click',()=>userSelected(item));actions.append(edit);}
      }else{
       const open=document.createElement('button');open.type='button';open.className='file-button';open.textContent='请求 '+item.manifest_id.slice(-8);open.setAttribute('aria-label','查看下载请求 '+item.manifest_id);open.addEventListener('click',()=>downloadSelected?.(item.manifest_id));cell(row).append(open);
       cell(row).append(badge(AdminDownloadDetail.labels[item.manifest_state],item.manifest_state==='RECOVERY_REQUIRED'?'warning':'neutral'));present(cell(row),'',item.owner_user_id,'用户编号');cell(row,dateText(item.updated_at));
