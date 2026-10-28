@@ -56,3 +56,23 @@ test('switching selected USER clears the previous detail immediately without a n
  assert.equal(app.text('user-detail-facts'),'');
  assert.equal(app.requests.length,before,'selection must not trigger a background detail GET');
 });
+
+
+test('managing a row brings the selected USER controls into view and keyboard focus without commands',async()=>{
+ const app=await ready();app.click('nav-users');await app.drain({'/api/v1/admin/users':{items:[user],next_cursor:'',total:1,read_at:'2026-10-28T00:00:00Z',scope:'FILTERED_PRODUCT_USERS'}});
+ const row=app.elements.get('users-rows').children[0];assert.equal(row.children.length,5,'user table omits updated time');
+ const manage=row.children.at(-1).children.find(n=>n.textContent==='管理此 USER');assert.ok(manage);
+ const before=app.requests.length;manage.listeners.click[0]({});
+ assert.equal(app.document.activeElement,app.elements.get('selected-user'));assert.equal(app.elements.get('selected-user').scrolled,true);
+ assert.match(app.html,/<p id="selected-user"[^>]*tabindex="-1"/);
+ assert.match(app.text('selected-user'),/test-user/);assert.equal(app.elements.get('change-user-submit').disabled,false);assert.equal(app.elements.get('rename-user-submit').disabled,false);
+ assert.equal(app.requests.length,before,'selection only; no mutation or implicit detail GET');
+});
+
+test('management blocked by an uncertain command explains the lock and focuses its receipt without resubmitting',async()=>{
+ const app=await ready();createValues(app);const done=submit(app);await auth(app);const command=app.pending('/api/v1/admin/users'),id=JSON.parse(command.options.body).request_id;
+ app.respond(command,{code:'ACTION_UNCONFIRMED'},503);await done;
+ const before=app.requests.length;app.ctx.user=user;app.run('adminOperations.selectUser(user)');
+ assert.equal(app.document.activeElement,app.elements.get('action-status'));assert.match(app.text('action-status'),/未确认.*查询服务端操作记录/);assert.match(app.text('action-status'),new RegExp(id));
+ assert.equal(app.elements.get('change-user-submit').disabled,true);assert.equal(app.requests.length,before);
+});

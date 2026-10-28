@@ -152,3 +152,14 @@ evaluate updated_at before the newly added deleted_at column (27/1000 synthetic
 probe updates reproduced the inverse order). Account updates now use one
 MATERIALIZED database timestamp; deletion asserts deleted_at=updated_at rather
 than weakening the read DTO's time-order validation.
+
+
+## User management UI feedback
+
+AdminLists renders creation time but omits the updated-time table column; the
+read DTO and explicit detail view retain their timestamps. AdminOperations owns
+selection and scrolls/focuses the selected USER summary before its controls.
+Selection never submits a command or implicitly loads detail. A busy or UNKNOWN
+command instead focuses the receipt notice with its original request ID, keeping
+all mutations locked until explicit status reconciliation. Keep these boundaries
+when replacing list rendering or adding new USER commands.
