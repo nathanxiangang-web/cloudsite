@@ -13,7 +13,7 @@ function workspace({hash='',storage}={}){
   set textContent(value){this._text=String(value);this.children=[];}get textContent(){return this._text;}
   append(...children){this.children.push(...children);}replaceChildren(...children){this._text='';this.children=children;}
   addEventListener(type,fn){(this.listeners[type]||=[]).push(fn);}setAttribute(key,value){this.attrs[key]=String(value);}
-  focus(){document.activeElement=this;}scrollIntoView(){}get isConnected(){return true;}
+  focus(){document.activeElement=this;}scrollIntoView(options){this.scrollOptions=options;this.scrolled=true;}get isConnected(){return true;}
   querySelectorAll(){return [elements.get('menu-close'),...Array.from(elements).filter(([id])=>id.startsWith('nav-')&&id!=='nav-tasks').map(([,n])=>n),elements.get('logout')];}
  }
  const elements=new Map(Array.from(html.matchAll(/<[^>]*\bid="([^"]+)"[^>]*>/g),m=>[m[1],new Element(m[1],m[0])]));

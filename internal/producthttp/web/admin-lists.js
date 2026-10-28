@@ -29,7 +29,7 @@ const AdminLists={create({el,read,generation,principal,onError,dateText,cell,bad
      if(kind==='users'){
       const name=cell(row,item.login),id=document.createElement('small');id.textContent=item.user_id;name.append(id);
       cell(row).append(badge(item.role,'neutral'));cell(row).append(badge(item.enabled?'启用':'停用',item.enabled?'':'warning'));
-      cell(row,dateText(item.created_at));cell(row,dateText(item.updated_at));
+      cell(row,dateText(item.created_at));
       const button=document.createElement('button');button.type='button';button.className='quiet';button.textContent='查看该用户任务';button.addEventListener('click',()=>ownerSelected(item.user_id));const actions=cell(row);actions.append(button);
       if(item.role==='USER'&&userSelected){const edit=document.createElement('button');edit.type='button';edit.className='quiet';edit.textContent='管理此 USER';edit.addEventListener('click',()=>userSelected(item));actions.append(edit);}
      }else{
