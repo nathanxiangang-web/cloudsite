@@ -472,7 +472,13 @@ func TestPostgresAdminCopyPresentationActualProtectedHTTP(t *testing.T) {
 		h.ServeHTTP(w, req)
 		return w.Code
 	}
+	if got := call("GET", path+"?binding_id="+adminBinding, "", token); got != 200 {
+		t.Fatal(got)
+	}
 	if got := call("PUT", path, body, token); got != 200 {
+		t.Fatal(got)
+	}
+	if got := call("GET", "/api/v1/admin/actions/"+c.RequestID, "", token); got != 200 {
 		t.Fatal(got)
 	}
 	if got := call("PUT", path, strings.Replace(body, c.RequestID, opID(2), 1), token); got != 409 {

@@ -2,6 +2,7 @@ package producthttp
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/nathanxiangang-web/panta/internal/adminops"
 	"github.com/nathanxiangang-web/panta/internal/auth"
@@ -98,5 +99,43 @@ func TestCopyPresentationHTTPStrictBoundary(t *testing.T) {
 				t.Fatal(f.command)
 			}
 		})
+	}
+}
+
+type presentationCapabilityHTTP struct {
+	copyReadHTTPFake
+	enabled bool
+}
+
+func (f *presentationCapabilityHTTP) CopyPresentationEnabled() bool { return f.enabled }
+func TestCopyPresentationDescriptorRequiresSchemaAndActualCapability(t *testing.T) {
+	for _, tc := range []struct {
+		version int64
+		enabled bool
+		missing bool
+		want    bool
+	}{{16, true, false, false}, {19, true, false, false}, {20, false, false, false}, {20, true, true, false}, {20, true, false, true}} {
+		const id = "99500000-0000-4000-8000-000000000001"
+		var ops adminops.Operations = &presentationCapabilityHTTP{enabled: tc.enabled}
+		if tc.missing {
+			ops = nil
+		}
+		h, e := NewWorkspaceHandler(&fakeAccess{p: auth.Principal{UserID: auth.UserID(id), Login: "admin", Role: auth.RoleAdmin}}, "http://127.0.0.1:8180", &readAccessFake{}, []DisplayBinding{workspaceBinding}, tc.version, WithAdminOperations(ops))
+		if e != nil {
+			t.Fatal(e)
+		}
+		for _, path := range []string{"/api/v1/admin/workspace", "/api/v1/workspace"} {
+			w := request(h, "GET", path, "", testToken, "")
+			var d struct {
+				Enabled bool `json:"admin_copy_presentation_enabled"`
+			}
+			if json.Unmarshal(w.Body.Bytes(), &d) != nil || w.Code != 200 {
+				t.Fatal(w.Code)
+			}
+			want := path == "/api/v1/admin/workspace" && tc.want
+			if d.Enabled != want {
+				t.Fatal(path, tc, d.Enabled)
+			}
+		}
 	}
 }

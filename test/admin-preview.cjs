@@ -15,6 +15,11 @@ const fixtureUUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
 const pendingReview=process.argv.includes('--pending-cancel-review'),pendingUncertain=process.argv.includes('--pending-cancel-uncertain');
 const pendingActions=new Map();let pendingWrites=0;
 const pendingTask={...require('./fixtures/admin-download-detail.json'),...task,owner_user_id:principal.user_id,binding_id:binding,manifest_state:'PENDING',job_id:null,job_state:null,result_copy_id:null,claim_attempts:0,failure_count:0,max_attempts:0,job_created_at:null,job_updated_at:null,started_at:null,finished_at:null,next_attempt_at:null,error_recorded:false,error_code:'NONE',copy:null};
+const editorReview=process.argv.includes('--resource-editor-review'),editorUncertain=process.argv.includes('--resource-editor-uncertain');
+const editorActions=new Map();let editorWrites=0;
+const editorID='99700000-0000-4000-8000-000000000001',editorBase='/api/v1/admin/copies/'+editorID+'/presentation';
+if(editorReview)file.copy_id=editorID;
+const editorDTO={source:'PANTA_COPY_PROJECTION',visibility_effect:'PRESENTATION_ONLY_NO_ACCESS_CONTROL',empty_name_fallback:'CURRENT_CANONICAL_DISPLAY',can_edit:true,read_at:new Date().toISOString(),evidence:{copy_id:editorID,binding_id:binding,indexcore_root_id:'ISOLATED-FIXTURE-ROOT',indexcore_resource_id:file.resource_id,availability:'PRESENT',projection_cursor:12,copy_updated_at:new Date().toISOString()},presentation:{display_name:'',category:'AUTO',hidden:false,version:0,updated_at:null,updated_by:null}};
 const auditReview=process.argv.includes('--audit-review');
 const auditSource='CLOUDSITE_POSTGRES_ADMIN_ACTION_LEDGER',auditScope='CURRENT_ADMIN_ACTIONS_IN_CONFIGURED_BINDINGS';
 const auditItems=[
@@ -60,13 +65,29 @@ const server=http.createServer((req,res)=>{
   if(logoutCalls===1){res.statusCode=503;return json({code:'AUTH_UNAVAILABLE'});}
   sessionValid=false;res.statusCode=204;return res.end();
  }
+ if(editorReview&&url.pathname===editorBase){
+  if(req.method==='GET'){if(url.searchParams.get('binding_id')!==binding){res.statusCode=404;return json({code:'ACTION_NOT_FOUND'});}return json({...editorDTO,read_at:new Date().toISOString()});}
+  if(req.method==='PUT'){
+   if(req.headers.origin!=='http://127.0.0.1:'+server.address().port){res.statusCode=403;return json({code:'ORIGIN_REJECTED'});}
+   let raw='';req.on('data',chunk=>{raw+=chunk;if(raw.length>4096)req.destroy();});req.on('end',()=>{
+    let b;try{b=JSON.parse(raw);}catch{res.statusCode=400;return json({code:'INVALID_REQUEST'});}
+    if(Object.keys(b).sort().join(',')!=='binding_id,category,display_name,expected_version,hidden,request_id'||!fixtureUUID.test(b.request_id)||b.binding_id!==binding||!Number.isSafeInteger(b.expected_version)||typeof b.display_name!=='string'||typeof b.hidden!=='boolean'){res.statusCode=400;return json({code:'INVALID_REQUEST'});}
+    if(editorActions.has(b.request_id))return json(editorActions.get(b.request_id));
+    const match=b.expected_version===editorDTO.presentation.version;
+    if(match)editorDTO.presentation={display_name:b.display_name,category:b.category,hidden:b.hidden,version:b.expected_version+1,updated_at:new Date().toISOString(),updated_by:principal.user_id};
+    const receipt={request_id:b.request_id,target_id:editorID,action:'SET_COPY_PRESENTATION',status:match?'SUCCEEDED':'REJECTED',code:match?'COPY_PRESENTATION_SET':'VERSION_CONFLICT',recorded_at:new Date().toISOString(),...(match?{presentation_version:editorDTO.presentation.version}:{})};editorActions.set(b.request_id,receipt);editorWrites++;console.log('ISOLATED FIXTURE presentation PUT #'+editorWrites);
+    if(editorUncertain&&editorWrites===1){res.statusCode=503;return json({code:'ACTION_UNCONFIRMED'});}if(!match)res.statusCode=409;return json(receipt);
+   });return;
+  }
+ }
+ if(editorReview&&url.pathname.startsWith('/api/v1/admin/actions/')){const r=editorActions.get(url.pathname.split('/').at(-1));if(!r){res.statusCode=404;return json({code:'ACTION_NOT_FOUND'});}return json(r);}
  if(req.method!=='GET'){res.statusCode=405;return json({code:'FIXTURE_READ_ONLY'});}
  if(url.pathname==='/api/v1/auth/me'){
   if(logoutReview)console.log('Fixture auth/me GET');
   if(!sessionValid){res.statusCode=401;return json({code:'AUTH_REQUIRED'});}
   return json({...principal,login:'fixture-admin'});
  }
- if(url.pathname==='/api/v1/admin/workspace')return json({...descriptor,admin_audit_enabled:auditReview,schema_version:auditReview?19:pendingReview?19:shareReview?18:descriptor.schema_version,admin_pending_cancellation_enabled:pendingReview,admin_reads_enabled:true,bindings:[{binding_id:binding,label:'隔离浏览器测试数据'}]});
+ if(url.pathname==='/api/v1/admin/workspace')return json({...descriptor,admin_audit_enabled:auditReview,admin_copy_presentation_enabled:editorReview,schema_version:editorReview?20:auditReview?19:pendingReview?19:shareReview?18:descriptor.schema_version,admin_pending_cancellation_enabled:pendingReview,admin_reads_enabled:true,bindings:[{binding_id:binding,label:'隔离浏览器测试数据'}]});
  if(shareReview&&url.pathname==='/api/v1/admin/shares'){
   const owner=url.searchParams.get('owner'),status=url.searchParams.get('status')||'ALL',cursor=url.searchParams.get('cursor')||'',limit=Number(url.searchParams.get('limit')||20);
   const items=shareDTO.items.map(item=>({...item,active:item.active&&!shareRevoked.has(item.share_id)})).filter(item=>(!owner||item.owner_id===owner)&&(status==='ALL'||status==='ACTIVE'&&item.active||status==='REVOKED'&&shareRevoked.has(item.share_id)||status==='EXPIRED'&&!item.active&&!shareRevoked.has(item.share_id)));
@@ -114,12 +135,14 @@ const server=http.createServer((req,res)=>{
  assets['/assets/admin-shares.js']=['admin-shares.js','text/javascript'];
  assets['/assets/admin-overview.js']=['admin-overview.js','text/javascript'];
  assets['/assets/admin-audit.js']=['admin-audit.js','text/javascript'];
+ assets['/assets/admin-resource-editor.js']=['admin-resource-editor.js','text/javascript'];
  assets['/assets/admin-pending-cancel.js']=['admin-pending-cancel.js','text/javascript'];
  assets['/assets/admin-download-detail.js']=['admin-download-detail.js','text/javascript'];
  const asset=assets[url.pathname];if(!asset){res.statusCode=404;return res.end();}
  res.setHeader('Content-Type',asset[1]+'; charset=utf-8');let data=fs.readFileSync(path.join(web,asset[0]),'utf8');
  if(asset[0]==='index.html')data=data.replace('<body>','<body><aside class="scope-banner" aria-label="测试数据标记">ISOLATED UI FIXTURE · 所有记录为测试数据 · 不连接真实网盘、数据库或生产服务</aside>');
  if(pendingReview&&asset[0]==='index.html')data=data.replace('<h2 id="pending-cancel-title">','<p class="scope-note">ISOLATED UI FIXTURE · 合成记录，非生产</p><h2 id="pending-cancel-title">');
+ if(editorReview&&asset[0]==='index.html')data=data.replace('id="resource-edit-title">产品展示信息','id="resource-edit-title">产品展示信息 · ISOLATED FIXTURE').replace('id="resource-edit-confirm-title">确认修改产品展示信息','id="resource-edit-confirm-title">确认修改产品展示信息 · ISOLATED FIXTURE');
  if(auditReview&&asset[0]==='index.html')data=data.replace('id="audit-title">管理操作审计','id="audit-title">管理操作审计 · ISOLATED FIXTURE').replace('id="audit-detail-title">脱敏审计证据','id="audit-detail-title">脱敏审计证据 · ISOLATED FIXTURE');
  res.end(data);
 });

@@ -31,6 +31,7 @@ function workspace({hash='',storage}={}){
  vm.runInContext(fs.readFileSync(path.join(web,'admin-download-detail.js'),'utf8'),ctx);
  vm.runInContext(fs.readFileSync(path.join(web,'admin-pending-cancel.js'),'utf8'),ctx);
  vm.runInContext(fs.readFileSync(path.join(web,'admin-audit.js'),'utf8'),ctx);
+ vm.runInContext(fs.readFileSync(path.join(web,'admin-resource-editor.js'),'utf8'),ctx);
  vm.runInContext(fs.readFileSync(path.join(web,'app.js'),'utf8'),ctx);
  const run=source=>vm.runInContext(source,ctx);
  function respond(request,body,status=200){assert.ok(request,'expected pending request');request.done=true;request.resolve({ok:status>=200&&status<300,status,json:async()=>body});}

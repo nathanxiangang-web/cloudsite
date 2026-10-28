@@ -15,7 +15,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
 
-//go:embed web/index.html web/app.css web/resource-display.js web/admin-lists.js web/admin-observe.js web/admin-operations.js web/admin-shares.js web/admin-overview.js web/admin-download-detail.js web/admin-pending-cancel.js web/admin-audit.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js web/library-sharing.js web/share.html web/share.js web/downloads.html web/downloads.css web/downloads.js web/download-model.js web/file-browser.html web/file-surface.js
+//go:embed web/index.html web/app.css web/resource-display.js web/admin-lists.js web/admin-observe.js web/admin-operations.js web/admin-shares.js web/admin-overview.js web/admin-download-detail.js web/admin-pending-cancel.js web/admin-audit.js web/admin-resource-editor.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js web/library-sharing.js web/share.html web/share.js web/downloads.html web/downloads.css web/downloads.js web/download-model.js web/file-browser.html web/file-surface.js
 var workspaceFiles embed.FS
 
 type DisplayBinding struct {
@@ -34,6 +34,7 @@ type cloudFileScope struct {
 }
 
 type workspaceInfo struct {
+	AdminCopyPresentationEnabled    bool             `json:"admin_copy_presentation_enabled"`
 	AdminAuditEnabled               bool             `json:"admin_audit_enabled"`
 	AdminPendingCancellationEnabled bool             `json:"admin_pending_cancellation_enabled"`
 	CloudDownloadFiles              *cloudFileScope  `json:"cloud_download_files,omitempty"`
@@ -124,7 +125,11 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 	if capability, ok := settings.operations.(interface{ PendingCancellationEnabled() bool }); ok {
 		cancellationReady = version >= 19 && diagnosticsReady && capability.PendingCancellationEnabled()
 	}
-	info := workspaceInfo{AdminAuditEnabled: version >= 16 && auditReady(settings.audit), AdminPendingCancellationEnabled: cancellationReady, SharingEnabled: settings.shares != nil, ContentAccess: settings.files != nil, Mode: "READ_ONLY", SchemaVersion: version, Bindings: append([]DisplayBinding(nil), bindings...)}
+	copyPresentationReady := false
+	if capability, ok := settings.operations.(interface{ CopyPresentationEnabled() bool }); ok && settings.operations != nil {
+		copyPresentationReady = version >= 20 && capability.CopyPresentationEnabled()
+	}
+	info := workspaceInfo{AdminCopyPresentationEnabled: copyPresentationReady, AdminAuditEnabled: version >= 16 && auditReady(settings.audit), AdminPendingCancellationEnabled: cancellationReady, SharingEnabled: settings.shares != nil, ContentAccess: settings.files != nil, Mode: "READ_ONLY", SchemaVersion: version, Bindings: append([]DisplayBinding(nil), bindings...)}
 	if settings.sourcePreview != nil {
 		if settings.cloud != nil || !settings.sourcePreview.Valid() {
 			return nil, product.ErrInvalid
@@ -148,6 +153,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		info.Mode = "ACQUISITION"
 	}
 	consumer := info
+	consumer.AdminCopyPresentationEnabled = false
 	consumer.AdminAuditEnabled = false
 	consumer.AdminPendingCancellationEnabled = false
 	consumer.WholeRootLibrary = settings.wholeRoot
@@ -209,6 +215,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		{"GET /assets/admin-overview.js", "web/admin-overview.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/admin-download-detail.js", "web/admin-download-detail.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/admin-pending-cancel.js", "web/admin-pending-cancel.js", "text/javascript; charset=utf-8"},
+		{"GET /assets/admin-resource-editor.js", "web/admin-resource-editor.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/admin-audit.js", "web/admin-audit.js", "text/javascript; charset=utf-8"},
 	} {
 		content, err := workspaceFiles.ReadFile(asset.file)
