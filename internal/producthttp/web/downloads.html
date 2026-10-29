@@ -10,7 +10,7 @@
    <div class="download-layout"><form id="download-form" class="download-panel">
     <h2>新建下载</h2><p id="download-target" class="intro"></p>
     <label for="download-source">下载链接</label><textarea id="download-source" rows="5" maxlength="65536" required spellcheck="false" autocomplete="off" placeholder="magnet:?xt=urn:btih:… 或 HTTPS / HTTP / ed2k 链接"></textarea>
-    <p class="field-hint">磁力链接自动保留资源标识与名称，移除多余 tracker。不支持的磁力格式会明确拒绝，不会猜测下载内容。</p>
+    <p class="field-hint">磁力链接保留有效资源标识；遇到 <code>&amp;amp;</code> 时从此处截去后续内容，其余链接保留名称并移除多余 tracker。不支持的磁力格式会明确拒绝。</p>
     <label for="download-name">预期文件名（可选）</label><input id="download-name" maxlength="512" autocomplete="off" placeholder="仅在网盘未返回名称时作为后备，不改变磁力内容">
     <div class="file-actions"><button id="download-prepare" class="secondary" type="button">检查链接</button><button id="download-submit" class="primary" type="submit" disabled>提交下载</button></div>
     <section id="download-preview" hidden><h3>实际提交的链接</h3><pre id="download-execution"></pre><p id="download-policy" class="field-hint"></p></section>

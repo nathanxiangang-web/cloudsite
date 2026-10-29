@@ -58,17 +58,17 @@ func PrepareSource(value string, policy SourcePolicy) (PreparedSource, error) {
 		}
 		return PreparedSource{Original: value, Reference: ref, Policy: policy}, nil
 	}
-	parsed, err := url.Parse(value)
-	if err != nil || parsed.Opaque != "" || parsed.Host != "" || parsed.Path != "" || parsed.Fragment != "" || strings.Contains(value, "#") || parsed.RawQuery == "" || strings.Count(parsed.RawQuery, "&") >= 512 {
-		return PreparedSource{}, ErrInvalidSource
+	original := value
+	value, removed, err := trimMagnetAMPTail(value)
+	if err != nil {
+		return PreparedSource{}, err
 	}
-	query, err := url.ParseQuery(parsed.RawQuery)
+	query, err := magnetQuery(value)
 	if err != nil {
 		return PreparedSource{}, ErrInvalidSource
 	}
 	hash, name := "", ""
 	nameSeen := false
-	removed := 0
 	keys := make([]string, 0, len(query))
 	for key := range query {
 		keys = append(keys, key)
@@ -126,8 +126,65 @@ func PrepareSource(value string, policy SourcePolicy) (PreparedSource, error) {
 	if err != nil {
 		return PreparedSource{}, err
 	}
-	return PreparedSource{Original: value, Reference: ref, Policy: policy, Changed: execution != value, RemovedParameters: removed}, nil
+	return PreparedSource{Original: original, Reference: ref, Policy: policy, Changed: execution != original, RemovedParameters: removed}, nil
 }
+
+func magnetQuery(value string) (url.Values, error) {
+	parsed, err := url.Parse(value)
+	if err != nil || parsed.Opaque != "" || parsed.Host != "" || parsed.Path != "" || parsed.Fragment != "" || strings.Contains(value, "#") || parsed.RawQuery == "" || strings.Count(parsed.RawQuery, "&") >= 512 {
+		return nil, ErrInvalidSource
+	}
+	query, err := url.ParseQuery(parsed.RawQuery)
+	if err != nil {
+		return nil, ErrInvalidSource
+	}
+	return query, nil
+}
+
+// trimMagnetAMPTail handles copied HTML separators without decoding parameter
+// data. The retained prefix must still contain a valid BTIH. Inspect content
+// selectors across the entire input before discarding any advisory tail.
+func trimMagnetAMPTail(value string) (string, int, error) {
+	cut := strings.Index(value, "&amp;")
+	if cut < 0 {
+		return value, 0, nil
+	}
+	query, err := magnetQuery(strings.ReplaceAll(value, "&amp;", "&"))
+	if err != nil {
+		return "", 0, err
+	}
+	keys := make([]string, 0, len(query))
+	for key := range query {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	hash := ""
+	for _, key := range keys {
+		switch strings.ToLower(key) {
+		case "so":
+			return "", 0, ErrMagnetUnsupported
+		case "xt":
+			for _, topic := range query[key] {
+				next, err := magnetBTIH(topic)
+				if err != nil {
+					return "", 0, err
+				}
+				if hash != "" && hash != next {
+					return "", 0, ErrMagnetAmbiguous
+				}
+				hash = next
+			}
+		}
+	}
+	removed := 0
+	for _, parameter := range strings.Split(strings.ReplaceAll(value[cut:], "&amp;", "&"), "&") {
+		if parameter != "" {
+			removed++
+		}
+	}
+	return value[:cut], removed, nil
+}
+
 func magnetBTIH(topic string) (string, error) {
 	const prefix = "urn:btih:"
 	if len(topic) < len(prefix) || !strings.EqualFold(topic[:len(prefix)], prefix) {
