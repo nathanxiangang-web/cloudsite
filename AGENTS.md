@@ -1,5 +1,22 @@
 # AGENTS.md — cloudsite AI/Developer Entry Point
 
+## Current delivery - Issue180 admin information architecture (2026-10-28)
+
+PR179 merged as750f5281217d92bc2ed48b71bb28256bd0101e82. Exact merged-main
+CI40652403381 completed SUCCESS3/3: quality/race/vet/build, PostgreSQL16 and
+PostgreSQL18. Issue180 now owns one bounded UI-only cleanup PR. Capture desktop
+1440px and mobile390px before editing presentation code; identify evidence-backed
+noise, then preserve the existing shell, APIs, audit/CAS/UNKNOWN recovery and
+accessibility while simplifying navigation and progressively disclosing internals.
+Implementation is complete on the review branch:201 frontend tests and the producthttp
+Go package pass. Chrome before/after evidence includes12 pairs plus4 interaction
+captures, all isolated synthetic fixtures. See docs/admin-ui-180/README.md.
+Review-branch CI and merge remain separate; do not claim production deployment. No backend, schema, provider or
+IndexCore changes and no production deployment under180. Parent155 remains open;
+production153 verifies the real host separately. Do not self-merge; retain review.
+Earlier delivery pointers are history, not current unfinished work.
+
+
 ## Current delivery - Issue176 complete resource editor (2026-10-28)
 
 PR177 merged as1611d37bd443e01b82c1eb66381bb91ecc3ee0d2; main CI40549771841

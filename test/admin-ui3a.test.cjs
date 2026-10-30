@@ -61,8 +61,8 @@ test('switching selected USER clears the previous detail immediately without a n
 test('managing a row brings the selected USER controls into view and keyboard focus without commands',async()=>{
  const app=await ready();app.click('nav-users');await app.drain({'/api/v1/admin/users':{items:[user],next_cursor:'',total:1,read_at:'2026-10-28T00:00:00Z',scope:'FILTERED_PRODUCT_USERS'}});
  const row=app.elements.get('users-rows').children[0];assert.equal(row.children.length,5,'user table omits updated time');
- const manage=row.children.at(-1).children.find(n=>n.textContent==='管理此 USER');assert.ok(manage);
- const before=app.requests.length;manage.listeners.click[0]({});
+ const manage=row.children.at(-1).children.find(n=>n.textContent==='管理用户');assert.ok(manage);assert.equal(manage.attrs['aria-label'],'管理用户 '+user.login);
+ assert.equal(app.elements.get('user-target-controls').hidden,true);const before=app.requests.length;manage.listeners.click[0]({});assert.equal(app.elements.get('user-target-controls').hidden,false);assert.match(app.text('selected-user-evidence'),new RegExp(user.user_id));assert.doesNotMatch(app.text('selected-user'),new RegExp(user.user_id));
  assert.equal(app.document.activeElement,app.elements.get('selected-user'));assert.equal(app.elements.get('selected-user').scrolled,true);
  assert.match(app.html,/<p id="selected-user"[^>]*tabindex="-1"/);
  assert.match(app.text('selected-user'),/test-user/);assert.equal(app.elements.get('change-user-submit').disabled,false);assert.equal(app.elements.get('rename-user-submit').disabled,false);

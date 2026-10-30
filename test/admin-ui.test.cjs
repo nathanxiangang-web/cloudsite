@@ -4,12 +4,12 @@ const {workspace,principal,descriptor,tick,web}=require('./admin-dom.cjs');
 const file={binding_id:descriptor.bindings[0].binding_id,resource_id:'stable-resource',name:'真实文档.md',path:'/文档/真实文档.md',directory:false,size_bytes:321,presence:'PRESENT',copy_id:'stable-copy',copy_availability:'PRESENT'};
 const task={manifest_id:'97000000-0000-4000-8000-000000000005',job_id:'stable-job',manifest_state:'AWAITING_CANONICAL',job_state:'RETRY_WAIT',result_copy_id:null,claim_attempts:3,failure_count:0,created_at:'2026-10-20T00:00:00Z',updated_at:'2026-10-20T00:01:00Z'};
 async function ready(){const app=workspace();await app.drain();return app;}
-test('overview and nine destinations keep real and unavailable scopes distinct',async()=>{
+test('eight implemented destinations retain read boundaries and omit the unfinished settings entry',async()=>{
  const app=await ready();assert.equal(app.elements.get('overview-panel').hidden,false);assert.equal(app.elements.get('overview-schema').textContent,'v15');assert.equal(app.elements.get('overview-bindings').textContent,'1');
  assert.equal(app.requests.some(r=>r.url.startsWith('/api/v1/resources')||r.url.startsWith('/api/v1/tasks')),false);
- for(const id of ['overview','users','resources','downloads','storage','indexcore','shares','audit','settings']){app.click('nav-'+id);await app.drain();assert.equal(app.run('state.tab'),id);assert.equal(app.elements.get('workspace-view').hidden,false);}
- app.click('nav-audit');assert.equal(app.elements.get('audit-panel').hidden,false);assert.equal(app.elements.get('planned-panel').hidden,true);assert.match(app.text('audit-footer'),/UNAVAILABLE/);
- for(const id of ['settings']){app.click('nav-'+id);assert.equal(app.elements.get('planned-panel').hidden,false);assert.match(app.text('planned-title'),/尚未接入/);assert.equal(app.elements.get('planned-action').disabled,true);await app.drain();}
+ for(const id of ['overview','users','resources','downloads','storage','indexcore','shares','audit']){app.click('nav-'+id);await app.drain();assert.equal(app.run('state.tab'),id);assert.equal(app.elements.get('workspace-view').hidden,false);}
+ app.click('nav-audit');assert.equal(app.elements.get('audit-panel').hidden,false);assert.equal(app.elements.has('planned-panel'),false);assert.match(app.text('audit-footer'),/UNAVAILABLE/);
+ assert.equal(app.elements.has('nav-settings'),false);assert.match(app.html,/<details id="diagnostics-nav"/);
  app.click('nav-downloads');assert.equal(app.elements.get('global-tasks-placeholder').hidden,false);assert.equal(app.elements.get('tasks-panel').hidden,true);await app.drain();
  app.click('nav-tasks');await app.drain();assert.equal(app.elements.get('tasks-panel').hidden,false);assert.match(app.text('tasks-footer'),/仅当前登录者/);
  assert.ok(app.requests.every(r=>['/api/v1/auth/me','/api/v1/admin/workspace','/api/v1/admin/overview','/api/v1/admin/users','/api/v1/admin/downloads','/api/v1/admin/storage','/api/v1/admin/shares','/api/v1/resources','/api/v1/tasks'].includes(r.url.split('?')[0])));

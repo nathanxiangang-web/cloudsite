@@ -7,6 +7,7 @@ const binding=descriptor.bindings[0].binding_id;
 const file={binding_id:binding,resource_id:'fixture-resource-001',name:'部署说明.md',path:'/文档/部署说明.md',directory:false,size_bytes:7530,presence:'PRESENT',copy_id:'fixture-copy-001',copy_availability:'PRESENT',asset_id:null,release_id:null,variant_id:null};
 const task={manifest_id:'97000000-0000-4000-8000-000000000005',job_id:'97000000-0000-4000-8000-000000000006',manifest_state:'AWAITING_CANONICAL',job_state:'RETRY_WAIT',result_copy_id:null,claim_attempts:3,failure_count:0,created_at:'2026-10-21T00:00:00Z',updated_at:'2026-10-21T00:01:00Z'};
 const users=[{user_id:principal.user_id,login:'fixture-admin',role:'ADMIN',enabled:true,created_at:task.created_at,updated_at:task.updated_at},{user_id:'98000000-0000-4000-8000-000000000002',login:'fixture-user',role:'USER',enabled:false,created_at:task.created_at,updated_at:task.updated_at}];
+for(const user of users){user.version=0;user.deleted_at=null;user.deleted_by=null;}
 // Explicit test-only mode for Round1 logout review. One synthetic503, then204.
 const logoutReview=process.argv.includes('--logout-review');let sessionValid=true,logoutCalls=0;
 const shareReview=process.argv.includes('--share-review'),shareUncertain=process.argv.includes('--share-uncertain');
@@ -140,7 +141,7 @@ const server=http.createServer((req,res)=>{
  assets['/assets/admin-download-detail.js']=['admin-download-detail.js','text/javascript'];
  const asset=assets[url.pathname];if(!asset){res.statusCode=404;return res.end();}
  res.setHeader('Content-Type',asset[1]+'; charset=utf-8');let data=fs.readFileSync(path.join(web,asset[0]),'utf8');
- if(asset[0]==='index.html')data=data.replace('<body>','<body><aside class="scope-banner" aria-label="测试数据标记">ISOLATED UI FIXTURE · 所有记录为测试数据 · 不连接真实网盘、数据库或生产服务</aside>');
+ if(asset[0]==='index.html')data=data.replace('<body>','<body><aside class="scope-banner" aria-label="测试数据标记">隔离整改候选 · Issue 180 · 模拟数据，非生产页面</aside>');
  if(pendingReview&&asset[0]==='index.html')data=data.replace('<h2 id="pending-cancel-title">','<p class="scope-note">ISOLATED UI FIXTURE · 合成记录，非生产</p><h2 id="pending-cancel-title">');
  if(editorReview&&asset[0]==='index.html')data=data.replace('id="resource-edit-title">产品展示信息','id="resource-edit-title">产品展示信息 · ISOLATED FIXTURE').replace('id="resource-edit-confirm-title">确认修改产品展示信息','id="resource-edit-confirm-title">确认修改产品展示信息 · ISOLATED FIXTURE');
  if(auditReview&&asset[0]==='index.html')data=data.replace('id="audit-title">管理操作审计','id="audit-title">管理操作审计 · ISOLATED FIXTURE').replace('id="audit-detail-title">脱敏审计证据','id="audit-detail-title">脱敏审计证据 · ISOLATED FIXTURE');

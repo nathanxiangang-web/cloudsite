@@ -95,10 +95,13 @@ func TestAdminUI1ShellIsIsolatedAndFutureAdminRoutesRemainAbsent(t *testing.T) {
 	if page.Code != 200 {
 		t.Fatal(page.Code)
 	} // Static shell carries no private DTO.
-	for _, name := range []string{"overview", "users", "resources", "downloads", "storage", "indexcore", "shares", "audit", "settings"} {
+	for _, name := range []string{"overview", "users", "resources", "downloads", "storage", "indexcore", "shares", "audit"} {
 		if !strings.Contains(page.Body.String(), "id=\"nav-"+name+"\"") {
 			t.Fatal("navigation absent", name)
 		}
+	}
+	if strings.Contains(page.Body.String(), `id="nav-settings"`) {
+		t.Fatal("unfinished settings entry must be absent")
 	}
 	for _, entry := range []string{"/", "/downloads/"} {
 		body := request(h, "GET", entry, "", "", "").Body.String()

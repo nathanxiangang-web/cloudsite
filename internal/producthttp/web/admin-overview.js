@@ -1,6 +1,6 @@
 'use strict';
 // Homepage read model. No commands, provider calls or sampled task counts.
-const AdminOverview={create({el,read,generation,principal,isActive,dateText}){
+const AdminOverview={create({present,friendlyInfo,el,read,generation,principal,isActive,dateText}){
  const manifestFields=['pending','active','awaiting_visibility','awaiting_canonical','ready','failed','canceled','recovery_required'];
  const jobFields=['queued','running','retry_wait','succeeded','failed','canceled','recovery_required'];
  let request=0,controller;
@@ -18,7 +18,7 @@ const AdminOverview={create({el,read,generation,principal,isActive,dateText}){
  }
  function clearTasks(){for(const key of ['total','incomplete','canceled_without_job',...manifestFields])el('overview-manifests-'+key).textContent='—';for(const key of ['total',...jobFields])el('overview-jobs-'+key).textContent='—';el('overview-read-at').textContent='尚未取得有效数据库读取时间';}
  function clearUsers(){el('overview-users-total').textContent='—';el('overview-users-read-at').textContent='尚未取得有效数据库读取时间';}
- function status(id,text,kind='neutral'){el(id).textContent=text;el(id).className='badge '+kind;}
+ function status(id,text,kind='neutral'){present(el(id),friendlyInfo(text),text!==friendlyInfo(text)?text:'');el(id).className='badge '+kind;}
  function invalidate(){request++;controller?.abort();controller=null;clearTasks();clearUsers();status('overview-status','等待查询');status('overview-users-status','等待查询');el('overview-panel').setAttribute('aria-busy','false');}
  async function load(background=false){
   if(principal()?.role!=='ADMIN'||!background&&!isActive())return;
@@ -30,7 +30,7 @@ const AdminOverview={create({el,read,generation,principal,isActive,dateText}){
     const value=await read('/api/v1/admin/overview',gen,signal);if(!current())return;const dto=validate(value);
     for(const [kind,fields] of [['manifests',dto.manifests],['jobs',dto.jobs]])for(const [key,value] of Object.entries(fields))el('overview-'+kind+'-'+key).textContent=String(value);
     el('overview-read-at').textContent='数据库读取于 '+dateText(dto.read_at);
-    status('overview-status',dto.manifests.recovery_required?'已读取 · 存在恢复待处理':dto.manifests.failed?'已读取 · 存在失败记录':'已读取 · 非系统健康检查',dto.manifests.recovery_required||dto.manifests.failed?'warning':'neutral');
+    status('overview-status',dto.manifests.recovery_required?'已读取 · 有任务需要人工处理':dto.manifests.failed?'已读取 · 存在失败记录':'已更新',dto.manifests.recovery_required||dto.manifests.failed?'warning':'neutral');
    }catch{if(current()){clearTasks();status('overview-status','UNAVAILABLE · 任务统计暂不可用','warning');}}})(),
    (async()=>{try{
     const page=await read('/api/v1/admin/users?limit=1',gen,signal);if(!current())return;

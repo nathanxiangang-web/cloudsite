@@ -16,7 +16,7 @@ test('real editor saves exactly one frozen PUT and renders only a fresh persiste
  app.elements.get('resource-edit-name').value='Changed after confirmation';
  const done=app.click('resource-edit-confirm');await auth(app);const put=app.pending(base),p=JSON.parse(put.options.body);assert.equal(put.options.method,'PUT');assert.equal(p.display_name,'Product alias');assert.equal(p.expected_version,0);assert.equal(p.binding_id,binding);
  app.respond(put,result(p));await app.drain(defaults(detail(1,'Persisted server label')));await done;
- assert.equal(app.elements.get('resource-edit-recovery').hidden,false);assert.match(app.text('resource-edit-result'),/SUCCEEDED.*版本 1/);assert.match(app.text('resource-edit-facts'),/Persisted server label/);assert.doesNotMatch(app.text('resource-edit-facts'),/Changed after/);assert.match(app.text('file-title'),/Canonical original/);assert.equal(app.requests.filter(r=>r.options.method==='PUT').length,1);
+ assert.equal(app.elements.get('resource-edit-recovery').hidden,false);assert.match(app.text('resource-edit-result'),/保存已记录.*版本 1/);assert.match(app.text('resource-edit-result'),/SUCCEEDED \/ COPY_PRESENTATION_SET/);assert.match(app.text('resource-edit-facts'),/Persisted server label/);assert.doesNotMatch(app.text('resource-edit-facts'),/Changed after/);assert.match(app.text('file-title'),/Canonical original/);assert.equal(app.requests.filter(r=>r.options.method==='PUT').length,1);
 });
 test('UNKNOWN uses original status GET then exact GET with no repeated PUT; storage contains IDs only',async()=>{
  const storage=new Map(),app=await ready(detail(),cap,storage);await prepare(app);const done=app.click('resource-edit-confirm');await auth(app);const put=app.pending(base),p=JSON.parse(put.options.body);app.respond(put,result(p,'UNKNOWN','RESERVED_NO_CONFIRMED_RESULT'),202);await done;
@@ -70,4 +70,12 @@ test('fresh authorization removes capability before PUT and late exact reads can
 test('read deadline closes editing, and missing secure UUID never sends a command',async()=>{
  const app=await ready();app.run('openResource(state.resources[0]);');await auth(app);const timer=[...app.timers.values()].find(t=>t.ms===15000);assert.ok(timer);timer.callback();await tick();assert.match(app.text('resource-edit-status'),/UNAVAILABLE/);assert.equal(app.elements.get('resource-edit-form').hidden,true);
  const next=await ready();await prepare(next);next.window.crypto={randomUUID(){throw Error('Unavailable');}};await next.click('resource-edit-confirm');assert.match(next.text('resource-edit-status'),/未发送修改/);assert.equal(next.requests.some(r=>r.options.method==='PUT'),false);
+});
+
+test('dismissal restores the submitter even when disabling the form removed browser focus during verification',async()=>{
+ const app=await ready(),submitter=app.document.createElement('button');submitter.focus();app.elements.get('resource-edit-name').value='Focus check';
+ const done=app.elements.get('resource-edit-form').listeners.submit[0]({submitter,preventDefault(){}});
+ // Browsers move focus away from a disabled submit button while the exact GET is pending.
+ app.document.activeElement=app.document.body;await app.drain(defaults(detail()));await done;
+ app.click('resource-edit-dismiss');assert.equal(app.document.activeElement,submitter);assert.equal(app.elements.get('resource-edit-dialog').hidden,true);assert.ok(app.requests.every(r=>r.options.method==='GET'));
 });

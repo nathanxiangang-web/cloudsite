@@ -12,7 +12,7 @@ function zero(){const value=dto();for(const fields of [value.manifests,value.job
 
 test('initial homepage automatically reads verified ADMIN GET aggregates, separate denominators and provenance',async()=>{
  const app=await ready();assert.equal(app.text('overview-users-total'),'42');assert.equal(app.text('overview-manifests-total'),'15');assert.equal(app.text('overview-jobs-total'),'14');
- assert.equal(app.text('overview-manifests-incomplete'),'6');assert.equal(app.text('overview-manifests-failed'),'2');assert.equal(app.text('overview-manifests-recovery_required'),'2');assert.equal(app.text('overview-jobs-recovery_required'),'2');assert.match(app.text('overview-status'),/恢复待处理/);
+ assert.equal(app.text('overview-manifests-incomplete'),'6');assert.equal(app.text('overview-manifests-failed'),'2');assert.equal(app.text('overview-manifests-recovery_required'),'2');assert.equal(app.text('overview-jobs-recovery_required'),'2');assert.match(app.text('overview-status'),/需要人工处理/);
  assert.match(app.text('overview-read-at'),/数据库读取于/);assert.match(app.html,/PRODUCT_ACQUISITIONS_IN_CONFIGURED_BINDINGS/);
  assert.equal(app.requests.filter(r=>r.url==='/api/v1/admin/overview').length,1);assert.ok(app.requests.every(r=>r.options.method==='GET'&&r.options.credentials==='same-origin'&&r.options.cache==='no-store'));
  assert.equal(app.requests.some(r=>/probe|indexcore|resources|tasks|replay/.test(r.url)),false);
@@ -20,7 +20,7 @@ test('initial homepage automatically reads verified ADMIN GET aggregates, separa
 test('loading and true zero are distinct, neither claims provider health',async()=>{
  const app=await ready(),done=app.click('refresh-workspace');assert.equal(app.text('overview-manifests-total'),'—');assert.match(app.text('overview-status'),/LOADING/);assert.equal(app.elements.get('overview-panel').attrs['aria-busy'],'true');
  await app.drain({'/api/v1/admin/overview':zero(),'/api/v1/admin/users':{...users,total:0}});await done;
- assert.equal(app.text('overview-manifests-total'),'0');assert.equal(app.text('overview-jobs-total'),'0');assert.equal(app.text('overview-users-total'),'0');assert.match(app.text('overview-status'),/非系统健康检查/);assert.equal(app.elements.get('overview-panel').attrs['aria-busy'],'false');
+ assert.equal(app.text('overview-manifests-total'),'0');assert.equal(app.text('overview-jobs-total'),'0');assert.equal(app.text('overview-users-total'),'0');assert.match(app.text('overview-status'),/已更新/);assert.equal(app.elements.get('overview-panel').attrs['aria-busy'],'false');
 });
 test('all required counts reject negative, unsafe, fractional, string, null or missing values',async()=>{
  const app=await ready();for(const section of ['manifests','jobs'])for(const key of Object.keys(fixture[section]))for(const bad of [-1,Number.MAX_SAFE_INTEGER+1,0.5,'0',null,undefined]){
@@ -48,7 +48,7 @@ test('authoritative DirectoryReads total rejects malformed pages, never counts s
 });
 test('recovery is not incomplete, failure, provider state or retry estimate',async()=>{
  const app=await ready(),value=zero();value.manifests.total=1;value.manifests.recovery_required=1;value.jobs.total=1;value.jobs.recovery_required=1;await refresh(app,value);
- assert.equal(app.text('overview-manifests-incomplete'),'0');assert.equal(app.text('overview-manifests-failed'),'0');assert.equal(app.text('overview-manifests-recovery_required'),'1');assert.match(app.text('overview-status'),/恢复待处理/);
+ assert.equal(app.text('overview-manifests-incomplete'),'0');assert.equal(app.text('overview-manifests-failed'),'0');assert.equal(app.text('overview-manifests-recovery_required'),'1');assert.match(app.text('overview-status'),/需要人工处理/);
 });
 test('latest refresh wins even when both old GETs finish later',async()=>{
  const app=await ready(),oldDone=app.click('refresh-workspace');await verified(app);const oldTask=app.pending('/api/v1/admin/overview'),oldUser=app.pending('/api/v1/admin/users?limit=1');

@@ -27,7 +27,7 @@ func TestResourcePresentationServesSafeAssetsWithoutWritableRoutes(t *testing.T)
 			t.Fatal("missing presentation", id)
 		}
 	}
-	if !strings.Contains(page, "不是整个网盘") || !strings.Contains(page, "不包含文件正文") {
+	if !strings.Contains(page, "分类和搜索仅筛选当前页") || strings.Contains(page, `id="file-primary-action"`) {
 		t.Fatal("scope/content incorrectly implied")
 	}
 	if strings.Contains(page, "删除文件") {

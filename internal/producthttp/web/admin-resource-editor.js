@@ -5,7 +5,7 @@ const AdminResourceEditor={
  categories:{AUTO:'自动（沿用规范展示）',SOFTWARE:'软件',VIDEO:'视频',DOCUMENT:'文档',IMAGE:'图片',AUDIO:'音频',ARCHIVE:'压缩包',OTHER:'其他'},
  uuid:v=>typeof v==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(v),
  name(v){if(typeof v!=='string'||v.trim()!==v||[...v].length>160||/[\p{Cc}\p{Cf}<>\uFFFD]/u.test(v))return false;let bytes=0;for(const c of v){const n=c.codePointAt(0);if(n>=0xd800&&n<=0xdfff)return false;bytes+=n<128?1:n<2048?2:n<65536?3:4;}return bytes<=640;},
- create({el,read,command,generation,principal,isActive,bindingAllowed,capable,dateText,onError,newID,now=()=>Date.now()}){
+ create({present,el,read,command,generation,principal,isActive,bindingAllowed,capable,dateText,onError,newID,now=()=>Date.now()}){
   const uuid=AdminResourceEditor.uuid,max=Number.MAX_SAFE_INTEGER,mem=new Map();
   let last=null,target=null,doc=null,confirmation=null,focus=null,seq=0,opSeq=0,busy=false,controller,confirmTimer;
   const actor=()=>principal()?.role==='ADMIN'?principal().user_id:'';
@@ -69,12 +69,13 @@ const AdminResourceEditor={
   }
   async function prepare(event){
    event?.preventDefault();if(busy||!doc?.can_edit||pending()||!capable()||!target)return;
+   const returnFocus=event?.submitter||document.activeElement;
    const fields={display_name:el('resource-edit-name').value,category:el('resource-edit-category').value,hidden:el('resource-edit-hidden').checked};
    if(!AdminResourceEditor.name(fields.display_name)||!Object.hasOwn(AdminResourceEditor.categories,fields.category)||typeof fields.hidden!=='boolean'){el('resource-edit-status').textContent='输入未提交 · 展示名称最多 160 个字符，不接受 HTML、控制字符或首尾空白';return;}
    const t={...target},ctx=context(),version=doc.presentation.version,n=++seq;controller?.abort();controller=new AbortController();const c=controller;busy=true;controls();
    try{const d=await fetchExact(t,c,ctx);if(n!==seq||!same(ctx)||!capable()||!bindingAllowed(t.binding_id)||c.signal.aborted)return;
     if(!d.can_edit||d.presentation.version!==version){draw(d);el('resource-edit-status').textContent='资源或展示版本已变化 · 已刷新，请检查后重新编辑';return;}
-    doc=d;confirmation={...ctx,...t,...fields,expected_version:version,at:now()};focus=document.activeElement;el('resource-edit-summary').textContent='产品展示名称：'+(fields.display_name||'清除并沿用当前规范展示')+'；类别：'+AdminResourceEditor.categories[fields.category]+'；展示隐藏标记：'+(fields.hidden?'标记':'不标记')+'。不修改网盘文件名、索引或当前分享权限。';
+    doc=d;confirmation={...ctx,...t,...fields,expected_version:version,at:now()};focus=returnFocus;el('resource-edit-summary').textContent='产品展示名称：'+(fields.display_name||'清除并沿用当前规范展示')+'；类别：'+AdminResourceEditor.categories[fields.category]+'；展示隐藏标记：'+(fields.hidden?'标记':'不标记')+'。不修改网盘文件名、索引或当前分享权限。';
     el('resource-edit-dialog').hidden=false;document.body.classList.toggle('resource-edit-confirm-open',true);el('resource-edit-dismiss').focus();confirmTimer=setTimeout(()=>dismiss(),30000);
    }catch(e){if(n===seq&&same(ctx)){clear();el('resource-edit-status').textContent='无法确认最新版本 · 未提交修改';onError(e);}}
    finally{if(n===seq&&same(ctx)){busy=false;controls();}}
@@ -87,7 +88,8 @@ const AdminResourceEditor={
    return true;
   }
   async function operation(lookup=false){
-   if(busy||!actor()||!isActive())return;let p=pending(),body;
+   if(busy||!actor()||!isActive())return;let p=pending(),body,receiptView;
+   function showReceipt(message,evidence){receiptView={message,evidence};present(el('resource-edit-result'),message,evidence,'原始回执');}
    if(lookup){if(!p||p.corrupt||!bindingAllowed(p.binding_id))return;}
    else{
     const v=confirmation;if(p||!v||!same(v)||!capable()||!bindingAllowed(v.binding_id)||target?.copy_id!==v.copy_id||doc?.presentation.version!==v.expected_version||now()-v.at>=30000){dismiss();return;}
@@ -102,15 +104,15 @@ const AdminResourceEditor={
    try{
     const work=lookup?read('/api/v1/admin/actions/'+original.request_id,ctx.gen,c.signal):command(base(original.target_id),body,ctx.gen,c.signal,()=>permit&&current()&&capable());
     const r=await deadline(work,c);if(!current()||c.signal.aborted)return;terminal=receipt(r,original);
-    el('resource-edit-result').textContent=r.status==='SUCCEEDED'?'SUCCEEDED / COPY_PRESENTATION_SET · 保存已记录 · 版本 '+r.presentation_version+' · 正在重新读取服务器展示信息':terminal?'REJECTED · 修改被拒绝 · '+r.code+' · 请检查最新信息':'UNKNOWN · 未取得已确认回执，请查询原请求，不要重复保存';
+    showReceipt(r.status==='SUCCEEDED'?'保存已记录 · 版本 '+r.presentation_version+' · 正在重新读取服务器展示信息':terminal?'修改被拒绝，请检查最新信息':'结果未确认，请查询原请求，不要重复保存',r.status+' / '+r.code);
    }catch(e){if(current()){
-    if(!lookup&&[409,404].includes(e.status)){conflict=true;try{terminal=receipt(e.receipt,original);el('resource-edit-result').textContent='修改未完成 · '+e.receipt.code+' · 已请求刷新';}catch{el('resource-edit-result').textContent='冲突或目标变化 · 回执未确认，只能查询原请求';}}
-    else el('resource-edit-result').textContent='UNKNOWN · 结果未确认，只能查询原审计回执，不会重复发送修改';onError(e);
+    if(!lookup&&[409,404].includes(e.status)){conflict=true;try{terminal=receipt(e.receipt,original);showReceipt('修改未完成，已请求刷新',e.receipt.code);}catch{el('resource-edit-result').textContent='冲突或目标变化 · 回执未确认，只能查询原请求';}}
+    else present(el('resource-edit-result'),'结果未确认，只能查询原审计回执，不会重复发送修改','UNKNOWN','原始状态');onError(e);
    }}finally{permit=false;if(n===opSeq&&ctx.actor===actor()){busy=false;controls();}}
    if(!current())return;
    if(terminal){last={...original,actor:ctx.actor};finish(ctx.actor);controls();}
    if((terminal||conflict)&&target&&capable())await load();
-   if(terminal&&doc&&n===opSeq&&same(ctx))el('resource-edit-result').textContent=el('resource-edit-result').textContent.replace('正在重新读取服务器展示信息','已重新读取当前展示信息');
+   if(terminal&&doc&&receiptView&&n===opSeq&&same(ctx))showReceipt(receiptView.message.replace('正在重新读取服务器展示信息','已重新读取当前展示信息'),receiptView.evidence);
   }
   function keyHandler(event){
    if(el('resource-edit-dialog').hidden)return false;
