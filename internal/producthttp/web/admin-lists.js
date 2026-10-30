@@ -1,7 +1,7 @@
 'use strict';
 // Admin-only paged view module. Authentication and HTTP are injected ports;
 // consumer controllers and owner-only task handling are independent.
-const AdminLists={create({el,read,generation,principal,onError,dateText,cell,badge,ownerSelected,userSelected,downloadSelected,downloadsChanged,bindingAllowed}){
+const AdminLists={create({present,rowLabels,el,read,generation,principal,onError,dateText,cell,badge,ownerSelected,userSelected,downloadSelected,downloadsChanged,bindingAllowed}){
  const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
  const views={};
  for(const kind of ['users','downloads']){
@@ -16,7 +16,7 @@ const AdminLists={create({el,read,generation,principal,onError,dateText,cell,bad
    if(kind==='downloads')downloadsChanged?.();
    const gen=generation(),request=++view.request,key=[view.cursor,view.owner,view.search,view.status].join('|'),previous=view.loaded&&view.key===key;
    if(!previous)view.clear();view.key=key;el(prefix+'-empty').hidden=true;
-   el('refresh-'+prefix).disabled=true;el('more-'+prefix).disabled=true;footer().textContent=previous?'正在刷新… · 旧页暂留':'LOADING · 正在查询…';
+   el('refresh-'+prefix).disabled=true;el('more-'+prefix).disabled=true;footer().textContent=previous?'正在刷新… · 旧页暂留':'正在查询…';
    const query=new URLSearchParams({limit:'20'});if(view.cursor)query.set('cursor',view.cursor);if(kind==='downloads'){if(view.owner)query.set('user_id',view.owner);query.set('status',view.status);}if(kind==='users'){if(view.search)query.set('q',view.search);if(view.status&&view.status!=='ALL')query.set('status',view.status);}
    try{
     const page=await read('/api/v1/admin/'+kind+'?'+query,gen);
@@ -27,21 +27,22 @@ const AdminLists={create({el,read,generation,principal,onError,dateText,cell,bad
     for(const item of page.items){
      const row=document.createElement('tr');
      if(kind==='users'){
-      const name=cell(row,item.login),id=document.createElement('small');id.textContent=item.user_id;name.append(id);
-      cell(row).append(badge(item.role,'neutral'));cell(row).append(badge(item.enabled?'启用':'停用',item.enabled?'':'warning'));
+      const name=cell(row);present(name,item.login,item.user_id,'账号编号');
+      cell(row).append(badge(({ADMIN:'管理员',USER:'普通用户'}[item.role]||'未知角色'),'neutral'));cell(row).append(badge(item.enabled?'启用':'停用',item.enabled?'':'warning'));
       cell(row,dateText(item.created_at));
-      const button=document.createElement('button');button.type='button';button.className='quiet';button.textContent='查看该用户任务';button.addEventListener('click',()=>ownerSelected(item.user_id));const actions=cell(row);actions.append(button);
-      if(item.role==='USER'&&userSelected){const edit=document.createElement('button');edit.type='button';edit.className='quiet';edit.textContent='管理此 USER';edit.addEventListener('click',()=>userSelected(item));actions.append(edit);}
+      const button=document.createElement('button');button.type='button';button.className='quiet';button.textContent='下载任务';button.setAttribute('aria-label','查看 '+item.login+' 的下载任务');button.addEventListener('click',()=>ownerSelected(item.user_id));const actions=cell(row);actions.append(button);
+      if(item.role==='USER'&&userSelected){const edit=document.createElement('button');edit.type='button';edit.className='quiet';edit.textContent='管理用户';edit.setAttribute('aria-label','管理用户 '+item.login);edit.addEventListener('click',()=>userSelected(item));actions.append(edit);}
      }else{
-      const open=document.createElement('button');open.type='button';open.className='file-button';open.textContent=item.manifest_id;open.addEventListener('click',()=>downloadSelected?.(item.manifest_id));cell(row).append(open);cell(row,item.owner_user_id);cell(row).append(badge(item.manifest_state,item.manifest_state==='RECOVERY_REQUIRED'?'warning':'neutral'));cell(row,item.job_state??'未创建 Job');
-      cell(row,String(item.claim_attempts)+' / '+String(item.failure_count));cell(row,dateText(item.updated_at));cell(row,item.binding_id);cell(row,item.job_id??'未创建 Job');cell(row,item.result_copy_id??'未提供');cell(row,dateText(item.created_at));
+      const open=document.createElement('button');open.type='button';open.className='file-button';open.textContent='请求 '+item.manifest_id.slice(-8);open.setAttribute('aria-label','查看下载请求 '+item.manifest_id);open.addEventListener('click',()=>downloadSelected?.(item.manifest_id));cell(row).append(open);
+      cell(row).append(badge(AdminDownloadDetail.labels[item.manifest_state],item.manifest_state==='RECOVERY_REQUIRED'?'warning':'neutral'));present(cell(row),'',item.owner_user_id,'用户编号');cell(row,dateText(item.updated_at));
+      const evidence=[['Manifest',item.manifest_id],['请求状态',item.manifest_state],['Job',item.job_id??'未创建 Job'],['执行状态',item.job_state??'未创建 Job'],['领取 / 失败次数',item.claim_attempts+' / '+item.failure_count],['Binding',item.binding_id],['结果 Copy',item.result_copy_id??'未提供'],['创建时间',dateText(item.created_at)]].map(([k,v])=>k+'：'+v).join('\n');present(cell(row),'',evidence,'执行与归属记录');
      }
-     rows().append(row);
+     rowLabels(row,kind==='users'?['账号','角色','状态','创建时间','操作']:['下载请求','进度','所属用户','更新时间','详情']);rows().append(row);
     }
     view.loaded=true;view.next=page.next_cursor||'';view.observed=new Date().toLocaleString();
     el(prefix+'-empty').hidden=page.items.length!==0;el('more-'+prefix).disabled=!view.next;
-    footer().textContent='本页 '+page.items.length+' 项 · GET /api/v1/admin/'+kind+(kind==='users'?(Number.isSafeInteger(page.total)?' · 匹配总数 '+page.total+'（服务端聚合，非本页推算） · 数据库读取于 '+dateText(page.read_at):' · 不代表全站总数（服务端未返回聚合，不据本页推算）'):'')+' · 客户端读取于 '+view.observed+'（非数据库观察时间）'+(kind==='downloads'?' · 状态 '+view.status+' · 未提供筛选总数（不据本页推算） · '+(view.owner?'用户 '+view.owner:'配置 Binding 内全部已归属任务'):' · 过滤条件：'+((view.search?'login~'+view.search:'')+(view.status&&view.status!=='ALL'?' 状态='+view.status:'')));
-   }catch(error){if(gen===generation()&&request===view.request){el(prefix+'-empty').hidden=true;footer().textContent=previous?'STALE · 查询失败；保留上次同页结果 · 客户端读取于 '+view.observed:'查询未完成 · 不以空结果代替失败';onError(error);}}
+    const evidence='本页 '+page.items.length+' 项 · GET /api/v1/admin/'+kind+(kind==='users'?(Number.isSafeInteger(page.total)?' · 匹配总数 '+page.total+'（服务端聚合，非本页推算） · 数据库读取于 '+dateText(page.read_at):' · 不代表全站总数（服务端未返回聚合，不据本页推算）'):'')+' · 客户端读取于 '+view.observed+'（非数据库观察时间）'+(kind==='downloads'?' · 状态 '+view.status+' · 未提供筛选总数（不据本页推算） · '+(view.owner?'用户 '+view.owner:'配置 Binding 内全部已归属任务'):' · 过滤条件：'+((view.search?'login~'+view.search:'')+(view.status&&view.status!=='ALL'?' 状态='+view.status:'')));present(footer(),'本页 '+page.items.length+(kind==='users'?' 位用户':' 条请求')+(kind==='users'&&Number.isSafeInteger(page.total)?' · 匹配 '+page.total+' 位用户':'')+' · 已更新',evidence,'读取范围与时间');
+   }catch(error){if(gen===generation()&&request===view.request){el(prefix+'-empty').hidden=true;footer().textContent=previous?'查询失败，保留上次结果 · 页面读取于 '+view.observed:'查询未完成 · 不以空结果代替失败';onError(error);}}
    finally{if(gen===generation()&&request===view.request)el('refresh-'+prefix).disabled=false;}
   };
   view.refresh=()=>{view.cursor='';return view.load();};

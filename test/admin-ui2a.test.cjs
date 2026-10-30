@@ -25,9 +25,9 @@ test('admin pages distinguish empty, failed, stale, new cursor and changed owner
   const app=await ready();let r=await reach(app,kind);app.respond(r,{items:[],next_cursor:''});await tick();assert.equal(app.elements.get(prefix+'-empty').hidden,false);
   const first=app.run('adminLists.'+kind+'.refresh();');await app.drain({['/api/v1/admin/'+kind]:{items:[item],next_cursor:item.user_id||item.manifest_id}});await first;
   const refresh=app.run('adminLists.'+kind+'.load();');app.respond(app.pending('/api/v1/admin/workspace'),descriptor);await tick();app.respond(app.pending('/api/v1/auth/me'),principal);await tick();app.respond(app.pending(new RegExp('^/api/v1/admin/'+kind+'\\?')),{code:'READ_UNAVAILABLE'},503);await refresh;
-  assert.equal(app.elements.get(prefix+'-rows').children.length,1);assert.equal(app.elements.get(prefix+'-empty').hidden,true);assert.match(app.text(prefix+'-footer'),/STALE/);
+  assert.equal(app.elements.get(prefix+'-rows').children.length,1);assert.equal(app.elements.get(prefix+'-empty').hidden,true);assert.match(app.text(prefix+'-footer'),/保留上次结果/);
   const next=app.run('adminLists.'+kind+'.more();');app.respond(app.pending('/api/v1/admin/workspace'),descriptor);await tick();app.respond(app.pending('/api/v1/auth/me'),principal);await tick();app.respond(app.pending(new RegExp('^/api/v1/admin/'+kind+'\\?')),{code:'READ_UNAVAILABLE'},503);await next;
-  assert.equal(app.elements.get(prefix+'-rows').children.length,0);assert.doesNotMatch(app.text(prefix+'-footer'),/STALE/);
+  assert.equal(app.elements.get(prefix+'-rows').children.length,0);assert.doesNotMatch(app.text(prefix+'-footer'),/保留上次结果/);
  }
 });
 test('admin read rejection immediately clears every cached list and old owner filter',async()=>{

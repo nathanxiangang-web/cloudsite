@@ -90,50 +90,61 @@ func assertAdmissionCounts(t *testing.T, f admissionFixture, operations, manifes
 	}
 }
 func TestPostgresProductAdmissionPersistsRawExecutionPolicyAndStableReplay(t *testing.T) {
-	f := newAdmissionFixture(t)
-	f.input.Source += "&tr=" + strings.Repeat("x", 10000)
-	got, err := f.service.Admit(f.ctx, f.p, f.input)
-	if err != nil || got.Status != acquisition.SubmissionCreated {
-		t.Fatal(got, err)
+	for _, ampTail := range []bool{false, true} {
+		t.Run(fmt.Sprintf("amp_tail_%t", ampTail), func(t *testing.T) {
+			f := newAdmissionFixture(t)
+			if ampTail {
+				f.input.Source = "magnet:?xt=urn:btih:0123456789ABCDEF0123456789ABCDEF01234567&amp;dn=private%20name&amp;tr=" + strings.Repeat("x", 10000)
+			} else {
+				f.input.Source += "&tr=" + strings.Repeat("x", 10000)
+			}
+			got, err := f.service.Admit(f.ctx, f.p, f.input)
+			if err != nil || got.Status != acquisition.SubmissionCreated {
+				t.Fatal(got, err)
+			}
+			var original, execution, policy string
+			if err = f.pool.QueryRow(f.ctx, `SELECT original_source,execution_source,source_policy FROM product_operations WHERE user_id=$1`, string(f.p.UserID)).Scan(&original, &execution, &policy); err != nil {
+				t.Fatal(err)
+			}
+			prepared, _ := acquisition.PrepareSource(f.input.Source, acquisition.MagnetBTIHNameV1)
+			if ampTail && execution != "magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567" {
+				t.Fatal("AMP tail reached durable execution")
+			}
+			if original != f.input.Source || execution != prepared.Reference.Value || policy != string(acquisition.MagnetBTIHNameV1) {
+				t.Fatal("durable preparation evidence differs")
+			}
+			m, err := f.manifests.GetManifest(f.ctx, got.ManifestID)
+			if err != nil || m.SourceRef != execution || m.ExpectedName != nil || m.JobID == nil || *m.JobID != got.JobID {
+				t.Fatal("Manifest execution/identity mismatch")
+			}
+			topology, _ := NewStorageRepository(f.pool)
+			resolver, _ := acquisition.NewExecutionInputResolver(f.manifests, topology)
+			input, err := resolver.Resolve(f.ctx, got.ManifestID)
+			if err != nil || input.Download.Source.Value != execution {
+				t.Fatal("provider source changed")
+			}
+			// Historical replay must not need an ACTIVE topology, nor charge twice.
+			if _, err = f.pool.Exec(f.ctx, `UPDATE storage_bindings SET status='DISABLED' WHERE storage_binding_id=$1`, string(f.input.BindingID)); err != nil {
+				t.Fatal(err)
+			}
+			if _, err = f.pool.Exec(f.ctx, `UPDATE product_operation_quotas SET operation_limit=1,concurrency_limit=1 WHERE user_id=$1`, string(f.p.UserID)); err != nil {
+				t.Fatal(err)
+			}
+			replay, err := f.service.Admit(f.ctx, f.p, f.input)
+			if err != nil || replay.Status != acquisition.SubmissionReplay || replay.ManifestID != got.ManifestID || replay.JobID != got.JobID {
+				t.Fatal("replay changed", err)
+			}
+			usage, err := f.service.Usage(f.ctx, f.p)
+			if err != nil || usage.Used != 1 || usage.InFlight != 1 || usage.Remaining != 0 {
+				t.Fatal(usage, err)
+			}
+			encoded, _ := json.Marshal(got)
+			if strings.Contains(string(encoded), "private") || strings.Contains(string(encoded), "source") || strings.Contains(string(encoded), "policy") {
+				t.Fatal("unsafe DTO")
+			}
+			assertAdmissionCounts(t, f, 1, 1, 1)
+		})
 	}
-	var original, execution, policy string
-	if err = f.pool.QueryRow(f.ctx, `SELECT original_source,execution_source,source_policy FROM product_operations WHERE user_id=$1`, string(f.p.UserID)).Scan(&original, &execution, &policy); err != nil {
-		t.Fatal(err)
-	}
-	prepared, _ := acquisition.PrepareSource(f.input.Source, acquisition.MagnetBTIHNameV1)
-	if original != f.input.Source || execution != prepared.Reference.Value || policy != string(acquisition.MagnetBTIHNameV1) {
-		t.Fatal("durable preparation evidence differs")
-	}
-	m, err := f.manifests.GetManifest(f.ctx, got.ManifestID)
-	if err != nil || m.SourceRef != execution || m.ExpectedName != nil || m.JobID == nil || *m.JobID != got.JobID {
-		t.Fatal("Manifest execution/identity mismatch")
-	}
-	topology, _ := NewStorageRepository(f.pool)
-	resolver, _ := acquisition.NewExecutionInputResolver(f.manifests, topology)
-	input, err := resolver.Resolve(f.ctx, got.ManifestID)
-	if err != nil || input.Download.Source.Value != execution {
-		t.Fatal("provider source changed")
-	}
-	// Historical replay must not need an ACTIVE topology, nor charge twice.
-	if _, err = f.pool.Exec(f.ctx, `UPDATE storage_bindings SET status='DISABLED' WHERE storage_binding_id=$1`, string(f.input.BindingID)); err != nil {
-		t.Fatal(err)
-	}
-	if _, err = f.pool.Exec(f.ctx, `UPDATE product_operation_quotas SET operation_limit=1,concurrency_limit=1 WHERE user_id=$1`, string(f.p.UserID)); err != nil {
-		t.Fatal(err)
-	}
-	replay, err := f.service.Admit(f.ctx, f.p, f.input)
-	if err != nil || replay.Status != acquisition.SubmissionReplay || replay.ManifestID != got.ManifestID || replay.JobID != got.JobID {
-		t.Fatal("replay changed", err)
-	}
-	usage, err := f.service.Usage(f.ctx, f.p)
-	if err != nil || usage.Used != 1 || usage.InFlight != 1 || usage.Remaining != 0 {
-		t.Fatal(usage, err)
-	}
-	encoded, _ := json.Marshal(got)
-	if strings.Contains(string(encoded), "private") || strings.Contains(string(encoded), "source") || strings.Contains(string(encoded), "policy") {
-		t.Fatal("unsafe DTO")
-	}
-	assertAdmissionCounts(t, f, 1, 1, 1)
 }
 func TestPostgresProductAdmissionPinnedPolicyAndConflictingRawIntent(t *testing.T) {
 	f := newAdmissionFixture(t)

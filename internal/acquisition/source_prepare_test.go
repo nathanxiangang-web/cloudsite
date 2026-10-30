@@ -17,6 +17,62 @@ import (
 const testBTIH = "0123456789abcdef0123456789abcdef01234567"
 const testMinimal = "magnet:?xt=urn:btih:" + testBTIH
 
+func TestPrepareMagnetCutsLiteralAMPTail(t *testing.T) {
+	for _, tc := range []struct {
+		input, want string
+		removed     int
+	}{
+		{testMinimal + "&amp;dn=discarded&amp;xl=123&amp;tr=udp://tracker.invalid", testMinimal, 3},
+		{testMinimal + "&dn=kept&amp;dn=discarded&tr=tracker", testMinimal + "&dn=kept", 2},
+		{testMinimal + "&tr=first&amp;tr=second", testMinimal, 2},
+		{testMinimal + "&amp;dn=" + strings.Repeat("a", 10000), testMinimal, 1},
+		{testMinimal + "&amp;xt=urn:btih:" + testBTIH, testMinimal, 1},
+		{testMinimal + "&dn=camping", testMinimal + "&dn=camping", 0},
+		{testMinimal + "&dn=A%26amp%3BB", testMinimal + "&dn=A%26amp%3BB", 0},
+	} {
+		got, err := acquisition.PrepareSource(tc.input, acquisition.MagnetBTIHNameV1)
+		if err != nil || got.Reference.Value != tc.want || got.Original != tc.input || got.RemovedParameters != tc.removed || got.Changed != (tc.input != tc.want) {
+			t.Fatalf("AMP preparation mismatch: input bytes=%d removed=%d error=%v", len(tc.input), got.RemovedParameters, err)
+		}
+		again, err := acquisition.PrepareSource(got.Reference.Value, got.Policy)
+		if err != nil || again.Reference.Value != tc.want || again.Changed {
+			t.Fatal("AMP preparation not idempotent", err)
+		}
+	}
+	for _, tc := range []struct {
+		input string
+		want  error
+	}{
+		{testMinimal + "&amp;xt=urn:btih:" + strings.Repeat("f", 40), acquisition.ErrMagnetAmbiguous},
+		{testMinimal + "&amp;xt=urn:btmh:1220" + strings.Repeat("a", 64), acquisition.ErrMagnetUnsupported},
+		{testMinimal + "&amp;%73O=0", acquisition.ErrMagnetUnsupported},
+		{testMinimal + "&so=1&amp;tr=tracker", acquisition.ErrMagnetUnsupported},
+		{"magnet:?dn=first&amp;xt=urn:btih:" + testBTIH, acquisition.ErrInvalidSource},
+		{testMinimal + "&amp;tr=%GG", acquisition.ErrInvalidSource},
+		{testMinimal + "&amp;tr=x#fragment", acquisition.ErrInvalidSource},
+		{testMinimal + strings.Repeat("&amp;tr=x", 512), acquisition.ErrInvalidSource},
+		{testMinimal + "&amp;tr=x\n", acquisition.ErrInvalidSource},
+		{testMinimal + "&amp;tr=" + strings.Repeat("x", acquisition.MaxSourceInputLength), acquisition.ErrInvalidSource},
+	} {
+		got, err := acquisition.PrepareSource(tc.input, acquisition.MagnetBTIHNameV1)
+		if !errors.Is(err, tc.want) || got.Original != "" || got.Reference.Value != "" {
+			t.Fatalf("unsafe AMP tail accepted: error=%v want=%v", err, tc.want)
+		}
+	}
+	for _, tc := range []struct {
+		input  string
+		policy acquisition.SourcePolicy
+	}{
+		{"https://example.invalid/file?token=a&amp;sig=b", acquisition.MagnetBTIHNameV1},
+		{testMinimal + "&amp;dn=legacy", acquisition.SourceExactV1},
+	} {
+		got, err := acquisition.PrepareSource(tc.input, tc.policy)
+		if err != nil || got.Reference.Value != tc.input || got.Original != tc.input || got.Changed {
+			t.Fatal("exact source changed", err)
+		}
+	}
+}
+
 func TestPrepareMagnetKeepsOnlyBTIHAndDisplayName(t *testing.T) {
 	rawBytes, _ := hex.DecodeString(testBTIH)
 	b32 := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(rawBytes)
@@ -124,6 +180,8 @@ func TestMagnetRejectionPriorityIsDeterministic(t *testing.T) {
 func FuzzPrepareMagnetNeverProducesMalformedOrUnboundedOutput(f *testing.F) {
 	f.Add(testMinimal + "&dn=demo&tr=udp%3A%2F%2Ftracker.invalid")
 	f.Add("magnet:?xt=urn:btih:invalid")
+	f.Add(testMinimal + "&amp;dn=discarded&amp;tr=udp://tracker.invalid")
+	f.Add(testMinimal + "&dn=A%26amp%3BB")
 	f.Fuzz(func(t *testing.T, input string) {
 		got, err := acquisition.PrepareSource(input, acquisition.MagnetBTIHNameV1)
 		if err != nil {

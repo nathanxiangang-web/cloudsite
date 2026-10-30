@@ -11,7 +11,7 @@ async function ready(data=page(),configuration=cap){const app=workspace();await 
 async function refresh(app,data,status=200){const done=app.click('audit-refresh');await auth(app);app.respond(app.pending(/\/admin\/audit\/actions\?/),data,status);await done;}
 async function detail(app,value=evidence()){const done=app.run('adminAudit.detail("'+value.request_id+'");');await auth(app);app.respond(app.pending(base+'/'+principal.user_id+'/'+value.request_id),value);await done;}
 test('real audit destination is read-only, actor scoped and shows UNKNOWN without invented terminal time',async()=>{
- const app=await ready();assert.equal(app.elements.get('audit-panel').hidden,false);assert.equal(app.elements.get('planned-panel').hidden,true);assert.match(app.text('audit-rows'),/结果未确认/);assert.match(app.text('audit-footer'),/本页 1 条.*未提供全量总数/);
+ const app=await ready();assert.equal(app.elements.get('audit-panel').hidden,false);assert.equal(app.elements.has('planned-panel'),false);assert.match(app.text('audit-rows'),/结果未确认/);assert.match(app.text('audit-footer'),/本页 1 条.*未提供全量总数/);
  assert.match(app.requests.find(r=>r.url.startsWith(base+'?')).url,/actor_id=97000000-0000-4000-8000-000000000009/);
  await detail(app);assert.match(app.text('audit-facts'),/无已确认终态/);assert.match(app.text('audit-detail-status'),/不会执行或重放/);assert.ok(app.requests.every(r=>r.options.method==='GET'));
 });
