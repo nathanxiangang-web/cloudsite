@@ -73,6 +73,19 @@ magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567&dn=demo-video
 [BEP53选择文件扩展](https://www.bittorrent.org/beps/bep_0053.html)。协议支持不等于
 某个115端点实际兼容；本轮不进行真实下载。
 
+### HTML 转义分隔符兼容（2026-10-29）
+
+新提交的磁力链接遇到第一个字面量 `&amp;` 时，从该分隔符起删除后续内容；
+例如 `magnet:?xt=urn:btih:<有效BTIH>&amp;dn=demo&amp;tr=...` 只保留资源标识。
+截断前仍校验完整参数结构、参数数量及所有身份和文件选择语义，拒绝冲突BTIH、
+混合v2身份和so；截断后的前缀必须独立包含有效BTIH。百分号编码的名称文本
+`%26amp%3B` 不触发此规则，普通HTTP签名链接和 `source-exact-v1` 保持逐字节不变。
+
+这是 `magnet-btih-name-v1` 对此前拒绝输入的兼容修复，已接受输入的语义不变，
+不新增策略或数据库迁移。预览与准入复用 acquisition 纯函数；前端不改写提交原文。
+私有原始输入继续完整保存；历史回放和Worker使用已保存的执行来源，不重新截断。
+新增规则须独立覆盖纯函数、HTTP预览及PostgreSQL准入/回放测试，后续Provider不得另写截断逻辑。
+
 ## 4. 原始输入、执行来源与幂等
 
 `PrepareSource`返回私有Original、执行Reference、策略版本、Changed和移除参数数。

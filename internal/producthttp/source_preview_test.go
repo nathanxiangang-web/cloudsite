@@ -6,6 +6,27 @@ import (
 	"testing"
 )
 
+func TestSourcePreviewCutsAMPTail(t *testing.T) {
+	h, err := NewWorkspaceHandler(&fakeAccess{p: goodPrincipal()}, "http://127.0.0.1:8180", &readAccessFake{}, []DisplayBinding{workspaceBinding}, 15, WithCloudSourcePreview(SourcePreviewConfig{Label: "Cloud downloads", UnavailableReason: "LOGIN_REQUIRED"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, _ := json.Marshal(map[string]string{"source": "magnet:?xt=urn:btih:0123456789ABCDEF0123456789ABCDEF01234567&amp;dn=discarded&amp;tr=udp://tracker.invalid"})
+	w := request(h, "POST", "/api/v1/cloud-downloads/prepare", string(raw), testToken, "http://127.0.0.1:8180")
+	var result struct {
+		ExecutionSource string `json:"execution_source"`
+		Policy          string `json:"policy"`
+		Changed         bool   `json:"changed"`
+		Removed         int    `json:"removed_parameters"`
+	}
+	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &result) != nil || result.ExecutionSource != "magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567" || result.Policy != "magnet-btih-name-v1" || !result.Changed || result.Removed != 2 {
+		t.Fatal("AMP preview differs from execution contract", w.Code)
+	}
+	if strings.Contains(w.Body.String(), "discarded") || strings.Contains(w.Body.String(), "tracker.invalid") {
+		t.Fatal("discarded tail exposed in preview")
+	}
+}
+
 func TestReadOnlySourcePreviewNeverRegistersAdmission(t *testing.T) {
 	access := &fakeAccess{p: goodPrincipal()}
 	h, err := NewWorkspaceHandler(access, "http://127.0.0.1:8180", &readAccessFake{}, []DisplayBinding{workspaceBinding}, 15, WithCloudSourcePreview(SourcePreviewConfig{Label: "Cloud downloads", UnavailableReason: "LOGIN_REQUIRED"}))
