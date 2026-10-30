@@ -1,5 +1,20 @@
 # cloudsite — AI Architecture Memory
 
+## Release 1.0.0 closeout - 2026-10-30
+
+The human explicitly requested the final 1.0 release and the end of this
+feature-development phase. This supersedes older candidate-only handoff pointers
+for this release integration/publication/deployment. Integrate the completed
+PR181 admin UI cleanup and PR182 magnet compatibility fix, freeze VERSION1.0.0,
+require exact merged-main CI success, then publish immutable v1.0.0 artifacts and
+perform the separately verified production cutover. No new business feature,
+migration, provider command, AI131 or paused private139 work is included.
+
+Project mode after release: MAINTENANCE. Retain existing state and capability;
+no further feature work without a new human request. Source, release artifacts
+and production must have distinct receipts. Production is not accepted merely
+because this documentation or a tag exists. See docs/releases/v1.0.0.md.
+
 ## Current delivery - Issue180 admin information architecture (2026-10-28)
 
 PR179 merged as750f5281217d92bc2ed48b71bb28256bd0101e82. Exact merged-main

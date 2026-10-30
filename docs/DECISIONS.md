@@ -1,5 +1,20 @@
 # cloudsite — Decision Log
 
+## Release 1.0.0 closeout - 2026-10-30
+
+The human explicitly requested the final 1.0 release and the end of this
+feature-development phase. This supersedes older candidate-only handoff pointers
+for this release integration/publication/deployment. Integrate the completed
+PR181 admin UI cleanup and PR182 magnet compatibility fix, freeze VERSION1.0.0,
+require exact merged-main CI success, then publish immutable v1.0.0 artifacts and
+perform the separately verified production cutover. No new business feature,
+migration, provider command, AI131 or paused private139 work is included.
+
+Project mode after release: MAINTENANCE. Retain existing state and capability;
+no further feature work without a new human request. Source, release artifacts
+and production must have distinct receipts. Production is not accepted merely
+because this documentation or a tag exists. See docs/releases/v1.0.0.md.
+
 ## Current delivery - Issue176 complete resource editor (2026-10-28)
 
 PR177 merged as1611d37bd443e01b82c1eb66381bb91ecc3ee0d2; main CI40549771841

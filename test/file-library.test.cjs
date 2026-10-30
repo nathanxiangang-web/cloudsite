@@ -5,8 +5,8 @@ const catalogCode=fs.readFileSync(path.join(web,'file-catalog.js'),'utf8');
 const {Catalog}=vm.runInNewContext(catalogCode+'\nFileCatalog;',{});
 const file=(id,extra={})=>({binding_id:'one',resource_id:id,name:id+'.pdf',directory:false,presence:'PRESENT',size_bytes:123,...extra});
 test('all public HTML surfaces use cloudsite and the exact release version',()=>{
- const version=fs.readFileSync(path.join(__dirname,'..','VERSION'),'utf8').trim();assert.equal(version,'cloudsiteV1.0.0alpha');
- for(const name of ['library.html','index.html','share.html']){const html=fs.readFileSync(path.join(web,name),'utf8');assert.ok(html.includes(version),name);assert.ok(html.includes('cloudsite'),name);assert.ok(!/panta/i.test(html),name);}
+ const version=fs.readFileSync(path.join(__dirname,'..','VERSION'),'utf8').trim();assert.equal(version,'1.0.0');
+ for(const name of ['library.html','index.html','share.html','downloads.html']){const html=fs.readFileSync(path.join(web,name),'utf8');assert.ok(html.includes(version),name);assert.ok(html.includes('cloudsite'),name);assert.ok(!/panta/i.test(html),name);}
 });
 const page=(items=[],next_cursor='')=>({items,next_cursor});
 

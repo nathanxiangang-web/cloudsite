@@ -1,40 +1,25 @@
 # cloudsite
 
-Current release: **cloudsiteV1.0.0alpha**. The HTTPS deployment enables website
-registration for ordinary USER accounts. Use the login page's registration
-action; passwords require at least6 characters and at most72 UTF-8 bytes,
-account names3-64 ASCII letters/digits/._-.
-Existing local product credentials are preserved on the remote deployment;
-registration cannot choose ADMIN or reset an existing account. Storage/115
-credentials remain operator-managed, separate from website accounts.
+Current release: **1.0.0**. [Release notes and upgrade/rollback contract](docs/releases/v1.0.0.md).
+The current development phase is complete; the project enters maintenance.
+New feature development requires a new explicit request.
 
-Deployed site: [cloud.netioi.com](https://cloud.netioi.com/). Public HTTPS,
-existing local account login, registration,283-file inventory, real document
-preview/download, video Range and protected/no-code sharing have been verified.
-This is an alpha with an imported canonical snapshot, not automatic continuous
-drive indexing or completed admission/usage/native115 sharing.
+Product: [cloud.netioi.com](https://cloud.netioi.com/). CloudSite provides account
+login, a file library, previews, browser-supported media playback, direct downloads,
+revocable single-file shares, cloud-download admission and a role-protected admin
+console. Admin capabilities include user management, task queries, audited resource
+presentation edits and operation history. The release includes the completed
+admin UI cleanup and magnet `&amp;` preparation fix.
 
-Storage service: [OpenList](https://pan.netioi.com/), version4.2.6 pinned by digest,
-installed on the same public server using local OpenList configuration/login.
-The previous AList container is removed; its data and rollback backups remain.
-Website and storage accounts are different domains. Existing local website
-passwords are unchanged; new website passwords require at least6 characters.
+Schema remains **20**. IndexCore owns physical truth; provider completion alone
+is not READY. Running/uncertain work has no automatic retry, and storage activation
+does not prove provider authentication. AI/private UserSpace work is deferred.
+See the release notes for precise supported behavior and remaining limits.
 
-Current release: **`cloudsiteV1.0.0alpha`**. This is the renamed Panta repository,
-not the deleted legacy CloudSite Python/Next.js project. GitHub repository ID and
-all accepted Issue/PR history are preserved. Public product branding is cloudsite.
-
-Available: authenticated consumer/admin UI, complete CloudSite file inventory,
-document previews, native downloads, browser-supported media playback and
-expiring single-file links with optional random4-character codes. Alpha naming
-does not complete admission/usage, native115 shares or all-codec transcoding.
-The current catalog is an explicitly imported canonical snapshot; automatic
-rescanning/production acquisition is not enabled by this release.
-
-Deployment/version/rollback: [cloudsiteV1.0.0alpha contract](docs/CLOUDSITE-V1-ALPHA.md).
-Internal Go imports, `cmd/panta`, `PANTA_*` settings, cookies and schema14 database
-names intentionally retain compatibility; do not rename durable identifiers or
-credentials as a cosmetic migration.
+Product and storage accounts remain separate. Existing Go imports, `cmd/panta`,
+`PANTA_*` settings, cookies, deployment filenames and durable identities retain
+compatibility names; do not rename them or recreate data volumes for branding.
+The prior [alpha deployment contract](docs/CLOUDSITE-V1-ALPHA.md) is historical.
 
 cloudsite is a provider-neutral resource acquisition and catalog platform.
 

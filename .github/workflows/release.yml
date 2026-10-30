@@ -1,0 +1,54 @@
+name: CloudSite release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version: 1.27.1
+          cache-dependency-path: go.sum
+      - name: Verify immutable release source and main CI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(cat VERSION)"
+          test "$GITHUB_REF_NAME" = "v$version"
+          test -f "docs/releases/$GITHUB_REF_NAME.md"
+          git merge-base --is-ancestor HEAD origin/main
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --commit "$(git rev-parse HEAD)" --event push --status success --json headSha,conclusion --jq 'length > 0' | grep -qx true
+      - name: Build Linux amd64 distribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(cat VERSION)"
+          package="cloudsite_${version}_linux_amd64"
+          mkdir -p "dist/$package"
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags '-s -w' -o "dist/$package/cloudsite" ./cmd/panta
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags '-s -w' -o "dist/$package/panta-db" ./cmd/panta-db
+          cp VERSION "docs/releases/$GITHUB_REF_NAME.md" "dist/$package/"
+          go version -m "dist/$package/cloudsite" > "dist/$package/BUILD-INFO.txt"
+          (cd "dist/$package" && sha256sum cloudsite panta-db > BINARY-SHA256SUMS)
+          tar -C dist -czf "dist/$package.tar.gz" "$package"
+          (cd dist && sha256sum "$package.tar.gz" > SHA256SUMS)
+      - name: Publish release with checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$GITHUB_REF_NAME" dist/*.tar.gz dist/SHA256SUMS --verify-tag --latest --title "CloudSite $(cat VERSION)" --notes-file "docs/releases/$GITHUB_REF_NAME.md"
