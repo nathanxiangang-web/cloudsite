@@ -41,7 +41,7 @@ jobs:
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags '-s -w' -o "dist/$package/cloudsite" ./cmd/panta
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags '-s -w' -o "dist/$package/panta-db" ./cmd/panta-db
           cp VERSION "docs/releases/$GITHUB_REF_NAME.md" "dist/$package/"
-          go version -m "dist/$package/cloudsite" > "dist/$package/BUILD-INFO.txt"
+          go version -m "dist/$package/cloudsite" "dist/$package/panta-db" > "dist/$package/BUILD-INFO.txt"
           (cd "dist/$package" && sha256sum cloudsite panta-db > BINARY-SHA256SUMS)
           tar -C dist -czf "dist/$package.tar.gz" "$package"
           (cd dist && sha256sum "$package.tar.gz" > SHA256SUMS)
