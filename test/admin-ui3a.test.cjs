@@ -103,3 +103,12 @@ test('confirmed action clears only its stored receipt so a reload does not lock 
  app.respond(request,outcome(id,{action:'DELETE_USER',code:'USER_DELETED',target_id:user.user_id,user:{...user,enabled:false,deleted:true,version:3}}));await done;await app.drain();
  assert.equal(storage.has('cloudsite-admin-action:'+principal.user_id),false);assert.match(app.text('action-status'),/账号已删除/);
 });
+
+
+test('a stored terminal action is reconciled by one GET without manual steps or command replay',async()=>{
+ const id='99500000-0000-4000-8000-000000000088',storage=new Map([['cloudsite-admin-action:'+principal.user_id,id]]),app=workspace({storage});
+ await app.drain({['/api/v1/admin/actions/'+id]:outcome(id,{target_id:user.user_id,user})});
+ assert.equal(app.requests.filter(r=>r.url==='/api/v1/admin/actions/'+id).length,1);
+ assert.equal(app.requests.some(r=>r.options.method!=='GET'),false);assert.equal(storage.size,0);
+ assert.equal(app.elements.get('create-user-submit').disabled,false);
+});

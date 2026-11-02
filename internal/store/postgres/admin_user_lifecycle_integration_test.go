@@ -423,6 +423,53 @@ func TestPostgresAdminLifecycleAdmissionSerialization(t *testing.T) {
 	}
 }
 
+func TestPostgresAdminLifecycleLegacyTombstonePermanentRemoval(t *testing.T) {
+	ctx, pool, _, a, _, repo := opFixture(t)
+	svc, _ := adminops.NewService(repo, nil, []string{adminBinding})
+	created := opRun(t, svc, a, adminops.Command{RequestID: opID(1), Action: adminops.CreateUser, Login: "legacy-deleted", Password: "synthetic-password"})
+	_, err := pool.Exec(ctx, `WITH stamp AS (SELECT clock_timestamp() AS at) UPDATE product_users SET enabled=false,deleted_at=stamp.at,deleted_by=$2,updated_at=stamp.at,admin_version=1 FROM stamp WHERE user_id=$1`, created.TargetID, string(a.Principal.UserID))
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := opRun(t, svc, a, adminops.Command{RequestID: opID(2), Action: adminops.DeleteUser, TargetID: created.TargetID, ExpectedVersion: 1})
+	var exists bool
+	if err = pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM product_users WHERE user_id=$1)`, created.TargetID).Scan(&exists); err != nil || exists || result.Status != "SUCCEEDED" {
+		t.Fatal("legacy deletion was not made permanent", result, err)
+	}
+}
+
+func TestPostgresAdminLifecycleUnexpectedReferenceRejectsAtomically(t *testing.T) {
+	ctx, pool, accounts, a, _, repo := opFixture(t)
+	svc, _ := adminops.NewService(repo, nil, []string{adminBinding})
+	created := opRun(t, svc, a, adminops.Command{RequestID: opID(1), Action: adminops.CreateUser, Login: "referenced-user", Password: "synthetic-password"})
+	other := opRun(t, svc, a, adminops.Command{RequestID: opID(2), Action: adminops.CreateUser, Login: "reference-holder", Password: "synthetic-password"})
+	logged, err := accounts.Login(ctx, "referenced-user", "synthetic-password")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Isolated legacy/corrupt-role setup: a normal USER is unexpectedly referenced
+	// as a historical deletion actor. No partial credential cleanup may survive.
+	_, err = pool.Exec(ctx, `WITH stamp AS (SELECT clock_timestamp() AS at) UPDATE product_users SET enabled=false,deleted_at=stamp.at,deleted_by=$2,updated_at=stamp.at FROM stamp WHERE user_id=$1`, other.TargetID, created.TargetID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	command := adminops.Command{RequestID: opID(3), Action: adminops.DeleteUser, TargetID: created.TargetID}
+	result := opRun(t, svc, a, command)
+	if result.Status != "REJECTED" || result.Code != "TARGET_FORBIDDEN" {
+		t.Fatal("unexpected reference was not an audited rejection", result)
+	}
+	if _, err = accounts.Authenticate(ctx, logged.Token); err != nil {
+		t.Fatal("rejected deletion partially removed the session", err)
+	}
+	var unchanged bool
+	if err = pool.QueryRow(ctx, `SELECT enabled AND admin_version=0 FROM product_users WHERE user_id=$1`, created.TargetID).Scan(&unchanged); err != nil || !unchanged {
+		t.Fatal("rejected deletion changed the account", err)
+	}
+	if replay := opRun(t, svc, a, command); !replay.RecordedAt.Equal(result.RecordedAt) {
+		t.Fatal("rejected deletion replay changed the receipt")
+	}
+}
+
 func TestPostgresAdminLifecycleMigration16To17PreservesData(t *testing.T) {
 	ctx := context.Background()
 	pool := integrationPool(t, ctx)
