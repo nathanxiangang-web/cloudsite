@@ -1,5 +1,13 @@
 # Admin UI-3B PR-A: account lifecycle boundary
 
+## 2026-11-02 superseding maintenance contract
+
+The human explicitly replaced soft deletion with permanent account deletion.
+See [v1.0.1](releases/v1.0.1.md) for removed/retained data, module boundaries and
+validation. A row action and one irreversible confirmation replace the old
+checkbox/disable/restore presentation. No schema migration or automatic purge
+is included; historical descriptions below document the earlier contract.
+
 Issue #155 authorizes this development slice from `c26678a87ca4`.
 This is a candidate contract, not deployment or architecture acceptance.
 

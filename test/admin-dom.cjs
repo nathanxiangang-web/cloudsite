@@ -19,7 +19,7 @@ function workspace({hash='',storage}={}){
  const elements=new Map(Array.from(html.matchAll(/<[^>]*\bid="([^"]+)"[^>]*>/g),m=>[m[1],new Element(m[1],m[0])]));
  document={activeElement:null,visibilityState:'visible',body:new Element('body'),getElementById(id){assert.ok(elements.has(id),'unknown DOM id '+id);return elements.get(id);},createElement(){return new Element();},addEventListener(type,fn){(events[type]||=[]).push(fn);}};
  const timers=new Map();let timerID=0;
- const window={crypto:require('node:crypto').webcrypto,location:{hash,pathname:'/admin/',search:''},history:{replaceState(_state,_unused,url){window.location.hash=url.includes('#')?'#'+url.split('#')[1]:'';}},scrollTo(){},addEventListener(type,fn){(windowEvents[type]||=[]).push(fn);},matchMedia(){return{matches:true};}};
+ const window={confirm(){return false;},crypto:require('node:crypto').webcrypto,location:{hash,pathname:'/admin/',search:''},history:{replaceState(_state,_unused,url){window.location.hash=url.includes('#')?'#'+url.split('#')[1]:'';}},scrollTo(){},addEventListener(type,fn){(windowEvents[type]||=[]).push(fn);},matchMedia(){return{matches:true};}};
  const ctx=vm.createContext({AbortController,URLSearchParams,document,window,setTimeout(callback,ms){const id=++timerID;timers.set(id,{callback,ms});return id;},clearTimeout(id){timers.delete(id);},fetch(url,options){return new Promise((resolve,reject)=>requests.push({url,options,resolve,reject,done:false}));}});
  if(storage)window.sessionStorage={getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)};
  vm.runInContext(fs.readFileSync(path.join(web,'resource-display.js'),'utf8'),ctx);

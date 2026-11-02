@@ -30,7 +30,7 @@ func (r *AdminOperationsRepository) changeUser(ctx context.Context, tx pgx.Tx, a
 		result.Code = "VERSION_CONFLICT"
 		return result, nil
 	}
-	if (deleted != nil) != (c.Action == adminops.RestoreUser) {
+	if c.Action != adminops.DeleteUser && (deleted != nil) != (c.Action == adminops.RestoreUser) {
 		result.Code = "USER_STATE_CONFLICT"
 		return result, nil
 	}
@@ -84,8 +84,7 @@ func (r *AdminOperationsRepository) changeUser(ctx context.Context, tx pgx.Tx, a
 			result.Code = "DOWNLOAD_STATE_CONFLICT"
 			return result, nil
 		}
-		u.Enabled = false
-		code = "USER_DELETED"
+		return deleteAccount(ctx, tx, c, u)
 	default:
 		return result, adminops.ErrInvalid
 	}
@@ -99,9 +98,9 @@ func (r *AdminOperationsRepository) changeUser(ctx context.Context, tx pgx.Tx, a
 	e = save.QueryRow(ctx, `WITH stamp AS MATERIALIZED (SELECT clock_timestamp() AS at)
  UPDATE product_users SET login=$2,enabled=$3,
  password_hash=COALESCE($4::bytea,password_hash),admin_version=admin_version+1,
- deleted_at=CASE WHEN $5='DELETE_USER' THEN stamp.at WHEN $5='RESTORE_USER' THEN NULL ELSE deleted_at END,
- deleted_by=CASE WHEN $5='DELETE_USER' THEN $6::uuid WHEN $5='RESTORE_USER' THEN NULL ELSE deleted_by END,
- updated_at=stamp.at FROM stamp WHERE user_id=$1 AND admin_version=$7 RETURNING admin_version`, u.UserID, u.Login, u.Enabled, newHash, c.Action, string(a.Principal.UserID), c.ExpectedVersion).Scan(&u.Version)
+ deleted_at=CASE WHEN $5='RESTORE_USER' THEN NULL ELSE deleted_at END,
+ deleted_by=CASE WHEN $5='RESTORE_USER' THEN NULL ELSE deleted_by END,
+ updated_at=stamp.at FROM stamp WHERE user_id=$1 AND admin_version=$6 RETURNING admin_version`, u.UserID, u.Login, u.Enabled, newHash, c.Action, c.ExpectedVersion).Scan(&u.Version)
 	if e != nil {
 		_ = save.Rollback(ctx)
 		var pe *pgconn.PgError
@@ -117,13 +116,7 @@ func (r *AdminOperationsRepository) changeUser(ctx context.Context, tx pgx.Tx, a
 	if _, e = tx.Exec(ctx, `UPDATE product_sessions SET revoked_at=clock_timestamp() WHERE user_id=$1 AND revoked_at IS NULL`, u.UserID); e != nil {
 		return result, e
 	}
-	if c.Action == adminops.DeleteUser {
-		// Grants remain durable history but can never bypass the revoked parent.
-		if _, e = tx.Exec(ctx, `UPDATE product_file_shares SET revoked_at=clock_timestamp() WHERE owner_id=$1 AND revoked_at IS NULL`, u.UserID); e != nil {
-			return result, e
-		}
-	}
-	u.Deleted = c.Action == adminops.DeleteUser
+	u.Deleted = false
 	result.Status = "SUCCEEDED"
 	result.Code = code
 	result.User = &u

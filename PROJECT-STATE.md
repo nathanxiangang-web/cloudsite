@@ -1,5 +1,15 @@
 # cloudsite — Project State
 
+## Maintenance request - simple permanent account deletion (2026-11-02)
+
+The human explicitly requested a simpler account-delete flow and rejected
+soft-disable/restore semantics. Implement v1.0.1 as specified in
+`docs/releases/v1.0.1.md`: one confirmation, physical website-account cleanup,
+terminal-download/concurrency/authorization guards, retained task and audit
+history, no native storage deletion or migration. Existing production accounts
+are not test fixtures; validate destructive commands only on isolated data.
+The project remains in maintenance after this bounded fix.
+
 ## Release 1.0.0 closeout - 2026-10-30
 
 The human explicitly requested the final 1.0 release and the end of this

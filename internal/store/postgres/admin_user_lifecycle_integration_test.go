@@ -22,7 +22,7 @@ import (
 	"github.com/nathanxiangang-web/panta/migrations"
 )
 
-func TestPostgresAdminLifecycleRenamePasswordDeleteRestore(t *testing.T) {
+func TestPostgresAdminLifecycleRenamePasswordPermanentDelete(t *testing.T) {
 	ctx, pool, accounts, a, _, repo := opFixture(t)
 	svc, _ := adminops.NewService(repo, nil, []string{adminBinding})
 	created := opRun(t, svc, a, adminops.Command{RequestID: opID(1), Action: adminops.CreateUser, Login: "lifecycle-user", Password: "original-password"})
@@ -76,9 +76,9 @@ func TestPostgresAdminLifecycleRenamePasswordDeleteRestore(t *testing.T) {
 	if removed.Code != "USER_DELETED" || !removed.User.Deleted || removed.User.Enabled || removed.User.Version != 3 {
 		t.Fatal(removed)
 	}
-	var coherentStamp bool
-	if e = pool.QueryRow(ctx, `SELECT deleted_at=updated_at FROM product_users WHERE user_id=$1`, id).Scan(&coherentStamp); e != nil || !coherentStamp {
-		t.Fatal("deletion/update timestamps differ", e)
+	var removedAccount bool
+	if e = pool.QueryRow(ctx, `SELECT NOT EXISTS(SELECT 1 FROM product_users WHERE user_id=$1) AND NOT EXISTS(SELECT 1 FROM product_sessions WHERE user_id=$1) AND NOT EXISTS(SELECT 1 FROM product_file_shares WHERE owner_id=$1) AND NOT EXISTS(SELECT 1 FROM product_file_share_grants WHERE share_id=$2)`, id, share.ID).Scan(&removedAccount); e != nil || !removedAccount {
+		t.Fatal("account or credentials were retained", e)
 	}
 	replay := opRun(t, svc, a, del)
 	if !replay.RecordedAt.Equal(removed.RecordedAt) || replay.User.Version != 3 {
@@ -97,37 +97,20 @@ func TestPostgresAdminLifecycleRenamePasswordDeleteRestore(t *testing.T) {
 	if blocked.Status != "REJECTED" {
 		t.Fatal("enabled tombstone")
 	}
-	// Tombstone login stays unique, never reassigned to another user's history.
-	if duplicate := opRun(t, svc, a, adminops.Command{RequestID: opID(6), Action: adminops.CreateUser, Login: "new-login", Password: "other-password"}); duplicate.Status != "REJECTED" {
-		t.Fatal("tombstone login reused")
+	// A new account with the same login has a fresh identity; deleted credentials
+	// and historical task ownership cannot be recovered or reassigned.
+	replacement := opRun(t, svc, a, adminops.Command{RequestID: opID(6), Action: adminops.CreateUser, Login: "new-login", Password: "other-password"})
+	if replacement.Status != "SUCCEEDED" || replacement.TargetID == id {
+		t.Fatal("deleted login was not released with a new identity", replacement)
 	}
-	restore := adminops.Command{RequestID: opID(7), Action: adminops.RestoreUser, TargetID: id, ExpectedVersion: 3, Password: "replacement-password"}
-	if same := opRun(t, svc, a, restore); same.Code != "PASSWORD_UNCHANGED" {
-		t.Fatal("old restore password accepted")
+	if restored := opRun(t, svc, a, adminops.Command{RequestID: opID(7), Action: adminops.RestoreUser, TargetID: id, ExpectedVersion: 3, Password: "restore-new-password"}); restored.Status != "REJECTED" {
+		t.Fatal("permanently deleted account was restored", restored)
 	}
-	restore.RequestID = opID(8)
-	restore.Password = "restore-new-password"
-	restored := opRun(t, svc, a, restore)
-	if restored.Code != "USER_RESTORED" || restored.User.Enabled || restored.User.Deleted || restored.User.Version != 4 || restored.User.UserID != id {
-		t.Fatal(restored)
+	if _, e = accounts.Login(ctx, "new-login", "replacement-password"); !errors.Is(e, auth.ErrUnauthorized) {
+		t.Fatal("old password accepted for replacement account", e)
 	}
-	opRun(t, svc, a, adminops.Command{RequestID: opID(9), Action: adminops.SetEnabled, TargetID: id, ExpectedVersion: 4, Enabled: true})
-	if _, e = accounts.Login(ctx, "new-login", "restore-new-password"); e != nil {
+	if _, e = accounts.Login(ctx, "new-login", "other-password"); e != nil {
 		t.Fatal(e)
-	}
-	if _, e = accounts.Authenticate(ctx, logged.Token); !errors.Is(e, auth.ErrUnauthorized) {
-		t.Fatal("restored old session")
-	}
-	if _, _, e = shares.Granted(ctx, share.ID, grant); !errors.Is(e, fileshare.ErrDenied) {
-		t.Fatal("restored old grant")
-	}
-	if _, e = shares.Secret(ctx, record.TokenHash); !errors.Is(e, fileshare.ErrDenied) {
-		t.Fatal("restored old share")
-	}
-	var intact bool
-	e = pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM product_file_shares WHERE share_id=$1 AND owner_id=$2 AND revoked_at IS NOT NULL) AND EXISTS(SELECT 1 FROM product_file_share_grants WHERE share_id=$1)`, share.ID, id).Scan(&intact)
-	if e != nil || !intact {
-		t.Fatal("history removed", e)
 	}
 	var raw string
 	if e = pool.QueryRow(ctx, `SELECT string_agg(outcome::text,'') FROM product_admin_action_results`).Scan(&raw); e != nil {
@@ -292,18 +275,18 @@ func TestPostgresAdminLifecycleDirectoryAndActualHTTP(t *testing.T) {
 	reader, _ := NewAdminReadRepository(pool)
 	reads, _ := adminread.NewService(reader, []string{adminBinding})
 	first, e := reads.SearchUsers(ctx, a.Principal, adminread.UserFilter{Limit: 2, Search: "search-user", Status: "ALL"})
-	if e != nil || len(first.Items) != 2 || first.Total != 4 || first.NextCursor == "" {
+	if e != nil || len(first.Items) != 2 || first.Total != 3 || first.NextCursor == "" {
 		t.Fatal(first, e)
 	}
 	second, e := reads.SearchUsers(ctx, a.Principal, adminread.UserFilter{Limit: 2, Cursor: first.NextCursor, Search: "search-user", Status: "ALL"})
-	if e != nil || second.Total != 4 || len(second.Items) != 2 || second.NextCursor != "" {
+	if e != nil || second.Total != 3 || len(second.Items) != 1 || second.NextCursor != "" {
 		t.Fatal(second, e)
 	}
 	deleted, e := reads.SearchUsers(ctx, a.Principal, adminread.UserFilter{Limit: 5, Status: "DELETED"})
-	if e != nil || deleted.Total != 1 || deleted.Items[0].DeletedAt == nil {
+	if e != nil || deleted.Total != 0 || len(deleted.Items) != 0 {
 		t.Fatal(deleted, e)
 	}
-	id := deleted.Items[0].UserID
+	id := first.Items[0].UserID
 	exact, e := reads.SearchUsers(ctx, a.Principal, adminread.UserFilter{Limit: 5, Search: id})
 	if e != nil || exact.Total != 1 || exact.Items[0].UserID != id {
 		t.Fatal(exact, e)
@@ -433,7 +416,11 @@ func TestPostgresAdminLifecycleAdmissionSerialization(t *testing.T) {
 	if r := opRun(t, svc, a, adminops.Command{RequestID: opID(40), Action: adminops.DeleteUser, TargetID: string(f.p.UserID)}); r.Status != "SUCCEEDED" {
 		t.Fatal("valid terminal pair rejected", r)
 	}
-	assertAdmissionCounts(t, f, 1, 1, 1)
+	assertAdmissionCounts(t, f, 0, 1, 1)
+	var gone bool
+	if e = f.pool.QueryRow(f.ctx, `SELECT NOT EXISTS(SELECT 1 FROM product_users WHERE user_id=$1) AND NOT EXISTS(SELECT 1 FROM product_operation_quotas WHERE user_id=$1) AND EXISTS(SELECT 1 FROM acquisition_manifests WHERE user_id=$1)`, string(f.p.UserID)).Scan(&gone); e != nil || !gone {
+		t.Fatal("account removal changed historical task ownership", e)
+	}
 }
 
 func TestPostgresAdminLifecycleMigration16To17PreservesData(t *testing.T) {
