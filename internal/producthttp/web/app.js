@@ -3,7 +3,7 @@
 const el = id => document.getElementById(id);
 const sections = {
  overview:['总览','查看用户与下载概况，及时发现需要处理的记录。'],
- users:['用户管理','搜索和查看用户，创建、重命名、重置密码、启停、删除及恢复普通账号。'],
+ users:['用户管理','搜索和管理用户，创建账号、修改名称、重置密码或删除账号。'],
  resources:['资源管理','查找文件、整理分类和展示信息。'],
  downloads:['下载任务','查看下载进度与待处理请求。'],
  storage:['存储连接','查看配置，按需检测连接。'],
@@ -227,7 +227,7 @@ async function loadResources(){
 }
 const manifestLabels={PENDING:'等待激活',ACTIVE:'执行中',AWAITING_VISIBILITY:'等待观察',AWAITING_CANONICAL:'等待规范确认',READY:'READY',FAILED:'失败',RECOVERY_REQUIRED:'需人工恢复',CANCELED:'已取消'};
 function dateText(value){const d=new Date(value);return value&&Number.isFinite(d.getTime())?d.toLocaleString():'未提供';}
-const adminLists=AdminLists.create({present,friendlyInfo,rowLabels,el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,onError:error=>showError('workspace-error',error),dateText,cell,badge,downloadSelected:id=>adminDownloadDetail.load(id),downloadsChanged:()=>adminDownloadDetail.close(),bindingAllowed:id=>state.workspace?.bindings.some(b=>b.binding_id===id)===true,userSelected:item=>adminOperations.selectUser(item),ownerSelected:id=>{el('admin-user-filter').value=id;adminLists.downloads.owner=id;adminLists.downloads.cursor='';selectTab('downloads');}});
+const adminLists=AdminLists.create({present,friendlyInfo,rowLabels,el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,onError:error=>showError('workspace-error',error),dateText,cell,badge,downloadSelected:id=>adminDownloadDetail.load(id),downloadsChanged:()=>adminDownloadDetail.close(),bindingAllowed:id=>state.workspace?.bindings.some(b=>b.binding_id===id)===true,userSelected:item=>adminOperations.selectUser(item),userDelete:item=>adminOperations.deleteUser(item),ownerSelected:id=>{el('admin-user-filter').value=id;adminLists.downloads.owner=id;adminLists.downloads.cursor='';selectTab('downloads');}});
 const adminOverview=AdminOverview.create({present,friendlyInfo,rowLabels,el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='overview',dateText});
 const adminResourceEditor=AdminResourceEditor.create({present,el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='resources',bindingAllowed:id=>state.workspace?.bindings.some(b=>b.binding_id===id)===true,capable:()=>state.workspace?.schema_version>=20&&state.workspace?.admin_copy_presentation_enabled===true,dateText,newID:()=>window.crypto.randomUUID(),onError:error=>{if(['AUTH_REQUIRED','ADMIN_REQUIRED','AUTH_CHANGED'].includes(error.code)){signedOut();showError('login-error',error);}},command:async(path,body,gen,signal,guard)=>{const {workspace}=await verifyAdmin(gen);current(gen);if(signal.aborted||!guard()||workspace.schema_version<20||workspace.admin_copy_presentation_enabled!==true||!workspace.bindings.some(b=>b.binding_id===body.binding_id))throw stale();return api(path,'PUT',body,gen,signal);}});
 const adminDownloadDetail=AdminDownloadDetail.create({onChange:d=>adminPendingCancel.observe(d),el,read:adminRead,generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='downloads',dateText,bindingAllowed:id=>state.workspace?.bindings.some(b=>b.binding_id===id)===true});

@@ -141,7 +141,7 @@ const server=http.createServer((req,res)=>{
  assets['/assets/admin-download-detail.js']=['admin-download-detail.js','text/javascript'];
  const asset=assets[url.pathname];if(!asset){res.statusCode=404;return res.end();}
  res.setHeader('Content-Type',asset[1]+'; charset=utf-8');let data=fs.readFileSync(path.join(web,asset[0]),'utf8');
- if(asset[0]==='index.html')data=data.replace('<body>','<body><aside class="scope-banner" aria-label="测试数据标记">隔离整改候选 · Issue 180 · 模拟数据，非生产页面</aside>');
+ if(asset[0]==='index.html')data=data.replace('<body>','<body><aside class="scope-banner" aria-label="测试数据标记">隔离测试界面 · 模拟数据，非生产页面</aside>');
  if(pendingReview&&asset[0]==='index.html')data=data.replace('<h2 id="pending-cancel-title">','<p class="scope-note">ISOLATED UI FIXTURE · 合成记录，非生产</p><h2 id="pending-cancel-title">');
  if(editorReview&&asset[0]==='index.html')data=data.replace('id="resource-edit-title">产品展示信息','id="resource-edit-title">产品展示信息 · ISOLATED FIXTURE').replace('id="resource-edit-confirm-title">确认修改产品展示信息','id="resource-edit-confirm-title">确认修改产品展示信息 · ISOLATED FIXTURE');
  if(auditReview&&asset[0]==='index.html')data=data.replace('id="audit-title">管理操作审计','id="audit-title">管理操作审计 · ISOLATED FIXTURE').replace('id="audit-detail-title">脱敏审计证据','id="audit-detail-title">脱敏审计证据 · ISOLATED FIXTURE');

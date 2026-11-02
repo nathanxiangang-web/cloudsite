@@ -27,7 +27,7 @@ func TestAdminUIUserLifecycleAssetsWireReviewedCommands(t *testing.T) {
 		"RENAME_USER", "RESET_USER_PASSWORD", "DELETE_USER", "RESTORE_USER",
 		"USER_RENAMED", "USER_PASSWORD_RESET", "USER_RESTORED", "USER_DELETED",
 		"USER_STATE_CONFLICT", "LOGIN_CONFLICT", "ACTIVE_DOWNLOADS", "DOWNLOAD_STATE_CONFLICT", "PASSWORD_UNCHANGED",
-		"/rename", "/password", "/restore",
+		"/rename", "/password", "window.confirm",
 	} {
 		if !strings.Contains(body, want) {
 			t.Fatalf("admin-operations.js missing %q", want)
@@ -38,9 +38,14 @@ func TestAdminUIUserLifecycleAssetsWireReviewedCommands(t *testing.T) {
 		t.Fatalf("admin page status %d", page.Code)
 	}
 	html := page.Body.String()
+	for _, retired := range []string{"confirm-user-delete", "change-user-submit", "restore-user-form"} {
+		if strings.Contains(html, retired) {
+			t.Fatalf("retired account workflow still visible: %s", retired)
+		}
+	}
 	for _, want := range []string{
-		"rename-user-form", "reset-user-password-form", "delete-user-form", "restore-user-form",
-		"confirm-user-disable", "confirm-user-reset", "confirm-user-delete",
+		"rename-user-form", "reset-user-password-form", "delete-user-form",
+		"confirm-user-reset",
 	} {
 		if !strings.Contains(html, want) {
 			t.Fatalf("admin page missing %q", want)
