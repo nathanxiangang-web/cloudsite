@@ -246,7 +246,7 @@ func TestPostgresProductAdmissionConcurrentReplayAndConflict(t *testing.T) {
 	}
 	assertAdmissionCounts(t, f, 1, 1, 1)
 }
-func TestPostgresProductAdmissionConcurrentLimitsAndIdentity(t *testing.T) {
+func TestPostgresProductAdmissionConcurrentUnlimitedAndIdentity(t *testing.T) {
 	f := newAdmissionFixture(t)
 	type result struct {
 		value product.AdmissionDTO
@@ -270,14 +270,14 @@ func TestPostgresProductAdmissionConcurrentLimitsAndIdentity(t *testing.T) {
 	for result := range results {
 		if result.err == nil {
 			accepted = append(accepted, result.value)
-		} else if !errors.Is(result.err, product.ErrConcurrencyLimit) {
+		} else {
 			t.Fatal(result.err)
 		}
 	}
-	if len(accepted) != 2 {
-		t.Fatal("concurrency overrun", len(accepted))
+	if len(accepted) != 12 {
+		t.Fatal("unexpected admission cap", len(accepted))
 	}
-	// Paired terminal fixture releases concurrency, never lifetime usage.
+	// Legacy configured limits must not gate new operations, even after usage grows.
 	tx, err := f.pool.Begin(f.ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -296,11 +296,11 @@ func TestPostgresProductAdmissionConcurrentLimitsAndIdentity(t *testing.T) {
 	}
 	r := f.input
 	r.OperationKey = "new"
-	if _, err = f.service.Admit(f.ctx, f.p, r); !errors.Is(err, product.ErrOperationLimit) {
-		t.Fatal("lifetime overrun", err)
+	if _, err = f.service.Admit(f.ctx, f.p, r); err != nil {
+		t.Fatal("legacy lifetime cap still enforced", err)
 	}
 	usage, err := f.service.Usage(f.ctx, f.p)
-	if err != nil || usage.Used != 2 || usage.InFlight != 0 || usage.Remaining != 0 {
+	if err != nil || !usage.Unlimited || usage.Used != 13 || usage.InFlight != 1 || usage.Remaining != 0 {
 		t.Fatal(usage, err)
 	}
 	forged := f.p
@@ -317,7 +317,7 @@ func TestPostgresProductAdmissionConcurrentLimitsAndIdentity(t *testing.T) {
 	if _, err = f.service.Admit(f.ctx, f.p, r); !errors.Is(err, auth.ErrUnauthorized) {
 		t.Fatal("disabled user admitted")
 	}
-	assertAdmissionCounts(t, f, 2, 2, 2)
+	assertAdmissionCounts(t, f, 13, 13, 13)
 }
 func TestPostgresProductAdmissionAtomicRollbackCancellationAndCrash(t *testing.T) {
 	for _, mode := range []string{"rollback", "cancel", "backend-exit"} {

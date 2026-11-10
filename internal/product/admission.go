@@ -24,6 +24,8 @@ var (
 )
 
 const (
+	// Legacy schema-15 row values, retained for FK and rollback compatibility.
+	// They are not enforced by the unlimited admission policy.
 	DefaultOperationLimit   = 100
 	DefaultConcurrencyLimit = 2
 	AdmissionMaxAttempts    = 5
@@ -60,13 +62,16 @@ type AdmissionDTO struct {
 	Status     acquisition.SubmissionStatus `json:"status"`
 }
 type UsageDTO struct {
-	Unit             string `json:"unit"`
-	Price            string `json:"price"`
-	OperationLimit   int    `json:"operation_limit"`
-	Used             int    `json:"used"`
-	Remaining        int    `json:"remaining"`
-	ConcurrencyLimit int    `json:"concurrency_limit"`
-	InFlight         int    `json:"in_flight"`
+	Unit  string `json:"unit"`
+	Price string `json:"price"`
+	// Unlimited disables both website admission caps. Zero legacy limit fields
+	// then mean no cap, rather than an exhausted allowance.
+	Unlimited        bool `json:"unlimited"`
+	OperationLimit   int  `json:"operation_limit"`
+	Used             int  `json:"used"`
+	Remaining        int  `json:"remaining"`
+	ConcurrencyLimit int  `json:"concurrency_limit"`
+	InFlight         int  `json:"in_flight"`
 }
 type AdmissionStore interface {
 	Reserve(context.Context, auth.Principal, AdmissionRequest, Reservation) (Reservation, error)
@@ -221,7 +226,11 @@ func (s *AdmissionService) Usage(ctx context.Context, p auth.Principal) (UsageDT
 	if err != nil {
 		return UsageDTO{}, admissionError(err)
 	}
-	if result.Unit != "OPERATION" || result.Price != "ZERO" || result.OperationLimit < 0 || result.Used < 0 || result.Remaining != max(0, result.OperationLimit-result.Used) || result.ConcurrencyLimit < 1 || result.InFlight < 0 || result.InFlight > result.Used {
+	validLimits := result.OperationLimit >= 0 && result.Remaining == max(0, result.OperationLimit-result.Used) && result.ConcurrencyLimit >= 1
+	if result.Unlimited {
+		validLimits = result.OperationLimit == 0 && result.Remaining == 0 && result.ConcurrencyLimit == 0
+	}
+	if result.Unit != "OPERATION" || result.Price != "ZERO" || !validLimits || result.Used < 0 || result.InFlight < 0 || result.InFlight > result.Used {
 		return UsageDTO{}, ErrUnavailable
 	}
 	return result, nil
