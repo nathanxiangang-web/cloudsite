@@ -1,5 +1,12 @@
 # Product cloud-download admission and zero-price usage
 
+Current v1.0.2 policy (Issue185) supersedes the finite limits below: website
+lifetime and submission/concurrency caps are removed for all accounts. The
+legacy quota row remains only a serialization/FK and rollback-compatible record.
+Usage returns unlimited=true and zero limit/remaining fields, with real counters.
+See [release/module contract](releases/v1.0.2.md). Historical finite policy below
+explains schema15 and is not the current enforcement rule.
+
 2026-10-16, Issue83 / D-054, following D-042 and D-053. Development slice, not
 public cloud-download enablement or full MVP acceptance. Original isolated dirty
 Issue83 files remain untouched; selected concepts are rebased on sharing14.

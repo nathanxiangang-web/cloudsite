@@ -1,5 +1,18 @@
 # cloudsite — Project State
 
+## Current maintenance - Issue185 unlimited cloud downloads (2026-11-10)
+
+The human requests investigation/fix of CONCURRENCY_LIMIT and removal of download
+count restrictions, with a GitHub patch and production update. v1.0.2 removes
+website lifetime and per-account submission caps, including legacy customized
+rows, while retaining atomic owner serialization, idempotent operation replay,
+authentication, serial Worker execution and uncertain provider-start protection.
+See `docs/releases/v1.0.2.md`. Schema20 stays unchanged. Do not mutate/replay
+historical recovery tasks or unrelated IndexCore/storage services. Validate exact
+head/main CI, publish immutable artifacts, and use backup/isolated restore,
+health and preservation checks for the product-only deployment. This explicit
+maintenance request supersedes historical candidate-only integration pointers.
+
 ## Maintenance request - simple permanent account deletion (2026-11-02)
 
 The human explicitly requested a simpler account-delete flow and rejected

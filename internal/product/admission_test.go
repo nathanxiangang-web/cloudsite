@@ -15,7 +15,7 @@ import (
 
 const admissionBinding storage.BindingID = "98000000-0000-4000-8000-000000000001"
 
-func TestDefaultQuotaPolicyIs100WithUnchangedConcurrencyFence(t *testing.T) {
+func TestLegacyQuotaRowDefaultsRemainSchemaCompatible(t *testing.T) {
 	if DefaultOperationLimit != 100 || DefaultConcurrencyLimit != 2 {
 		t.Fatal("quota policy")
 	}
@@ -30,6 +30,7 @@ type admissionStoreStub struct {
 	failure error
 	created bool
 	owner   auth.UserID
+	usage   *UsageDTO
 }
 
 func (s *admissionStoreStub) Reserve(_ context.Context, p auth.Principal, r AdmissionRequest, _ Reservation) (Reservation, error) {
@@ -42,6 +43,9 @@ func (s *admissionStoreStub) Reserve(_ context.Context, p auth.Principal, r Admi
 	return Reservation{ManifestID: "98000000-0000-4000-8000-000000000003", JobID: "98000000-0000-4000-8000-000000000004", MaxAttempts: AdmissionMaxAttempts, Created: s.created, Source: prepared.Reference.Value, Policy: prepared.Policy}, s.failure
 }
 func (s *admissionStoreStub) Usage(context.Context, auth.Principal) (UsageDTO, error) {
+	if s.usage != nil {
+		return *s.usage, s.failure
+	}
 	return UsageDTO{Unit: "OPERATION", Price: "ZERO", OperationLimit: 10, Remaining: 10, ConcurrencyLimit: 2}, s.failure
 }
 
@@ -168,5 +172,28 @@ func TestAdmissionDigestAndValidation(t *testing.T) {
 	var typedNil *admissionStoreStub
 	if _, err := NewAdmissionService(typedNil, &submitAdmissionStub{}, []storage.BindingID{admissionBinding}); !errors.Is(err, ErrUnavailable) {
 		t.Fatal(err)
+	}
+}
+
+func TestAdmissionUsageUnlimitedContract(t *testing.T) {
+	usage := UsageDTO{Unit: "OPERATION", Price: "ZERO", Unlimited: true, Used: 135, InFlight: 16}
+	store := &admissionStoreStub{usage: &usage}
+	service, _ := NewAdmissionService(store, &submitAdmissionStub{}, []storage.BindingID{admissionBinding})
+	if got, err := service.Usage(context.Background(), admissionPrincipal()); err != nil || !got.Unlimited || got.Used != 135 {
+		t.Fatal(got, err)
+	}
+	for _, mutate := range []func(*UsageDTO){
+		func(u *UsageDTO) { u.OperationLimit = 100 },
+		func(u *UsageDTO) { u.ConcurrencyLimit = 2 },
+		func(u *UsageDTO) { u.Remaining = 1 },
+		func(u *UsageDTO) { u.InFlight = 136 },
+		func(u *UsageDTO) { u.Unlimited = false },
+	} {
+		bad := usage
+		mutate(&bad)
+		store.usage = &bad
+		if _, err := service.Usage(context.Background(), admissionPrincipal()); !errors.Is(err, ErrUnavailable) {
+			t.Fatal("invalid usage accepted", err)
+		}
 	}
 }

@@ -1,6 +1,6 @@
 # cloudsite
 
-Current release: **1.0.1**. [Release notes](docs/releases/v1.0.1.md) and [upgrade/rollback contract](docs/releases/v1.0.0.md).
+Current release: **1.0.2**. [Release notes](docs/releases/v1.0.2.md) and [upgrade/rollback contract](docs/releases/v1.0.0.md).
 The current development phase is complete; the project enters maintenance.
 New feature development requires a new explicit request.
 

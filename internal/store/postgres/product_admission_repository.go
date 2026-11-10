@@ -58,8 +58,10 @@ func (r *ProductAdmissionRepository) Reserve(ctx context.Context, p auth.Princip
 	if err != nil {
 		return product.Reservation{}, admissionPersistenceError(ctx, err)
 	}
-	var limit, concurrency int
-	err = tx.QueryRow(ctx, `SELECT operation_limit,concurrency_limit FROM product_operation_quotas WHERE user_id=$1 FOR UPDATE`, string(p.UserID)).Scan(&limit, &concurrency)
+	// Retain the existing per-owner serialization row and FK for atomic replay
+	// and account deletion. Its legacy limits no longer gate new submissions.
+	var lockedUser string
+	err = tx.QueryRow(ctx, `SELECT user_id::text FROM product_operation_quotas WHERE user_id=$1 FOR UPDATE`, string(p.UserID)).Scan(&lockedUser)
 	if err != nil {
 		return product.Reservation{}, admissionPersistenceError(ctx, err)
 	}
@@ -69,17 +71,6 @@ func (r *ProductAdmissionRepository) Reserve(ctx context.Context, p auth.Princip
 	}
 	if !errors.Is(err, pgx.ErrNoRows) {
 		return product.Reservation{}, err
-	}
-	var used, inFlight int
-	err = tx.QueryRow(ctx, `SELECT count(*)::int,count(*) FILTER(WHERE m.state NOT IN ('READY','FAILED','CANCELED'))::int FROM product_operations o JOIN acquisition_manifests m ON m.manifest_id=o.manifest_id WHERE o.user_id=$1`, string(p.UserID)).Scan(&used, &inFlight)
-	if err != nil {
-		return product.Reservation{}, admissionPersistenceError(ctx, err)
-	}
-	if used >= limit {
-		return product.Reservation{}, product.ErrOperationLimit
-	}
-	if inFlight >= concurrency {
-		return product.Reservation{}, product.ErrConcurrencyLimit
 	}
 	// Prepare only a new operation, after replay lookup. Stored policy results
 	// survive later policy changes, topology disablement, retries and claims.
@@ -192,10 +183,10 @@ func (r *ProductAdmissionRepository) Usage(ctx context.Context, p auth.Principal
 	if !p.Valid() {
 		return product.UsageDTO{}, auth.ErrUnauthorized
 	}
-	result := product.UsageDTO{Unit: "OPERATION", Price: "ZERO"}
-	err := r.pool.QueryRow(ctx, `SELECT COALESCE(q.operation_limit,$4),COALESCE(q.concurrency_limit,$5),count(o.operation_key)::int,count(o.operation_key) FILTER(WHERE m.state NOT IN ('READY','FAILED','CANCELED'))::int
- FROM product_users u LEFT JOIN product_operation_quotas q ON q.user_id=u.user_id LEFT JOIN product_operations o ON o.user_id=u.user_id LEFT JOIN acquisition_manifests m ON m.manifest_id=o.manifest_id
- WHERE u.user_id=$1 AND u.login=$2 AND u.role=$3 AND u.enabled GROUP BY u.user_id,q.operation_limit,q.concurrency_limit`, string(p.UserID), p.Login, string(p.Role), product.DefaultOperationLimit, product.DefaultConcurrencyLimit).Scan(&result.OperationLimit, &result.ConcurrencyLimit, &result.Used, &result.InFlight)
+	result := product.UsageDTO{Unit: "OPERATION", Price: "ZERO", Unlimited: true}
+	err := r.pool.QueryRow(ctx, `SELECT count(o.operation_key)::int,count(o.operation_key) FILTER(WHERE m.state NOT IN ('READY','FAILED','CANCELED'))::int
+ FROM product_users u LEFT JOIN product_operations o ON o.user_id=u.user_id LEFT JOIN acquisition_manifests m ON m.manifest_id=o.manifest_id
+ WHERE u.user_id=$1 AND u.login=$2 AND u.role=$3 AND u.enabled GROUP BY u.user_id`, string(p.UserID), p.Login, string(p.Role)).Scan(&result.Used, &result.InFlight)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return product.UsageDTO{}, auth.ErrUnauthorized
 	}
