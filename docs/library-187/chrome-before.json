@@ -1,0 +1,908 @@
+{
+  "site": "https://cloud.netioi.com/",
+  "browser": "real Chrome, existing authenticated session",
+  "captured_at": "2026-11-15T04:35:46.988Z",
+  "initial_cursor_truncated": true,
+  "subsequent_reads_truncated": false,
+  "cycles": [
+    {
+      "cycle": 1,
+      "requests": 18,
+      "elapsed_s": 16.115,
+      "first_start": 1509.122365,
+      "start_gap_from_previous_s": null,
+      "statuses": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ]
+    },
+    {
+      "cycle": 2,
+      "requests": 18,
+      "elapsed_s": 10.011,
+      "first_start": 1528.077295,
+      "start_gap_from_previous_s": 18.955,
+      "statuses": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ]
+    },
+    {
+      "cycle": 3,
+      "requests": 18,
+      "elapsed_s": 9.807,
+      "first_start": 1548.086542,
+      "start_gap_from_previous_s": 20.009,
+      "statuses": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ]
+    },
+    {
+      "cycle": 4,
+      "requests": 11,
+      "elapsed_s": null,
+      "first_start": 1558.091139,
+      "start_gap_from_previous_s": 10.005,
+      "statuses": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ]
+    }
+  ],
+  "initial_totals": {
+    "items": 858,
+    "files": 343,
+    "dirs": 515
+  },
+  "page": {
+    "all": "343",
+    "document": "6",
+    "load": "主文件库已收录文件加载完成（不含云下载）。",
+    "other": "60",
+    "software": "42",
+    "status": "已加载 343 个文件",
+    "video": "235"
+  },
+  "served_library_sha256": "add73ea076bcff3f92ee58c58c15719393c0d83ea29d82003ba680f20e6989a0",
+  "resource_requests": [
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": false,
+      "start": 1509.122365,
+      "end": 1509.627092,
+      "status": 200,
+      "encoded_bytes": 4305
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1509.627729,
+      "end": 1510.532263,
+      "status": 200,
+      "encoded_bytes": 4047
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1510.533005,
+      "end": 1511.02683,
+      "status": 200,
+      "encoded_bytes": 4344
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1511.027376,
+      "end": 1511.502255,
+      "status": 200,
+      "encoded_bytes": 4454
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1511.516793,
+      "end": 1512.161945,
+      "status": 200,
+      "encoded_bytes": 4758
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1512.162565,
+      "end": 1512.691742,
+      "status": 200,
+      "encoded_bytes": 4092
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1512.692308,
+      "end": 1513.196023,
+      "status": 200,
+      "encoded_bytes": 4236
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1513.196598,
+      "end": 1513.732606,
+      "status": 200,
+      "encoded_bytes": 4709
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1513.74777,
+      "end": 1514.25306,
+      "status": 200,
+      "encoded_bytes": 4077
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1514.253808,
+      "end": 1514.740115,
+      "status": 200,
+      "encoded_bytes": 4025
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1514.74069,
+      "end": 1515.212667,
+      "status": 200,
+      "encoded_bytes": 4031
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1515.213263,
+      "end": 1515.689203,
+      "status": 200,
+      "encoded_bytes": 4046
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1515.70553,
+      "end": 1516.199969,
+      "status": 200,
+      "encoded_bytes": 4009
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1516.20052,
+      "end": 1516.672983,
+      "status": 200,
+      "encoded_bytes": 4471
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1516.673639,
+      "end": 1517.192708,
+      "status": 200,
+      "encoded_bytes": 4586
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1517.193373,
+      "end": 1524.304807,
+      "status": 200,
+      "encoded_bytes": 4622
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1524.320003,
+      "end": 1524.839228,
+      "status": 200,
+      "encoded_bytes": 4120
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1524.839804,
+      "end": 1525.236907,
+      "status": 200,
+      "encoded_bytes": 1042
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": false,
+      "start": 1528.077295,
+      "end": 1528.575108,
+      "status": 200,
+      "encoded_bytes": 4418
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1528.575679,
+      "end": 1529.106405,
+      "status": 200,
+      "encoded_bytes": 4037
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1529.107052,
+      "end": 1529.689696,
+      "status": 200,
+      "encoded_bytes": 4310
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1529.690289,
+      "end": 1530.268474,
+      "status": 200,
+      "encoded_bytes": 4584
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1530.269022,
+      "end": 1530.804749,
+      "status": 200,
+      "encoded_bytes": 4467
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1530.805294,
+      "end": 1531.311076,
+      "status": 200,
+      "encoded_bytes": 4018
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1531.311698,
+      "end": 1531.827488,
+      "status": 200,
+      "encoded_bytes": 4500
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1531.82803,
+      "end": 1532.482894,
+      "status": 200,
+      "encoded_bytes": 4701
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1532.483547,
+      "end": 1532.968835,
+      "status": 200,
+      "encoded_bytes": 4164
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1532.969417,
+      "end": 1533.524946,
+      "status": 200,
+      "encoded_bytes": 3953
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1533.525655,
+      "end": 1534.038196,
+      "status": 200,
+      "encoded_bytes": 3931
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1534.039111,
+      "end": 1534.53275,
+      "status": 200,
+      "encoded_bytes": 4146
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1534.533472,
+      "end": 1535.093021,
+      "status": 200,
+      "encoded_bytes": 4015
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1535.093606,
+      "end": 1536.115849,
+      "status": 200,
+      "encoded_bytes": 4080
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1536.116626,
+      "end": 1536.67365,
+      "status": 200,
+      "encoded_bytes": 4516
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1536.674313,
+      "end": 1537.160173,
+      "status": 200,
+      "encoded_bytes": 4708
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1537.160792,
+      "end": 1537.702265,
+      "status": 200,
+      "encoded_bytes": 4029
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1537.703318,
+      "end": 1538.088487,
+      "status": 200,
+      "encoded_bytes": 1055
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": false,
+      "start": 1548.086542,
+      "end": 1548.657348,
+      "status": 200,
+      "encoded_bytes": 4336
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1548.657908,
+      "end": 1549.167202,
+      "status": 200,
+      "encoded_bytes": 4014
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1549.168024,
+      "end": 1549.701737,
+      "status": 200,
+      "encoded_bytes": 4313
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1549.702306,
+      "end": 1550.259328,
+      "status": 200,
+      "encoded_bytes": 4517
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1550.260105,
+      "end": 1550.759673,
+      "status": 200,
+      "encoded_bytes": 4479
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1550.760207,
+      "end": 1551.266587,
+      "status": 200,
+      "encoded_bytes": 4101
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1551.267252,
+      "end": 1551.749172,
+      "status": 200,
+      "encoded_bytes": 4570
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1551.750288,
+      "end": 1552.275878,
+      "status": 200,
+      "encoded_bytes": 4896
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1552.276377,
+      "end": 1552.875012,
+      "status": 200,
+      "encoded_bytes": 4074
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1552.875598,
+      "end": 1553.401884,
+      "status": 200,
+      "encoded_bytes": 3943
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1553.402477,
+      "end": 1553.899739,
+      "status": 200,
+      "encoded_bytes": 4093
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1553.900814,
+      "end": 1554.411647,
+      "status": 200,
+      "encoded_bytes": 4046
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1554.412743,
+      "end": 1554.943364,
+      "status": 200,
+      "encoded_bytes": 3997
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1554.943917,
+      "end": 1555.538596,
+      "status": 200,
+      "encoded_bytes": 4168
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1555.539748,
+      "end": 1556.159116,
+      "status": 200,
+      "encoded_bytes": 4513
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1556.159704,
+      "end": 1556.79565,
+      "status": 200,
+      "encoded_bytes": 4694
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1556.796509,
+      "end": 1557.381081,
+      "status": 200,
+      "encoded_bytes": 4119
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1557.382272,
+      "end": 1557.893483,
+      "status": 200,
+      "encoded_bytes": 1061
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": false,
+      "start": 1558.091139,
+      "end": 1558.712819,
+      "status": 200,
+      "encoded_bytes": 4457
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1558.714191,
+      "end": 1559.373136,
+      "status": 200,
+      "encoded_bytes": 4133
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1559.373734,
+      "end": 1560.657729,
+      "status": 200,
+      "encoded_bytes": 4340
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1560.658379,
+      "end": 1561.220452,
+      "status": 200,
+      "encoded_bytes": 4509
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1561.221222,
+      "end": 1561.772232,
+      "status": 200,
+      "encoded_bytes": 4466
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1561.772795,
+      "end": 1562.503889,
+      "status": 200,
+      "encoded_bytes": 4026
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1562.504617,
+      "end": 1563.215696,
+      "status": 200,
+      "encoded_bytes": 4607
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1563.216328,
+      "end": 1563.82657,
+      "status": 200,
+      "encoded_bytes": 4793
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1563.827141,
+      "end": 1564.524155,
+      "status": 200,
+      "encoded_bytes": 4206
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1564.52474,
+      "end": 1565.106925,
+      "status": 200,
+      "encoded_bytes": 4048
+    },
+    {
+      "path": "/api/v1/resources",
+      "limit": "50",
+      "whole_root": "true",
+      "has_cursor": true,
+      "start": 1565.107583,
+      "end": null,
+      "status": 200,
+      "encoded_bytes": null
+    }
+  ],
+  "initial_pages": [
+    {
+      "status": 200,
+      "items": 50,
+      "files": 43,
+      "dirs": 7,
+      "next": true
+    },
+    {
+      "status": 200,
+      "items": 50,
+      "files": 34,
+      "dirs": 16,
+      "next": true
+    },
+    {
+      "status": 200,
+      "items": 50,
+      "files": 38,
+      "dirs": 12,
+      "next": true
+    },
+    {
+      "status": 200,
+      "items": 50,
+      "files": 40,
+      "dirs": 10,
+      "next": true
+    },
+    {
+      "status": 200,
+      "items": 50,
+      "files": 34,
+      "dirs": 16,
+      "next": true
+    },
+    {
+      "status": 200,
+      "items": 50,
+      "files": 27,
+      "dirs": 23,
+      "next": true
+    },
+    {
+      "status": 200,
+      "items": 50,
+      "files": 26,
+      "dirs": 24,
+      "next": true
+    },
+    {
+      "status": 200,
+      "items": 50,
+      "files": 22,
+      "dirs": 28,
+      "next": true
+    },
+    {
+      "status": 200,
+      "items": 50,
+      "files": 6,
+      "dirs": 44,
+      "next": true
+    },
+    {
+      "status": 200,
+      "items": 50,
+      "files": 6,
+      "dirs": 44,
+      "next": true
+    },
+    {
+      "status": 200,
+      "items": 50,
+      "files": 5,
+      "dirs": 45,
+      "next": true
+    },
+    {
+      "status": 200,
+      "items": 50,
+      "files": 5,
+      "dirs": 45,
+      "next": true
+    },
+    {
+      "status": 200,
+      "items": 50,
+      "files": 3,
+      "dirs": 47,
+      "next": true
+    },
+    {
+      "status": 200,
+      "items": 50,
+      "files": 9,
+      "dirs": 41,
+      "next": true
+    },
+    {
+      "status": 200,
+      "items": 50,
+      "files": 15,
+      "dirs": 35,
+      "next": true
+    },
+    {
+      "status": 200,
+      "items": 50,
+      "files": 13,
+      "dirs": 37,
+      "next": true
+    },
+    {
+      "status": 200,
+      "items": 50,
+      "files": 15,
+      "dirs": 35,
+      "next": true
+    },
+    {
+      "status": 200,
+      "items": 8,
+      "files": 2,
+      "dirs": 6,
+      "next": false
+    }
+  ],
+  "full_page_first_paint": "NOT_TRACKED",
+  "server_SQL_and_upstream_timings": "NOT_TRACKED",
+  "actions": "read-only observation plus ordinary browser reload; no config or source edits"
+}
