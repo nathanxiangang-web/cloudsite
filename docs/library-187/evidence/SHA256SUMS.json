@@ -1,7 +1,8 @@
 {
   "chrome-after.json": "761f41004b825678a3e317af7c9bfc6cd2fb4cc8ba6f49c558731327b6097687",
   "chrome-after.png": "8f8fe147dd326c4cb106f7368246495773cf2add60490f2bb2168d011f16bcd4",
-  "deployment-python.log": "213e2f32e4f3f926b88727f067f5f4ca1b6af20caf572fcaafaa61521b63b9c5",
+  "deployment-python-schema20-expectation-failed.log": "685e160afd85d61538e46d1ef19d9a3762c66a392b0b2141ad92a652936eee7c",
+  "deployment-python.log": "ce4e22ff6ccdad3b871e208ada39bb0d3fb318c82509c2b6e8feea32360768ab",
   "final-build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "final-deployment-python.log": "4ab2e9797572b9697d2e117314d5fe3f3b1a5a84c9c687cc363af3a34fe3340f",
   "final-full-pg18-test-compile-failed.ndjson.gz": "2a1e1f9b7792d0a685626271ffe4dbba383ca56bba8e33ccd0587f9bb917ccf1",
@@ -17,6 +18,6 @@
   "full-pg18-first-parallel-failed.ndjson.gz": "faac7821ced1b613d6dfd04cb3431bdab033b79443631a3006786e1bfdc0651d",
   "full-pg18-serial.ndjson.gz": "8a54df71a6e251cc851a1ec09b062ec57df7d1aa41f4f692833a0a9bc5739dce",
   "node.log": "5f2fc6018d7fd1dbbff11b95dcdd5eaadf1097c0d5aafbc172d730a4c9015f9c",
-  "receipt.json": "6c4daad450cf12b5eeaf827c03a34c3749299707c15e460299174b683d077b91",
-  "source-sha256.json": "b6468706592480fac0bf8294c13070176f2210b4ba8ead15ab5a49f1d40c610c"
+  "receipt.json": "eb0e3af3677826f7de33479fca208bfa542cf85f1731ed880f7435faaea36492",
+  "source-sha256.json": "aea94346caf4520bbdc536742d7f76582faed2cea798b6fcc0160bda5cde515a"
 }

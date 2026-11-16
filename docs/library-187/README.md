@@ -150,7 +150,7 @@ Final-head tests, browser receipts and hashes are listed in the evidence manifes
 
 [Machine receipt](evidence/receipt.json), [source SHA256](evidence/source-sha256.json)
 and compressed raw test NDJSON are committed together. Local and dsh copies of
-393 code/schema/asset/workflow files matched exactly; migrations0001..0020 match
+394 code/schema/asset/workflow/test files matched exactly; migrations0001..0020 match
 main byte-for-byte. Final Go test logs contain no failures. Full PG18 has1832
 passing tests/subtests and4 explicit skips,43 passing packages and5 packages with
 no tests; full Race without DB has1392 passing tests/subtests and325 explicit
@@ -177,3 +177,7 @@ not derived queue estimates. The old18-request/16.115s sample is production;
 the new functional sample is synthetic. **No production millisecond speedup,
 resource-use,20K capacity or long-term stability result is claimed.** The test
 preview and tunnel are stopped after evidence capture. No production changes.
+
+Post-commit archive verification also caught the historical fixed20 SQL-file
+expectation; it now requires21 and still checks every archived migration byte
+against Git HEAD, including the new0021. The failed and corrected runs are kept.

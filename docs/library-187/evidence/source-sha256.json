@@ -382,6 +382,7 @@
   "ops/acquisition_binding/main_test.go": "85ec3f105c1a1a0b692f3e64eecf993765ed535d2844941ed5db66ef9845ac08",
   "ops/cloudsite_binding/main.go": "fc4b61a3228cf44451e890fb1ea739a63abcd23036d93abc8b919b3a28c108b4",
   "ops/cloudsite_binding/main_test.go": "9e386a51e46ee6e472d94df407939affaea683baab9f07e178e9b853ba84dcbb",
+  "test/deployment_safety_test.py": "017af15d4a341079c0c19cdc83f378b26ae55b22873b21a788514d825481623f",
   "test/e2e/acquisitionruntime/cloud_cli_test.go": "533ea4379ef9318cbb40136a19697b199a6bad71c8649804edf89e1f9f32a3e6",
   "test/e2e/acquisitionruntime/cloud_http_test.go": "f6594d558c36a715014a8a4d49dfb8d9624af26972f4593037733e695739ee11",
   "test/e2e/acquisitionruntime/operator_test.go": "ce8496be6b5db2b5e4b6a62c278b390c87bda13ab5cd874baec7b54fb848d17b",

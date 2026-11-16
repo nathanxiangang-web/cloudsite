@@ -1,0 +1,17 @@
+test_private_deployment_has_no_host_ports_and_defaults_route_off (deployment_safety_test.DeploymentSafety.test_private_deployment_has_no_host_ports_and_defaults_route_off) ... ok
+test_token_expiry_and_scope_are_checked (deployment_safety_test.DeploymentSafety.test_token_expiry_and_scope_are_checked) ... ok
+test_windows_archive_preserves_published_migration_bytes (deployment_safety_test.DeploymentSafety.test_windows_archive_preserves_published_migration_bytes) ... FAIL
+
+======================================================================
+FAIL: test_windows_archive_preserves_published_migration_bytes (deployment_safety_test.DeploymentSafety.test_windows_archive_preserves_published_migration_bytes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Nathan\Documents\Codex\2026-11-10\indexcore-p0-github-https-github-com\work\cloudsite-issue187\test\deployment_safety_test.py", line 11, in test_windows_archive_preserves_published_migration_bytes
+    self.assertEqual(len(files),20)  # Append-only Copy overlay; retain byte checks for ALL history.
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 21 != 20
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.058s
+
+FAILED (failures=1)

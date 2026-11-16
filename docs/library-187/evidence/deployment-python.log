@@ -3,6 +3,6 @@ test_token_expiry_and_scope_are_checked (deployment_safety_test.DeploymentSafety
 test_windows_archive_preserves_published_migration_bytes (deployment_safety_test.DeploymentSafety.test_windows_archive_preserves_published_migration_bytes) ... ok
 
 ----------------------------------------------------------------------
-Ran 3 tests in 0.839s
+Ran 3 tests in 0.866s
 
 OK

@@ -3,7 +3,7 @@
   "date": "2026-11-16",
   "base_main": "9eb4111a705bc60d264c19a2a2cecfe6e0a9b255",
   "plan_commit": "3dce2f1",
-  "source_files_verified_identical_local_and_dsh": 393,
+  "source_files_verified_identical_local_and_dsh": 394,
   "historical_migrations_0001_0020": "BYTE_IDENTICAL_TO_MAIN",
   "node": {
     "tests": 211,
@@ -59,7 +59,8 @@
   },
   "deployment_python": {
     "pass": 3,
-    "environment": "Windows worktree with real Git metadata"
+    "environment": "Windows worktree with real Git metadata",
+    "schema_archive_expectation": "21 SQL files; every archived SQL byte checked against HEAD blob"
   },
   "fixture_counter_delta_for_add_and_remove": {
     "copy_batch_queries": 7,
@@ -79,7 +80,8 @@
     "Initial parallel DB reset and intermediate test compile failures retained; final successful logs are explicitly named",
     "Remote Python archive test failed because tar source has no Git metadata; rerun in real Windows Git worktree passed",
     "20K, sustained resource consumption and production throughput not performed; no capacity or stability PASS",
-    "Feature defaults OFF; Schema21 upgrade, runtime grants and production rollout need separate authorization"
+    "Feature defaults OFF; Schema21 upgrade, runtime grants and production rollout need separate authorization",
+    "Post-commit archive test exposed a historical count20 expectation; updated to21 without weakening byte checks, corrected run passes3/3; no Go or frontend code changed"
   ],
   "text_evidence_format": "Copied Windows text receipts normalized to UTF8/LF; compressed NDJSON retains original bytes"
 }
