@@ -625,7 +625,7 @@ Target.Path  = UserSpace.canonical_prefix
 
 私有子目录可能存在于同一个 Root 快照中，因此不能仅在前端隐藏。
 
-必须在服务端 LibraryService / libraryview 查询投影阶段按当前 UserSpace 过滤：
+当前 libraryview.Page 将 Owner 用于 Cursor 查询指纹，但这不是资源所有权校验，也不会按 Owner 过滤快照中的文件。必须在服务端 LibraryService / libraryview 查询投影阶段按当前 UserSpace 过滤：
 
 - 当前用户的 downloads 页面只能得到自己的 canonical_prefix。
 - 普通 library surface 不得显示私有 _users 子树。
