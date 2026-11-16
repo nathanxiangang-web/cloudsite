@@ -6,6 +6,8 @@
 - 先安全与正确性，再通用写能力，再产品体验，最后真实规模；不以大重构替代小步证据。
 - 数据库变更默认 append-only；旧二进制回滚必须先验证 schema 兼容，不能盲目切旧镜像。
 - 真实 20K+、长稳、HTTP 吞吐、PG 负载和网盘压力统一放到授权部署后。
+- PR #191 的 per-user UserSpace 仅在 Q00 产品路线明确、生产备份恢复 Gate 通过、schema21/22 兼容发布完成后施工；文档审查不构成代码/生产授权。
+- 当前 main 的 migrator 严格校验 migration history；schema22 不能假定可由 v1.0.3 直接回滚，必须先准备双版本兼容发布或采用经演练的整库恢复方案。
 
 ## 2. P0：安全止血
 
@@ -95,6 +97,18 @@
 - 回滚方案：仅在网络隔离环境先演练；生产回滚保留原配置/卷/镜像，禁止在线盲目恢复旧备份。
 - 验收标准：实际 SHA/schema/flags/日志可只读核验，隔离恢复通过，管理面和容器权限最小化。
 
+### R1-7 — 每用户累计 1500 次云下载上限
+
+- 开发目标：按项目所有者 2026-11-16 指示，将每个 CloudSite 用户 UUID 的累计新下载操作上限设为 1500 次。
+- 影响模块：CloudSite product admission、PostgreSQL operation ledger、usage DTO 和 downloads UI。
+- 数据库变更：优先复用现有 operation ledger/quota lock；不为统一 1500 上限单独新增 schema 或改写历史 migration。若实施证明必须变更，另行 ADR。
+- API 变更：`operation_limit=1500`、`used`、`remaining`；`unlimited=false`；并发不设每用户上限，DTO 必须明确表达 concurrency unlimited。
+- 兼容性：当前 main 仍不限次数；新策略只在独立 release 生效。先查 exact replay，再查额度；原操作重放不重复计数。
+- 测试要求：1499/1500/1501 边界、并发新提交、同 key replay/conflict、commit UNKNOWN、历史已超限用户、RECOVERY_REQUIRED 不占并发槽、超限零 Provider 请求。
+- 风险：把 1500 错当并发/文件数/容量，或把失败重试重复计数；错误计数会锁死用户或绕过上限。
+- 回滚方案：关闭新额度策略需经所有者明确批准；不得删除历史 operation ledger。该策略无 schema migration 时保持数据库兼容。
+- 验收标准：每用户最多 1500 个不同的已提交操作意图；幂等重放不增加计数；无 per-user concurrency cap；全局背压独立有效。
+
 ### R1-6 — IndexCore 配置 fence、故障边界与容量门槛
 
 - 开发目标：修复 IC-06 的配置 fence；对 IC-08 的高影响 fail-closed 设计按 Q15 评审局部故障隔离，不预设吞错；对 IC-07 保持 NO-GO 并建立真实容量验收，不承诺未验证优化。
@@ -111,16 +125,16 @@
 
 **入口前置决策（Q00/Q01）**：IndexCore 当前项目上下文将 CloudSite 1.0 标为 Legacy/Frozen Product，并把正式 successor product/Gate 5 标为未授权。因此，R2 系列施工前，所有者/Architect 必须明确选择“扩展 CloudSite 1.0”还是“在新 successor product 中实现”，并书面 supersede 受影响的旧边界；本路线图只提供两种选择下的需求与风险研究，不构成开工授权。R2-3 还必须先获得 Q01 的 Copy 基数决策。PR190/191 与 R1/R2 存在重叠，开工前需评审其未合并内容，避免重复实现。
 
-### R2-1 — 通用 FileOperation Job Engine
+### R2-1 — 通用 FileOperation Job Engine（延后决策）
 
-- 开发目标：在现有 acquisition fence 上抽象统一命令状态机，关闭 CS-05/06/07、DR-15。
-- 影响模块：CloudSite jobs/acquisition/providers/contracts/store/postgres；IndexCore Hint outbox。
+- 开发目标：仅当多个已验收的物理写操作确实重复出现相同状态/恢复需求时，再评审是否在现有 acquisition fence 上抽象统一命令状态机；不作为 UserSpace 首期前置条件。
+- 影响模块：仅在单独 ADR 批准后涉及 CloudSite jobs/acquisition/providers/contracts/store/postgres；IndexCore Hint outbox。
 - 数据库变更：append-only `file_operations/file_operation_items/indexcore_hint_outbox`，阶段 deadline、request_digest、expected_version、item outcome。
 - API 变更：`operations:preview/create/cancel/confirm` 和 item/status；通用 Cancel 拒绝不能直接取消的 acquisition。
 - 兼容性：现有 ACQUISITION 保持原状态机或由适配器映射，不迁移/重放历史未知任务。
 - 测试要求：永久 pending、429/503、配对取消、重启、多 worker、部分成功、Canonical TTL、上传读回。
 - 风险：过度泛化会破坏已验证 acquisition；必须先从窄接口和两个操作证明。
-- 回滚方案：新 job type/default-off，旧 acquisition 独立运行；停止新命令入队，保留恢复读取。
+- 回滚方案：如获批准，采用新 job type/default-off，旧 acquisition 独立运行；停止新命令入队，保留恢复读取。
 - 验收标准：每副作用有 fence、UNKNOWN 可恢复、无无限 pending、取消不分裂、Hint/Canonical 可追踪。
 
 ### R2-2 — 文件管理中心与下载/分享闭环
