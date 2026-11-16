@@ -1,5 +1,17 @@
 # cloudsite — Project State
 
+## Authorized release — v1.0.3 (2026-11-16)
+
+Owner explicitly requests public-server deployment of Issue187 / PR188. Prepare
+version1.0.3, require exact PR and merged-main CI, publish immutable official
+release artifacts, verify full PostgreSQL16 backup/isolated restore and20->21
+upgrade, then replace only the product service and enable library_snapshots.
+Preserve existing Worker/Reader/IndexCore budgets and all historical business
+state. Schema20 binary rollback requires the full verified database restore;
+same-schema feature rollback can disable the flag. Do not publish or claim
+20K/long-term/production-throughput acceptance. This explicit deployment request
+supersedes the older Issue187 candidate-only rollout boundary below.
+
 ## Current maintenance — Issue187 versioned file library (2026-11-16)
 
 Owner requests publishing the Chrome diagnosis and implementing the optimization.
