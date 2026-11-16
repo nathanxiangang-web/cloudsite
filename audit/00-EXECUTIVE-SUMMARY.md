@@ -68,7 +68,7 @@ CloudSite 当前的 acquisition 链路没有绕过 IndexCore 直写 Canonical；
 
 1. **安全止血**：下载 Header allowlist、移除 HTTP 端点、debug 脱敏、危险删除本地防爆半径、生产秘密文件权限与备份访问审查。
 2. **正确性优先**：修复离线多结果 panic、三页轮询错误分类、Journal gap、IndexCore 身份冲突及结果持久化。
-3. **建立通用写操作内核**：确定性 Provider Adapter、`APPLIED/NOT_APPLIED/UNKNOWN/PARTIAL`、预检、回执、对账、审计、Hint outbox、Canonical 等待。
+3. **建立最小受审计写入闭环**：确定性 Provider Adapter、`APPLIED/NOT_APPLIED/UNKNOWN/PARTIAL`、预检、回执、对账、审计和 Canonical 等待；不先建设覆盖所有操作的通用框架。
 4. **先只读文件管理中心**：全局树、列表、详情、搜索、操作进度先基于 IndexCore；再逐项开放 mkdir/rename/move/copy/upload/delete。
 5. **业务分类与发现**：物理目录不承载唯一分类；建立 Asset 中心、标签、别名、厂商/版本/平台/架构元数据、合集和专题。
 6. **最后做真实规模验收**：在授权部署后执行 20K+、长稳、真实限流、PG 负载、任务积压和增量索引验证；本阶段不伪造这些结论。
