@@ -1,0 +1,24 @@
+test_private_deployment_has_no_host_ports_and_defaults_route_off (deployment_safety_test.DeploymentSafety.test_private_deployment_has_no_host_ports_and_defaults_route_off) ... ok
+test_token_expiry_and_scope_are_checked (deployment_safety_test.DeploymentSafety.test_token_expiry_and_scope_are_checked) ... ok
+test_windows_archive_preserves_published_migration_bytes (deployment_safety_test.DeploymentSafety.test_windows_archive_preserves_published_migration_bytes) ... fatal: 不是 git 仓库（或者直至挂载点 / 的任何父目录）
+停止在文件系统边界（未设置 GIT_DISCOVERY_ACROSS_FILESYSTEM）。
+ERROR
+
+======================================================================
+ERROR: test_windows_archive_preserves_published_migration_bytes (deployment_safety_test.DeploymentSafety.test_windows_archive_preserves_published_migration_bytes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/nathan/cloudsite-issue187-20261115/src/test/deployment_safety_test.py", line 8, in test_windows_archive_preserves_published_migration_bytes
+    raw=subprocess.check_output(['git','-c','core.autocrlf=true','archive','--format=tar','HEAD','migrations'],cwd=root,timeout=15)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 466, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['git', '-c', 'core.autocrlf=true', 'archive', '--format=tar', 'HEAD', 'migrations']' returned non-zero exit status 128.
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.006s
+
+FAILED (errors=1)

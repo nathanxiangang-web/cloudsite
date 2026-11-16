@@ -27,7 +27,7 @@ func TestAllReturnsOrderedMigrationHistory(t *testing.T) {
 // assertions in the PostgreSQL integration tests honest: adding a migration
 // without updating them fails here first, in a unit test with no database.
 func TestMigrationHistoryEndsAtExpectedVersion(t *testing.T) {
-	const expectedLatestVersion = 20
+	const expectedLatestVersion = 21
 	all, err := All()
 	if err != nil {
 		t.Fatalf("All() error = %v", err)
@@ -39,8 +39,24 @@ func TestMigrationHistoryEndsAtExpectedVersion(t *testing.T) {
 	if latest.Version != expectedLatestVersion {
 		t.Fatalf("latest migration version = %d, want %d", latest.Version, expectedLatestVersion)
 	}
-	if latest.Filename != "0020_product_copy_presentation.sql" {
-		t.Fatalf("latest migration = %q, want product Copy presentation append-only migration", latest.Filename)
+	if latest.Filename != "0021_library_snapshots.sql" {
+		t.Fatalf("latest migration = %q, want library snapshot append-only migration", latest.Filename)
+	}
+}
+
+func TestLibrarySnapshotMigrationOnlyAddsDerivedState(t *testing.T) {
+	all, err := All()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sql := strings.ToLower(all[20].SQL)
+	if strings.Count(sql, "create table") != 1 || !strings.Contains(sql, "create table product_library_snapshots") {
+		t.Fatal("wrong read-model migration scope")
+	}
+	for _, forbidden := range []string{"alter table", "update ", "delete from", "insert into", "create trigger", "security definer", "grant ", "drop "} {
+		if strings.Contains(sql, forbidden) {
+			t.Fatal("business mutation in read-model migration", forbidden)
+		}
 	}
 }
 

@@ -1,0 +1,893 @@
+{
+  "captured_at": "2026-11-16T04:34:41.766Z",
+  "environment": "real Chrome, synthetic isolated PG18 + Fake IndexCore, not production latency benchmark",
+  "truncated": false,
+  "hasMore": false,
+  "states": [
+    {
+      "step": "search outside first page",
+      "state": {
+        "cards": 1,
+        "names": [
+          "fixture-0300.zip"
+        ],
+        "search": "fixture-0300",
+        "status": "已收录 343 个文件 · 本页 1 个"
+      }
+    },
+    {
+      "step": "clear search restored cached all page",
+      "state": {
+        "cards": 50,
+        "search": "",
+        "status": "已收录 343 个文件 · 本页 50 个"
+      }
+    },
+    {
+      "step": "add file while on page2",
+      "state": {
+        "cards": 50,
+        "count": "已收录 344 个文件 · 本页 50 个",
+        "page": "第 2 / 7 页 · 文件 51–100"
+      },
+      "firstCardNode": 29,
+      "originalCardNode": 29
+    },
+    {
+      "step": "remove exact added file while on page2",
+      "state": {
+        "cards": 50,
+        "count": "已收录 343 个文件 · 本页 50 个",
+        "page": "第 2 / 7 页 · 文件 51–100"
+      },
+      "firstCardNode": 29,
+      "originalCardNode": 29
+    },
+    {
+      "step": "software filter",
+      "state": {
+        "cards": 42,
+        "count": "已收录 343 个文件 · 本页 42 个",
+        "first": "fixture-0235.apk",
+        "page": "第 1 / 1 页 · 文件 1–42"
+      }
+    },
+    {
+      "step": "idle conditional refresh preserves nodes",
+      "originalCardNode": 121,
+      "firstCardNode": 121,
+      "state": {
+        "cards": 50,
+        "count": "已收录 343 个文件 · 本页 50 个",
+        "hiddenTableRows": 0,
+        "page": "第 1 / 7 页 · 文件 1–50"
+      }
+    }
+  ],
+  "events": [
+    {
+      "sequence": 34380,
+      "method": "Network.requestWillBeSent",
+      "id": "9560D2981644B1952198DCD4C9F21F0D",
+      "t": 87812.476281,
+      "path": "/",
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34384,
+      "method": "Network.responseReceived",
+      "id": "9560D2981644B1952198DCD4C9F21F0D",
+      "t": 87812.481498,
+      "path": "/",
+      "status": 200
+    },
+    {
+      "sequence": 34392,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6806",
+      "t": 87812.48479,
+      "path": "/assets/library.css",
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34393,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6807",
+      "t": 87812.48491,
+      "path": "/assets/resource-display.js",
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34394,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6808",
+      "t": 87812.484941,
+      "path": "/assets/file-catalog.js",
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34395,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6809",
+      "t": 87812.484961,
+      "path": "/assets/file-surface.js",
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34396,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6810",
+      "t": 87812.48498,
+      "path": "/assets/download-model.js",
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34397,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6811",
+      "t": 87812.485019,
+      "path": "/assets/library-page.js",
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34398,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6812",
+      "t": 87812.485039,
+      "path": "/assets/library.js",
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34399,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6813",
+      "t": 87812.485056,
+      "path": "/assets/library-sharing.js",
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34421,
+      "method": "Network.responseReceived",
+      "id": "11180.6806",
+      "t": 87812.504823,
+      "path": "/assets/library.css",
+      "status": 200
+    },
+    {
+      "sequence": 34424,
+      "method": "Network.loadingFinished",
+      "id": "11180.6806",
+      "t": 87812.503577,
+      "bytes": 9827
+    },
+    {
+      "sequence": 34425,
+      "method": "Network.loadingFinished",
+      "id": "9560D2981644B1952198DCD4C9F21F0D",
+      "t": 87812.480058,
+      "bytes": 8026
+    },
+    {
+      "sequence": 34426,
+      "method": "Network.responseReceived",
+      "id": "11180.6807",
+      "t": 87812.506568,
+      "path": "/assets/resource-display.js",
+      "status": 200
+    },
+    {
+      "sequence": 34429,
+      "method": "Network.loadingFinished",
+      "id": "11180.6807",
+      "t": 87812.503764,
+      "bytes": 4133
+    },
+    {
+      "sequence": 34438,
+      "method": "Network.responseReceived",
+      "id": "11180.6808",
+      "t": 87812.514635,
+      "path": "/assets/file-catalog.js",
+      "status": 200
+    },
+    {
+      "sequence": 34441,
+      "method": "Network.loadingFinished",
+      "id": "11180.6808",
+      "t": 87812.512757,
+      "bytes": 3191
+    },
+    {
+      "sequence": 34443,
+      "method": "Network.responseReceived",
+      "id": "11180.6809",
+      "t": 87812.514764,
+      "path": "/assets/file-surface.js",
+      "status": 200
+    },
+    {
+      "sequence": 34446,
+      "method": "Network.loadingFinished",
+      "id": "11180.6809",
+      "t": 87812.5129,
+      "bytes": 1477
+    },
+    {
+      "sequence": 34450,
+      "method": "Network.responseReceived",
+      "id": "11180.6810",
+      "t": 87812.516663,
+      "path": "/assets/download-model.js",
+      "status": 200
+    },
+    {
+      "sequence": 34452,
+      "method": "Network.responseReceived",
+      "id": "11180.6811",
+      "t": 87812.516794,
+      "path": "/assets/library-page.js",
+      "status": 200
+    },
+    {
+      "sequence": 34455,
+      "method": "Network.loadingFinished",
+      "id": "11180.6810",
+      "t": 87812.514895,
+      "bytes": 3349
+    },
+    {
+      "sequence": 34457,
+      "method": "Network.loadingFinished",
+      "id": "11180.6811",
+      "t": 87812.515049,
+      "bytes": 3232
+    },
+    {
+      "sequence": 34458,
+      "method": "Network.responseReceived",
+      "id": "11180.6812",
+      "t": 87812.517647,
+      "path": "/assets/library.js",
+      "status": 200
+    },
+    {
+      "sequence": 34461,
+      "method": "Network.loadingFinished",
+      "id": "11180.6812",
+      "t": 87812.515629,
+      "bytes": 31163
+    },
+    {
+      "sequence": 34462,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6822",
+      "t": 87812.518612,
+      "path": "/api/v1/auth/capabilities",
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34463,
+      "method": "Network.responseReceived",
+      "id": "11180.6813",
+      "t": 87812.518801,
+      "path": "/assets/library-sharing.js",
+      "status": 200
+    },
+    {
+      "sequence": 34466,
+      "method": "Network.loadingFinished",
+      "id": "11180.6813",
+      "t": 87812.516098,
+      "bytes": 5585
+    },
+    {
+      "sequence": 34477,
+      "method": "Network.responseReceived",
+      "id": "11180.6822",
+      "t": 87812.531552,
+      "path": "/api/v1/auth/capabilities",
+      "status": 200
+    },
+    {
+      "sequence": 34482,
+      "method": "Network.loadingFinished",
+      "id": "11180.6822",
+      "t": 87812.523144,
+      "bytes": 473
+    },
+    {
+      "sequence": 34484,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6823",
+      "t": 87812.534805,
+      "path": "/api/v1/auth/me",
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34486,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6824",
+      "t": 87812.546394,
+      "path": "/images/cursor-chat.png",
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34488,
+      "method": "Network.responseReceived",
+      "id": "11180.6824",
+      "t": 87812.549482,
+      "path": "/images/cursor-chat.png",
+      "status": 200
+    },
+    {
+      "sequence": 34490,
+      "method": "Network.loadingFinished",
+      "id": "11180.6824",
+      "t": 87812.548466,
+      "bytes": 1843
+    },
+    {
+      "sequence": 34491,
+      "method": "Network.responseReceived",
+      "id": "11180.6823",
+      "t": 87812.553308,
+      "path": "/api/v1/auth/me",
+      "status": 200
+    },
+    {
+      "sequence": 34493,
+      "method": "Network.loadingFinished",
+      "id": "11180.6823",
+      "t": 87812.548187,
+      "bytes": 525
+    },
+    {
+      "sequence": 34494,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6825",
+      "t": 87812.554518,
+      "path": "/api/v1/workspace",
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34497,
+      "method": "Network.responseReceived",
+      "id": "11180.6825",
+      "t": 87812.557649,
+      "path": "/api/v1/workspace",
+      "status": 200
+    },
+    {
+      "sequence": 34499,
+      "method": "Network.loadingFinished",
+      "id": "11180.6825",
+      "t": 87812.557194,
+      "bytes": 882
+    },
+    {
+      "sequence": 34500,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6826",
+      "t": 87812.558362,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "all",
+        "q": "",
+        "cursor": ""
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34504,
+      "method": "Network.responseReceived",
+      "id": "11180.6826",
+      "t": 87812.563485,
+      "path": "/api/v1/library",
+      "status": 200
+    },
+    {
+      "sequence": 34508,
+      "method": "Network.loadingFinished",
+      "id": "11180.6826",
+      "t": 87812.562305,
+      "bytes": 13926
+    },
+    {
+      "sequence": 34516,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6827",
+      "t": 87822.532014,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "all",
+        "q": "",
+        "cursor": ""
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34519,
+      "method": "Network.responseReceived",
+      "id": "11180.6827",
+      "t": 87822.536611,
+      "path": "/api/v1/library",
+      "status": 304
+    },
+    {
+      "sequence": 34520,
+      "method": "Network.loadingFinished",
+      "id": "11180.6827",
+      "t": 87822.536136,
+      "bytes": 497
+    },
+    {
+      "sequence": 34521,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6828",
+      "t": 87832.53019,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "all",
+        "q": "",
+        "cursor": ""
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34524,
+      "method": "Network.responseReceived",
+      "id": "11180.6828",
+      "t": 87832.53495,
+      "path": "/api/v1/library",
+      "status": 304
+    },
+    {
+      "sequence": 34525,
+      "method": "Network.loadingFinished",
+      "id": "11180.6828",
+      "t": 87832.534463,
+      "bytes": 497
+    },
+    {
+      "sequence": 34528,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6829",
+      "t": 87835.377112,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "all",
+        "q": "fixture-0300",
+        "cursor": ""
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34531,
+      "method": "Network.responseReceived",
+      "id": "11180.6829",
+      "t": 87835.388476,
+      "path": "/api/v1/library",
+      "status": 200
+    },
+    {
+      "sequence": 34533,
+      "method": "Network.loadingFinished",
+      "id": "11180.6829",
+      "t": 87835.387978,
+      "bytes": 1111
+    },
+    {
+      "sequence": 34535,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6830",
+      "t": 87842.52191,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "all",
+        "q": "fixture-0300",
+        "cursor": ""
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34538,
+      "method": "Network.responseReceived",
+      "id": "11180.6830",
+      "t": 87842.525704,
+      "path": "/api/v1/library",
+      "status": 304
+    },
+    {
+      "sequence": 34539,
+      "method": "Network.loadingFinished",
+      "id": "11180.6830",
+      "t": 87842.525205,
+      "bytes": 497
+    },
+    {
+      "sequence": 34542,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6831",
+      "t": 87851.350876,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "all",
+        "q": "",
+        "cursor": ""
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34545,
+      "method": "Network.responseReceived",
+      "id": "11180.6831",
+      "t": 87851.355722,
+      "path": "/api/v1/library",
+      "status": 200
+    },
+    {
+      "sequence": 34547,
+      "method": "Network.loadingFinished",
+      "id": "11180.6831",
+      "t": 87851.355194,
+      "bytes": 13926
+    },
+    {
+      "sequence": 34549,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6832",
+      "t": 87852.524088,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "all",
+        "q": "",
+        "cursor": ""
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34552,
+      "method": "Network.responseReceived",
+      "id": "11180.6832",
+      "t": 87852.528035,
+      "path": "/api/v1/library",
+      "status": 304
+    },
+    {
+      "sequence": 34553,
+      "method": "Network.loadingFinished",
+      "id": "11180.6832",
+      "t": 87852.527496,
+      "bytes": 497
+    },
+    {
+      "sequence": 34554,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6833",
+      "t": 87857.168317,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "all",
+        "q": "",
+        "cursor": "PRESENT"
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34557,
+      "method": "Network.responseReceived",
+      "id": "11180.6833",
+      "t": 87857.17278,
+      "path": "/api/v1/library",
+      "status": 200
+    },
+    {
+      "sequence": 34559,
+      "method": "Network.loadingFinished",
+      "id": "11180.6833",
+      "t": 87857.172226,
+      "bytes": 13929
+    },
+    {
+      "sequence": 34565,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6834",
+      "t": 87862.522981,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "all",
+        "q": "",
+        "cursor": "PRESENT"
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34568,
+      "method": "Network.responseReceived",
+      "id": "11180.6834",
+      "t": 87862.528129,
+      "path": "/api/v1/library",
+      "status": 304
+    },
+    {
+      "sequence": 34569,
+      "method": "Network.loadingFinished",
+      "id": "11180.6834",
+      "t": 87862.527648,
+      "bytes": 497
+    },
+    {
+      "sequence": 34570,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6835",
+      "t": 87872.525311,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "all",
+        "q": "",
+        "cursor": "PRESENT"
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34573,
+      "method": "Network.responseReceived",
+      "id": "11180.6835",
+      "t": 87872.572405,
+      "path": "/api/v1/library",
+      "status": 409
+    },
+    {
+      "sequence": 34575,
+      "method": "Network.loadingFinished",
+      "id": "11180.6835",
+      "t": 87872.571851,
+      "bytes": 483
+    },
+    {
+      "sequence": 34576,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6836",
+      "t": 87872.572723,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "all",
+        "q": "",
+        "cursor": "",
+        "page": "1"
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34579,
+      "method": "Network.responseReceived",
+      "id": "11180.6836",
+      "t": 87872.575758,
+      "path": "/api/v1/library",
+      "status": 200
+    },
+    {
+      "sequence": 34581,
+      "method": "Network.loadingFinished",
+      "id": "11180.6836",
+      "t": 87872.575292,
+      "bytes": 13926
+    },
+    {
+      "sequence": 34582,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6837",
+      "t": 87882.520854,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "all",
+        "q": "",
+        "cursor": "",
+        "page": "1"
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34585,
+      "method": "Network.responseReceived",
+      "id": "11180.6837",
+      "t": 87882.525012,
+      "path": "/api/v1/library",
+      "status": 304
+    },
+    {
+      "sequence": 34586,
+      "method": "Network.loadingFinished",
+      "id": "11180.6837",
+      "t": 87882.524519,
+      "bytes": 497
+    },
+    {
+      "sequence": 34587,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6838",
+      "t": 87892.526502,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "all",
+        "q": "",
+        "cursor": "",
+        "page": "1"
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34590,
+      "method": "Network.responseReceived",
+      "id": "11180.6838",
+      "t": 87892.530815,
+      "path": "/api/v1/library",
+      "status": 200
+    },
+    {
+      "sequence": 34592,
+      "method": "Network.loadingFinished",
+      "id": "11180.6838",
+      "t": 87892.530343,
+      "bytes": 13927
+    },
+    {
+      "sequence": 34593,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6839",
+      "t": 87897.46794,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "software",
+        "q": "",
+        "cursor": ""
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34596,
+      "method": "Network.responseReceived",
+      "id": "11180.6839",
+      "t": 87897.471729,
+      "path": "/api/v1/library",
+      "status": 200
+    },
+    {
+      "sequence": 34598,
+      "method": "Network.loadingFinished",
+      "id": "11180.6839",
+      "t": 87897.471253,
+      "bytes": 11667
+    },
+    {
+      "sequence": 34692,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6840",
+      "t": 87902.522987,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "software",
+        "q": "",
+        "cursor": ""
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34695,
+      "method": "Network.responseReceived",
+      "id": "11180.6840",
+      "t": 87902.527788,
+      "path": "/api/v1/library",
+      "status": 304
+    },
+    {
+      "sequence": 34696,
+      "method": "Network.loadingFinished",
+      "id": "11180.6840",
+      "t": 87902.527284,
+      "bytes": 497
+    },
+    {
+      "sequence": 34697,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6841",
+      "t": 87907.881793,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "all",
+        "q": "",
+        "cursor": ""
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34700,
+      "method": "Network.responseReceived",
+      "id": "11180.6841",
+      "t": 87907.88626,
+      "path": "/api/v1/library",
+      "status": 200
+    },
+    {
+      "sequence": 34702,
+      "method": "Network.loadingFinished",
+      "id": "11180.6841",
+      "t": 87907.885768,
+      "bytes": 13924
+    },
+    {
+      "sequence": 34796,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6842",
+      "t": 87912.532348,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "all",
+        "q": "",
+        "cursor": ""
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34799,
+      "method": "Network.responseReceived",
+      "id": "11180.6842",
+      "t": 87912.536982,
+      "path": "/api/v1/library",
+      "status": 304
+    },
+    {
+      "sequence": 34800,
+      "method": "Network.loadingFinished",
+      "id": "11180.6842",
+      "t": 87912.536473,
+      "bytes": 497
+    },
+    {
+      "sequence": 34801,
+      "method": "Network.requestWillBeSent",
+      "id": "11180.6843",
+      "t": 87922.529696,
+      "path": "/api/v1/library",
+      "query": {
+        "surface": "library",
+        "category": "all",
+        "q": "",
+        "cursor": ""
+      },
+      "http_method": "GET"
+    },
+    {
+      "sequence": 34804,
+      "method": "Network.responseReceived",
+      "id": "11180.6843",
+      "t": 87922.534232,
+      "path": "/api/v1/library",
+      "status": 304
+    },
+    {
+      "sequence": 34805,
+      "method": "Network.loadingFinished",
+      "id": "11180.6843",
+      "t": 87922.533701,
+      "bytes": 497
+    }
+  ]
+}

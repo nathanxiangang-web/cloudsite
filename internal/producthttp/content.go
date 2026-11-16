@@ -17,11 +17,13 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/auth"
 	"github.com/nathanxiangang-web/panta/internal/fileaccess"
 	"github.com/nathanxiangang-web/panta/internal/fileshare"
+	"github.com/nathanxiangang-web/panta/internal/product"
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
 
 type WorkspaceOption func(*workspaceOptions)
 type workspaceOptions struct {
+	library       product.LibraryReads
 	audit         adminaudit.Reads
 	operations    adminops.Operations
 	observation   adminobserve.Reads

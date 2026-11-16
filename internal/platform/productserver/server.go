@@ -22,6 +22,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/fileshare"
 	"github.com/nathanxiangang-web/panta/internal/integrations/indexcore"
 	openlistcontent "github.com/nathanxiangang-web/panta/internal/integrations/openlist/content"
+	"github.com/nathanxiangang-web/panta/internal/libraryview"
 	"github.com/nathanxiangang-web/panta/internal/platform/adminindex"
 	"github.com/nathanxiangang-web/panta/internal/platform/adminprovider"
 	"github.com/nathanxiangang-web/panta/internal/platform/bootstrap"
@@ -154,6 +155,11 @@ func Run(ctx context.Context, action, configFile, userFile string, policies ...c
 	}
 	reads, err := product.NewReadService(tasks, topology, index, physical, catalog, bindings)
 	if err != nil {
+		cancel()
+		return ErrStartup
+	}
+	libraryStore := postgres.NewLibrarySnapshotRepository(pool)
+	if cfg.LibrarySnapshots && libraryStore.CheckLibraryPermissions(startupCtx) != nil {
 		cancel()
 		return ErrStartup
 	}
@@ -322,6 +328,39 @@ func Run(ctx context.Context, action, configFile, userFile string, policies ...c
 			options = append(options, producthttp.WithSharing(shares))
 		}
 	}
+	var libraryEngine *libraryview.Engine
+	if cfg.LibrarySnapshots {
+		cacheBindings := append([]storage.BindingID(nil), cfg.LibraryBindingIDs...)
+		if len(cacheBindings) == 0 {
+			cacheBindings = append(cacheBindings, bindings...)
+		}
+		if cfg.CloudDownload != nil {
+			found := false
+			for _, id := range cacheBindings {
+				found = found || id == cfg.CloudDownload.Target.BindingID
+			}
+			if !found {
+				cacheBindings = append(cacheBindings, cfg.CloudDownload.Target.BindingID)
+			}
+		}
+		libraryEngine, err = libraryview.New(index, topology, libraryStore, cacheBindings)
+		if err != nil || libraryEngine.Restore(startupCtx) != nil {
+			cancel()
+			return ErrStartup
+		}
+		var cloudBinding storage.BindingID
+		var cloudPath string
+		if cfg.CloudDownload != nil {
+			cloudBinding = cfg.CloudDownload.Target.BindingID
+			cloudPath = cfg.CloudDownload.Target.TargetPath
+		}
+		libraryReads, libraryErr := product.NewLibraryService(reads, libraryEngine, cfg.LibraryBindingIDs, cloudBinding, cloudPath)
+		if libraryErr != nil {
+			cancel()
+			return ErrStartup
+		}
+		options = append(options, producthttp.WithLibraryReads(libraryReads))
+	}
 	handler, err := producthttp.NewWorkspaceHandler(accounts, cfg.Origin, reads, cfg.Bindings, postgres.CurrentSchemaVersion, options...)
 	if err != nil {
 		cancel()
@@ -334,6 +373,12 @@ func Run(ctx context.Context, action, configFile, userFile string, policies ...c
 	listener, err := net.Listen("tcp", cfg.ListenAddress)
 	if err != nil {
 		return ErrStartup
+	}
+	if libraryEngine != nil {
+		libraryCtx, stopLibrary := context.WithCancel(ctx)
+		done := make(chan struct{})
+		go func() { defer close(done); libraryEngine.Run(libraryCtx) }()
+		defer func() { stopLibrary(); <-done }()
 	}
 	// No URL/credentials are logged. Connection errors cannot include backend
 	// responses or sources through the server's default logger.

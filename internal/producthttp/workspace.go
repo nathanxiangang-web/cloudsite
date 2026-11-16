@@ -15,7 +15,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
 
-//go:embed web/index.html web/app.css web/resource-display.js web/admin-lists.js web/admin-observe.js web/admin-operations.js web/admin-shares.js web/admin-overview.js web/admin-download-detail.js web/admin-pending-cancel.js web/admin-audit.js web/admin-resource-editor.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js web/library-sharing.js web/share.html web/share.js web/downloads.html web/downloads.css web/downloads.js web/download-model.js web/file-browser.html web/file-surface.js
+//go:embed web/index.html web/app.css web/resource-display.js web/admin-lists.js web/admin-observe.js web/admin-operations.js web/admin-shares.js web/admin-overview.js web/admin-download-detail.js web/admin-pending-cancel.js web/admin-audit.js web/admin-resource-editor.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js web/library-page.js web/library-sharing.js web/share.html web/share.js web/downloads.html web/downloads.css web/downloads.js web/download-model.js web/file-browser.html web/file-surface.js
 var workspaceFiles embed.FS
 
 type DisplayBinding struct {
@@ -34,6 +34,7 @@ type cloudFileScope struct {
 }
 
 type workspaceInfo struct {
+	LibrarySnapshotEnabled          bool             `json:"library_snapshot_enabled"`
 	AdminCopyPresentationEnabled    bool             `json:"admin_copy_presentation_enabled"`
 	AdminAuditEnabled               bool             `json:"admin_audit_enabled"`
 	AdminPendingCancellationEnabled bool             `json:"admin_pending_cancellation_enabled"`
@@ -108,6 +109,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		}
 	}
 	registerAdminReads(h, settings.adminReads)
+	registerLibrary(h, settings.library)
 	registerAdminAudit(h, settings.audit)
 	registerAdminObservation(h, settings.observation)
 	registerAdminOperations(h, settings.operations)
@@ -153,6 +155,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		info.Mode = "ACQUISITION"
 	}
 	consumer := info
+	consumer.LibrarySnapshotEnabled = settings.library != nil
 	consumer.AdminCopyPresentationEnabled = false
 	consumer.AdminAuditEnabled = false
 	consumer.AdminPendingCancellationEnabled = false
@@ -199,6 +202,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		{"GET /{$}", "web/library.html", "text/html; charset=utf-8"},
 		{"GET /admin/{$}", "web/index.html", "text/html; charset=utf-8"},
 		{"GET /assets/library.css", "web/library.css", "text/css; charset=utf-8"},
+		{"GET /assets/library-page.js", "web/library-page.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/library.js", "web/library.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/library-sharing.js", "web/library-sharing.js", "text/javascript; charset=utf-8"},
 		{"GET /s/{$}", "web/share.html", "text/html; charset=utf-8"},

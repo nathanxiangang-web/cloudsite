@@ -290,29 +290,66 @@ func (s *ReadService) Browse(ctx context.Context, p auth.Principal, request Brow
 	if len(page.Items) > request.Limit || !ValidOpaque(page.NextCursor) || page.NextCursor != "" && page.NextCursor == request.Cursor {
 		return ResourcePage{}, ErrUnavailable
 	}
-	result := ResourcePage{Items: make([]Resource, 0, len(page.Items)), NextCursor: page.NextCursor}
+	items, err := s.resources(ctx, binding, page.Items)
+	return ResourcePage{Items: items, NextCursor: page.NextCursor}, err
+}
+
+// resources is shared by live reads and cached physical pages. Both revalidate
+// exact identities; cached metadata never bypasses the optional Copy fence.
+func (s *ReadService) resources(ctx context.Context, binding storage.Binding, physicalItems []indexcore.ResourceContext) ([]Resource, error) {
+	if len(physicalItems) > 50 {
+		return nil, ErrUnavailable
+	}
+	var copies map[string]catalog.Copy
+	if batch, ok := s.copies.(catalog.PhysicalIdentityBatchReader); ok && len(physicalItems) > 0 {
+		ids := make([]string, 0, len(physicalItems))
+		for _, item := range physicalItems {
+			ids = append(ids, item.ResourceID)
+		}
+		var err error
+		copies, err = batch.GetCopiesByPhysicalIdentity(ctx, binding.IndexCoreRootID, ids)
+		if err != nil {
+			return nil, safeReadError(err)
+		}
+		requested := map[string]bool{}
+		for _, id := range ids {
+			requested[id] = true
+		}
+		for id, c := range copies {
+			if !requested[id] || c.IndexCoreRootID != binding.IndexCoreRootID || c.IndexCoreResourceID != id {
+				return nil, ErrUnavailable
+			}
+		}
+	}
+	result := ResourcePage{Items: make([]Resource, 0, len(physicalItems))}
 	seen := map[string]bool{}
-	for _, physical := range page.Items {
+	for _, physical := range physicalItems {
 		if seen[physical.ResourceID] {
-			return ResourcePage{}, ErrUnavailable
+			return nil, ErrUnavailable
 		}
 		seen[physical.ResourceID] = true
 		item, err := resourceView(binding, physical, nil)
 		if err != nil {
-			return ResourcePage{}, err
+			return nil, err
 		}
-		copy, err := s.copies.GetCopyByPhysicalIdentity(ctx, physical.RootID, physical.ResourceID)
+		copy, found := copies[physical.ResourceID]
+		err = catalog.ErrNotFound
+		if found {
+			err = nil
+		} else if _, batch := s.copies.(catalog.PhysicalIdentityBatchReader); !batch {
+			copy, err = s.copies.GetCopyByPhysicalIdentity(ctx, physical.RootID, physical.ResourceID)
+		}
 		if err == nil {
 			item, err = resourceView(binding, physical, &copy)
 		} else if errors.Is(err, catalog.ErrNotFound) {
 			err = nil
 		}
 		if err != nil {
-			return ResourcePage{}, safeReadError(err)
+			return nil, safeReadError(err)
 		}
 		result.Items = append(result.Items, item)
 	}
-	return result, nil
+	return result.Items, nil
 }
 func (s *ReadService) Resolve(ctx context.Context, p auth.Principal, id storage.BindingID, path string) (Resource, error) {
 	if s == nil {

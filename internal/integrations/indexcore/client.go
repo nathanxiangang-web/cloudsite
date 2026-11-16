@@ -276,6 +276,37 @@ func (c *Client) RootStatus(ctx context.Context, request RootStatusRequest) (Roo
 func (c *Client) get(ctx context.Context, operation, rootID, endpoint string, query url.Values, target any) error {
 	requestURL := c.endpoint(rootID, endpoint)
 	requestURL.RawQuery = query.Encode()
+	return c.getURL(ctx, operation, requestURL, target)
+}
+
+// Resource preserves exact identity and explicit removed visibility. The caller
+// must still validate Root identity; this endpoint is globally ID-addressed.
+func (c *Client) Resource(ctx context.Context, id string, includeRemoved bool) (ResourceContext, error) {
+	if id == "" {
+		return ResourceContext{}, localRequestError("resource", "resource ID required")
+	}
+	target := *c.baseURL
+	target.Path = strings.TrimRight(c.baseURL.Path, "/") + "/v1/resources/" + id
+	target.RawPath = strings.TrimRight(c.baseURL.EscapedPath(), "/") + "/v1/resources/" + url.PathEscape(id)
+	q := url.Values{}
+	if includeRemoved {
+		q.Set("include_removed", "true")
+	}
+	target.RawQuery = q.Encode()
+	var wire resourceWire
+	if err := c.getURL(ctx, "resource", &target, &wire); err != nil {
+		return ResourceContext{}, err
+	}
+	rows, err := decodeResources([]resourceWire{wire})
+	if err != nil {
+		return ResourceContext{}, malformed("resource", "invalid resource", err)
+	}
+	if rows[0].ResourceID != id {
+		return ResourceContext{}, malformed("resource", "resource identity mismatch", nil)
+	}
+	return rows[0], nil
+}
+func (c *Client) getURL(ctx context.Context, operation string, requestURL *url.URL, target any) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL.String(), nil)
 	if err != nil {
 		return &Error{Kind: ErrTransport, Operation: operation, Cause: err}

@@ -104,6 +104,12 @@ type ReadPort interface {
 	Browse(context.Context, BrowseRequest) (ResourcePage, error)
 }
 
+// ResourceReadPort is the existing Q7 exact-identity read, used by presentation
+// consumers to update one file without re-enumerating a Root.
+type ResourceReadPort interface {
+	Resource(context.Context, string, bool) (ResourceContext, error)
+}
+
 // JournalEventType is the closed canonical IndexCore journal event set.
 type JournalEventType string
 

@@ -20,6 +20,24 @@ import (
 func validConfig() Config {
 	return Config{DatabaseURLFile: "/protected/database.url", ListenAddress: "127.0.0.1:8180", Origin: "http://127.0.0.1:8180", IndexCoreBaseURL: "http://127.0.0.1:8080", Bindings: []producthttp.DisplayBinding{{ID: storage.BindingID("97000000-0000-4000-8000-000000000001"), Label: "Test space"}}}
 }
+func TestLibrarySnapshotsOptInRetainsWholeRootScope(t *testing.T) {
+	c := validConfig()
+	if c.LibrarySnapshots {
+		t.Fatal("snapshots unexpectedly enabled")
+	}
+	c.LibrarySnapshots = true
+	if c.Validate() == nil {
+		t.Fatal("hierarchical browsing silently changed into a whole-Root cache")
+	}
+	c.WholeRootLibrary = true
+	if err := c.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	c.LibrarySnapshots = false
+	if err := c.Validate(); err != nil || !c.WholeRootLibrary {
+		t.Fatal("flag-off changed canonical scope", err)
+	}
+}
 func TestConfigValidateAndProtectedInputs(t *testing.T) {
 	cfg := validConfig()
 	if err := cfg.Validate(); err != nil {

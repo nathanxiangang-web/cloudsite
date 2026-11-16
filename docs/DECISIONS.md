@@ -1847,3 +1847,17 @@ Earlier implementation pointers and the following design paragraphs are history.
 Proposed [management PRD/UI blueprint](PRODUCT-ADMIN-CONSOLE-BLUEPRINT.md) and [offline click-through static design](design/CLOUDSITE-ADMIN-UI-PROTOTYPE.html): side navigation overview/users/resources/downloads/storage/IndexCore/shares/audit/settings, responsive Chinese SaaS console, provenance/last-observed data and UNKNOWN/NOT_TRACKED, redacted task incident drilldown and no dangerous action without a separate gate. Existing `/admin/` enforces ADMIN only for workspace discovery, but displays **admin's own** tasks and standard resource views; it is not yet an all-user dashboard. Backend admin-wide list/summary, provider health, audit and mutation operations are **proposed, not existing**. The static concept uses invented `DEMO` data and no HTTP calls.
 
 Keep user role `USER/ADMIN` with server-side per-action authorization for future sensitive writes, existing authentication and Origin/Host protections. IndexCore owns Canonical/Q8; native115, OpenList, website session and storage bindings remain distinct. Do not expose source URLs/credentials/native provider IDs/CDN tokens. User **has rejected all per-user GB capacity/quota functions**; preserve existing operation-count and concurrency policy (D-060). Any real admin UI implementation requires a separate, bounded Issue/PR and exact-head CI; no production work or live commands follows from design documents.
+
+
+## D-067 — Versioned file-library presentation snapshots (Issue187 candidate)
+
+Owner authorized diagnosis publication and implementation on2026-11-15. Physical
+truth remains IndexCore-owned. A product-owned disposable read model uses Q6 for
+complete baselines, Q8 checkpoints and exact Q7 file updates; uncertain directory
+changes rebuild safely. Counts and page rows are one published view. Root/filter/
+user-fenced paging, private ETag and actual runtime privilege preflight preserve
+session and identity boundaries. Snapshot rows do not create/update Copy or
+Canonical truth. Schema21 is additive; old20 rollback needs complete recovery.
+`library_snapshots` defaultsfalse and preserves whole-root scope when disabled.
+See [module/rollout contract](library-187/README.md). Candidate for PR review, not
+independent acceptance, release, merge, production rollout or capacity PASS.

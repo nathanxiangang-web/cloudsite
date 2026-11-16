@@ -1,0 +1,87 @@
+{
+  "status": "LOCAL_FUNCTIONAL_PASS_NOT_DEPLOYED",
+  "date": "2026-11-16",
+  "base_main": "9eb4111a705bc60d264c19a2a2cecfe6e0a9b255",
+  "plan_commit": "3dce2f1",
+  "source_files_verified_identical_local_and_dsh": 394,
+  "historical_migrations_0001_0020": "BYTE_IDENTICAL_TO_MAIN",
+  "node": {
+    "tests": 211,
+    "pass": 211,
+    "fail": 0
+  },
+  "go": {
+    "final-full-pg18.ndjson": {
+      "tests": {
+        "run": 1836,
+        "output": 3707,
+        "pass": 1832,
+        "skip": 4
+      },
+      "packages": {
+        "start": 48,
+        "output": 91,
+        "pass": 43,
+        "skip": 5
+      }
+    },
+    "final-race.ndjson": {
+      "tests": {
+        "run": 1717,
+        "output": 3789,
+        "pass": 1392,
+        "skip": 325
+      },
+      "packages": {
+        "start": 48,
+        "output": 91,
+        "pass": 43,
+        "skip": 5
+      }
+    },
+    "final-pg18-library-race.ndjson": {
+      "tests": {
+        "run": 2,
+        "output": 4,
+        "pass": 2
+      },
+      "packages": {
+        "start": 1,
+        "output": 2,
+        "pass": 1
+      }
+    }
+  },
+  "vet": "PASS",
+  "build": "PASS",
+  "readonly_python": {
+    "pass": 11
+  },
+  "deployment_python": {
+    "pass": 3,
+    "environment": "Windows worktree with real Git metadata",
+    "schema_archive_expectation": "21 SQL files; every archived SQL byte checked against HEAD blob"
+  },
+  "fixture_counter_delta_for_add_and_remove": {
+    "copy_batch_queries": 7,
+    "copy_single_queries": 0,
+    "legacy_resources_requests": 0,
+    "library_requests": 8,
+    "source_q6": 0,
+    "source_q7": 2,
+    "source_q8": 19,
+    "source_q9": 10
+  },
+  "limitations": [
+    "Production latency improvement NOT_TRACKED; before production and after synthetic fixture are not a paired benchmark",
+    "First cold baseline needs full Q6; directory mutations and invalid checkpoint still rebuild the Root",
+    "Full Race without DB skips PostgreSQL tests; separate PG18 library Race has zero skips",
+    "Standalone controlled real-IndexCore E2E requires GitHub CI; full local PG suite skips gated observation E2E",
+    "Initial parallel DB reset and intermediate test compile failures retained; final successful logs are explicitly named",
+    "Remote Python archive test failed because tar source has no Git metadata; rerun in real Windows Git worktree passed",
+    "20K, sustained resource consumption and production throughput not performed; no capacity or stability PASS",
+    "Feature defaults OFF; Schema21 upgrade, runtime grants and production rollout need separate authorization",
+    "Post-commit archive test exposed a historical count20 expectation; updated to21 without weakening byte checks, corrected run passes3/3; no Go or frontend code changed"
+  ],
+  "text_evidence_format": "Copied Windows text receipts normalized to UTF8/LF; compressed NDJSON retains original bytes"
+}

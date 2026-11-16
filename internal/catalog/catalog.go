@@ -99,6 +99,12 @@ type PhysicalIdentityReader interface {
 	GetCopyByPhysicalIdentity(context.Context, string, string) (Copy, error)
 }
 
+// PhysicalIdentityBatchReader is the bounded read-side optimization. Missing
+// identities are absent from the map; no path/name fallback is permitted.
+type PhysicalIdentityBatchReader interface {
+	GetCopiesByPhysicalIdentity(context.Context, string, []string) (map[string]Copy, error)
+}
+
 // Repository is the persistence port for the minimum logical resource model.
 // Implementations live outside the catalog package.
 type Repository interface {

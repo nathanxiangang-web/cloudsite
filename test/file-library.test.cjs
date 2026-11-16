@@ -5,7 +5,7 @@ const catalogCode=fs.readFileSync(path.join(web,'file-catalog.js'),'utf8');
 const {Catalog}=vm.runInNewContext(catalogCode+'\nFileCatalog;',{});
 const file=(id,extra={})=>({binding_id:'one',resource_id:id,name:id+'.pdf',directory:false,presence:'PRESENT',size_bytes:123,...extra});
 test('all public HTML surfaces use cloudsite and the exact release version',()=>{
- const version=fs.readFileSync(path.join(__dirname,'..','VERSION'),'utf8').trim();assert.equal(version,'1.0.2');
+ const version=fs.readFileSync(path.join(__dirname,'..','VERSION'),'utf8').trim();assert.equal(version,'1.0.3');
  for(const name of ['library.html','index.html','share.html','downloads.html']){const html=fs.readFileSync(path.join(web,name),'utf8');assert.ok(html.includes(version),name);assert.ok(html.includes('cloudsite'),name);assert.ok(!/panta/i.test(html),name);}
 });
 const page=(items=[],next_cursor='')=>({items,next_cursor});
@@ -86,10 +86,60 @@ function workspace(surface='library'){
   addEventListener(type,fn){(this.listeners[type]||=[]).push(fn);}setAttribute(k,v){this.attrs[k]=v;}removeAttribute(k){delete this.attrs[k];delete this[k];}scrollIntoView(){}focus(){this.focused=true;}async play(){this.paused=false;this.played=true;}pause(){this.paused=true;}load(){this.loaded=true;}click(){this.clicked=true;}select(){this.selected=true;}
  }
  const elements=new Map(Array.from(ids,id=>[id,new Element()]));const requests=[],created=[],copied=[],timers=[];
- const ctx=vm.createContext({AbortController,URLSearchParams,TextEncoder,setTimeout,setInterval(callback,ms){timers.push({callback,ms});return timers.length;},crypto:require('node:crypto').webcrypto,navigator:{clipboard:{async writeText(value){copied.push(value);}}},document:{body:{dataset:{fileSurface:surface}},getElementById(id){assert.ok(elements.has(id),'Unknown id '+id);return elements.get(id);},createElement(){const e=new Element();created.push(e);return e;}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
- for(const script of ['resource-display.js','file-catalog.js','file-surface.js','library.js','library-sharing.js'])vm.runInContext(fs.readFileSync(path.join(web,script),'utf8'),ctx);
+ const ctx=vm.createContext({AbortController,URLSearchParams,TextEncoder,setTimeout,clearTimeout,setInterval(callback,ms){timers.push({callback,ms});return timers.length;},crypto:require('node:crypto').webcrypto,navigator:{clipboard:{async writeText(value){copied.push(value);}}},document:{body:{dataset:{fileSurface:surface}},getElementById(id){assert.ok(elements.has(id),'Unknown id '+id);return elements.get(id);},createElement(){const e=new Element();created.push(e);return e;}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
+ for(const script of ['resource-display.js','file-catalog.js','file-surface.js','library-page.js','library.js','library-sharing.js'])vm.runInContext(fs.readFileSync(path.join(web,script),'utf8'),ctx);
  return {ctx,elements,requests,created,copied,timers,run:s=>vm.runInContext(s,ctx)};
 }
+
+function remotePage(items,next='',offset=0){return {items:items.map(item=>({...item,path:item.path??null})),counts:{all:343,software:42,video:235,document:6,other:60},ready:true,stale:false,revision:'a'.repeat(64),updated_at:'2026-11-15T00:00:00Z',next_cursor:next,offset,filtered:343,limit:50};}
+function remoteStart(app){app.run("library.remote=true;library.userID='owner';library.bindings=[{binding_id:'one'}];library.wholeRoot=true;");return app.run('refreshFiles()');}
+function remoteRespond(app,payload,status=200,etag='"one"'){
+ const req=app.requests.filter(r=>r.url.startsWith('/api/v1/library?')&&!r.done).at(-1);assert.ok(req);req.done=true;req.resolve({ok:status>=200&&status<300,status,headers:{get(){return etag;}},json:async()=>payload});return req;
+}
+test('page reader does not bind native browser fetch to the Reader object',async()=>{
+ const {Reader}=require('../internal/producthttp/web/library-page.js');let calls=0;
+ const reader=new Reader(function(){assert.equal(this,undefined);calls++;return Promise.resolve({ok:true,status:200,headers:{get(){return '"one"';}},json:async()=>remotePage([file('one')])});},['one']);
+ await reader.read({surface:'library',category:'all',q:'',cursor:''});assert.equal(calls,1);
+});
+test('snapshot surface obtains full counts in one page request and conditionally revalidates without repaint',async()=>{
+ const app=workspace();const pending=remoteStart(app);remoteRespond(app,remotePage(Array.from({length:50},(_,n)=>file('f'+n)),'next'));await pending;
+ assert.equal(app.requests.filter(r=>r.url.startsWith('/api/v1/resources?')).length,0);assert.equal(app.elements.get('count-all').textContent,'343');assert.equal(app.elements.get('file-grid').children.length,50);
+ const first=app.elements.get('file-grid').children[0];const next=app.run('refreshCanonicalQuietly()');const req=remoteRespond(app,null,304);assert.equal(req.options.headers['If-None-Match'],'"one"');await next;
+ assert.equal(app.elements.get('file-grid').children[0],first,'304 must not rebuild the cards');assert.equal(app.elements.get('count-all').textContent,'343');
+});
+test('snapshot errors and unknown cold counts preserve honest presentation',async()=>{
+ const app=workspace();let pending=remoteStart(app);remoteRespond(app,{...remotePage([file('preview')]),ready:false,counts:null,filtered:1});await pending;
+ assert.equal(app.elements.get('count-all').textContent,'—');assert.equal(app.elements.get('files-empty').hidden,true);assert.equal(app.elements.get('file-page-next').disabled,true);
+ pending=app.run('refreshFiles()');remoteRespond(app,remotePage([file('keep')]));await pending;const first=app.elements.get('file-grid').children[0];
+ pending=app.run('refreshFiles()');remoteRespond(app,{code:'READ_UNAVAILABLE'},503);await pending;
+ assert.equal(app.elements.get('file-grid').children[0],first);assert.equal(app.elements.get('count-all').textContent,'343');assert.equal(app.elements.get('library-error').hidden,false);
+});
+test('snapshot paging loads only requested page; expired cursors restart without clearing old cards',async()=>{
+ const app=workspace();let pending=remoteStart(app);remoteRespond(app,remotePage([file('first')],'cursor-50'));await pending;
+ pending=app.run('loadRemotePage(1)');let req=app.requests.at(-1);assert.ok(req.url.includes('cursor=cursor-50'));remoteRespond(app,remotePage([file('second')],'cursor-100',50));await pending;
+ assert.equal(app.elements.get('file-grid').children.length,1);assert.equal(app.run('library.remoteIndex'),1);
+ const first=app.elements.get('file-grid').children[0];pending=app.run('refreshFiles()');remoteRespond(app,{code:'LIBRARY_VERSION_EXPIRED'},409);await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(app.elements.get('file-grid').children[0],first);assert.ok(app.requests.at(-1).url.includes('page=1'));remoteRespond(app,remotePage([file('fresh')],'new-next',50));await pending;assert.equal(app.run('library.remoteIndex'),1);
+});
+test('snapshot late results cannot cross logout or reset account metadata',async()=>{
+ const app=workspace();const pending=remoteStart(app);app.run('signOut()');remoteRespond(app,remotePage([file('private')]));await pending;
+ assert.equal(app.run('library.catalog'),null);assert.equal(app.run('library.remoteReader'),null);assert.equal(app.elements.get('file-grid').children.length,0);assert.equal(app.elements.get('count-all').textContent,'');
+});
+test('returning to a cached query restores that page rather than the previous search results',async()=>{
+ const app=workspace();const original=remotePage([file('one'),file('two')]);let pending=remoteStart(app);remoteRespond(app,original);await pending;
+ app.elements.get('file-search').value='one';pending=app.run('loadRemotePage(0,true,true)');remoteRespond(app,{...remotePage([file('one')]),filtered:1});await pending;assert.equal(app.elements.get('file-grid').children.length,1);
+ app.elements.get('file-search').value='';pending=app.run('loadRemotePage(0,true,true)');remoteRespond(app,original);await pending;
+ assert.equal(app.elements.get('file-grid').children.length,2,'unchanged cache entry still differs from the currently displayed query');
+});
+test('missing selected item in a page is not deletion evidence; exact Q5 confirms removal',async()=>{
+ const app=workspace();let pending=remoteStart(app);const movie=file('movie',{name:'movie.mp4',path:'/movie.mp4'});remoteRespond(app,remotePage([movie]));await pending;
+ app.ctx.movie=movie;app.run('library.content=true;fileDetail(movie,null)');const player=app.run('library.player');
+ pending=app.run('refreshFiles()');remoteRespond(app,remotePage([file('other')]));await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(app.run('library.player'),player);const resolve=app.requests.at(-1);assert.ok(resolve.url.startsWith('/api/v1/resources/resolve?'));
+ resolve.resolve({ok:false,status:503,json:async()=>({code:'READ_UNAVAILABLE'})});await pending;assert.equal(app.run('library.player'),player);
+ pending=app.run('refreshFiles()');remoteRespond(app,{...remotePage([file('other')]),revision:'b'.repeat(64)});await new Promise(resolve=>setImmediate(resolve));app.requests.at(-1).resolve({ok:false,status:404,json:async()=>({code:'NOT_FOUND'})});await pending;
+ assert.equal(app.run('library.player'),null);assert.equal(player.paused,true);
+});
 test('consumer DOM has literal file cards and no operational topology controls',()=>{
  const app=workspace();app.ctx.item=file('evil',{name:'<img src=x onerror=alert(1)>.pdf',path:'/PRIVATE/path'});
  app.run("library.catalog=new FileCatalog.Catalog([{binding_id:'one'}]);library.catalog.files=[item];library.catalog.pending=[];drawFiles();fileDetail(item,null);");
