@@ -1,5 +1,17 @@
 # cloudsite — AI Architecture Memory
 
+## Current maintenance — Issue187 versioned file library (2026-11-16)
+
+Owner requests publishing the Chrome diagnosis and implementing the optimization.
+See [Issue187](https://github.com/nathanxiangang-web/cloudsite/issues/187),
+`docs/library-187/PLAN.md` and `docs/library-187/README.md`. Deliver one independent
+review PR: persistent derived snapshots, exact file deltas, server pagination,
+private conditional reads and page-sized Copy batches. Append schema21 only;
+keep Kernel/Canonical/Journal, provider actions, existing queues and paused139
+unchanged. `library_snapshots` is a separate default-false opt-in requiring
+whole-root scope; no production rollout/migration/config change is authorized
+by this development request. Preserve historical tests and exact-head CI.
+
 ## Current maintenance - Issue185 unlimited cloud downloads (2026-11-10)
 
 The human requests investigation/fix of CONCURRENCY_LIMIT and removal of download

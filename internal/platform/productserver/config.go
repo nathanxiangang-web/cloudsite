@@ -28,6 +28,7 @@ var ErrConfig = errors.New("invalid protected product configuration")
 var ErrStartup = errors.New("product process unavailable")
 
 type Config struct {
+	LibrarySnapshots        bool                             `json:"library_snapshots,omitempty"`
 	AdminProbeBootstrapFile string                           `json:"admin_probe_bootstrap_file,omitempty"`
 	CloudDownloadPreview    *producthttp.SourcePreviewConfig `json:"cloud_download_preview,omitempty"`
 	CloudDownload           *CloudDownloadConfig             `json:"cloud_download,omitempty"`
@@ -133,6 +134,9 @@ func LoadConfig(ctx context.Context, path string) (Config, error) {
 	return cfg, nil
 }
 func (cfg Config) Validate() error {
+	if cfg.LibrarySnapshots && !cfg.WholeRootLibrary {
+		return ErrConfig
+	}
 	if cfg.CloudDownloadPreview != nil && (!cfg.CloudDownloadPreview.Valid() || cfg.CloudDownload != nil) {
 		return ErrConfig
 	}

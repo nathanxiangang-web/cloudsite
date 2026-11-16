@@ -88,4 +88,4 @@ Chrome实际加载的library.js SHA256为 `add73ea076bcff3f92ee58c58c15719393c0d
 
 没有证据支持提高IndexCore Reader或开启F4能修复这个前端加载问题。本方案不要求改Kernel、Canonical、Journal语义或增加Canonical写入进程。
 
-证据：[Chrome请求记录](chrome-evidence.json)、[数量截图](chrome-counts.png)。
+证据：[Chrome请求记录](chrome-before.json)、[数量截图](chrome-before.png)。

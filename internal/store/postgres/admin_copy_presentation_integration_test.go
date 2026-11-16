@@ -431,6 +431,7 @@ func TestPostgresAdminCopyPresentationMigration19To20Atomic(t *testing.T) {
 		t.Fatal("allowlist rollback incomplete")
 	}
 	m, _ = NewMigrator(pool)
+	m.migrations = all[:20] // keep this historical19->20 boundary pinned
 	st, e := m.Apply(ctx)
 	if e != nil || st.CurrentVersion != 20 || !st.Compatible {
 		t.Fatal(st, e)

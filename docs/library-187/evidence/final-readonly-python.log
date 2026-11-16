@@ -1,0 +1,16 @@
+test_container_identity_failure_never_starts_any_container (readonly_catalog_service_test.ReadonlyServiceTests.test_container_identity_failure_never_starts_any_container) ... ok
+test_controller_not_ready_is_bounded_and_never_creates_container (readonly_catalog_service_test.ReadonlyServiceTests.test_controller_not_ready_is_bounded_and_never_creates_container) ... ok
+test_four_bindings_and_explicit_consumer_selection (readonly_catalog_service_test.ReadonlyServiceTests.test_four_bindings_and_explicit_consumer_selection) ... ok
+test_never_inherit_provider_worker_or_hint_credentials (readonly_catalog_service_test.ReadonlyServiceTests.test_never_inherit_provider_worker_or_hint_credentials) ... ok
+test_optional_protected_content_config (readonly_catalog_service_test.ReadonlyServiceTests.test_optional_protected_content_config) ... ok
+test_refuse_public_origin_or_wrong_database (readonly_catalog_service_test.ReadonlyServiceTests.test_refuse_public_origin_or_wrong_database) ... ok
+test_reject_permissions_symlink_duplicate_and_unknown_fields (readonly_catalog_service_test.ReadonlyServiceTests.test_reject_permissions_symlink_duplicate_and_unknown_fields) ... ok
+test_sharing_flag_must_be_boolean_and_content_scoped (readonly_catalog_service_test.ReadonlyServiceTests.test_sharing_flag_must_be_boolean_and_content_scoped) ... ok
+test_start_only_pinned_owned_database_not_restart (readonly_catalog_service_test.ReadonlyServiceTests.test_start_only_pinned_owned_database_not_restart) ... ok
+test_unsupported_action_never_executes (readonly_catalog_service_test.ReadonlyServiceTests.test_unsupported_action_never_executes) ... ok
+test_valid_receipt_and_binary_pin (readonly_catalog_service_test.ReadonlyServiceTests.test_valid_receipt_and_binary_pin) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.013s
+
+OK

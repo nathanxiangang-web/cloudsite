@@ -24,6 +24,7 @@ function closeDetail(restore=false){
  library.opener=null;
 }
 function clearFiles(){
+ if(library.remoteReader)library.remoteReader.clear();library.remoteReader=null;library.remotePage=null;library.remoteFilter=null;library.remoteCursors=[''];library.remoteIndex=0;
  library.filePage=0;library.autoLoad=false;library.loadingAll=null;node('load-pause').hidden=true;node('file-page-status').textContent='';node('file-page-prev').disabled=true;node('file-page-next').disabled=true;
  library.catalog=null;library.failed=false;library.busy=false;closeDetail();node('file-grid').replaceChildren();node('file-rows').replaceChildren();node('files-empty').hidden=true;node('load-more').hidden=true;
  for(const kind of categories)node('count-'+kind).textContent='';
@@ -40,7 +41,7 @@ async function signIn(principal){
  const generation=++library.session;
  const info=await request('/api/v1/workspace');if(generation!==library.session)return;
 	library.userID=principal.user_id;node('cloud-download-link').hidden=info.cloud_download_enabled!==true&&info.cloud_download_preview_enabled!==true;
- library.cloudScope=info.cloud_download_files||null;library.bindings=info.bindings;library.wholeRoot=info.whole_root_library===true;node('library-scope').textContent=library.wholeRoot?'展示已接入目录中完成索引的文件，不代表整个网盘。':'当前展示已接入的真实文件，不代表整个网盘。';library.content=info.content_access_enabled===true;library.sharing=info.sharing_enabled===true;node('my-shares').hidden=!library.sharing;node('login-name').textContent=principal.login;node('account').hidden=false;node('session-error').hidden=true;node('session-error').textContent='';node('login-view').hidden=true;node('library-view').hidden=false;clearError('login-error');
+ library.remote=info.library_snapshot_enabled===true;node('file-search-label').textContent=library.remote?'搜索已收录的文件名':'搜索已加载的文件名';library.cloudScope=info.cloud_download_files||null;library.bindings=info.bindings;library.wholeRoot=info.whole_root_library===true;node('library-scope').textContent=library.wholeRoot?'展示已接入目录中完成索引的文件，不代表整个网盘。':'当前展示已接入的真实文件，不代表整个网盘。';library.content=info.content_access_enabled===true;library.sharing=info.sharing_enabled===true;node('my-shares').hidden=!library.sharing;node('login-name').textContent=principal.login;node('account').hidden=false;node('session-error').hidden=true;node('session-error').textContent='';node('login-view').hidden=true;node('library-view').hidden=false;clearError('login-error');
  await refreshFiles();
 }
 function surfaceFiles(){return FileSurface.partition(library.catalog?library.catalog.files:[],library.cloudScope,cloudFilePage?'downloads':'library');}
@@ -106,32 +107,33 @@ async function previewPDF(item,generation,session,page){
   const image=document.createElement('img');image.className='pdf-page';image.alt='PDF 第 '+page+' 页';image.src='data:image/png;base64,'+result.image_base64;node('file-preview').append(tools,image);node('preview-status').textContent='服务器渲染预览 · 原文件缓存一小时后自动清理。';
  }catch(error){if(current())node('preview-status').textContent='暂时无法渲染 PDF，可下载原文件查看。';}
 }
-function drawFiles(preserveDetail=false){
+function drawFiles(preserveDetail=false,preserveRows=false){
  const catalog=library.catalog;if(!catalog)return;
- const files=visibleFiles();const counts=ResourceDisplay.counts(surfaceFiles());
- for(const kind of categories){node('count-'+kind).textContent=String(counts[kind]);node('category-'+kind).setAttribute('aria-pressed',String(kind===library.category));}
- if(!preserveDetail)closeDetail();node('file-grid').replaceChildren();node('file-rows').replaceChildren();
- const pages=Math.max(1,Math.ceil(files.length/120));library.filePage=Math.min(library.filePage||0,pages-1);const offset=library.filePage*120;
- node('file-page-prev').disabled=library.filePage===0;node('file-page-next').disabled=library.filePage>=pages-1;node('file-page-status').textContent=files.length?'第 '+(library.filePage+1)+' / '+pages+' 页 · 文件 '+(offset+1)+'–'+Math.min(offset+120,files.length):'';
- for(const item of files.slice(offset,offset+120)){
+ const remote=library.remote&&library.remotePage;const files=remote?surfaceFiles():visibleFiles();const counts=remote?remote.counts:ResourceDisplay.counts(surfaceFiles());
+ for(const kind of categories){node('count-'+kind).textContent=counts?String(counts[kind]):'—';node('category-'+kind).setAttribute('aria-pressed',String(kind===library.category));}
+ if(!preserveDetail)closeDetail();if(!preserveRows){node('file-grid').replaceChildren();node('file-rows').replaceChildren();}
+ const pageSize=remote?50:120;const total=remote?remote.filtered:files.length;const pages=Math.max(1,Math.ceil(total/pageSize));library.filePage=remote?library.remoteIndex:Math.min(library.filePage||0,pages-1);const offset=remote?remote.offset:library.filePage*pageSize;
+ node('file-page-prev').disabled=remote?!remote.ready||library.remoteIndex===0:library.filePage===0;node('file-page-next').disabled=remote?!remote.ready||!remote.next_cursor:library.filePage>=pages-1;node('file-page-status').textContent=remote&&!remote.ready?'目录同步中':files.length?'第 '+(library.filePage+1)+' / '+pages+' 页 · 文件 '+(offset+1)+'–'+Math.min(offset+pageSize,total):'';
+ if(!preserveRows)for(const item of (remote?files:files.slice(offset,offset+120))){
   const kind=ResourceDisplay.classify(item);
-  const button=document.createElement('button');button.type='button';button.className='file-card '+ResourceDisplay.category(item);
+  if(library.layout==='cards'){const button=document.createElement('button');button.type='button';button.className='file-card '+ResourceDisplay.category(item);
   const format=document.createElement('span');format.className='format';format.textContent=kind.extension.toUpperCase()||'FILE';
   const name=document.createElement('strong');name.textContent=ResourceDisplay.name(item);const meta=document.createElement('small');meta.textContent=(ResourceDisplay.category(item)==='other'?'其他':kind.label)+' · '+ResourceDisplay.size(item.size_bytes);
-  button.append(format,name,meta);button.addEventListener('click',()=>fileDetail(item,button));node('file-grid').append(button);
-  const row=document.createElement('tr');const title=document.createElement('td');const link=document.createElement('button');link.type='button';link.textContent=ResourceDisplay.name(item);link.addEventListener('click',()=>fileDetail(item,link));title.append(link);row.append(title);
-  for(const text of [ResourceDisplay.category(item)==='other'?'其他':kind.label,ResourceDisplay.size(item.size_bytes)]){const cell=document.createElement('td');cell.textContent=text;row.append(cell);}node('file-rows').append(row);
+  button.append(format,name,meta);button.addEventListener('click',()=>fileDetail(item,button));node('file-grid').append(button);}
+  else {const row=document.createElement('tr');const title=document.createElement('td');const link=document.createElement('button');link.type='button';link.textContent=ResourceDisplay.name(item);link.addEventListener('click',()=>fileDetail(item,link));title.append(link);row.append(title);
+  for(const text of [ResourceDisplay.category(item)==='other'?'其他':kind.label,ResourceDisplay.size(item.size_bytes)]){const cell=document.createElement('td');cell.textContent=text;row.append(cell);}node('file-rows').append(row);}
  }
  node('file-grid').hidden=library.layout!=='cards';node('file-list').hidden=library.layout!=='list';
  for(const layout of ['cards','list'])node('view-'+layout).setAttribute('aria-pressed',String(layout===library.layout));
- node('files-empty').hidden=files.length!==0||library.busy||library.failed;
+ node('files-empty').hidden=files.length!==0||library.busy||library.failed||!!(remote&&!remote.ready);
  node('empty-title').textContent=node('file-search').value?'没有匹配的文件':library.category==='all'?'还没有找到文件':'暂时没有这类文件';
  node('empty-description').textContent=catalog.complete?(cloudFilePage?'当前云下载目录中没有匹配结果。':'当前文件库中没有匹配结果。'):'更多文件尚未加载，可继续加载后再找找。';
  node('collection-status').textContent='已加载 '+surfaceFiles().length+' 个文件'+(files.length!==surfaceFiles().length?' · 当前显示 '+files.length+' 个':'');
  node('load-status').textContent=library.busy?'正在加载文件…':library.failed?'加载中断，当前结果可能不完整。':catalog.limited?'已达到本次加载上限，当前结果并非完整文件库。':catalog.complete?(library.wholeRoot?(cloudFilePage?'云下载目录已收录文件加载完成。':'主文件库已收录文件加载完成（不含云下载）。'):'已载入当前接入范围的文件，不是整个网盘。'):'还有文件待加载，搜索与分类仅针对已加载文件。';
+ if(remote){node('collection-status').textContent=remote.ready?'已收录 '+remote.counts.all+' 个文件 · 本页 '+files.length+' 个':'正在同步目录 · 已显示 '+files.length+' 个文件';node('load-status').textContent=remote.stale?'后台更新暂时不可用，保留最近成功的目录。':remote.ready?'分类与搜索覆盖已收录文件，目录在后台更新。':'正在后台建立文件目录，统计尚未完成。';}
  if(catalog.unknown)node('load-status').textContent+=' '+catalog.unknown+' 项类型未明确，未当作文件显示。';
- node('load-more').hidden=catalog.complete||catalog.limited||library.failed;node('load-more').disabled=library.busy;
- node('load-pause').hidden=!library.wholeRoot||!library.autoLoad||catalog.complete||library.failed;
+ node('load-more').hidden=!!remote||catalog.complete||catalog.limited||library.failed;node('load-more').disabled=library.busy;
+ node('load-pause').hidden=!!remote||!library.wholeRoot||!library.autoLoad||catalog.complete||library.failed;
 }
 async function loadRound(){
  if(library.busy||!library.catalog)return;
@@ -145,6 +147,7 @@ async function loadRound(){
 }
 async function loadWholeLibrary(){const catalog=library.catalog;if(!catalog||library.loadingAll===catalog)return;library.loadingAll=catalog;library.autoLoad=true;try{while(library.catalog===catalog&&library.autoLoad&&!catalog.complete&&!catalog.limited&&!library.failed){await loadRound();await new Promise(resolve=>setTimeout(resolve,0));}}finally{if(library.catalog===catalog){library.loadingAll=null;library.autoLoad=false;drawFiles(true);}}}
 async function refreshFiles(){
+ if(library.remote)return loadRemotePage(library.remoteIndex||0,true);
  library.request++;library.controller.abort();library.controller=new AbortController();clearFiles();
  try{library.catalog=new FileCatalog.Catalog(library.bindings,library.wholeRoot);if(library.wholeRoot)await loadWholeLibrary();else await loadRound();}catch(error){library.failed=true;errorAt('library-error',error);node('collection-status').textContent='文件尚未加载';}
 }
@@ -168,19 +171,20 @@ node('login-form').addEventListener('submit',async event=>{
 node('logout').addEventListener('click',async()=>{node('logout').disabled=true;try{await request('/api/v1/auth/logout','POST');signOut(true);}catch(error){errorAt('library-error',error);}finally{node('logout').disabled=false;}});
 }
 node('refresh').addEventListener('click',refreshFiles);node('load-more').addEventListener('click',()=>library.wholeRoot?loadWholeLibrary():loadRound());node('load-pause').addEventListener('click',()=>{library.autoLoad=false;node('load-pause').hidden=true;});
-for(const category of categories)node('category-'+category).addEventListener('click',()=>{library.category=category;library.filePage=0;drawFiles();});
+for(const category of categories)node('category-'+category).addEventListener('click',()=>{library.category=category;library.filePage=0;if(library.remote){loadRemotePage(0,true,true);return;}drawFiles();});
 for(const layout of ['cards','list'])node('view-'+layout).addEventListener('click',()=>{library.layout=layout;drawFiles();});
-node('file-search').addEventListener('input',()=>{library.filePage=0;drawFiles();});node('detail-close').addEventListener('click',()=>closeDetail(true));
-node('file-page-prev').addEventListener('click',()=>{library.filePage=Math.max(0,(library.filePage||0)-1);drawFiles();});node('file-page-next').addEventListener('click',()=>{library.filePage=(library.filePage||0)+1;drawFiles();});
+let searchTimer;node('file-search').addEventListener('input',()=>{if(library.remote){clearTimeout(searchTimer);searchTimer=setTimeout(()=>loadRemotePage(0,true,true),250);return;}library.filePage=0;drawFiles();});node('detail-close').addEventListener('click',()=>closeDetail(true));
+node('file-page-prev').addEventListener('click',()=>{if(library.remote){loadRemotePage(Math.max(0,library.remoteIndex-1));return;}library.filePage=Math.max(0,(library.filePage||0)-1);drawFiles();});node('file-page-next').addEventListener('click',()=>{if(library.remote){loadRemotePage(library.remoteIndex+1);return;}library.filePage=(library.filePage||0)+1;drawFiles();});
 node('file-detail').addEventListener('keydown',event=>{if(event.key==='Escape')closeDetail(true);});
 if(!cloudFilePage)(async()=>{try{const capabilities=await request('/api/v1/auth/capabilities');node('auth-toggle').hidden=capabilities.registration_enabled!==true;}catch(error){node('auth-toggle').hidden=true;}try{await signIn(await request('/api/v1/auth/me'));}catch(error){if(error.code!=='AUTH_REQUIRED'){node('session-error').textContent='连接暂时不可用，请刷新重试。';node('session-error').hidden=false;}}})();
 
 // Reuse the exact content/player/download/share controller on the download page.
 const CloudFileSurface=Object.freeze({
+ usesSnapshots(){return library.remote===true;},
  async mount(principal,info,onUnauthorized){
   if(!cloudFilePage)return;
   CloudFileSurface.clear();
-  library.cloudScope=FileSurface.validScope(info.cloud_download_files)?info.cloud_download_files:null;
+  library.remote=info.library_snapshot_enabled===true;node('file-search-label').textContent=library.remote?'搜索已收录的文件名':'搜索已加载的文件名';library.cloudScope=FileSurface.validScope(info.cloud_download_files)?info.cloud_download_files:null;
   if(!library.cloudScope)return;
   library.onUnauthorized=onUnauthorized;library.userID=principal.user_id;
   library.bindings=[{binding_id:library.cloudScope.binding_id}];library.wholeRoot=true;
@@ -198,6 +202,7 @@ const CloudFileSurface=Object.freeze({
  async refresh(){return refreshCanonicalQuietly();}
 });
 async function refreshCanonicalQuietly(){
+ if(library.remote){if(!library.busy&&library.userID)return loadRemotePage(library.remoteIndex||0);return;}
   if(!library.userID||!library.catalog||library.busy||library.quietRefresh||!library.bindings.length)return;
   const session=library.session,generation=library.request,previous=library.catalog;
   const current=()=>session===library.session&&generation===library.request&&previous===library.catalog;
@@ -215,4 +220,38 @@ async function refreshCanonicalQuietly(){
   finally{library.quietRefresh=false;}
 }
 // GET-only reconciliation, without resetting playback, details or login.
-if(!cloudFilePage)setInterval(()=>{if(!document.hidden)refreshCanonicalQuietly();},10000);
+setInterval(()=>{if(!document.hidden&&library.userID&&(library.remote||!cloudFilePage))refreshCanonicalQuietly();},10000);
+
+// A page fetch never clears the last successful publication. Request/session
+// fences prevent late responses from crossing a query or account switch.
+async function loadRemotePage(index=0,fresh=false,reset=false){
+ if(!library.userID)return;
+ library.request++;const generation=library.request,session=library.session;
+ library.controller.abort();library.controller=new AbortController();
+ if(!library.remoteReader)library.remoteReader=new LibraryPageModel.Reader(fetch,library.bindings.map(b=>b.binding_id));
+ const filter=library.category+'\0'+node('file-search').value.trim();
+ if(reset||library.remoteFilter&&library.remoteFilter!==filter)index=0;
+ const cursors=library.remoteCursors||[''];const cursor=cursors[index]||'';
+ const query={surface:cloudFilePage?'downloads':'library',category:library.category,q:node('file-search').value.trim(),cursor:index===0&&reset?'':cursor};
+ if(!query.cursor&&index>0)query.page=String(index);
+ library.busy=true;node('refresh').disabled=true;clearError('library-error');
+ const current=()=>session===library.session&&generation===library.request&&library.remote;
+ let redraw=false,preserveRows=false,recovered=false;try{
+  let result;
+  try{result=await library.remoteReader.read(query,library.controller.signal,fresh);}
+  catch(error){if(error.code!=='LIBRARY_VERSION_EXPIRED'||!cursor)throw error;query.cursor='';query.page=String(index);recovered=true;result=await library.remoteReader.read(query,library.controller.signal,true);}
+  if(!current())return;
+  const changed=!library.remotePage||library.remoteFilter!==filter||library.remoteIndex!==Math.floor(result.page.offset/50)||JSON.stringify(library.remotePage)!==JSON.stringify(result.page);
+  if(changed&&result.page.ready&&library.selected?.path&&!result.page.items.some(item=>item.binding_id===library.selected.binding_id&&item.resource_id===library.selected.resource_id&&item.path===library.selected.path)){
+   const selected=library.selected;
+   try{const exact=await request('/api/v1/resources/resolve?'+new URLSearchParams({binding_id:selected.binding_id,path:selected.path}));if(current()&&library.selected===selected&&exact?.binding_id===selected.binding_id&&typeof exact.resource_id==='string'&&exact.resource_id!==selected.resource_id)closeDetail();}
+   catch(error){if(current()&&library.selected===selected&&['NOT_FOUND','RESOURCE_AMBIGUOUS'].includes(error.code))closeDetail();}
+  }
+  if(!current())return;
+  index=Math.floor(result.page.offset/50);library.remoteIndex=index;library.remoteFilter=filter;library.remoteCursors=index===0?['']:recovered?Array(index+1).fill(''):cursors.slice(0,index+1);
+  library.remoteCursors[index+1]=result.page.next_cursor;
+  library.failed=false;
+  if(changed){preserveRows=!!library.remotePage&&JSON.stringify(library.remotePage.items)===JSON.stringify(result.page.items);library.remotePage=result.page;library.catalog={files:result.page.items,complete:result.page.ready,limited:false,unknown:result.page.unknown||0};redraw=true;}
+ }catch(error){if(current()&&error.name!=='AbortError'){if(error.code==='AUTH_REQUIRED'){signOut();return;}if(error.code==='LIBRARY_SCOPE_CHANGED'){clearFiles();library.failed=true;node('library-error').hidden=false;node('library-error').textContent='文件库范围已变更，请重新加载页面。';return;}library.failed=true;errorAt('library-error',error);node('load-status').textContent='更新失败，保留已显示的文件。';}}
+ finally{if(current()){library.busy=false;node('refresh').disabled=false;if(redraw)drawFiles(true,preserveRows);else if(!library.failed&&library.remotePage)node('load-status').textContent=library.remotePage.stale?'后台更新暂时不可用，保留最近成功的目录。':library.remotePage.ready?'分类与搜索覆盖已收录文件，目录在后台更新。':'正在后台建立文件目录，统计尚未完成。';}}
+}
