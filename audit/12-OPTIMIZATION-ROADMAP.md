@@ -112,6 +112,7 @@
 ### R1-7 — 每用户累计 1500 次云下载上限
 
 - 开发目标：按项目所有者 2026-11-16 指示，将每个 CloudSite 用户 UUID 的累计新下载操作上限设为 1500 次。
+- 边界：UserSpace 不设置个人存储容量配额；1500 仅是云下载提交次数上限，不是容量、文件大小或并发限制。
 - 影响模块：CloudSite product admission、PostgreSQL operation ledger、usage DTO 和 downloads UI。
 - 数据库变更：优先复用现有 operation ledger/quota lock；不为统一 1500 上限单独新增 schema 或改写历史 migration。若实施证明必须变更，另行 ADR。
 - API 变更：`operation_limit=1500`、`used`、`remaining`；`unlimited=false`；并发不设每用户上限，DTO 必须明确表达 concurrency unlimited。
