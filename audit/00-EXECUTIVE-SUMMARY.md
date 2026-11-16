@@ -8,7 +8,7 @@
 - CloudSite 实际固定依赖：115driver `v1.3.5`，tag 提交 `d89999540a6d35838582ac06e31f81312d1f66fd`
 - 生产只读观测窗口：2026-11-16 09:50—10:40 UTC
 
-> **架构审查补充：** [安全过渡与架构审查意见](15-ARCHITECTURE-TRANSITION-REVIEW.md)。目标云下载策略为每用户累计 1500 次，不恢复每用户并发上限；当前 main 仍未实施该策略。PR #191 的 UserSpace 方案在 schema/API 兼容和生产恢复 Gate 通过前不得开工。
+> **架构审查补充：** [安全过渡与架构审查意见](15-ARCHITECTURE-TRANSITION-REVIEW.md)。UserSpace 不设置个人存储容量配额；目标云下载策略为每用户累计 1500 次提交，不恢复每用户并发上限。1500 是提交次数，不是容量或文件大小限制；当前 main 仍未实施该策略。PR #191 的 UserSpace 方案在 schema/API 兼容和生产恢复 Gate 通过前不得开工。
 
 ## 1. 总体结论
 
