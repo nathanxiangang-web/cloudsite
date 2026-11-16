@@ -1,3 +1,7 @@
+> **Current implementation handoff (2026-11-16):** see [PRODUCT-USER-CLOUD-DOWNLOAD-CRUD.md](PRODUCT-USER-CLOUD-DOWNLOAD-CRUD.md) for the audit against current main (VERSION 1.0.3 / schema 21), the 115driver v1.3.5 CRUD capability review, current user lifecycle constraints, and the proposed end-to-end private-space ACL. This D-065 document retains its original historical baseline and proposal; do not use its old schema 15 baseline or old quota statements as current implementation facts. The new handoff is documentation-only and does not authorize code, migration, provider writes, or deployment.
+
+---
+
 # CloudSite 私有云下载空间蓝图（D-065 / Issue #138）
 
 > 状态：**拟议设计，尚未实现、尚未架构验收**。蓝图写入 GitHub 并不代表已更改线上服务、网盘文件、数据库或 IndexCore。
