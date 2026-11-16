@@ -149,12 +149,18 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		if err := registerCloudDownload(h, settings.cloud); err != nil {
 			return nil, err
 		}
+
 		info.CloudDownloadFiles = &cloudFileScope{BindingID: settings.cloud.target.BindingID, Path: settings.cloud.target.TargetPath}
 		info.CloudDownloadEnabled = true
 		info.CloudDownloadSessionCheck = settings.cloud.health != nil
 		info.CloudDownloadPreviewEnabled = true
 		info.CloudDownloadLabel = settings.cloud.target.Label
 		info.Mode = "ACQUISITION"
+	}
+	if settings.cloudSpace != nil {
+		if err := registerCloudSpace(h, settings.cloudSpace); err != nil {
+			return nil, err
+		}
 	}
 	consumer := info
 	consumer.LibrarySnapshotEnabled = settings.library != nil

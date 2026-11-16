@@ -110,7 +110,7 @@ func (s *LibraryService) Library(ctx context.Context, p auth.Principal, q Librar
 	}
 	projected := map[storage.BindingID]map[string]Resource{}
 	for id, items := range groups {
-		rows, err := s.reads.resources(ctx, bindings[id], items)
+		rows, err := s.reads.resources(ctx, p, bindings[id], items)
 		if err != nil {
 			return LibraryPage{}, err
 		}

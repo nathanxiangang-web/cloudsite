@@ -102,6 +102,9 @@ func (e *Engine) Page(q Request) (Page, error) {
 			result.UpdatedAt = s.UpdatedAt
 		}
 		for _, r := range s.Resources {
+			if r.CanonicalPath != nil && strings.Contains(*r.CanonicalPath, "/_users/") {
+				continue
+			}
 			within := s.BindingID == q.CloudBinding && q.CloudPath != "" && r.CanonicalPath != nil && strings.HasPrefix(*r.CanonicalPath, q.CloudPath+"/")
 			if q.Downloads != within {
 				continue

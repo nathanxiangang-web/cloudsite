@@ -168,3 +168,37 @@ func executionResolverFixture(t *testing.T) (*acquisition.ExecutionInputResolver
 	}
 	return resolver, manifests, topology, manifest
 }
+func TestExecutionInputResolverUsesFrozenPrivateTarget(t *testing.T) {
+	_, manifests, topology, manifest := executionResolverFixture(t)
+	spaceID := "space-a"
+	connectionID := storage.ConnectionID("connection-a")
+	scope := "frozen-private-directory"
+	owner := acquisition.UserID("owner-a")
+	manifest.UserSpaceID = &spaceID
+	manifest.UserID = &owner
+	manifest.TargetProviderConnectionID = &connectionID
+	manifest.TargetProviderScope = &scope
+	manifests.values[manifest.ID] = manifest
+	reader := privateTargetReaderDouble{space: acquisition.PrivateTargetSpace{
+		ID: spaceID, OwnerUserID: string(owner), BindingID: "binding-a", ProviderConnectionID: connectionID,
+		IndexCoreRootID: "root-a", NativeDirID: scope, CanonicalPrefix: manifest.TargetPath,
+		Status: acquisition.PrivateTargetStatusActive, OwnerState: acquisition.PrivateTargetOwnerActive,
+	}}
+	resolver, err := acquisition.NewExecutionInputResolver(manifests, topology, acquisition.WithExecutionPrivateTargetSpaces(reader))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resolved, err := resolver.Resolve(context.Background(), manifest.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resolved.ConnectionID != connectionID || resolved.Download.Target.Scope != scope || resolved.Download.Target.Path != manifest.TargetPath {
+		t.Fatalf("unexpected private execution input: %#v", resolved)
+	}
+	wrongConnection := storage.ConnectionID("wrong-connection")
+	manifest.TargetProviderConnectionID = &wrongConnection
+	manifests.values[manifest.ID] = manifest
+	if _, err := resolver.Resolve(context.Background(), manifest.ID); !errors.Is(err, acquisition.ErrExecutionIdentityMismatch) {
+		t.Fatalf("error = %v, want ErrExecutionIdentityMismatch", err)
+	}
+}

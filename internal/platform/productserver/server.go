@@ -153,7 +153,13 @@ func Run(ctx context.Context, action, configFile, userFile string, policies ...c
 		cancel()
 		return ErrStartup
 	}
-	reads, err := product.NewReadService(tasks, topology, index, physical, catalog, bindings)
+	cloudUserSpaces, err := postgres.NewCloudUserSpaceRepository(pool)
+	if err != nil {
+		cancel()
+		return ErrStartup
+	}
+	reads, err := product.NewReadService(tasks, topology, index, physical, catalog, bindings,
+		product.WithPrivateResourceAuthorizer(product.CloudSpaceResourceAuthorizer{Spaces: cloudUserSpaces}))
 	if err != nil {
 		cancel()
 		return ErrStartup

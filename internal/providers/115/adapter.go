@@ -71,7 +71,8 @@ type Backend interface {
 // Options configures an adapter.
 type Options struct {
 	// Backend is required. It is the only way the adapter reaches 115.
-	Backend Backend
+	Backend     Backend
+	CopyBackend CopyBackend
 	// Now is an optional clock, used for context deadlines in tests.
 	Now func() time.Time
 	// MaxPages bounds status pagination. Zero uses DefaultMaxPages.
@@ -84,10 +85,11 @@ type Options struct {
 
 // Adapter is the concrete 115 DownloaderProvider.
 type Adapter struct {
-	backend    Backend
-	descriptor contracts.Descriptor
-	now        func() time.Time
-	maxPages   int64
+	backend     Backend
+	copyBackend CopyBackend
+	descriptor  contracts.Descriptor
+	now         func() time.Time
+	maxPages    int64
 
 	// mu serializes backend calls. The pinned client holds mutable per-client
 	// state (user id, request object), so a single adapter instance must not be
@@ -111,7 +113,7 @@ func New(options Options) (*Adapter, error) {
 		maxPages = DefaultMaxPages
 	}
 	return &Adapter{
-		backend: options.Backend,
+		backend: options.Backend, copyBackend: options.CopyBackend,
 		descriptor: contracts.Descriptor{
 			ID:          ProviderID,
 			DisplayName: "115 offline download",

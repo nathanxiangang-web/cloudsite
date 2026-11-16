@@ -62,10 +62,12 @@ type RuntimeDependencies struct {
 // Runtime owns the Panta product pool; injected transports and secret resolvers
 // remain caller-owned. Close is idempotent and must follow Run shutdown.
 type Runtime struct {
-	application *app.Application
-	pool        *pgxpool.Pool
-	closeOnce   sync.Once
-	health      map[storage.ConnectionID]*sessionhealth.Health
+	application     *app.Application
+	pool            *pgxpool.Pool
+	closeOnce       sync.Once
+	health          map[storage.ConnectionID]*sessionhealth.Health
+	sessions        *session.Registry
+	sessionBindings map[storage.ConnectionID]RuntimeSession
 }
 
 // SessionHealth returns the bounded checker for the already imported immutable
@@ -237,13 +239,30 @@ func NewRuntime(ctx context.Context, cfg config.Config, deps RuntimeDependencies
 		}
 	}
 
-	inputs, err := acquisition.NewExecutionInputResolver(manifests, storageStore)
-	if err != nil {
-		return nil, err
-	}
 	var executionOptions []acquisition.ExecutionOption
 	if deps.KnownPollScope != nil {
 		executionOptions = append(executionOptions, acquisition.WithKnownPollOnly(*deps.KnownPollScope))
+	}
+	copyDonors, err := postgres.NewAcquisitionCopyDonorRepository(pool)
+	if err != nil {
+		return nil, err
+	}
+	copyOperations, err := postgres.NewAcquisitionCopyRepository(pool)
+	if err != nil {
+		return nil, err
+	}
+	cloudUserSpaces, err := postgres.NewCloudUserSpaceRepository(pool)
+	if err != nil {
+		return nil, err
+	}
+	copyCoordinator, err := acquisition.NewCopyCoordinator(copyDonors, copyOperations, time.Now)
+	if err != nil {
+		return nil, err
+	}
+	executionOptions = append(executionOptions, acquisition.WithCopyStepCoordinator(copyCoordinator))
+	inputs, err := acquisition.NewExecutionInputResolver(manifests, storageStore, acquisition.WithExecutionPrivateTargetSpaces(cloudUserSpaces))
+	if err != nil {
+		return nil, err
 	}
 	execution, err := acquisition.NewExecutionStepService(inputs, manifests, jobs, sessions, tasks, executionOptions...)
 	if err != nil {
@@ -298,7 +317,7 @@ func NewRuntime(ctx context.Context, cfg config.Config, deps RuntimeDependencies
 	if err != nil {
 		return nil, err
 	}
-	return &Runtime{application: application, pool: pool, health: health}, nil
+	return &Runtime{application: application, pool: pool, health: health, sessions: sessions, sessionBindings: registered}, nil
 }
 
 func new115Downloader(_ context.Context, providerID contracts.ProviderID, secret []byte) (contracts.DownloaderProvider, error) {

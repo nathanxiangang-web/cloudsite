@@ -102,6 +102,20 @@ type DownloaderSessionResolver interface {
 // ExecutionOption configures the execution step service.
 type ExecutionOption func(*ExecutionStepService) error
 
+type CopyStepCoordinator interface {
+	ExecuteCopy(context.Context, Manifest, jobs.Job, contracts.ObjectCopyProvider, string, int) (StepResult, bool, error)
+}
+
+func WithCopyStepCoordinator(coordinator CopyStepCoordinator) ExecutionOption {
+	return func(service *ExecutionStepService) error {
+		if coordinator == nil {
+			return ErrInvalidExecutionRequest
+		}
+		service.copyCoordinator = coordinator
+		return nil
+	}
+}
+
 // WithExecutionClock injects a deterministic clock for tests.
 func WithExecutionClock(clock Clock) ExecutionOption {
 	return func(service *ExecutionStepService) error {
@@ -117,13 +131,14 @@ func WithExecutionClock(clock Clock) ExecutionOption {
 // crosses the external side-effect boundary at most once per execution and never
 // blindly recreates an existing provider task.
 type ExecutionStepService struct {
-	inputs    *ExecutionInputResolver
-	manifests ManifestReader
-	jobs      JobReader
-	sessions  DownloaderSessionResolver
-	tasks     ProviderTaskStore
-	now       Clock
-	pollScope *KnownPollScope
+	inputs          *ExecutionInputResolver
+	manifests       ManifestReader
+	jobs            JobReader
+	sessions        DownloaderSessionResolver
+	tasks           ProviderTaskStore
+	now             Clock
+	pollScope       *KnownPollScope
+	copyCoordinator CopyStepCoordinator
 }
 
 func NewExecutionStepService(
@@ -191,6 +206,14 @@ func (service *ExecutionStepService) Execute(ctx context.Context, request StepRe
 	if errors.Is(err, ErrProviderTaskNotFound) {
 		if service.pollScope != nil {
 			return StepResult{}, ErrKnownRecoveryConflict
+		}
+		if service.copyCoordinator != nil && manifest.UserSpaceID != nil {
+			if copier, ok := downloader.(contracts.ObjectCopyProvider); ok {
+				step, handled, copyErr := service.copyCoordinator.ExecuteCopy(ctx, manifest, job, copier, request.Owner, request.ClaimAttempt)
+				if handled {
+					return step, copyErr
+				}
+			}
 		}
 		return service.claimAndStartProviderTask(ctx, request, input, downloader)
 	}

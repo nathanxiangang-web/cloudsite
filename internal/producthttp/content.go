@@ -30,6 +30,7 @@ type workspaceOptions struct {
 	adminReads    adminread.Reads
 	sourcePreview *SourcePreviewConfig
 	cloud         *cloudDownloadOptions
+	cloudSpace    *cloudSpaceOptions
 	registration  bool
 	libraryIDs    []storage.BindingID
 	wholeRoot     bool

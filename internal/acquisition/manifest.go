@@ -88,29 +88,35 @@ type Manifest struct {
 	// set exactly once by the canonical-finalization transaction and links this
 	// acquisition to the one canonical projected Copy that confirmed it. Later Copy
 	// availability changes never rewrite it.
-	ResultCopyID           *catalog.CopyID
-	TargetStorageBindingID storage.BindingID
-	TargetPath             string
-	AssetID                *catalog.AssetID
-	ReleaseID              *catalog.ReleaseID
-	VariantID              *catalog.VariantID
-	JobID                  *jobs.JobID
-	State                  State
-	CreatedAt              time.Time
-	UpdatedAt              time.Time
+	ResultCopyID               *catalog.CopyID
+	TargetStorageBindingID     storage.BindingID
+	TargetPath                 string
+	UserSpaceID                *string
+	TargetProviderConnectionID *storage.ConnectionID
+	TargetProviderScope        *string
+	AssetID                    *catalog.AssetID
+	ReleaseID                  *catalog.ReleaseID
+	VariantID                  *catalog.VariantID
+	JobID                      *jobs.JobID
+	State                      State
+	CreatedAt                  time.Time
+	UpdatedAt                  time.Time
 }
 
 type CreateManifestRequest struct {
-	ID                     ManifestID
-	UserID                 *UserID
-	SourceType             string
-	SourceRef              string
-	ExpectedName           *string
-	TargetStorageBindingID storage.BindingID
-	TargetPath             string
-	AssetID                *catalog.AssetID
-	ReleaseID              *catalog.ReleaseID
-	VariantID              *catalog.VariantID
+	ID                         ManifestID
+	UserID                     *UserID
+	SourceType                 string
+	SourceRef                  string
+	ExpectedName               *string
+	TargetStorageBindingID     storage.BindingID
+	TargetPath                 string
+	UserSpaceID                *string
+	TargetProviderConnectionID *storage.ConnectionID
+	TargetProviderScope        *string
+	AssetID                    *catalog.AssetID
+	ReleaseID                  *catalog.ReleaseID
+	VariantID                  *catalog.VariantID
 }
 
 type ManifestRepository interface {
@@ -143,10 +149,21 @@ func WithClock(clock Clock) Option {
 }
 
 type Service struct {
-	storage   StorageTopologyReader
-	catalog   CatalogIdentityReader
-	manifests ManifestRepository
-	now       Clock
+	storage       StorageTopologyReader
+	catalog       CatalogIdentityReader
+	manifests     ManifestRepository
+	privateSpaces PrivateTargetSpaceReader
+	now           Clock
+}
+
+func WithPrivateTargetSpaces(reader PrivateTargetSpaceReader) Option {
+	return func(service *Service) error {
+		if reader == nil {
+			return ErrInvalidArgument
+		}
+		service.privateSpaces = reader
+		return nil
+	}
 }
 
 func NewService(topology StorageTopologyReader, identities CatalogIdentityReader, manifests ManifestRepository, options ...Option) (*Service, error) {
@@ -171,9 +188,22 @@ func (service *Service) CreateManifest(ctx context.Context, request CreateManife
 	if err != nil {
 		return Manifest{}, err
 	}
-	_, _, err = loadAcquisitionTopology(ctx, service.storage, request.TargetStorageBindingID)
+	binding, connection, err := loadAcquisitionTopology(ctx, service.storage, request.TargetStorageBindingID)
 	if err != nil {
 		return Manifest{}, err
+	}
+	if request.UserSpaceID != nil {
+		if service.privateSpaces == nil {
+			return Manifest{}, ErrExecutionIdentityMismatch
+		}
+		space, err := service.privateSpaces.GetPrivateTargetSpace(ctx, *request.UserSpaceID)
+		if err != nil {
+			return Manifest{}, err
+		}
+		if err := ValidatePrivateTargetSpace(space, *request.UserSpaceID, binding, connection,
+			*request.TargetProviderScope, targetPath, request.UserID); err != nil {
+			return Manifest{}, err
+		}
 	}
 	if err := service.validateLineage(ctx, request); err != nil {
 		return Manifest{}, err
@@ -183,7 +213,9 @@ func (service *Service) CreateManifest(ctx context.Context, request CreateManife
 	manifest := Manifest{
 		ID: request.ID, UserID: request.UserID, SourceType: request.SourceType, SourceRef: request.SourceRef,
 		ExpectedName: request.ExpectedName, TargetStorageBindingID: request.TargetStorageBindingID, TargetPath: targetPath,
-		AssetID: request.AssetID, ReleaseID: request.ReleaseID, VariantID: request.VariantID, JobID: nil,
+		UserSpaceID: request.UserSpaceID, TargetProviderConnectionID: request.TargetProviderConnectionID,
+		TargetProviderScope: request.TargetProviderScope,
+		AssetID:             request.AssetID, ReleaseID: request.ReleaseID, VariantID: request.VariantID, JobID: nil,
 		State: StatePending, CreatedAt: now, UpdatedAt: now,
 	}
 	if err := service.manifests.CreateManifest(ctx, manifest); err != nil {
@@ -265,11 +297,25 @@ func validateCreateRequest(request CreateManifestRequest) (string, error) {
 	if request.ReleaseID != nil && request.AssetID == nil || request.VariantID != nil && request.ReleaseID == nil {
 		return "", ErrInvalidArgument
 	}
+	if err := validatePrivateTarget(request.UserSpaceID, request.TargetProviderConnectionID, request.TargetProviderScope); err != nil {
+		return "", err
+	}
 	targetPath, err := NormalizeTargetPath(request.TargetPath)
 	if err != nil {
 		return "", err
 	}
 	return targetPath, nil
+}
+
+func validatePrivateTarget(userSpaceID *string, connectionID *storage.ConnectionID, scope *string) error {
+	if userSpaceID == nil && connectionID == nil && scope == nil {
+		return nil
+	}
+	if userSpaceID == nil || connectionID == nil || scope == nil || *userSpaceID == "" || *connectionID == "" ||
+		storage.ValidateProviderScope(scope) != nil {
+		return ErrInvalidArgument
+	}
+	return nil
 }
 
 func validRequiredText(value string, maximum int) bool {
@@ -309,6 +355,9 @@ func ValidateManifest(manifest Manifest) error {
 	}
 	if manifest.State != StateReady && manifest.ResultCopyID != nil {
 		return ErrInvalidArgument
+	}
+	if err := validatePrivateTarget(manifest.UserSpaceID, manifest.TargetProviderConnectionID, manifest.TargetProviderScope); err != nil {
+		return err
 	}
 	normalized, err := NormalizeTargetPath(manifest.TargetPath)
 	if err != nil || normalized != manifest.TargetPath {

@@ -18,7 +18,8 @@ import (
 const acquisitionManifestColumns = `
 manifest_id::text, user_id::text, source_type, source_ref, expected_name, result_name,
 result_copy_id::text, target_storage_binding_id::text, target_path, asset_id::text, release_id::text,
-variant_id::text, job_id::text, state, created_at, updated_at`
+variant_id::text, job_id::text, state, created_at, updated_at,
+user_space_id::text, target_provider_connection_id::text, target_provider_scope`
 
 type acquisitionManifestDB interface {
 	Exec(context.Context, string, ...any) (pgconn.CommandTag, error)
@@ -46,13 +47,15 @@ func (repository *AcquisitionManifestRepository) CreateManifest(ctx context.Cont
 INSERT INTO acquisition_manifests (
     manifest_id, user_id, source_type, source_ref, expected_name, result_name,
     result_copy_id, target_storage_binding_id, target_path, asset_id, release_id,
-    variant_id, job_id, state, created_at, updated_at
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+    variant_id, job_id, state, created_at, updated_at,
+    user_space_id, target_provider_connection_id, target_provider_scope
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
 		string(manifest.ID), optionalID(manifest.UserID), manifest.SourceType, manifest.SourceRef,
 		manifest.ExpectedName, manifest.ResultName, optionalCopyID(manifest.ResultCopyID),
 		string(manifest.TargetStorageBindingID), manifest.TargetPath, optionalID(manifest.AssetID),
 		optionalID(manifest.ReleaseID), optionalID(manifest.VariantID), optionalID(manifest.JobID),
 		string(manifest.State), manifest.CreatedAt, manifest.UpdatedAt,
+		manifest.UserSpaceID, optionalID(manifest.TargetProviderConnectionID), manifest.TargetProviderScope,
 	)
 	if err == nil {
 		return nil
@@ -91,10 +94,12 @@ func scanAcquisitionManifest(row pgx.Row) (acquisition.Manifest, error) {
 	var manifest acquisition.Manifest
 	var manifestID, bindingID string
 	var userID, assetID, releaseID, variantID, jobID, resultCopyID sql.NullString
+	var userSpaceID, targetConnectionID, targetScope sql.NullString
 	err := row.Scan(
 		&manifestID, &userID, &manifest.SourceType, &manifest.SourceRef, &manifest.ExpectedName, &manifest.ResultName,
 		&resultCopyID, &bindingID, &manifest.TargetPath, &assetID, &releaseID, &variantID, &jobID,
 		&manifest.State, &manifest.CreatedAt, &manifest.UpdatedAt,
+		&userSpaceID, &targetConnectionID, &targetScope,
 	)
 	if err != nil {
 		return acquisition.Manifest{}, err
@@ -124,6 +129,16 @@ func scanAcquisitionManifest(row pgx.Row) (acquisition.Manifest, error) {
 	if jobID.Valid {
 		value := jobs.JobID(jobID.String)
 		manifest.JobID = &value
+	}
+	if userSpaceID.Valid {
+		manifest.UserSpaceID = &userSpaceID.String
+	}
+	if targetConnectionID.Valid {
+		value := storage.ConnectionID(targetConnectionID.String)
+		manifest.TargetProviderConnectionID = &value
+	}
+	if targetScope.Valid {
+		manifest.TargetProviderScope = &targetScope.String
 	}
 	return manifest, nil
 }

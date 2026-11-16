@@ -30,15 +30,36 @@ type ExecutionInput struct {
 }
 
 type ExecutionInputResolver struct {
-	manifests ManifestReader
-	storage   StorageTopologyReader
+	manifests     ManifestReader
+	storage       StorageTopologyReader
+	privateSpaces PrivateTargetSpaceReader
 }
 
-func NewExecutionInputResolver(manifests ManifestReader, topology StorageTopologyReader) (*ExecutionInputResolver, error) {
+type ExecutionInputOption func(*ExecutionInputResolver) error
+
+func WithExecutionPrivateTargetSpaces(reader PrivateTargetSpaceReader) ExecutionInputOption {
+	return func(resolver *ExecutionInputResolver) error {
+		if reader == nil {
+			return ErrInvalidExecutionInputRequest
+		}
+		resolver.privateSpaces = reader
+		return nil
+	}
+}
+
+func NewExecutionInputResolver(manifests ManifestReader, topology StorageTopologyReader, options ...ExecutionInputOption) (*ExecutionInputResolver, error) {
 	if manifests == nil || topology == nil {
 		return nil, ErrInvalidExecutionInputRequest
 	}
-	return &ExecutionInputResolver{manifests: manifests, storage: topology}, nil
+	resolver := &ExecutionInputResolver{manifests: manifests, storage: topology}
+	for _, option := range options {
+		if option != nil {
+			if err := option(resolver); err != nil {
+				return nil, err
+			}
+		}
+	}
+	return resolver, nil
 }
 
 // Resolve builds provider-neutral execution input from durable Panta state. It
@@ -68,12 +89,33 @@ func (resolver *ExecutionInputResolver) Resolve(ctx context.Context, manifestID 
 		return ExecutionInput{}, err
 	}
 	credentialRef := cloneString(connection.CredentialRef)
+	scope := binding.ProviderScope
+	connectionID := connection.ID
+	if manifest.UserSpaceID != nil {
+		if manifest.TargetProviderConnectionID == nil || manifest.TargetProviderScope == nil ||
+			*manifest.TargetProviderConnectionID != connection.ID || resolver.privateSpaces == nil {
+			return ExecutionInput{}, ErrExecutionIdentityMismatch
+		}
+		space, err := resolver.privateSpaces.GetPrivateTargetSpace(ctx, *manifest.UserSpaceID)
+		if err != nil {
+			return ExecutionInput{}, err
+		}
+		if err := ValidatePrivateTargetSpace(space, *manifest.UserSpaceID, binding, connection,
+			*manifest.TargetProviderScope, manifest.TargetPath, manifest.UserID); err != nil {
+			return ExecutionInput{}, err
+		}
+		scope = manifest.TargetProviderScope
+		connectionID = *manifest.TargetProviderConnectionID
+	}
+	if scope == nil {
+		return ExecutionInput{}, ErrExecutionIdentityMismatch
+	}
 	return ExecutionInput{
 		ManifestID: manifest.ID, ProviderID: contracts.ProviderID(connection.ProviderType),
-		ConnectionID: connection.ID, CredentialRef: credentialRef,
+		ConnectionID: connectionID, CredentialRef: credentialRef,
 		Download: contracts.DownloadRequest{
 			Source: contracts.SourceReference{Scheme: manifest.SourceType, Value: manifest.SourceRef},
-			Target: contracts.TargetPath{Scope: *binding.ProviderScope, Path: manifest.TargetPath},
+			Target: contracts.TargetPath{Scope: *scope, Path: manifest.TargetPath},
 		},
 	}, nil
 }

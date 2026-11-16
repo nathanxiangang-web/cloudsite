@@ -64,10 +64,12 @@ type StorageObjectReference struct {
 
 // StorageObject contains the facts needed to verify a stored result.
 type StorageObject struct {
-	Reference StorageObjectReference
-	Name      string
-	SizeBytes int64
-	Directory bool
+	Reference     StorageObjectReference
+	Name          string
+	SizeBytes     int64
+	Directory     bool
+	HashAlgorithm string
+	ContentHash   string
 }
 
 // AccessTarget is a time-bounded or indirect location from which a resource can

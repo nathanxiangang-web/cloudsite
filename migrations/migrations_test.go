@@ -27,7 +27,7 @@ func TestAllReturnsOrderedMigrationHistory(t *testing.T) {
 // assertions in the PostgreSQL integration tests honest: adding a migration
 // without updating them fails here first, in a unit test with no database.
 func TestMigrationHistoryEndsAtExpectedVersion(t *testing.T) {
-	const expectedLatestVersion = 21
+	const expectedLatestVersion = 22
 	all, err := All()
 	if err != nil {
 		t.Fatalf("All() error = %v", err)
@@ -39,8 +39,8 @@ func TestMigrationHistoryEndsAtExpectedVersion(t *testing.T) {
 	if latest.Version != expectedLatestVersion {
 		t.Fatalf("latest migration version = %d, want %d", latest.Version, expectedLatestVersion)
 	}
-	if latest.Filename != "0021_library_snapshots.sql" {
-		t.Fatalf("latest migration = %q, want library snapshot append-only migration", latest.Filename)
+	if latest.Filename != "0022_private_cloud_copy.sql" {
+		t.Fatalf("latest migration = %q, want private cloud copy append-only migration", latest.Filename)
 	}
 }
 
