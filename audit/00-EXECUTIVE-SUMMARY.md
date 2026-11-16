@@ -8,6 +8,8 @@
 - CloudSite 实际固定依赖：115driver `v1.3.5`，tag 提交 `d89999540a6d35838582ac06e31f81312d1f66fd`
 - 生产只读观测窗口：2026-11-16 09:50—10:40 UTC
 
+> **架构审查补充：** [安全过渡与架构审查意见](15-ARCHITECTURE-TRANSITION-REVIEW.md)。目标云下载策略为每用户累计 1500 次，不恢复每用户并发上限；当前 main 仍未实施该策略。PR #191 的 UserSpace 方案在 schema/API 兼容和生产恢复 Gate 通过前不得开工。
+
 ## 1. 总体结论
 
 现有分层方向合理，尤其应保留以下责任边界：
@@ -35,7 +37,7 @@ CloudSite 当前的 acquisition 链路没有绕过 IndexCore 直写 Canonical；
 ### 2.2 影响核心正确性的缺陷
 
 1. **CS-01 / DR-10（P1）**：固定版 115driver 在单 URI 返回多个离线任务结果时可能切片越界；CloudSite 的“多 hash 拒绝”发生在 SDK 返回之后，无法拦截该 panic。
-2. **CS-02（P1）**：CloudSite 生产工厂只轮询离线任务前三页；页数耗尽与“确认不存在”均可能进入不可重试的人工恢复。无限提交政策使页外任务风险更现实。
+2. **CS-02（P1）**：CloudSite 生产工厂只轮询离线任务前三页；页数耗尽与“确认不存在”均可能进入不可重试的人工恢复。当前 main 不限提交使页外任务风险更现实；目标政策调整为每用户累计 1500 次，但该额度不能替代分页错误分类和恢复能力。
 3. **IC-01—IC-03（P1）**：IndexCore 的冲突/UNRESOLVED、R8 同路径替换和同 Snapshot 重复稳定 ID 存在身份与删除收敛缺口。代码路径确定，实际删除影响属于有条件推断，需要对抗性 PG 重放确认。
 4. **IC-04 / IC-05（P1）**：正常 reconcile 的 counts/conflicts 未按真实结果持久化；Journal payload 只有 reason，不能作为自包含 CDC。
 5. **CS-04（P2）**：CloudSite 旧 Journal Projector 接受序号缺口并推进游标；若上游发生缺口，可能永久漏投影。
@@ -52,7 +54,7 @@ CloudSite 当前的 acquisition 链路没有绕过 IndexCore 直写 Canonical；
 | 模块 | 判断 |
 |---|---|
 | CloudSite Catalog 的 Asset→Release→Variant→Copy | 保留；需明确 Copy 当前一对一物理映射，并补业务元数据与约束 |
-| CloudSite acquisition Job/fence/原子恢复 | 保留并抽象为通用文件操作任务框架 |
+| CloudSite acquisition Job/fence/原子恢复 | 保留；先补齐现有下载链路所需的窄接口，通用文件操作框架须由多个真实用例证明后再抽象 |
 | CloudSite libraryview | 保留为可重建派生读模型；不能与旧 Projector 长期维持不同 Journal 连续性规则 |
 | IndexCore Canonical/Journal/串行 admission | 保留；先修身份冲突和 Journal 契约，再扩容量 |
 | IndexCore Hint | 只作同宿主受信任的“重新验证”信号；202 不是操作完成 |
@@ -71,7 +73,7 @@ CloudSite 当前的 acquisition 链路没有绕过 IndexCore 直写 Canonical；
 5. **业务分类与发现**：物理目录不承载唯一分类；建立 Asset 中心、标签、别名、厂商/版本/平台/架构元数据、合集和专题。
 6. **最后做真实规模验收**：在授权部署后执行 20K+、长稳、真实限流、PG 负载、任务积压和增量索引验证；本阶段不伪造这些结论。
 
-详细任务的数据库/API/兼容性/回滚和验收见 `12-OPTIMIZATION-ROADMAP.md`。
+详细任务的数据库/API/兼容性/回滚和验收见 `12-OPTIMIZATION-ROADMAP.md`；PR #191 的安全切换合同见 `15-ARCHITECTURE-TRANSITION-REVIEW.md`。
 
 ## 5. 生产核验边界
 
