@@ -1,4 +1,4 @@
-> **Current implementation handoff (2026-11-16):** see [PRODUCT-USER-CLOUD-DOWNLOAD-CRUD.md](PRODUCT-USER-CLOUD-DOWNLOAD-CRUD.md) for the audit against current main (VERSION 1.0.3 / schema 21), the 115driver v1.3.5 CRUD capability review, current user lifecycle constraints, and the proposed end-to-end private-space ACL. This D-065 document retains its original historical baseline and proposal; do not use its old schema 15 baseline or old quota statements as current implementation facts. The new handoff is documentation-only and does not authorize code, migration, provider writes, or deployment.
+> **Current implementation handoff (2026-11-16):** see [PRODUCT-USER-CLOUD-DOWNLOAD-CRUD.md](PRODUCT-USER-CLOUD-DOWNLOAD-CRUD.md) for the audit against current main (VERSION 1.0.3 / schema 21), the 115driver v1.3.5 CRUD capability review, current user lifecycle constraints, and the proposed end-to-end private-space ACL. This D-065 document retains its original historical baseline. Its old schema 15 baseline and old quota statements are superseded: **UserSpace has no per-user storage-capacity quota; cloud-download submissions have a separate target limit of 1500 per user; no per-user concurrency cap is restored.** Current main still has unlimited submissions until a separately reviewed implementation/release. The new handoff is documentation-only and does not authorize code, migration, provider writes, or deployment.
 
 ---
 
@@ -12,7 +12,8 @@
 
 - 登录用户根据规范化登录名获得**真实的 115 网盘专属文件夹**，但不可变的归属标识是 CloudSite `user_id(UUID)`。用户只能列出、搜索、浏览、播放、预览、下载及删除其私有文件。不能查看别人文件；管理员不默认享有普通用户私有内容访问权限，必要维护要单独审计授权。
 - 其他 CloudSite 的**普通共享文件库**维持既有策略；本次隔离只针对定义明确的**私有云下载命名空间**，不把普通库误判为私有。
-- **忽略用户容量：不实现每用户 520G、用户剩余容量、用户空间统计、用户容量告警、按用户存储字节收费或用户容量前置拒绝。** 现有下载**操作次数及并发**控制（D-060）是独立功能，不应误删。
+- **用户空间不做容量限制：** 不设置每用户 520G/1TB 等存储配额，不计算个人剩余容量作为准入条件，不按用户已用字节、文件数量或单个文件大小实施空间配额，也不因用户空间“满额”而拒绝云下载。UserSpace 只负责身份、目录和访问权限隔离，不代表分配独立 115 容量。
+- **云下载次数是另一条独立规则：** 目标政策为每个 CloudSite 用户 UUID 累计最多 1500 次新的云下载提交；不恢复每用户并发任务上限。幂等重放不重复计数。该目标政策须经独立代码 PR、测试和发布后才生效；当前 main 仍不限累计次数。D-060 的旧操作次数/并发表述不再作为当前策略依据。
 - 早前所说 **520G** 仅作**同一 115 账号全局容量的参考/展示基准**：若需要配置常量，明确为十进制 520 GB = 520,000,000,000 bytes；它不是已实测的网盘实际额度，也**不是 V1 的硬限制或下载准入门禁**。当 `GetInfo()` 返回不同的真实 `all_total` 时以真实数据标注“提供方实际容量”，520GB 标注“计划参考值”，绝不伪称一致。此项可以在管理员页面后续只读展示；前台不出现个人容量进度条。
 - **已核实的 SDK 能力，不等于现网已读成功：** 项目锁定 `github.com/SheltonZhu/115driver v1.3.5`；对应 `Pan115Client.GetInfo()` → `InfoData.SpaceInfo.AllTotal/AllUse/AllRemain.Size`，数据是 int64 字节。该版本还实现 `Mkdir(parentID,name)`、`ListPage(dirID,offset,limit)`、`GetFile(fileID)`、`Stat(fileID)`、`Delete(fileIDs...)`。这些仅经过 SDK 源码确认，**本规划未用线上凭据调用**；错误/登录失效时返回 UNKNOWN，不应拿虚构容量代替。
 
@@ -85,7 +86,7 @@ IndexCore canonical: /云下载/_users/zhangsan__<full-user-uuid>/...
 
 ```text
 CloudSite verified session (user_id)
-  -> validate admission & existing operation limits
+  -> validate 1500 cumulative cloud-download submission policy (no per-user concurrency cap; no storage-capacity quota)
   -> UserSpace ACTIVE (native_dir_id + canonical_prefix) server-only
   -> durable frozen Manifest target/opaque provider destination identity
   -> existing single Worker + 115 StartDownload(saveDirID=native_dir_id)
@@ -99,7 +100,7 @@ CloudSite verified session (user_id)
 - 对新的 Manifest 以一次性、不可变绑定记录 native saveDirID 与 canonical target。当前 `ExecutionInputResolver` 只有统一 `binding.ProviderScope`；这是需要正式调整的**协议缺口**，不能在前端接一个用户名字符串就当作实现。
 - 产品认证 user_id 必须和 operation/Manifest/Job ownership 一致；重试/恢复时读取原冻结目标而非重新计算当前 login 或配置。保持历史操作和 8 项 unknown reservations 不动。
 - 一个 115 账号下相同 magnet/info_hash 可能是全局离线任务。跨用户相同源提交时，不准因为已经有该任务就认定第二人的目标也有文件，更不能让 A 删除 B 的实际 Copy。若原生 115 不支持等价隔离语义，则明确 `DESTINATION_UNCERTAIN/BLOCKED`，通过经过授权且可验证的 provider Copy/独立目录存在性流程另行设计，禁止猜测。
-- `GetInfo` 只是账号级独立只读能力；网络超时或源字段为空显示 `UNKNOWN`。**不对新下载执行个人剩余字节检查或 520GB 拦截**；保留现有 D-060 操作次数/并发配额。
+- `GetInfo` 只是账号级独立只读能力；网络超时或源字段为空显示 `UNKNOWN`。**不对新下载执行个人剩余字节检查、520GB 拦截或任何 UserSpace 容量准入判断**。云下载累计提交次数按独立的 1500 次目标政策处理；不设置每用户并发任务上限。
 
 ## 6. 删除（最后单独放行，绝不随首版目录变更自动开启）
 
