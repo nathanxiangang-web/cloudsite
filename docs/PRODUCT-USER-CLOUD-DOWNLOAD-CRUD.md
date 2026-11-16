@@ -1,5 +1,7 @@
 # CloudSite 多用户独立云下载空间与 CRUD 开发方案
 
+> **架构审查修订（2026-11-16）：** 已补充安全过渡、v1/v2 API 兼容、schema21→22 回滚门禁，以及每用户累计 1500 次云下载提交上限。跨 PR 审查意见见 [CloudSite 安全过渡与架构审查](https://github.com/nathanxiangang-web/cloudsite/blob/docs/system-audit-20261116/audit/15-ARCHITECTURE-TRANSITION-REVIEW.md)。本修订仍是设计文件，不表示 main 已实施 1500 上限或 UserSpace 功能。
+
 > **文档状态：代码调研完成；开发方案待项目所有者评审。**
 >
 > 本文是 D-065 / Issue #138 的最新代码审计补充和实施交接文档，不代表功能已经实现，也不授权执行数据库迁移、真实 115 写操作或生产部署。
@@ -734,23 +736,35 @@ COMPLETED
 
 所有接口都从认证 Principal 获取用户身份，不接受客户端指定 user_id、login、Binding、native ID 或 target_path。
 
-以下是建议接口，最终路径可在架构评审时统一：
+**不得原地改变既有 v1 API 的请求语义。** 当前 main 的 `POST /api/v1/cloud-downloads` 接受既有的 BindingID/TargetPath 字段；新 UserSpace 模式的目标由服务端解析，两者不是兼容的同一请求合同。
+
+### 13.1 v1 兼容合同
+
+| 方法 | 路径 | 过渡规则 |
+|---|---|---|
+| POST | /api/v1/cloud-downloads | feature flag 关闭时保持当前 v1 语义；当前用户启用 UserSpace 后返回 409 `PRIVATE_SPACE_REQUIRED`，不得回退到共享旧目录 |
+| GET | /api/v1/tasks | 保留 owner-only 历史任务读取；旧 Manifest 继续使用冻结的旧目标 |
+| GET | /api/v1/usage | 保留现有字段，按 1500 次目标政策返回用量；该政策未发布前 main 仍按现状执行 |
+
+### 13.2 v2 私有空间合同
 
 | 方法 | 路径 | 作用 |
 |---|---|---|
-| GET | /api/v1/cloud-downloads/space | 查询当前用户空间状态 |
-| POST | /api/v1/cloud-downloads/space/provision | 显式创建当前用户空间 |
-| GET | /api/v1/cloud-downloads/space/operations/{key} | 查询空间创建/管理操作结果 |
-| POST | /api/v1/cloud-downloads | 创建云下载任务，目标由服务端解析 |
-| GET | /api/v1/cloud-downloads/tasks | 查询当前用户当前空间任务 |
-| GET | /api/v1/cloud-downloads/tasks/{manifest_id} | 查询当前用户任务详情 |
-| POST | /api/v1/cloud-downloads/tasks/{manifest_id}/cancel | 取消当前用户未完成任务 |
-| GET | /api/v1/cloud-downloads/files | 浏览当前用户文件 |
-| POST | /api/v1/cloud-downloads/folders | 创建当前用户子目录 |
-| PATCH | /api/v1/cloud-downloads/items/{resource_id} | 重命名或移动当前用户资源 |
-| DELETE | /api/v1/cloud-downloads/items/{resource_id} | 删除单个已完成私有文件或空目录 |
+| GET | /api/v2/cloud-downloads/space | 查询当前用户空间状态 |
+| POST | /api/v2/cloud-downloads/space/provision | 显式创建当前用户空间 |
+| GET | /api/v2/cloud-downloads/space/operations/{key} | 查询空间创建/管理操作结果 |
+| POST | /api/v2/cloud-downloads | 创建云下载任务；目标由服务端 UserSpaceResolver 决定 |
+| GET | /api/v2/cloud-downloads/tasks | 查询当前用户当前空间任务 |
+| GET | /api/v2/cloud-downloads/tasks/{manifest_id} | 查询当前用户任务详情 |
+| POST | /api/v2/cloud-downloads/tasks/{manifest_id}/cancel | 取消当前用户未完成任务 |
+| GET | /api/v2/cloud-downloads/files | 浏览当前用户文件 |
+| POST | /api/v2/cloud-downloads/folders | 创建当前用户子目录 |
+| PATCH | /api/v2/cloud-downloads/items/{resource_id} | 重命名或移动当前用户资源 |
+| DELETE | /api/v2/cloud-downloads/items/{resource_id} | 删除单个已完成私有文件或空目录 |
 
-接口约束：
+v2 新下载提交仅接受 `operation_key`、`source`、可选 `expected_name`；Binding、Connection、native_dir_id、ProviderScope 和 Canonical prefix 均由服务端读取。v1 与 v2 对同一用户不得同时开放新写入，避免绕过 UserSpace ACL。
+
+### 13.3 通用接口约束
 
 - 不接收 user_id。
 - 不接收 login。
@@ -781,21 +795,48 @@ COMPLETED
 
 严格要求：
 
-- 只追加 migration，不修改历史 migration SQL。
-- 不在进程启动时自动执行生产迁移。
+- 只追加 migration，不修改历史 migration SQL/checksum。
+- 不在进程启动时自动执行生产迁移；由显式运维命令执行。
 - 不为历史任务补造 user_space_id。
 - 不自动移动、重命名或删除历史 115 文件。
 - 不删除历史 Manifest、Job、ProviderTask 和审计记录。
-- 新表设计必须兼容账号物理删除后的 owner tombstone。
-- schema21 -> 新 schema 的回滚必须依赖完整备份和兼容版本，不能假设旧二进制可以直接运行在新 schema 上。
+- 新表设计必须兼容账号物理删除后的 owner tombstone；不得对会被物理删除的 product_users 建立级联归属关系。
+- migration 前先取得 PostgreSQL 一致性备份并完成隔离恢复演练。
+- **必须先解决 schema 兼容发布问题：** 当前 v1.0.3 migrator 只认识 schema21，数据库出现 migration22 时旧二进制会把它视为 UNKNOWN；包含 migration22 的新二进制又会把 schema21 视为 PENDING。不能直接把“新增表/列是 additive”当作旧二进制可回滚。优先先发布明确支持 schema21/schema22 的兼容版本；若不做兼容版本，只能停机并采用整库备份恢复方案，且必须接受恢复点之后的数据损失。
+- schema21 -> schema22 只做 expand，不做破坏性字段替换；feature flag 默认关闭，确认兼容版本可运行后再切流。
+- 回滚时优先关闭新功能并运行 schema22 兼容版本；不做常规 down migration，不直接切回只认识 schema21 的 v1.0.3。
 
-## 15. 配额和容量策略
+## 15. 云下载上限和容量策略
 
-当前 main 的 docs/PRODUCT-ADMISSION.md 已明确 v1.0.2 起取消网站终身下载次数及提交/并发限制；旧 quota 行仅保留兼容用途。
+### 15.1 每用户累计云下载上限
 
-本功能不得把旧 D-060 限制重新带回来。
+**目标政策：每个 CloudSite 用户 UUID 累计最多提交 1500 次云下载操作。** 这是每用户累计次数上限，不是并发任务数、全站总数、单个任务文件数、单文件大小或存储容量。
 
-本功能也不实现：
+当前 main 的 `docs/PRODUCT-ADMISSION.md` 与 v1.0.2 实现仍是不限累计次数、也不限每用户并发任务；本节记录的是项目所有者要求的目标政策，必须经独立代码 PR、测试和发布后才生效。不得把文档变更描述成线上已经限额。
+
+计数规则：
+
+1. 以不可变 `user_id` 为主体，不以 login 计数；同名新账号因 UUID 不同拥有独立账本。
+2. 一个新的、已持久化的 `(user_id, operation_key)` 计 1 次；同一下载任务包含多个文件仍只计 1 次。
+3. 相同 operation_key + 相同 intent digest 的幂等重放复用原 Manifest/Job，不重复计数；相同 key 不同意图返回冲突。
+4. 状态查询、轮询、Worker claim、任务恢复和相同操作重放不增加次数。
+5. 已提交的失败、取消或 UNKNOWN 操作仍计数一次，不自动返还；不得通过重试创建第二份操作意图。
+6. 以 `product_operations` 为计数账本，不按所有 Manifest 或物理文件数推算。
+7. 已超过 1500 的现有用户保留全部历史记录；禁止新的不同意图，但允许原操作安全重放和历史任务恢复。
+8. 超限拒绝必须发生在 Provider 副作用之前，不得创建新 Manifest、Job 或 operation ledger 行。
+
+实现约束：
+
+- 先在用户 quota row 锁内查找幂等重放，再检查 `used >= 1500`，确保达到上限后原操作仍可安全查询/重放。
+- 新操作计数与 Manifest、Job 预留和 operation ledger 在同一 PostgreSQL 事务中原子提交。
+- 不恢复每用户并发上限；`RECOVERY_REQUIRED` 不能占用独立的并发名额并阻塞其他新提交。
+- `operation_limit=1500`、`used`、`remaining=max(0,1500-used)`；`unlimited=false`。若 `concurrency_limit=0` 表示不限并发，DTO 校验必须明确接受该含义，必要时增加 `concurrency_unlimited=true`，不能让字段语义混淆。
+- 现有 quota 行中的旧 limit 值不能继续作为有效策略来源；本次统一上限由明确的服务端策略实施。不要为了这个策略单独改写历史 migration 或增加不必要的 schema 迁移。
+- 全局队列水位、账号/IP 速率、Provider 预算和公平调度独立于 1500 次累计业务上限。
+
+### 15.2 不实现个人存储容量配额
+
+本功能不实现：
 
 - 每用户 520G。
 - 每用户已用容量。
@@ -917,13 +958,15 @@ COMPLETED
 
 | 阶段 | 开发范围 | 验收门禁 |
 |---|---|---|
-| Phase 0：本次 | 当前 main 代码审计、115driver 源码核验、开发文档、Git 评审 | 仅文档，不改业务代码 |
-| Phase A：UserSpace 基础 | UserSpace Domain、Store、追加 migration、账号生命周期 tombstone、Provider-neutral ports、fake tests | 不调用真实 115，不创建目录 |
-| Phase B：后端 ACL | PrivateResourceAuthorizer、Resources、Library、Content、Preview、Share、302 全入口保护 | A/B/ADMIN/匿名负向矩阵通过 |
-| Phase C：115 专属目录 | 显式 Provision、Mkdir、只读对账、UserSpace target resolver、Manifest 目标冻结、DirId 状态核验 | 先 mock，再单独授权真实探针 |
-| Phase D：用户页面 CRUD | 任务列表/取消、目录浏览、新建目录、文件重命名/移动、操作历史 | 双用户隔离与 IndexCore 一致性通过 |
-| Phase E：删除能力 | 单文件删除、空目录删除、操作台账、回收站核验、Q8/Q5 确认 | 独立破坏性操作评审和明确放行 |
-| Phase F：发布 | 备份、迁移、受控双用户真实验收、回滚预案 | 独立部署批准，不自动上线 |
+| Phase 0：本次 | 当前 main 代码审计、115driver 源码核验、架构审查和文档修订 | 仅文档，不改业务代码 |
+| Gate 0：生产基线 | 二进制/schema 证据、备份加密与 ACL、隔离恢复、秘密权限、队列/Provider 快照 | DEP-01/02/03/07 证据闭合；未通过不得迁移 |
+| Phase A：1500 上限 | 独立小 PR 恢复每用户累计 1500 次限制；不增加并发上限、不改 schema | 幂等重放、1499/1500/1501、并发提交、超限零副作用、历史超限用户测试 |
+| Phase B：兼容与 UserSpace 基础 | schema21/22 兼容发布、UserSpace Domain/Store、追加 migration、账号删除 tombstone、fake tests | feature flag 默认关闭；不调用真实 115；schema 升级/恢复通过 |
+| Phase C：后端 ACL 与 v2 API | PrivateResourceAuthorizer、Resources、Library、Content、Preview、Share、v1/v2 兼容 | A/B/ADMIN/匿名负向矩阵通过；旧 v1 不可绕过 |
+| Phase D：115 专属目录 | 显式 Provision、Mkdir、只读对账、UserSpace target resolver、Manifest 目标冻结、DirId 核验 | 先 mock；真实 115 探针另行授权 |
+| Phase E：只读与普通操作 | 用户任务、只读文件浏览、Mkdir；随后分别开放 Rename、Move | 每项独立验收；IndexCore 新鲜观察通过 |
+| Phase F：删除能力 | 单文件删除、空目录删除、操作台账、回收站核验、Q8/Q5 确认 | 独立破坏性操作评审和明确放行 |
+| Phase G：发布 | 备份、迁移、受控双用户验收、回滚预案 | 独立部署批准，不自动上线 |
 
 每个阶段必须单独 Issue、分支、PR、CI 和架构审查。Phase E 删除功能必须单独审查；不能因为 Phase D 页面已上线就自动开放删除。
 
@@ -964,7 +1007,7 @@ Issue #138 与 D-065 的目标是一致的：整个旧 /云下载 命名空间�
 - 不为每个用户创建独立 StorageBinding / IndexCore Root / Worker。
 - 不迁移、复制或批量移动历史网盘文件。
 - 不自动清理历史下载任务。
-- 不重新引入用户下载次数或并发配额。
+- 目标策略恢复每用户累计 1500 次云下载上限；不恢复每用户并发任务上限。
 - 不实现每用户容量配额。
 - 不在共享公共资源库开放删除。
 - 不开放递归/批量删除。
