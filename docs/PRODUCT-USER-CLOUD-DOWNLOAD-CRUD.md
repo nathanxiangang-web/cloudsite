@@ -628,7 +628,7 @@ Target.Path  = UserSpace.canonical_prefix
 当前 libraryview.Page 将 Owner 用于 Cursor 查询指纹，但这不是资源所有权校验，也不会按 Owner 过滤快照中的文件。必须在服务端 LibraryService / libraryview 查询投影阶段按当前 UserSpace 过滤：
 
 - 当前用户的 downloads 页面只能得到自己的 canonical_prefix。
-- 普通 library surface 不得显示私有 _users 子树。
+- 普通 library surface 必须排除整个云下载 Canonical 根（/云下载）及其全部子树，包括 _users 与历史未归属文件；downloads surface 只返回当前 user space prefix。
 - 搜索、分类统计、Unknown 数量、Filtered 数量、Cursor 和分页都必须在私有 ACL 过滤后计算。
 - Cursor 必须绑定 user_id、space_id、revision 和查询条件。
 - 不允许通过分页数量或错误信息推测其他用户的资源。
@@ -937,20 +937,20 @@ COMPLETED
 | U2 | 115 当前账号的稳定身份如何只读确认 | 设计单独身份探针；现有 GetAccountInfo 只读取容量，不足以证明账号身份 |
 | U3 | 115 对相同 InfoHash 的跨目录去重行为 | 使用授权测试账号做最小受控验证 |
 | U4 | 115 Delete 的真实回收站语义、恢复期限和恢复边界 | 受控测试后再决定是否开放删除/恢复 |
-| U5 | 历史 /云下载 未归属文件的访问策略 | Issue #138 描述与 D-065 文档对旧共享文件的处理口径需要统一；新个人页面绝不自动认领 |
+| U5 | 历史 /云下载 未归属文件的访问策略 | Issue #138 与 D-065 均要求整个旧 /云下载 命名空间默认私有；待核验的是历史 Alias/read Binding、旧分享及运营审计的具体封锁/处置路径；新个人页面绝不自动认领 |
 | U6 | 用户空间开通触发方式 | 推荐显式点击开通，GET 不产生 115 写副作用 |
 | U7 | 首版是否允许选择子目录作为下载目标 | 推荐首版统一保存到个人根目录，后续再开放目标选择 |
 | U8 | 是否开放用户空间文件分享 | 推荐首版禁止私有文件分享，后续另行设计 |
 
 ### U5 的特别说明
 
-现有 Issue #138 描述曾要求把旧 /云下载 命名空间整体按私有方式保护；D-065 文档又要求不自动认领旧文件，并保留普通共享库既有策略。历史 acquisition acceptance 还记录旧 Alias / read Binding 不属于当前活动消费者目录。
+Issue #138 与 D-065 的目标是一致的：整个旧 /云下载 命名空间默认私有，包括没有 owner 映射的历史文件；普通共享库（云下载根之外）保持既有策略。D-065 明确禁止自动认领旧文件。历史 acquisition acceptance 还记录旧 Alias / read Binding 不属于当前活动消费者目录，但仍需实施时核验所有遗留读取入口与分享链接。
 
 因此在正式实施前，必须明确：
 
 - 新的 _users 私有空间只显示已绑定 UserSpace 的文件。
-- 没有 UserSpaceID 的历史文件、Manifest 和 ProviderTask 不自动归属任何新用户。
-- 旧目录是否整体对普通用户隐藏、旧共享入口是否继续保留，需要项目所有者确认。
+- 没有 UserSpaceID 的历史文件保持 UNCLAIMED/私有，不自动归属任何新用户；历史 Manifest 和 ProviderTask 不自动迁移到新空间。
+- 整个旧 /云下载 根及其历史文件必须对普通用户默认不可见；实施时核验并封锁旧 Alias/read Binding、通用资源 API、旧分享和已签发直链的遗留入口。
 - 不能用文件名、InfoHash、最近任务、同名 login 或创建时间猜测历史文件归属。
 
 ## 20. 非本次范围
