@@ -30,6 +30,14 @@ func NewProductAdmissionRepository(pool *pgxpool.Pool) (*ProductAdmissionReposit
 	return &ProductAdmissionRepository{pool: pool}, nil
 }
 func (r *ProductAdmissionRepository) Reserve(ctx context.Context, p auth.Principal, input product.AdmissionRequest, candidate product.Reservation) (product.Reservation, error) {
+	return r.reserve(ctx, p, input, candidate, nil)
+}
+
+func (r *ProductAdmissionRepository) ReserveChecked(ctx context.Context, p auth.Principal, input product.AdmissionRequest, candidate product.Reservation, check product.AdmissionCheck) (product.Reservation, error) {
+	return r.reserve(ctx, p, input, candidate, &check)
+}
+
+func (r *ProductAdmissionRepository) reserve(ctx context.Context, p auth.Principal, input product.AdmissionRequest, candidate product.Reservation, check *product.AdmissionCheck) (product.Reservation, error) {
 	if r == nil || r.pool == nil {
 		return product.Reservation{}, product.ErrUnavailable
 	}
@@ -72,6 +80,11 @@ func (r *ProductAdmissionRepository) Reserve(ctx context.Context, p auth.Princip
 	if !errors.Is(err, pgx.ErrNoRows) {
 		return product.Reservation{}, err
 	}
+	if check != nil {
+		if rejection := check.Rejection(); rejection != nil {
+			return product.Reservation{}, rejection
+		}
+	}
 	// Prepare only a new operation, after replay lookup. Stored policy results
 	// survive later policy changes, topology disablement, retries and claims.
 	prepared, err := acquisition.PrepareSource(input.Source, acquisition.MagnetBTIHNameV1)
@@ -94,6 +107,11 @@ func (r *ProductAdmissionRepository) Reserve(ctx context.Context, p auth.Princip
 		return product.Reservation{}, admissionPersistenceError(ctx, err)
 	}
 	topology, _ := NewStorageRepository(tx)
+	if check != nil {
+		if rejection := check.Rejection(); rejection != nil {
+			return product.Reservation{}, rejection
+		}
+	}
 	identities, _ := NewCatalogRepository(tx)
 	manifests, _ := NewAcquisitionManifestRepository(tx)
 	var dbNow time.Time

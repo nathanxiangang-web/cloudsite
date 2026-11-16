@@ -1,5 +1,18 @@
 # AGENTS.md — cloudsite AI/Developer Entry Point
 
+## Current maintenance — Issue189 native session health (2026-11-16)
+
+Owner requests visible115 login failures and pre-admission blocking instead of
+new quarantined downloads. See [Issue189](https://github.com/nathanxiangang-web/cloudsite/issues/189)
+and `docs/CLOUD-DOWNLOAD-SESSION-HEALTH.md`. Reuse the exact Worker runtime session;
+bounded read-only health, new-intent transactional gate, input-preserving UI and
+explicit pre-start no-action failures. Preserve historical uncertain reservations,
+serial Worker, native POST uncertainty and schema21. No automatic task recovery,
+second writer, cookie administration or IndexCore change. Deliver one independent
+review PR with exact CI; implementation does not claim deployment or READY of
+the latest timeout task. Earlier completed release scopes remain historical.
+
+
 ## Authorized release — v1.0.3 (2026-11-16)
 
 Owner explicitly requests public-server deployment of Issue187 / PR188. Prepare

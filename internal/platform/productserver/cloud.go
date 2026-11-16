@@ -75,12 +75,13 @@ func buildCloud(ctx context.Context, cfg Config, policy config.AcquisitionWorker
 	activation, _ := acquisition.NewActivationService(activationRepo)
 	submitter, _ := acquisition.NewSubmissionService(creator, manifests, activation, jobs)
 	store, _ := postgres.NewProductAdmissionRepository(pool)
-	service, err := product.NewAdmissionService(store, submitter, []storage.BindingID{cfg.CloudDownload.Target.BindingID})
+	health := worker.SessionHealth(binding.ConnectionID)
+	service, err := product.NewAdmissionService(store, submitter, []storage.BindingID{cfg.CloudDownload.Target.BindingID}, product.WithAdmissionHealth(health))
 	if err != nil {
 		worker.Close()
 		return nil, nil, ErrStartup
 	}
-	return worker, producthttp.WithCloudDownload(cfg.CloudDownload.Target, service, store), nil
+	return worker, producthttp.WithCloudDownload(cfg.CloudDownload.Target, service, store, health), nil
 }
 
 type managedWorker interface{ Run(context.Context) error }

@@ -9,6 +9,7 @@
   <section id="download-workspace" hidden>
    <div class="download-layout"><form id="download-form" class="download-panel">
     <h2>新建下载</h2><p id="download-target" class="intro"></p>
+    <section id="download-session" hidden aria-label="网盘账号状态"><p id="download-session-status" role="status" aria-live="polite">正在检查 115 账号登录状态…</p><button id="download-session-refresh" class="text-button" type="button">重新检查账号</button><p class="field-hint">这是服务器使用的网盘账号，与本网站登录独立。恢复凭据后请管理员重新加载服务；不会自动重提历史任务。</p></section>
     <label for="download-source">下载链接</label><textarea id="download-source" rows="5" maxlength="65536" required spellcheck="false" autocomplete="off" placeholder="magnet:?xt=urn:btih:… 或 HTTPS / HTTP / ed2k 链接"></textarea>
     <p class="field-hint">磁力链接保留有效资源标识；遇到 <code>&amp;amp;</code> 时从此处截去后续内容，其余链接保留名称并移除多余 tracker。不支持的磁力格式会明确拒绝。</p>
     <label for="download-name">预期文件名（可选）</label><input id="download-name" maxlength="512" autocomplete="off" placeholder="仅在网盘未返回名称时作为后备，不改变磁力内容">

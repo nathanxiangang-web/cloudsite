@@ -21,6 +21,8 @@
   clear(){this.key=null;this.source=null;this.expected=null;this.busy=false;this.uncertain=false;}
  }
  function taskLabel(task){
+	if(task.manifest_state==='FAILED'&&task.failure_reason==='PROVIDER_LOGIN_REQUIRED_BEFORE_START')return '115 登录失效，未启动下载';
+	if(task.manifest_state==='FAILED'&&task.failure_reason==='PROVIDER_SESSION_UNKNOWN_BEFORE_START')return '账号状态无法确认，未启动下载';
   if(task.manifest_state==='READY')return task.job_state==='SUCCEEDED'&&typeof task.result_copy_id==='string'&&task.result_copy_id?'已收录，可在本页查看':'正在核实结果';
   return ({PENDING:'提交已保存，等待激活',AWAITING_VISIBILITY:'下载完成，等待收录',AWAITING_CANONICAL:'正在确认文件',RECOVERY_REQUIRED:'需要处理，请勿重复提交',FAILED:'下载失败',CANCELED:'已取消'})[task.manifest_state]||(task.manifest_state==='ACTIVE'?(task.job_state==='RUNNING'?'网盘下载中':task.job_state==='RETRY_WAIT'?'等待下一次查询':'任务已排队'):'正在核实状态');
  }

@@ -24,6 +24,7 @@ import (
 	p115 "github.com/nathanxiangang-web/panta/internal/providers/115"
 	"github.com/nathanxiangang-web/panta/internal/providers/contracts"
 	"github.com/nathanxiangang-web/panta/internal/providers/session"
+	"github.com/nathanxiangang-web/panta/internal/sessionhealth"
 	"github.com/nathanxiangang-web/panta/internal/storage"
 	"github.com/nathanxiangang-web/panta/internal/store/postgres"
 )
@@ -64,6 +65,13 @@ type Runtime struct {
 	application *app.Application
 	pool        *pgxpool.Pool
 	closeOnce   sync.Once
+	health      map[storage.ConnectionID]*sessionhealth.Health
+}
+
+// SessionHealth returns the bounded checker for the already imported immutable
+// runtime session. Construction and deployment preflight perform no native I/O.
+func (runtime *Runtime) SessionHealth(id storage.ConnectionID) sessionhealth.Reader {
+	return runtime.health[id]
 }
 
 func (runtime *Runtime) Run(ctx context.Context) error { return runtime.application.Run(ctx) }
@@ -174,6 +182,7 @@ func NewRuntime(ctx context.Context, cfg config.Config, deps RuntimeDependencies
 	}
 
 	sessions := session.New()
+	health := make(map[storage.ConnectionID]*sessionhealth.Health, len(deps.Sessions))
 	registered := make(map[storage.ConnectionID]RuntimeSession, len(deps.Sessions))
 	factory := deps.DownloaderFactory
 	if factory == nil {
@@ -213,6 +222,8 @@ func NewRuntime(ctx context.Context, cfg config.Config, deps RuntimeDependencies
 			return nil, fmt.Errorf("%w: duplicate or mismatched provider session", ErrInvalidAcquisitionRuntime)
 		}
 		registered[binding.ConnectionID] = binding
+		checker, _ := downloader.(sessionhealth.Checker)
+		health[binding.ConnectionID] = sessionhealth.New(checker)
 	}
 	activeSessions, err := postgres.ListActiveAcquisitionSessions(ctx, pool)
 	if err != nil {
@@ -287,7 +298,7 @@ func NewRuntime(ctx context.Context, cfg config.Config, deps RuntimeDependencies
 	if err != nil {
 		return nil, err
 	}
-	return &Runtime{application: application, pool: pool}, nil
+	return &Runtime{application: application, pool: pool, health: health}, nil
 }
 
 func new115Downloader(_ context.Context, providerID contracts.ProviderID, secret []byte) (contracts.DownloaderProvider, error) {

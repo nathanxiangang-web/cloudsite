@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -25,12 +26,14 @@ var _ OfflineClient = (*driver.Pan115Client)(nil)
 // CookiedBackend implements Backend over a 115driver client that already holds an
 // imported credential.
 //
-// It never holds the cookie itself: credential material lives only inside the
-// 115driver client's cookie jar, so no secret can leak through this struct, its
-// errors, or any diagnostic rendering of it.
+// It never keeps a serialized cookie or a second parsed credential. The SDK
+// owns imported cookie objects; the read-only health transport reuses those
+// same immutable objects. Errors and diagnostics never render secret values.
 type CookiedBackend struct {
-	client OfflineClient
-	trace  *startHTTPTrace
+	client     OfflineClient
+	healthHTTP *http.Client
+	accountID  string
+	trace      *startHTTPTrace
 	// mu keeps this backend safe if it is ever driven concurrently; the adapter
 	// also serializes its own calls.
 	mu sync.Mutex
@@ -143,6 +146,10 @@ func parseCredential(cookie []byte) (*driver.Credential, error) {
 // guarantee of network isolation; tests drive the adapter through an injected
 // Backend instead.
 func NewAdapterFromCookie(cookie []byte, options Options) (*Adapter, error) {
+	return newAdapterFromCookie(cookie, options, http.DefaultTransport)
+}
+
+func newAdapterFromCookie(cookie []byte, options Options, transport http.RoundTripper) (*Adapter, error) {
 	timeout := options.HTTPTimeout
 	if timeout == 0 {
 		timeout = 5 * time.Second
@@ -156,7 +163,8 @@ func NewAdapterFromCookie(cookie []byte, options Options) (*Adapter, error) {
 	}
 	trace := &startHTTPTrace{}
 	client := newDriverClient(&http.Client{Timeout: timeout,
-		Transport: statusTransport{next: http.DefaultTransport, trace: trace}}).ImportCredential(credential)
+		Transport: statusTransport{next: transport, trace: trace}}).ImportCredential(credential)
+	accountID := strings.SplitN(credential.UID, "_", 2)[0]
 	// Drop this package's only reference to the secret material. The imported
 	// client owns its own cookies from here on.
 	forgetCredential(credential)
@@ -166,6 +174,9 @@ func NewAdapterFromCookie(cookie []byte, options Options) (*Adapter, error) {
 		return nil, err
 	}
 	backend.trace = trace
+	backend.accountID = accountID
+	backend.healthHTTP = &http.Client{Timeout: timeout, Jar: client.Client.GetClient().Jar, Transport: healthCookieTransport{next: transport, cookies: client.Client.Cookies},
+		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	options.Backend = backend
 	return New(options)
 }

@@ -1861,3 +1861,18 @@ Canonical truth. Schema21 is additive; old20 rollback needs complete recovery.
 `library_snapshots` defaultsfalse and preserves whole-root scope when disabled.
 See [module/rollout contract](library-187/README.md). Candidate for PR review, not
 independent acceptance, release, merge, production rollout or capacity PASS.
+
+
+## D-068 — Native session health before new cloud admission (Issue189)
+
+Authentication is a bounded read-only observation of the same immutable runtime
+credential used by the Worker. Cache and single flight belong to a provider-neutral
+module; the product gate applies only after exact replay/conflict lookup and before
+new durable intent creation, with no provider network call inside a transaction.
+Expired observations fail closed. UI distinguishes website login from native login,
+preserves inputs/files and permits existing-operation GET during native outage.
+Only an explicit winning-reservation precheck that never invokes StartDownload
+can produce a safe no-start FAILED marker. Every actual StartDownload error, lost
+reference, existing unknown reservation and crash window keeps its existing fence.
+No historical inference, implicit retry, migration, second writer or READY shortcut.
+See [module and rollout contract](CLOUD-DOWNLOAD-SESSION-HEALTH.md).
