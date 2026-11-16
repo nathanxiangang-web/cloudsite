@@ -1,6 +1,6 @@
 # CloudSite 多用户独立云下载空间与 CRUD 开发方案
 
-> **架构审查修订（2026-11-16）：** 已补充安全过渡、v1/v2 API 兼容、schema21→22 回滚门禁，以及每用户累计 1500 次云下载提交上限。跨 PR 审查意见见 [CloudSite 安全过渡与架构审查](https://github.com/nathanxiangang-web/cloudsite/blob/docs/system-audit-20261116/audit/15-ARCHITECTURE-TRANSITION-REVIEW.md)。本修订仍是设计文件，不表示 main 已实施 1500 上限或 UserSpace 功能。
+> **架构审查修订（2026-11-16）：** 已补充安全过渡、v1/v2 API 兼容、schema21→22 回滚门禁，以及每用户累计 1500 次云下载提交上限。**用户空间不设置个人存储容量配额**；1500 是云下载提交次数，不是容量、文件大小或并发限制。跨 PR 审查意见见 [CloudSite 安全过渡与架构审查](https://github.com/nathanxiangang-web/cloudsite/blob/docs/system-audit-20261116/audit/15-ARCHITECTURE-TRANSITION-REVIEW.md)。本修订仍是设计文件，不表示 main 已实施 1500 上限或 UserSpace 功能。
 
 > **文档状态：代码调研完成；开发方案待项目所有者评审。**
 >
@@ -834,7 +834,9 @@ v2 新下载提交仅接受 `operation_key`、`source`、可选 `expected_name`�
 - 现有 quota 行中的旧 limit 值不能继续作为有效策略来源；本次统一上限由明确的服务端策略实施。不要为了这个策略单独改写历史 migration 或增加不必要的 schema 迁移。
 - 全局队列水位、账号/IP 速率、Provider 预算和公平调度独立于 1500 次累计业务上限。
 
-### 15.2 不实现个人存储容量配额
+### 15.2 用户空间不设置存储容量上限
+
+UserSpace 只负责用户身份、物理目录和访问权限隔离，不为每个用户分配独立存储容量，也不执行任何个人容量准入检查。1500 次只限制新的云下载提交操作，与文件实际占用多少空间无关。115 运营账号自身的提供方容量/单文件协议限制仍按提供方实际规则处理，但 CloudSite 不新增每用户容量配额。
 
 本功能不实现：
 
