@@ -97,18 +97,6 @@
 - 回滚方案：仅在网络隔离环境先演练；生产回滚保留原配置/卷/镜像，禁止在线盲目恢复旧备份。
 - 验收标准：实际 SHA/schema/flags/日志可只读核验，隔离恢复通过，管理面和容器权限最小化。
 
-### R1-7 — 每用户累计 1500 次云下载上限
-
-- 开发目标：按项目所有者 2026-11-16 指示，将每个 CloudSite 用户 UUID 的累计新下载操作上限设为 1500 次。
-- 影响模块：CloudSite product admission、PostgreSQL operation ledger、usage DTO 和 downloads UI。
-- 数据库变更：优先复用现有 operation ledger/quota lock；不为统一 1500 上限单独新增 schema 或改写历史 migration。若实施证明必须变更，另行 ADR。
-- API 变更：`operation_limit=1500`、`used`、`remaining`；`unlimited=false`；并发不设每用户上限，DTO 必须明确表达 concurrency unlimited。
-- 兼容性：当前 main 仍不限次数；新策略只在独立 release 生效。先查 exact replay，再查额度；原操作重放不重复计数。
-- 测试要求：1499/1500/1501 边界、并发新提交、同 key replay/conflict、commit UNKNOWN、历史已超限用户、RECOVERY_REQUIRED 不占并发槽、超限零 Provider 请求。
-- 风险：把 1500 错当并发/文件数/容量，或把失败重试重复计数；错误计数会锁死用户或绕过上限。
-- 回滚方案：关闭新额度策略需经所有者明确批准；不得删除历史 operation ledger。该策略无 schema migration 时保持数据库兼容。
-- 验收标准：每用户最多 1500 个不同的已提交操作意图；幂等重放不增加计数；无 per-user concurrency cap；全局背压独立有效。
-
 ### R1-6 — IndexCore 配置 fence、故障边界与容量门槛
 
 - 开发目标：修复 IC-06 的配置 fence；对 IC-08 的高影响 fail-closed 设计按 Q15 评审局部故障隔离，不预设吞错；对 IC-07 保持 NO-GO 并建立真实容量验收，不承诺未验证优化。
@@ -120,6 +108,18 @@
 - 风险：吞掉 INTERNAL 会破坏 fail-closed；加并发会放大 2 vCPU 主机 I/O 和 Provider 限流。
 - 回滚方案：关闭新 runtime/读池/F4，保留只读 Query 和既有安全观察；旧 schema 回滚须按 migration 兼容执行。
 - 验收标准：配置变化拒绝旧 Snapshot，系统错误仍 fatal；容量指标达到事先批准的 debt/freshness 门限，否则维持 NO-GO。
+
+### R1-7 — 每用户累计 1500 次云下载上限
+
+- 开发目标：按项目所有者 2026-11-16 指示，将每个 CloudSite 用户 UUID 的累计新下载操作上限设为 1500 次。
+- 影响模块：CloudSite product admission、PostgreSQL operation ledger、usage DTO 和 downloads UI。
+- 数据库变更：优先复用现有 operation ledger/quota lock；不为统一 1500 上限单独新增 schema 或改写历史 migration。若实施证明必须变更，另行 ADR。
+- API 变更：`operation_limit=1500`、`used`、`remaining`；`unlimited=false`；并发不设每用户上限，DTO 必须明确表达 concurrency unlimited。
+- 兼容性：当前 main 仍不限次数；新策略只在独立 release 生效。先查 exact replay，再查额度；原操作重放不重复计数。
+- 测试要求：1499/1500/1501 边界、并发新提交、同 key replay/conflict、commit UNKNOWN、历史已超限用户、RECOVERY_REQUIRED 不占并发槽、超限零 Provider 请求。
+- 风险：把 1500 错当并发/文件数/容量，或把失败重试重复计数；错误计数会锁死用户或绕过上限。
+- 回滚方案：关闭新额度策略需经所有者明确批准；不得删除历史 operation ledger。该策略无 schema migration 时保持数据库兼容。
+- 验收标准：每用户最多 1500 个不同的已提交操作意图；幂等重放不增加计数；无 per-user concurrency cap；全局背压独立有效。
 
 ## 4. P2：通用文件管理与产品能力
 
