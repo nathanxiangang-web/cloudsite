@@ -180,7 +180,11 @@ docker run -d --name pc-verify-pg --network none \
   -e POSTGRES_USER=<临时用户> -e POSTGRES_PASSWORD=<临时口令> \
   -e POSTGRES_DB=panta_restore_check \
   postgres:16-alpine
-until docker exec pc-verify-pg pg_isready -U <临时用户> -d panta_restore_check; do sleep 1; done
+for attempt in $(seq 1 60); do
+  docker exec pc-verify-pg pg_isready -U <临时用户> -d panta_restore_check && break
+  [ "$attempt" -lt 60 ] || { echo "PG16_READINESS_TIMEOUT"; exit 1; }
+  sleep 1
+done
 docker exec -i pc-verify-pg pg_restore -U <临时用户> -d panta_restore_check \
   --no-owner --no-privileges --exit-on-error < "$BK/product-db.dump"
 ```
@@ -246,6 +250,8 @@ docker exec pc-verify-pg psql -U <临时用户> -d panta_restore_check -At \
 > 本步骤**不得**复用生产配置直连生产库，也**不得**把秘密写进命令行。未获单独启动授权时记 `NOT_RUN`，**禁止**据此宣称新镜像可启动；未完成本节全部权限与字段改写**也不得**宣称启动成功（配置或 DSN 不合格时容器会以配置/启动错误失败，这不是通过）。
 
 #### 4.4.1 准备隔离配置目录（权限与属主必须精确）
+
+> 下列 `chown 10001:10001` 需要 root；普通操作者不得通过放宽为 0644/0755 绕过。
 
 ```bash
 umask 077; VERIFYCFG=/tmp/pc-verify/product-run
@@ -445,16 +451,21 @@ join -t= <(sort -t= -k1,1 "$BK/rowcounts-before.txt") <(sort -t= -k1,1 /tmp/rowc
 4. **验证恢复库**：`head=21`、`schema_migrations` 历史与 checksum 精确匹配、0022 新增对象（`cloud_user_spaces`、`acquisition_result_object_evidence`、`acquisition_copy_operations`）与 0022 新增列**均不存在**、关键表行数与 `rowcounts-before.txt` 一致。
 5. **生成恢复库 DSN，并在切换前断言其 schema 身份**（`RECOVERYDSN` = 指向 `<恢复库名>` 的受保护 DSN 文件，用编辑器写入，不要进命令历史）：
    ```bash
-   umask 077; RECOVERYDSN="$BK-failed/recovery-database.url"; chmod 0400 "$RECOVERYDSN"
+   umask 077; RECOVERYDSN="$BK-failed/recovery-database.url"
+   # 由操作者用编辑器创建并写入指向 <恢复库名> 的 DSN；不要把内容写进命令历史
+   test -s "$RECOVERYDSN" || { echo "RECOVERY_DSN_EMPTY"; exit 1; }
+   chown 10001:10001 "$RECOVERYDSN"; chmod 0400 "$RECOVERYDSN"
 
    # 断言 1：该 DSN 对应的库 head=21
    docker run --rm --network <compose 数据网络> -v "$RECOVERYDSN:/run/dsn:ro" postgres:16-alpine \
      sh -c 'psql "$(cat /run/dsn)" -At -c "select max(version) from schema_migrations"'
    # 期望输出：21（不是 22）
 
-   # 断言 2：0022 三对象不存在
-   docker run --rm --network <compose 数据网络> -v "$RECOVERYDSN:/run/dsn:ro" postgres:16-alpine \
-     sh -c 'psql "$(cat /run/dsn)" -At -c "select count(*) from pg_class where relname in (''cloud_user_spaces'',''acquisition_result_object_evidence'',''acquisition_copy_operations'')"'
+   # 断言 2：0022 三对象不存在（SQL 仅含固定表名，不含秘密）
+   VERIFY_SQL="select count(*) from pg_class where relname in ('cloud_user_spaces','acquisition_result_object_evidence','acquisition_copy_operations')"
+   docker run --rm --network <compose 数据网络> -v "$RECOVERYDSN:/run/dsn:ro" \
+     -e VERIFY_SQL="$VERIFY_SQL" postgres:16-alpine \
+     sh -c 'psql "$(cat /run/dsn)" -At -c "$VERIFY_SQL"'
    # 期望输出：0
    ```
    任一断言不符即**停止**：说明 DSN 指错库或备份未回到 schema21；不得启动旧镜像。
@@ -464,8 +475,7 @@ join -t= <(sort -t= -k1,1 "$BK/rowcounts-before.txt") <(sort -t= -k1,1 /tmp/rowc
    umask 077; cp "$RECOVERYDSN" "$PRODDSN"
    chown 10001:10001 "$PRODDSN"; chmod 0400 "$PRODDSN"
    # 产品 config.json 的 database_url_file 保持原容器内路径不变（既有挂载 ./cloudsiteV1.0.0alpha/private/product:/run/cloudsite:ro）
-   cat "$PRODDSN" | head -c 0   # 切勿回显内容；只确认文件非空
-   test -s "$PRODDSN" && echo DSN_POINTER_REPOINTED
+   test -s "$PRODDSN" && echo DSN_POINTER_REPOINTED   # 切勿回显文件内容
    ```
    > 只改 DSN **文件内容**，不改 `config.json` 的 `database_url_file` 路径、不改 compose。若既有 env 或 compose 中内嵌了数据库 DSN，回滚时**必须**让该内嵌值同样指向恢复库，或确认产品只从 `database_url_file` 读取（否则会出现两个真相源）。
 7. **移除 override 恢复原 compose/env，然后启动旧镜像**：
