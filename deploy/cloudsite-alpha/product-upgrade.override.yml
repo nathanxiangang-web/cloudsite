@@ -1,0 +1,5 @@
+# Replaces only the product service image. Catalog, catalog-cloud and every
+# other service keep their reviewed images (C-PRODUCT-OVERRIDE@1).
+services:
+  cloudsite:
+    image: ${CLOUDSITE_CANDIDATE_IMAGE:?}

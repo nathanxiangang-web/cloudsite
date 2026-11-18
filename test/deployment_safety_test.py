@@ -8,8 +8,8 @@ class DeploymentSafety(unittest.TestCase):
   raw=subprocess.check_output(['git','-c','core.autocrlf=true','archive','--format=tar','HEAD','migrations'],cwd=root,timeout=15)
   with tarfile.open(fileobj=io.BytesIO(raw),mode='r:') as archive:
    files=[item for item in archive.getmembers() if item.name.endswith('.sql')]
-   self.assertEqual(len(files),21)  # Append-only library cache; retain byte checks for ALL history.
-   self.assertEqual(sorted(item.name for item in files)[-1],'migrations/0021_library_snapshots.sql')
+   self.assertEqual(len(files),22)  # Append-only private cloud copy; retain byte checks for ALL history.
+   self.assertEqual(sorted(item.name for item in files)[-1],'migrations/0022_private_cloud_copy.sql')
    for item in files:
     published=subprocess.check_output(['git','cat-file','blob','HEAD:'+item.name],cwd=root,timeout=5)
     self.assertNotIn(b'\r\n',published)
