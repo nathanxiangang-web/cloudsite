@@ -16,7 +16,13 @@ die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 step() { printf '==> %s\n' "$*" >&2; }
 
 WORK_DIR=""
+BUILD_TREE=""
 cleanup() {
+  if [[ -n "$BUILD_TREE" ]]; then
+    git -C "$REPO_ROOT" worktree remove --force "$BUILD_TREE" >/dev/null 2>&1 || true
+    rm -rf "$BUILD_TREE"
+    git -C "$REPO_ROOT" worktree prune >/dev/null 2>&1 || true
+  fi
   if [[ -n "$WORK_DIR" && -d "$WORK_DIR" ]]; then rm -rf "$WORK_DIR"; fi
 }
 trap cleanup EXIT
@@ -81,13 +87,32 @@ WORK_DIR="$(mktemp -d "${OUTPUT_DIR}/.build-${PACKAGE}.XXXXXX")"
 PACKAGE_DIR="${WORK_DIR}/${PACKAGE}"
 mkdir -p "$PACKAGE_DIR"
 
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 "$GO_BIN" build -trimpath -ldflags '-s -w' \
-  -o "${PACKAGE_DIR}/cloudsite" ./cmd/panta
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 "$GO_BIN" build -trimpath -ldflags '-s -w' \
-  -o "${PACKAGE_DIR}/panta-db" ./cmd/panta-db
+# Build from a detached worktree of the exact commit so untracked local files
+# (e.g. .codeartsdoer/) cannot make Go stamp vcs.modified=true.
+BUILD_TREE="${WORK_DIR}/src-${SHORT_SHA}-$$"
+git worktree add --detach "$BUILD_TREE" "$COMMIT" >&2
+
+(
+  cd "$BUILD_TREE"
+  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 "$GO_BIN" build -trimpath -ldflags '-s -w' \
+    -o "${PACKAGE_DIR}/cloudsite" ./cmd/panta
+  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 "$GO_BIN" build -trimpath -ldflags '-s -w' \
+    -o "${PACKAGE_DIR}/panta-db" ./cmd/panta-db
+)
 
 [[ -s "${PACKAGE_DIR}/cloudsite" ]] || die "missing cloudsite binary"
 [[ -s "${PACKAGE_DIR}/panta-db" ]] || die "missing panta-db binary"
+
+step "asserting clean VCS stamp"
+(
+  cd "$PACKAGE_DIR"
+  for binary in cloudsite panta-db; do
+    vcs_info="$("$GO_BIN" version -m "$binary")"
+    if [[ "$vcs_info" == *"vcs.modified=true"* || "$vcs_info" == *"+dirty"* ]]; then
+      die "${binary} embeds dirty VCS state (vcs.modified=true); refusing to package"
+    fi
+  done
+)
 
 step "writing source manifest and build metadata"
 GENERATED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -124,11 +149,15 @@ EOF
   printf 'built_at: %s\n' "$GENERATED_AT"
   printf 'go: %s\n' "$GO_VERSION_STRING"
   printf 'image: %s\n' "$IMAGE_TAG"
-  printf '\n--- cloudsite ---\n'
-  "$GO_BIN" version -m "${PACKAGE_DIR}/cloudsite"
-  printf '\n--- panta-db ---\n'
-  "$GO_BIN" version -m "${PACKAGE_DIR}/panta-db"
 } > "${PACKAGE_DIR}/BUILD-INFO.txt"
+
+(
+  cd "$PACKAGE_DIR"
+  printf '\n--- cloudsite ---\n' >> BUILD-INFO.txt
+  "$GO_BIN" version -m cloudsite >> BUILD-INFO.txt
+  printf '\n--- panta-db ---\n' >> BUILD-INFO.txt
+  "$GO_BIN" version -m panta-db >> BUILD-INFO.txt
+)
 
 (
   cd "$PACKAGE_DIR"
@@ -173,5 +202,6 @@ tar -C "$OUTPUT_DIR" -czf "$ARCHIVE" "$PACKAGE"
 
 cleanup
 WORK_DIR=""
+BUILD_TREE=""
 printf 'candidate package: %s\n' "$ARCHIVE" >&2
 printf 'checksums: %s\n' "$CHECKSUMS" >&2
