@@ -10,6 +10,8 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/providers/contracts"
 )
 
+const privateCopyHash = "0123456789abcdef0123456789abcdef01234567"
+
 type evidenceObjectProvider struct {
 	*scriptedProvider
 	objects []contracts.StorageObject
@@ -26,7 +28,7 @@ func (provider *evidenceObjectProvider) CopyObject(context.Context, contracts.St
 }
 
 type resultEvidenceStoreFake struct {
-	values   map[acquisition.ManifestID]acquisition.ResultObjectEvidence
+	values    map[acquisition.ManifestID]acquisition.ResultObjectEvidence
 	saveCalls int
 }
 
@@ -67,12 +69,18 @@ func TestExecutionCapturesDonorEvidenceOnce(t *testing.T) {
 		Reference: contracts.StorageObjectReference{Scope: "library", Path: "file-a"}, Name: "movie.mkv",
 		SizeBytes: 42, HashAlgorithm: contracts.ContentHashSHA1, ContentHash: privateCopyHash,
 	}}
-	provider.adoptTask("provider-task-0001", contracts.TaskStateSucceeded)
+	result, err := service.Execute(context.Background(), executionRequest())
+	if err != nil || result.Outcome != acquisition.OutcomeProviderInProgress {
+		t.Fatalf("start result = %#v, error = %v", result, err)
+	}
+	if store.saveCalls != 0 {
+		t.Fatalf("evidence saved before provider success: %d", store.saveCalls)
+	}
 	provider.statuses["provider-task-0001"] = contracts.TaskStatus{
 		Reference: contracts.TaskReference{Value: "provider-task-0001"}, State: contracts.TaskStateSucceeded,
 		Result: &contracts.DownloadResult{Name: "movie.mkv"},
 	}
-	result, err := service.Execute(context.Background(), executionRequest())
+	result, err = service.Execute(context.Background(), executionRequest())
 	if err != nil || result.Outcome != acquisition.OutcomeProviderSucceeded {
 		t.Fatalf("result = %#v, error = %v", result, err)
 	}
