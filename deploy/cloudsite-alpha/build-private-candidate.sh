@@ -118,6 +118,7 @@ step "writing source manifest and build metadata"
 GENERATED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 cp "$REPO_ROOT/VERSION" "${PACKAGE_DIR}/VERSION"
 cp "${SCRIPT_DIR}/product-upgrade.override.yml" "${PACKAGE_DIR}/product-upgrade.override.yml"
+cp "$REPO_ROOT/docs/operations/private-cloud-candidate/README.md" "${PACKAGE_DIR}/UPGRADE-RUNBOOK.md"
 
 cat > "${PACKAGE_DIR}/SOURCE-MANIFEST.json" <<EOF
 {
