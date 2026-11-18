@@ -49,16 +49,28 @@ func TestCloudSpaceResourceAuthorizerOwnerIsolation(t *testing.T) {
 		DirectoryName: "a", Status: UserSpaceActive, OwnerState: UserSpaceOwnerActive,
 	}}
 	authorizer := CloudSpaceResourceAuthorizer{Spaces: store}
-	allowed, err := authorizer.Allowed(context.Background(), principal, "binding-a", "/云下载/_users/a/result.bin")
+	allowed, err := authorizer.Allowed(context.Background(), principal, "binding-a", "root-a", "/云下载/_users/a/result.bin")
 	if err != nil || !allowed {
 		t.Fatalf("owner path rejected: allowed=%t error=%v", allowed, err)
 	}
-	allowed, err = authorizer.Allowed(context.Background(), principal, "binding-a", "/云下载/_users/b/result.bin")
+	allowed, err = authorizer.Allowed(context.Background(), principal, "binding-a", "root-a", "/云下载/_users/b/result.bin")
 	if err != nil || allowed {
 		t.Fatalf("other user path allowed: allowed=%t error=%v", allowed, err)
 	}
-	allowed, err = authorizer.Allowed(context.Background(), principal, "binding-a", "/shared/result.bin")
+	allowed, err = authorizer.Allowed(context.Background(), principal, "binding-a", "root-a", "/shared/result.bin")
 	if err != nil || !allowed {
 		t.Fatalf("public path rejected: allowed=%t error=%v", allowed, err)
+	}
+	allowed, err = authorizer.Allowed(context.Background(), principal, "binding-a", "root-b", "/云下载/_users/a/result.bin")
+	if err != nil || allowed {
+		t.Fatalf("root mismatch allowed: allowed=%t error=%v", allowed, err)
+	}
+	allowed, err = authorizer.Allowed(context.Background(), principal, "binding-a", "root-a", "/云下载/_users")
+	if err != nil || allowed {
+		t.Fatalf("private container enumeration allowed: allowed=%t error=%v", allowed, err)
+	}
+	allowed, err = authorizer.Allowed(context.Background(), principal, "binding-a", "root-a", "/云下载/_users/b")
+	if err != nil || allowed {
+		t.Fatalf("other private container allowed: allowed=%t error=%v", allowed, err)
 	}
 }

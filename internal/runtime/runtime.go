@@ -259,7 +259,7 @@ func NewRuntime(ctx context.Context, cfg config.Config, deps RuntimeDependencies
 	if err != nil {
 		return nil, err
 	}
-	executionOptions = append(executionOptions, acquisition.WithCopyStepCoordinator(copyCoordinator))
+	executionOptions = append(executionOptions, acquisition.WithCopyStepCoordinator(copyCoordinator), acquisition.WithResultEvidenceStore(copyOperations))
 	inputs, err := acquisition.NewExecutionInputResolver(manifests, storageStore, acquisition.WithExecutionPrivateTargetSpaces(cloudUserSpaces))
 	if err != nil {
 		return nil, err

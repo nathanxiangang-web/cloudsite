@@ -51,15 +51,10 @@ func (coordinator *CopyCoordinator) ExecuteCopy(ctx context.Context, requester M
 	if requesterJob.ID != *requester.JobID || requesterJob.Type != JobTypeAcquisition || requesterJob.State != jobs.StateRunning {
 		return StepResult{}, true, ErrExecutionJobMismatch
 	}
-	current, err := provider.ListObjects(ctx, *requester.TargetProviderScope)
+	baseline, err := coordinator.copyBaseline(ctx, requester, provider)
 	if err != nil {
 		return StepResult{}, true, err
 	}
-	baseline := make([]string, 0, len(current))
-	for _, object := range current {
-		baseline = append(baseline, object.Reference.Path)
-	}
-	sort.Strings(baseline)
 	operationID := copyOperationIDForManifest(requester.ID)
 	plan, err := NewCopyPlan(requester, candidate.Manifest, candidate.Job, candidate.Task, candidate.Evidence,
 		operationID, baseline, coordinator.now().UTC())
@@ -88,6 +83,26 @@ func (coordinator *CopyCoordinator) ExecuteCopy(ctx context.Context, requester M
 	name := plan.Donor.ResultName
 	return StepResult{Outcome: OutcomeProviderSucceeded, ResultName: &name}, true, nil
 }
+func (coordinator *CopyCoordinator) copyBaseline(ctx context.Context, requester Manifest, provider contracts.ObjectCopyProvider) ([]string, error) {
+	stored, err := coordinator.store.GetCopyOperation(ctx, requester.ID)
+	if err == nil {
+		return append([]string(nil), stored.DestinationBefore...), nil
+	}
+	if !errors.Is(err, ErrCopyOperationNotFound) {
+		return nil, err
+	}
+	current, err := provider.ListObjects(ctx, *requester.TargetProviderScope)
+	if err != nil {
+		return nil, err
+	}
+	baseline := make([]string, 0, len(current))
+	for _, object := range current {
+		baseline = append(baseline, object.Reference.Path)
+	}
+	sort.Strings(baseline)
+	return baseline, nil
+}
+
 func copyOperationIDForManifest(manifestID ManifestID) CopyOperationID {
 	sum := sha256.Sum256([]byte("panta-copy:" + string(manifestID)))
 	sum[6] = (sum[6] & 0x0f) | 0x50

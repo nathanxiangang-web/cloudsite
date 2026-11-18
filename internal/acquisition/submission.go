@@ -25,20 +25,20 @@ const (
 )
 
 type SubmitRequest struct {
-	ManifestID             ManifestID
-	JobID                  jobs.JobID
-	MaxAttempts            int
-	Source                 string
-	UserID                 *UserID
-	ExpectedName           *string
-	TargetStorageBindingID storage.BindingID
-	TargetPath             string
-	UserSpaceID            *string
+	ManifestID                 ManifestID
+	JobID                      jobs.JobID
+	MaxAttempts                int
+	Source                     string
+	UserID                     *UserID
+	ExpectedName               *string
+	TargetStorageBindingID     storage.BindingID
+	TargetPath                 string
+	UserSpaceID                *string
 	TargetProviderConnectionID *storage.ConnectionID
-	TargetProviderScope    *string
-	AssetID                *catalog.AssetID
-	ReleaseID              *catalog.ReleaseID
-	VariantID              *catalog.VariantID
+	TargetProviderScope        *string
+	AssetID                    *catalog.AssetID
+	ReleaseID                  *catalog.ReleaseID
+	VariantID                  *catalog.VariantID
 }
 
 type SubmitResult struct {
@@ -95,7 +95,7 @@ func (service *SubmissionService) Submit(ctx context.Context, request SubmitRequ
 		TargetStorageBindingID: request.TargetStorageBindingID, TargetPath: request.TargetPath,
 		UserSpaceID: request.UserSpaceID, TargetProviderConnectionID: request.TargetProviderConnectionID,
 		TargetProviderScope: request.TargetProviderScope,
-		AssetID: request.AssetID, ReleaseID: request.ReleaseID, VariantID: request.VariantID,
+		AssetID:             request.AssetID, ReleaseID: request.ReleaseID, VariantID: request.VariantID,
 	}
 	result := SubmitResult{ManifestID: request.ManifestID, JobID: request.JobID}
 	created, err := service.lookup.GetManifest(ctx, request.ManifestID)

@@ -309,11 +309,17 @@ func (s *ReadService) Browse(ctx context.Context, p auth.Principal, request Brow
 	if err != nil {
 		return ResourcePage{}, safeReadError(err)
 	}
-	if len(page.Items) > request.Limit || !ValidOpaque(page.NextCursor) || page.NextCursor != "" && page.NextCursor == request.Cursor {
+	if len(page.Items) > request.Limit || len(page.Items) == 0 && page.NextCursor != "" || !ValidOpaque(page.NextCursor) || page.NextCursor != "" && page.NextCursor == request.Cursor {
 		return ResourcePage{}, ErrUnavailable
 	}
 	items, err := s.resources(ctx, p, binding, page.Items)
-	return ResourcePage{Items: items, NextCursor: page.NextCursor}, err
+	if err != nil {
+		return ResourcePage{}, err
+	}
+	if len(items) != len(page.Items) {
+		return ResourcePage{}, ErrNotFound
+	}
+	return ResourcePage{Items: items, NextCursor: page.NextCursor}, nil
 }
 
 // resources is shared by live reads and cached physical pages. Both revalidate
@@ -347,7 +353,7 @@ func (s *ReadService) resources(ctx context.Context, principal auth.Principal, b
 	seen := map[string]bool{}
 	for _, physical := range physicalItems {
 		if s.privateResources != nil && physical.CanonicalPath != nil {
-			allowed, err := s.privateResources.Allowed(ctx, principal, binding.ID, *physical.CanonicalPath)
+			allowed, err := s.privateResources.Allowed(ctx, principal, binding.ID, binding.IndexCoreRootID, *physical.CanonicalPath)
 			if err != nil {
 				return nil, safeReadError(err)
 			}
@@ -397,7 +403,7 @@ func (s *ReadService) Resolve(ctx context.Context, p auth.Principal, id storage.
 		return Resource{}, err
 	}
 	if s.privateResources != nil {
-		allowed, err := s.privateResources.Allowed(ctx, p, binding.ID, normalized)
+		allowed, err := s.privateResources.Allowed(ctx, p, binding.ID, binding.IndexCoreRootID, normalized)
 		if err != nil {
 			return Resource{}, safeReadError(err)
 		}

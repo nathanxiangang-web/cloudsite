@@ -256,7 +256,7 @@ func Run(ctx context.Context, action, configFile, userFile string, policies ...c
 			cancel()
 			return nil
 		}
-		options = append(options, option)
+		options = append(options, producthttp.CombineWorkspaceOptions(option, producthttp.WithCloudSpaceFiles(reads)))
 	}
 	options = append(options, producthttp.WithRegistration(cfg.RegistrationEnabled))
 	options = append(options, producthttp.WithLibraryScope(cfg.LibraryBindingIDs, cfg.WholeRootLibrary))

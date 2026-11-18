@@ -48,3 +48,28 @@ test('missing private API falls back without creating directories',async()=>{
  await space.init();
  assert.equal(calls.length,1);assert.equal(space.endpoint(),'/api/v1/cloud-downloads');
 });
+test('private files use the dedicated cursor API and sanitize presentation fields',async()=>{
+ const surface=require('../internal/producthttp/web/file-surface.js');
+ const files=new surface.PrivateFiles(),calls=[];
+ const item=(id,name)=>({binding_id:'binding',resource_id:id,path:'/private/'+name,name:null,directory:false,size_bytes:12,presence:'PRESENT',donor:'SECRET'});
+ const read=async url=>{
+  calls.push(url);
+  return calls.length===1?{items:[item('one','a.txt')],next_cursor:'next page'}:{items:[item('two','b.pdf')],next_cursor:''};
+ };
+ let result=await files.read(read);
+ assert.equal(result.items[0].name,'a.txt');assert.equal('donor'in result.items[0],false);assert.equal(result.cursor,'next page');
+ result=await files.read(read,true);
+ assert.deepEqual(calls,['/api/v2/cloud-downloads/files?limit=50','/api/v2/cloud-downloads/files?limit=50&cursor=next%20page']);
+ assert.deepEqual(result.items.map(item=>item.resource_id),['one','two']);assert.equal(result.cursor,'');
+});
+
+test('private file cursors fail closed and clear fences late pages',async()=>{
+ const surface=require('../internal/producthttp/web/file-surface.js');
+ const item=id=>({binding_id:'binding',resource_id:id,path:'/private/'+id+'.txt',name:id,directory:false,size_bytes:null,presence:'PRESENT'});
+ const files=new surface.PrivateFiles();
+ await files.read(async()=>({items:[item('one')],next_cursor:'same'}));
+ await assert.rejects(files.read(async()=>({items:[item('two')],next_cursor:'same'}),true),/INVALID_PRIVATE_FILES/);
+ assert.deepEqual(files.items.map(item=>item.resource_id),['one']);
+ let resolve;const pending=files.read(()=>new Promise(r=>{resolve=r;}));files.clear();resolve({items:[item('late')],next_cursor:''});
+ assert.equal(await pending,null);assert.deepEqual(files.items,[]);assert.equal(files.cursor,'');
+});

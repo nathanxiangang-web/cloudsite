@@ -5,15 +5,19 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"strconv"
 
 	"github.com/nathanxiangang-web/panta/internal/acquisition"
 	"github.com/nathanxiangang-web/panta/internal/product"
 )
 
+type PrivateFileReader = product.PrivateFileReader
+
 type cloudSpaceOptions struct {
 	service    *product.CloudSpaceService
 	target     product.CloudSpaceTarget
 	admissions product.Admissions
+	files      PrivateFileReader
 }
 
 func WithCloudSpace(service *product.CloudSpaceService, target product.CloudSpaceTarget, admissions ...product.Admissions) WorkspaceOption {
@@ -23,6 +27,15 @@ func WithCloudSpace(service *product.CloudSpaceService, target product.CloudSpac
 			cloudSpace.admissions = admissions[0]
 		}
 		options.cloudSpace = cloudSpace
+	}
+}
+
+func WithCloudSpaceFiles(reader PrivateFileReader) WorkspaceOption {
+	return func(options *workspaceOptions) {
+		if options.cloudSpace == nil {
+			options.cloudSpace = &cloudSpaceOptions{}
+		}
+		options.cloudSpace.files = reader
 	}
 }
 
@@ -51,6 +64,22 @@ func registerCloudSpace(h *Handler, options *cloudSpaceOptions) error {
 		}
 		respond(w, http.StatusOK, result)
 	})))
+	if options.files != nil {
+		h.mux.Handle("GET /api/v2/cloud-downloads/files", h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			cursor, limit, err := parsePrivateFilesQuery(r)
+			if err != nil {
+				admissionFailure(w, err)
+				return
+			}
+			principal, _ := Principal(r.Context())
+			page, err := options.files.PrivateFiles(r.Context(), principal, options.target.BindingID, cursor, limit)
+			if err != nil {
+				admissionFailure(w, err)
+				return
+			}
+			respond(w, http.StatusOK, page)
+		})))
+	}
 	h.mux.Handle("POST /api/v2/cloud-downloads/space/provision", h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		key, err := decodeCloudSpaceProvision(w, r)
 		if err != nil {
@@ -114,6 +143,29 @@ func registerCloudSpace(h *Handler, options *cloudSpaceOptions) error {
 		})))
 	}
 	return nil
+}
+
+func parsePrivateFilesQuery(r *http.Request) (string, int, error) {
+	query, err := strictQuery(r, "cursor", "limit")
+	if err != nil {
+		return "", 0, product.ErrInvalid
+	}
+	cursor := query.Get("cursor")
+	if len(cursor) > 2048 {
+		return "", 0, product.ErrInvalid
+	}
+	limit := 50
+	if query.Has("limit") {
+		value, err := strconv.Atoi(query.Get("limit"))
+		if err != nil {
+			return "", 0, product.ErrInvalid
+		}
+		limit = value
+	}
+	if limit < 1 || limit > 50 {
+		return "", 0, product.ErrInvalid
+	}
+	return cursor, limit, nil
 }
 
 func decodeCloudSpaceProvision(w http.ResponseWriter, r *http.Request) (string, error) {

@@ -61,6 +61,27 @@ func TestCopyCoordinatorExecutesSingleCopyToReadyOutcome(t *testing.T) {
 	}
 }
 
+func TestCopyCoordinatorRecoveryUsesStoredBaseline(t *testing.T) {
+	fixture := newCopyPlanFixture()
+	operation := fixture.plan(t).Operation
+	operation.ID = copyOperationIDForManifest(fixture.requester.ID)
+	operation.Status = CopyProviderUnknown
+	store := &fakeCopyStore{operation: &operation}
+	copied := copiedObjectFromDonor(fixture.evidence, *fixture.requester.TargetProviderScope, "file-b")
+	provider := &fakeObjectCopyProvider{donor: objectFromDonor(fixture.evidence), candidate: copied,
+		listResults: [][]contracts.StorageObject{{copied}, {copied}}}
+	donor := CopyDonorCandidate{Manifest: fixture.donor, Job: fixture.job, Task: fixture.task, Evidence: fixture.evidence}
+	coordinator, err := NewCopyCoordinator(copyDonorStoreDouble{candidate: donor}, store, time.Now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, handled, err := coordinator.ExecuteCopy(context.Background(), fixture.requester,
+		jobs.Job{ID: *fixture.requester.JobID, Type: JobTypeAcquisition, State: jobs.StateRunning}, provider, "worker", 1)
+	if err != nil || !handled || result.Outcome != OutcomeProviderSucceeded || provider.copyCalls != 0 {
+		t.Fatalf("result = %#v, handled = %t, calls = %d, error = %v", result, handled, provider.copyCalls, err)
+	}
+}
+
 func TestCopyCoordinatorRejectsNonRunningRequesterJob(t *testing.T) {
 	fixture := newCopyPlanFixture()
 	donor := CopyDonorCandidate{Manifest: fixture.donor, Job: fixture.job, Task: fixture.task, Evidence: fixture.evidence}

@@ -139,6 +139,7 @@ type ExecutionStepService struct {
 	now             Clock
 	pollScope       *KnownPollScope
 	copyCoordinator CopyStepCoordinator
+	resultEvidence ResultEvidenceStore
 }
 
 func NewExecutionStepService(
@@ -233,7 +234,7 @@ func (service *ExecutionStepService) Execute(ctx context.Context, request StepRe
 	if service.pollScope != nil && !service.pollScope.Matches(manifest, task) {
 		return StepResult{}, ErrKnownRecoveryConflict
 	}
-	return service.pollProviderTask(ctx, task, downloader)
+	return service.pollProviderTask(ctx, input, task, downloader)
 }
 
 // resolveDownloaderSession fails closed unless the resolved session matches the
@@ -368,7 +369,7 @@ func (service *ExecutionStepService) claimAndStartProviderTask(
 			return StepResult{}, fmt.Errorf("%w: Manifest %s holds a durable start reservation without a task reference",
 				ErrExecutionSideEffectUncertain, input.ManifestID)
 		}
-		return service.pollProviderTask(ctx, claim.Task, downloader)
+		return service.pollProviderTask(ctx, input, claim.Task, downloader)
 	}
 
 	if checker, ok := downloader.(sessionhealth.Checker); ok {
@@ -410,13 +411,14 @@ func (service *ExecutionStepService) claimAndStartProviderTask(
 		return StepResult{}, fmt.Errorf("%w: Manifest %s did not durably commit a task reference",
 			ErrExecutionSideEffectUncertain, input.ManifestID)
 	}
-	return service.pollProviderTask(ctx, commit.Task, downloader)
+	return service.pollProviderTask(ctx, input, commit.Task, downloader)
 }
 
 // pollProviderTask reads provider task status for an already-linked task. It
 // never starts a provider task.
 func (service *ExecutionStepService) pollProviderTask(
 	ctx context.Context,
+	input ExecutionInput,
 	task ProviderTask,
 	downloader contracts.DownloaderProvider,
 ) (StepResult, error) {
@@ -431,6 +433,13 @@ func (service *ExecutionStepService) pollProviderTask(
 	result, err := mapTaskStatusToResult(status)
 	if err != nil {
 		return StepResult{}, &contracts.PollError{Category: contracts.PollUnknown, Cause: err}
+	}
+	if result.Outcome == OutcomeProviderSucceeded && result.ResultName != nil {
+		if copier, ok := downloader.(contracts.ObjectCopyProvider); ok {
+			if err := service.captureResultEvidence(ctx, input, *result.ResultName, copier); err != nil {
+				return StepResult{}, err
+			}
+		}
 	}
 	return result, nil
 }

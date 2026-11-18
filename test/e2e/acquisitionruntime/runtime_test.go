@@ -171,7 +171,7 @@ VALUES ($1,'magnet','magnet:?xt=urn:btih:synthetic','movie.mkv',$2,'/downloads/i
 	return fixture, manifestID, jobID
 }
 
-func runtimeDeps(fixture fixtureState, hintURL string, provider *runtimeDownloader) runtime.RuntimeDependencies {
+func runtimeDeps(fixture fixtureState, hintURL string, provider contracts.DownloaderProvider) runtime.RuntimeDependencies {
 	return runtime.RuntimeDependencies{Secrets: runtimeSecretResolver{},
 		Sessions:    []runtime.RuntimeSession{{ProviderID: "115", ConnectionID: storage.ConnectionID(fixture.bindingID), CredentialRef: runtimeTestCredential}},
 		HintBaseURL: hintURL, HintToken: runtimeHintToken,
