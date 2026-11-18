@@ -64,6 +64,7 @@ type PhysicalReader interface {
 	Resolve(context.Context, resourceview.PhysicalRequest) (resourceview.PhysicalDetail, error)
 }
 type Task struct {
+	FailureReason string                 `json:"failure_reason,omitempty"`
 	ManifestID    acquisition.ManifestID `json:"manifest_id"`
 	JobID         *jobs.JobID            `json:"job_id"`
 	ManifestState acquisition.State      `json:"manifest_state"`
@@ -246,6 +247,16 @@ func (s *ReadService) taskView(record TaskRecord, p auth.Principal) (Task, error
 	dto.JobState = &j.State
 	dto.ClaimAttempts = j.ClaimAttempts
 	dto.FailureCount = j.FailureCount
+	// Only exact closed application markers may cross into the consumer DTO.
+	// Historical errors/upstream bodies are never returned or reinterpreted.
+	if m.State == acquisition.StateFailed && j.LastError != nil {
+		switch *j.LastError {
+		case acquisition.ErrProviderLoginBeforeStart.Error():
+			dto.FailureReason = "PROVIDER_LOGIN_REQUIRED_BEFORE_START"
+		case acquisition.ErrProviderUnknownBeforeStart.Error():
+			dto.FailureReason = "PROVIDER_SESSION_UNKNOWN_BEFORE_START"
+		}
+	}
 	return dto, nil
 }
 func (s *ReadService) binding(ctx context.Context, p auth.Principal, id storage.BindingID) (storage.Binding, error) {

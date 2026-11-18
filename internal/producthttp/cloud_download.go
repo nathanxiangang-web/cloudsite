@@ -12,6 +12,7 @@ import (
 
 	"github.com/nathanxiangang-web/panta/internal/acquisition"
 	"github.com/nathanxiangang-web/panta/internal/product"
+	"github.com/nathanxiangang-web/panta/internal/sessionhealth"
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
 
@@ -26,9 +27,12 @@ func (t CloudDownloadTarget) Valid() bool {
 	path, err := acquisition.NormalizeTargetPath(t.TargetPath)
 	return err == nil && path == t.TargetPath && product.ValidID(string(t.BindingID)) && ValidDisplayLabel(t.Label)
 }
-func WithCloudDownload(target CloudDownloadTarget, admissions product.Admissions, operations product.OperationReader) WorkspaceOption {
+func WithCloudDownload(target CloudDownloadTarget, admissions product.Admissions, operations product.OperationReader, health ...sessionhealth.Reader) WorkspaceOption {
 	return func(o *workspaceOptions) {
 		o.cloud = &cloudDownloadOptions{target: target, admissions: admissions, operations: operations}
+		if len(health) > 0 {
+			o.cloud.health = health[0]
+		}
 	}
 }
 
@@ -36,6 +40,7 @@ type cloudDownloadOptions struct {
 	target     CloudDownloadTarget
 	admissions product.Admissions
 	operations product.OperationReader
+	health     sessionhealth.Reader
 }
 
 func nilCloudPort(value any) bool {
@@ -54,6 +59,15 @@ func registerCloudDownload(h *Handler, options *cloudDownloadOptions) error {
 		return product.ErrInvalid
 	}
 	registerSourcePreview(h)
+	if options.health != nil {
+		h.mux.Handle("GET /api/v1/cloud-downloads/session", h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if _, err := strictQuery(r); err != nil {
+				admissionFailure(w, product.ErrInvalid)
+				return
+			}
+			respond(w, http.StatusOK, options.health.Read(r.Context()))
+		})))
+	}
 	h.mux.Handle("POST /api/v1/cloud-downloads", h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		input, err := decodeCloudDownload(w, r, false)
 		if err != nil {

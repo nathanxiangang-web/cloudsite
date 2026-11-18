@@ -137,6 +137,10 @@ func decodeAdmission(w http.ResponseWriter, r *http.Request) (product.AdmissionR
 func admissionFailure(w http.ResponseWriter, err error) {
 	status, code := 503, "ADMISSION_UNAVAILABLE"
 	switch {
+	case errors.Is(err, product.ErrProviderLoginRequired):
+		status, code = 503, "PROVIDER_LOGIN_REQUIRED"
+	case errors.Is(err, product.ErrProviderSessionUnknown):
+		status, code = 503, "PROVIDER_SESSION_UNKNOWN"
 	case errors.Is(err, auth.ErrUnauthorized):
 		status, code = 401, "AUTH_REQUIRED"
 	case errors.Is(err, product.ErrInvalid):

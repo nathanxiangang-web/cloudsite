@@ -42,6 +42,7 @@ type workspaceInfo struct {
 	CloudDownloadPreviewEnabled     bool             `json:"cloud_download_preview_enabled"`
 	CloudDownloadUnavailableReason  string           `json:"cloud_download_unavailable_reason,omitempty"`
 	CloudDownloadEnabled            bool             `json:"cloud_download_enabled"`
+	CloudDownloadSessionCheck       bool             `json:"cloud_download_session_check"`
 	CloudDownloadLabel              string           `json:"cloud_download_label,omitempty"`
 	WholeRootLibrary                bool             `json:"whole_root_library"`
 	SharingEnabled                  bool             `json:"sharing_enabled"`
@@ -150,6 +151,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		}
 		info.CloudDownloadFiles = &cloudFileScope{BindingID: settings.cloud.target.BindingID, Path: settings.cloud.target.TargetPath}
 		info.CloudDownloadEnabled = true
+		info.CloudDownloadSessionCheck = settings.cloud.health != nil
 		info.CloudDownloadPreviewEnabled = true
 		info.CloudDownloadLabel = settings.cloud.target.Label
 		info.Mode = "ACQUISITION"

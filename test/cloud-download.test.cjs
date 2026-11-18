@@ -47,3 +47,48 @@ test('unlimited usage never presents zero as an exhausted allowance',async()=>{
  assert.equal(app.elements.get('download-usage').textContent,'下载次数不限 · 已提交 135 次');
  assert.equal(app.requests.some(r=>r.url==='/api/v1/cloud-downloads'),false);
 });
+
+test('live native session failure blocks new tasks, preserves input and allows old operation GET',async()=>{
+ const app=pageApp('web-previous');await app.ready({cloud_download_enabled:true,cloud_download_session_check:true});
+ app.elements.get('download-source').value='PRIVATE input';
+ assert.equal(app.elements.get('download-submit').disabled,true);
+ assert.equal(app.elements.get('download-session').hidden,false);
+ await app.respond('/api/v1/cloud-downloads/session',{status:'LOGIN_REQUIRED',valid_until:new Date(Date.now()+15000).toISOString()});
+ assert.match(app.elements.get('download-session-status').textContent,/登录已失效/);
+ assert.equal(app.elements.get('download-source').value,'PRIVATE input');
+ assert.equal(app.elements.get('download-prepare').disabled,false);
+ assert.equal(app.elements.get('download-submit').disabled,true);
+ assert.equal(app.elements.get('download-reconcile').hidden,false);
+ await app.respond('/api/v1/cloud-downloads/operations/web-previous',{code:'OPERATION_NOT_FOUND'},404);
+ await app.elements.get('download-form').listeners.submit({preventDefault(){}});
+ assert.equal(app.requests.some(r=>r.options.method==='POST'),false);
+ assert.deepEqual([...app.data.values()],['web-previous']);
+ const check=app.elements.get('download-session-refresh').listeners.click();
+ await app.respond('/api/v1/cloud-downloads/session',{status:'AUTHENTICATED',valid_until:new Date(Date.now()+15000).toISOString()});await check;
+ assert.equal(app.run('state.canSubmit'),true);
+ assert.equal(app.elements.get('download-source').value,'PRIVATE input');
+ assert.equal(app.requests.some(r=>r.options.method==='POST'),false);
+});
+test('expired or malformed health never enables submit or clears already displayed files',async()=>{
+ let mounts=0,clears=0;const app=pageApp(null,{async mount(){mounts++;},clear(){clears++;}});
+ await app.ready({cloud_download_enabled:true,cloud_download_session_check:true});
+ await app.respond('/api/v1/cloud-downloads/session',{status:'AUTHENTICATED',valid_until:new Date(Date.now()-1000).toISOString()});
+ assert.equal(app.elements.get('download-submit').disabled,true);
+ assert.match(app.elements.get('download-session-status').textContent,/无法确认/);
+ const check=app.elements.get('download-session-refresh').listeners.click();
+ await app.respond('/api/v1/cloud-downloads/session',{status:'AUTHENTICATED',valid_until:'bad'});await check;
+ assert.equal(app.run('state.canSubmit'),false);assert.equal(mounts,1);assert.equal(clears,0);
+});
+test('authoritative pre-admission auth rejection retains same key and preview without new POST',async()=>{
+ const app=pageApp();await app.ready({cloud_download_enabled:true,cloud_download_session_check:true});
+ await app.respond('/api/v1/cloud-downloads/session',{status:'AUTHENTICATED',valid_until:new Date(Date.now()+15000).toISOString()});
+ app.elements.get('download-source').value='https://example.invalid/private';const prep=app.elements.get('download-prepare').listeners.click();
+ await app.respond('/api/v1/cloud-downloads/prepare',{execution_source:'https://example.invalid/private'});await prep;
+ const submit=app.elements.get('download-form').listeners.submit({preventDefault(){}});
+ await app.respond('/api/v1/cloud-downloads',{code:'PROVIDER_LOGIN_REQUIRED'},503);await submit;
+ assert.equal(app.elements.get('download-source').value,'https://example.invalid/private');
+ assert.equal(app.elements.get('download-submit').disabled,true);assert.equal(app.run('state.intent.busy'),false);
+ assert.ok(app.run('state.intent.key'));assert.equal(app.elements.get('download-reconcile').hidden,false);
+ assert.match(app.elements.get('download-error').textContent,/未创建下载任务/);
+ assert.equal(app.requests.filter(r=>r.url==='/api/v1/cloud-downloads').length,1);
+});

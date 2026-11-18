@@ -164,6 +164,8 @@ func TestStageDispatcherProviderOutcomeTable(t *testing.T) {
 		{"failed", StepResult{Outcome: OutcomeProviderFailed}, nil, ProviderOutcomeFailed, StateFailed, jobs.StateFailed},
 		{"canceled", StepResult{Outcome: OutcomeProviderCanceled}, nil, ProviderOutcomeCanceled, StateCanceled, jobs.StateCanceled},
 		{"uncertain", StepResult{}, ErrExecutionSideEffectUncertain, ProviderOutcomeRecovery, StateRecoveryRequired, jobs.StateRecoveryRequired},
+		{"login before POST", StepResult{}, ErrProviderLoginBeforeStart, ProviderOutcomeFailed, StateFailed, jobs.StateFailed},
+		{"unknown before POST", StepResult{}, ErrProviderUnknownBeforeStart, ProviderOutcomeFailed, StateFailed, jobs.StateFailed},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			fixture := newDispatchFixture(t, StateActive)
@@ -177,6 +179,11 @@ func TestStageDispatcherProviderOutcomeTable(t *testing.T) {
 				t.Fatalf("Dispatch() error = %v", err)
 			}
 			fixture.assertCalls(t, 1, 1, 0, 0)
+			if errors.Is(test.stepErr, ErrProviderLoginBeforeStart) || errors.Is(test.stepErr, ErrProviderUnknownBeforeStart) {
+				if fixture.outcomes.request.ErrorMessage == nil || *fixture.outcomes.request.ErrorMessage != test.stepErr.Error() {
+					t.Fatal("lost closed no-start reason")
+				}
+			}
 			if result.Stage != StageProvider || result.Manifest.State != test.wantManifest || result.Job.State != test.wantJob ||
 				fixture.outcomes.request.Outcome != test.want {
 				t.Fatalf("result = %#v, handoff = %#v", result, fixture.outcomes.request)

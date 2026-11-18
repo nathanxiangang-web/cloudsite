@@ -247,3 +247,32 @@ func TestReadBoundsCancellationAndImmutableConfig(t *testing.T) {
 		t.Fatal("typed nil wired")
 	}
 }
+
+func TestTaskNoStartReasonsAreClosedAndFailedOnly(t *testing.T) {
+	service, f := newFixture(t)
+	record := pending("95000000-0000-4000-8000-000000000010")
+	id := jobs.JobID("95000000-0000-4000-8000-000000000020")
+	key := acquisition.AcquisitionJobIdempotencyKey(record.Manifest.ID)
+	record.Manifest.JobID = &id
+	record.Manifest.State = acquisition.StateFailed
+	record.Job = &jobs.Job{ID: id, Type: acquisition.JobTypeAcquisition, IdempotencyKey: &key, MaxAttempts: 5, State: jobs.StateFailed, Payload: json.RawMessage(`{"schema_version":1,"manifest_id":"95000000-0000-4000-8000-000000000010"}`)}
+	for _, message := range []string{acquisition.ErrProviderLoginBeforeStart.Error(), acquisition.ErrProviderUnknownBeforeStart.Error(), "PRIVATE upstream body", acquisition.ErrProviderLoginBeforeStart.Error() + " PRIVATE"} {
+		record.Job.LastError = &message
+		f.record = record
+		dto, err := service.Task(context.Background(), principal(), record.Manifest.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := ""
+		if message == acquisition.ErrProviderLoginBeforeStart.Error() || message == acquisition.ErrProviderUnknownBeforeStart.Error() {
+			want = message
+		}
+		if dto.FailureReason != want {
+			t.Fatal("incorrect reason", dto.FailureReason)
+		}
+		raw, _ := json.Marshal(dto)
+		if strings.Contains(string(raw), "PRIVATE") {
+			t.Fatal("error leaked")
+		}
+	}
+}

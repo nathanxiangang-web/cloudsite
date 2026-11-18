@@ -13,14 +13,17 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/acquisition"
 	"github.com/nathanxiangang-web/panta/internal/auth"
 	"github.com/nathanxiangang-web/panta/internal/jobs"
+	"github.com/nathanxiangang-web/panta/internal/sessionhealth"
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
 
 var (
-	ErrOperationConflict  = errors.New("product operation conflict")
-	ErrOperationLimit     = errors.New("product operation limit reached")
-	ErrConcurrencyLimit   = errors.New("product concurrency limit reached")
-	ErrAdmissionUncertain = errors.New("product admission uncertain")
+	ErrOperationConflict      = errors.New("product operation conflict")
+	ErrOperationLimit         = errors.New("product operation limit reached")
+	ErrConcurrencyLimit       = errors.New("product concurrency limit reached")
+	ErrAdmissionUncertain     = errors.New("product admission uncertain")
+	ErrProviderLoginRequired  = errors.New("provider login required")
+	ErrProviderSessionUnknown = errors.New("provider session unknown")
 )
 
 const (
@@ -77,6 +80,39 @@ type AdmissionStore interface {
 	Reserve(context.Context, auth.Principal, AdmissionRequest, Reservation) (Reservation, error)
 	Usage(context.Context, auth.Principal) (UsageDTO, error)
 }
+
+// CheckedAdmissionStore applies the precomputed gate only to a NEW operation,
+// after exact replay/conflict lookup under the existing owner transaction lock.
+// Network probes must have completed before entering this transaction.
+type CheckedAdmissionStore interface {
+	AdmissionStore
+	ReserveChecked(context.Context, auth.Principal, AdmissionRequest, Reservation, AdmissionCheck) (Reservation, error)
+}
+
+// AdmissionCheck carries a bounded observation, not a durable permission. The
+// store rechecks its expiry AFTER acquiring owner/topology locks for a new intent.
+type AdmissionCheck struct{ View sessionhealth.View }
+
+func (c AdmissionCheck) Rejection() error {
+	if !time.Now().Before(c.View.ValidUntil) {
+		return ErrProviderSessionUnknown
+	}
+	switch c.View.Status {
+	case sessionhealth.SessionAuthenticated:
+		return nil
+	case sessionhealth.SessionLoginRequired:
+		return ErrProviderLoginRequired
+	default:
+		return ErrProviderSessionUnknown
+	}
+}
+
+type AdmissionOption func(*AdmissionService)
+
+func WithAdmissionHealth(health sessionhealth.Reader) AdmissionOption {
+	return func(s *AdmissionService) { s.health = health }
+}
+
 type AcquisitionSubmitter interface {
 	Submit(context.Context, acquisition.SubmitRequest) (acquisition.SubmitResult, error)
 }
@@ -88,13 +124,22 @@ type AdmissionService struct {
 	store     AdmissionStore
 	submitter AcquisitionSubmitter
 	allowed   map[storage.BindingID]bool
+	health    sessionhealth.Reader
 }
 
-func NewAdmissionService(store AdmissionStore, submitter AcquisitionSubmitter, allowed []storage.BindingID) (*AdmissionService, error) {
+func NewAdmissionService(store AdmissionStore, submitter AcquisitionSubmitter, allowed []storage.BindingID, options ...AdmissionOption) (*AdmissionService, error) {
 	if missing(store) || missing(submitter) || len(allowed) == 0 {
 		return nil, ErrUnavailable
 	}
 	s := &AdmissionService{store: store, submitter: submitter, allowed: make(map[storage.BindingID]bool)}
+	for _, option := range options {
+		option(s)
+	}
+	if s.health != nil {
+		if _, ok := store.(CheckedAdmissionStore); !ok {
+			return nil, ErrUnavailable
+		}
+	}
 	for _, id := range allowed {
 		if !ValidID(string(id)) || s.allowed[id] {
 			return nil, ErrInvalid
@@ -171,7 +216,14 @@ func (s *AdmissionService) Admit(ctx context.Context, p auth.Principal, r Admiss
 	if err != nil {
 		return AdmissionDTO{}, ErrUnavailable
 	}
-	reserved, err := s.store.Reserve(ctx, p, r, Reservation{ManifestID: acquisition.ManifestID(mid), JobID: jobs.JobID(jid), MaxAttempts: AdmissionMaxAttempts})
+	candidate := Reservation{ManifestID: acquisition.ManifestID(mid), JobID: jobs.JobID(jid), MaxAttempts: AdmissionMaxAttempts}
+	var reserved Reservation
+	if s.health != nil {
+		view := s.health.Read(ctx)
+		reserved, err = s.store.(CheckedAdmissionStore).ReserveChecked(ctx, p, r, candidate, AdmissionCheck{View: view})
+	} else {
+		reserved, err = s.store.Reserve(ctx, p, r, candidate)
+	}
 	if err != nil {
 		return AdmissionDTO{}, admissionError(err)
 	}
@@ -236,7 +288,7 @@ func (s *AdmissionService) Usage(ctx context.Context, p auth.Principal) (UsageDT
 	return result, nil
 }
 func admissionError(err error) error {
-	for _, known := range []error{context.Canceled, context.DeadlineExceeded, auth.ErrUnauthorized, ErrInvalid, ErrNotFound, ErrOperationConflict, ErrOperationLimit, ErrConcurrencyLimit, ErrAdmissionUncertain} {
+	for _, known := range []error{context.Canceled, context.DeadlineExceeded, auth.ErrUnauthorized, ErrInvalid, ErrNotFound, ErrOperationConflict, ErrOperationLimit, ErrConcurrencyLimit, ErrAdmissionUncertain, ErrProviderLoginRequired, ErrProviderSessionUnknown} {
 		if errors.Is(err, known) {
 			return known
 		}

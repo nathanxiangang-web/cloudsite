@@ -237,10 +237,11 @@ const adminObservation=AdminObserve.create({present,friendlyInfo,rowLabels,el,re
 const adminOperations=AdminOperations.create({present,friendlyInfo,rowLabels,el,read:adminRead,command:async(path,method,body,gen)=>{await verifyAdmin(gen);current(gen);return api(path,method,body,gen);},generation:()=>state.session,principal:()=>state.principal,dateText,onError:error=>{if(error.code==='AUTH_REQUIRED'||error.code==='ADMIN_REQUIRED')signedOut();showError('workspace-error',error);},onUsersChanged:()=>adminLists.users.load(),newID:()=>window.crypto.randomUUID()});
 const adminShares=AdminShares.create({present,friendlyInfo,rowLabels,el,read:adminRead,command:async(path,method,body,gen)=>{await verifyAdmin(gen);current(gen);return api(path,method,body,gen);},generation:()=>state.session,principal:()=>state.principal,isActive:()=>state.tab==='shares',dateText,cell,badge,onStart:()=>clearError('workspace-error'),onError:error=>{if(error.code==='AUTH_REQUIRED'||error.code==='ADMIN_REQUIRED')signedOut();showError('workspace-error',error);},newID:()=>window.crypto.randomUUID()});
 Object.assign(messages,{NOT_CONNECTED:'Q9 尚未连接，未执行在线检测。',ROOT_NOT_READY:'Root 状态尚未就绪；没有成功观测。',ROOT_NOT_FOUND:'未取得该 Root 的状态，不能推断文件或网盘已删除。',OBSERVATION_UNKNOWN:'本次观测失败，实际运行状态未知。',OBSERVATION_BUSY:'观测频率或并发已达上限，请稍后手动查询。'});
+function taskFailureLabel(item){if(item.manifest_state!=='FAILED')return '';return ({PROVIDER_LOGIN_REQUIRED_BEFORE_START:'115 登录失效，未启动下载',PROVIDER_SESSION_UNKNOWN_BEFORE_START:'账号状态无法确认，未启动下载'})[item.failure_reason]||'';}
 function renderTasks(page){
  el('task-rows').replaceChildren();
  for(const item of page.items){const row=document.createElement('tr'),button=document.createElement('button');button.type='button';button.className='file-button';button.textContent=item.manifest_id.slice(0,8)+'…';button.title=item.manifest_id;button.addEventListener('click',()=>taskDetail(item.manifest_id));cell(row).append(button);
- cell(row).append(badge(manifestLabels[item.manifest_state]||item.manifest_state,item.manifest_state==='RECOVERY_REQUIRED'?'warning':'neutral'));cell(row,item.job_state||'未创建 Job');cell(row,item.claim_attempts+' / '+item.failure_count);cell(row,dateText(item.updated_at));el('task-rows').append(row);}
+ cell(row).append(badge(taskFailureLabel(item)||manifestLabels[item.manifest_state]||item.manifest_state,item.manifest_state==='RECOVERY_REQUIRED'?'warning':'neutral'));cell(row,item.job_state||'未创建 Job');cell(row,item.claim_attempts+' / '+item.failure_count);cell(row,dateText(item.updated_at));el('task-rows').append(row);}
  state.tasksLoaded=true;state.taskNext=page.next_cursor||'';el('more-tasks').disabled=!state.taskNext;el('tasks-empty').hidden=page.items.length!==0;el('tasks-footer').textContent='本页 '+page.items.length+' 项 · 仅当前登录者，不是全站任务';
 }
 async function loadTasks(){
@@ -255,7 +256,7 @@ function closeTaskDetail(returnFocus=false){state.taskDetailRequest++;el('task-d
 async function taskDetail(id){
  const generation=state.session;closeTaskDetail();const request=state.taskDetailRequest;state.taskFocus=document.activeElement;
  try{const item=await adminRead('/api/v1/tasks/'+encodeURIComponent(id),generation);if(generation!==state.session||request!==state.taskDetailRequest)return;
- facts('task-facts',[['Manifest ID',item.manifest_id],['Job ID',item.job_id],['Manifest 状态',manifestLabels[item.manifest_state]||item.manifest_state],['Job 状态',item.job_state],['结果 Copy ID',item.result_copy_id],['领取次数',item.claim_attempts],['失败次数',item.failure_count],['创建时间',dateText(item.created_at)],['更新时间',dateText(item.updated_at)]]);
+ facts('task-facts',[['Manifest ID',item.manifest_id],['Job ID',item.job_id],['Manifest 状态',taskFailureLabel(item)||manifestLabels[item.manifest_state]||item.manifest_state],['Job 状态',item.job_state],['结果 Copy ID',item.result_copy_id],['调度认领次数（含轮询）',item.claim_attempts],['失败次数',item.failure_count],['创建时间',dateText(item.created_at)],['更新时间',dateText(item.updated_at)]]);
  el('task-detail').hidden=false;el('task-detail').focus();el('task-detail').scrollIntoView({block:'nearest'});
  }catch(error){if(generation===state.session&&request===state.taskDetailRequest)showError('workspace-error',error);}
 }

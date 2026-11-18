@@ -164,6 +164,15 @@ jobs:
         env:
           PANTA_TEST_DATABASE_URL: postgres://panta:panta_e2e@127.0.0.1:5432/panta_library_test?sslmode=disable
         run: go test -race ./internal/store/postgres -run TestPostgresLibrary -count=1 -v
+      - name: Create isolated session admission database
+        run: >-
+          docker exec "${{ job.services.postgres.id }}"
+          psql -U panta -d indexcore_e2e -v ON_ERROR_STOP=1
+          -c "CREATE DATABASE panta_session_test"
+      - name: PostgreSQL 18 session admission rollback and replay race
+        env:
+          PANTA_TEST_DATABASE_URL: postgres://panta:panta_e2e@127.0.0.1:5432/panta_session_test?sslmode=disable
+        run: go test -race ./internal/store/postgres -run TestPostgresProductSession -count=1 -v
       - name: Run controlled observation E2E
         run: go test ./test/e2e/observation -run TestControlledObservation -count=1 -v
       - name: Create separate Gate 3.8 observation-hint database

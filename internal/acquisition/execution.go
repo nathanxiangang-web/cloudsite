@@ -8,6 +8,7 @@ import (
 
 	"github.com/nathanxiangang-web/panta/internal/jobs"
 	"github.com/nathanxiangang-web/panta/internal/providers/contracts"
+	"github.com/nathanxiangang-web/panta/internal/sessionhealth"
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
 
@@ -25,6 +26,11 @@ var (
 	// Callers must treat this as recovery-required state: a later execution may
 	// not start another provider task on the strength of this outcome.
 	ErrExecutionSideEffectUncertain = errors.New("acquisition external side effect is uncertain")
+	// These closed causes are emitted only by the winning start reservation's
+	// read-only precheck, before StartDownload is called. Never infer them from
+	// a POST error, timeout, missing reference or an existing reservation.
+	ErrProviderLoginBeforeStart   = errors.New("PROVIDER_LOGIN_REQUIRED_BEFORE_START")
+	ErrProviderUnknownBeforeStart = errors.New("PROVIDER_SESSION_UNKNOWN_BEFORE_START")
 )
 
 // StepRequest proves that this execution runs on behalf of one fenced RUNNING
@@ -342,6 +348,18 @@ func (service *ExecutionStepService) claimAndStartProviderTask(
 		return service.pollProviderTask(ctx, claim.Task, downloader)
 	}
 
+	if checker, ok := downloader.(sessionhealth.Checker); ok {
+		switch checker.CheckSession(ctx) {
+		case sessionhealth.SessionAuthenticated:
+		case sessionhealth.SessionLoginRequired:
+			return StepResult{}, ErrProviderLoginBeforeStart
+		default:
+			return StepResult{}, ErrProviderUnknownBeforeStart
+		}
+	}
+	if err := ctx.Err(); err != nil {
+		return StepResult{}, err
+	}
 	reference, startErr := downloader.StartDownload(ctx, input.Download)
 	if startErr != nil {
 		// START_RESERVED is durable, but the provider may have created a task

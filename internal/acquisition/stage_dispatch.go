@@ -181,6 +181,12 @@ func (dispatcher *StageDispatcher) Dispatch(ctx context.Context, request StageDi
 		}
 		if outcome == ProviderOutcomeFailed || outcome == ProviderOutcomeRecovery {
 			message := "provider stage failed"
+			if errors.Is(stepErr, ErrProviderLoginBeforeStart) {
+				message = ErrProviderLoginBeforeStart.Error()
+			}
+			if errors.Is(stepErr, ErrProviderUnknownBeforeStart) {
+				message = ErrProviderUnknownBeforeStart.Error()
+			}
 			if outcome == ProviderOutcomeRecovery {
 				message = "provider side effect uncertain; explicit recovery required"
 			}
@@ -286,6 +292,9 @@ func (dispatcher *StageDispatcher) Dispatch(ctx context.Context, request StageDi
 
 func providerOutcomeForStep(step StepResult, stepErr error) (ProviderOutcome, error) {
 	if stepErr != nil {
+		if errors.Is(stepErr, ErrProviderLoginBeforeStart) || errors.Is(stepErr, ErrProviderUnknownBeforeStart) {
+			return ProviderOutcomeFailed, nil
+		}
 		var poll *contracts.PollError
 		if errors.As(stepErr, &poll) {
 			if poll.CanRetry() {
