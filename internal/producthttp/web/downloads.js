@@ -1,21 +1,40 @@
 'use strict';
 const element=id=>document.getElementById(id);
-const state={owner:null,intent:new CloudDownloadModel.Intent(),controller:new AbortController(),preview:null,generation:0,cursor:'',refreshing:false,stopped:false,paginated:false,enabled:false,sessionCheck:false,sessionView:null,sessionLoading:false,canSubmit:false,canPrepare:false,readyFiles:null,privateFiles:null,privateBusy:false,privateContent:false,privateOnly:false};
+const state={owner:null,intent:new CloudDownloadModel.Intent(),controller:new AbortController(),preview:null,generation:0,cursor:'',refreshing:false,stopped:false,paginated:false,enabled:false,sessionCheck:false,sessionView:null,sessionLoading:false,canSubmit:false,canPrepare:false,readyFiles:null,privateFiles:null,privateTrail:[],privateBusy:false,privateContent:false,privateOnly:false};
 const errorText=code=>({PRIVATE_SPACE_REQUIRED:'请先开通私有空间，再提交下载。',PROVIDER_LOGIN_REQUIRED:'115 账号登录已失效，本次新请求未创建下载任务。请管理员恢复网盘登录后继续。',PROVIDER_SESSION_UNKNOWN:'暂时无法确认 115 登录状态，本次新请求未创建下载任务。请稍后检查账号。',AUTH_REQUIRED:'请先登录文件库。',INVALID_REQUEST:'链接或文件名不符合要求，请检查后重试。',ORIGIN_REJECTED:'当前网站入口不可用。',OPERATION_CONFLICT:'同一次提交的内容不一致，请先核实上次结果，不要创建重复任务。',OPERATION_LIMIT:'已达到当前账号的下载次数上限。',CONCURRENCY_LIMIT:'同时进行的任务已满，请等待现有任务完成。',BINDING_NOT_AVAILABLE:'当前下载目标暂不可用。',ADMISSION_UNCERTAIN:'提交结果尚未确认，请核实或使用原内容继续同一次提交。',OPERATION_NOT_FOUND:'暂未查到提交记录。这不能证明之前未提交，请继续核实，或用原内容重试同一次提交。',FROZEN_INTENT:'这次提交的内容已固定，请保持原链接与文件名。',STORAGE_UNAVAILABLE:'浏览器无法保存这次操作标识，请允许本站会话存储后再提交。'})[code]||'连接暂时不可用。若已经点过提交，请先核实上次结果，不要重复新建。';
 function message(text){element('download-message').textContent=text;}
 function error(code){element('download-error').textContent=errorText(code);element('download-error').hidden=false;}
 function clearDownloadError(){element('download-error').hidden=true;element('download-error').textContent='';}
+function drawPrivateFolders(folders){
+ const list=element('private-folder-list');
+ const entries=folders.map(folder=>{
+  const entry=document.createElement('li'),button=document.createElement('button');
+  button.type='button';button.className='secondary';button.textContent=folder.name;
+  button.addEventListener('click',()=>openPrivateFolder([...state.privateTrail,folder]));
+  entry.append(button);return entry;
+ });
+ list.replaceChildren(...entries);
+ element('private-folder-location').textContent=state.privateTrail.map(folder=>folder.name).join(' / ')||'私有下载空间';
+ element('private-folder-up').hidden=state.privateTrail.length===0;
+}
+function openPrivateFolder(trail){
+ if(!state.privateFiles||state.stopped)return;
+ state.privateFiles.clear();state.privateBusy=false;state.privateTrail=trail;
+ state.privateFiles=new FileSurface.PrivateFiles(trail.at(-1)?.path||'');
+ clearFiles();drawPrivateFolders([]);element('private-files-status').textContent='正在加载当前文件夹…';
+ return refreshPrivateFiles();
+}
 function showPrivateFiles(result){
  if(!result||state.stopped||!state.privateFiles)return;
  library.remote=false;library.cloudScope=result.scope;library.bindings=result.scope?[{binding_id:result.scope.binding_id}]:[];library.wholeRoot=true;
  library.content=state.privateContent;library.sharing=false;library.userID=state.owner;library.onUnauthorized=()=>stop();library.failed=false;
  library.catalog={files:result.items,complete:!result.cursor,limited:!!result.cursor,unknown:0};
  if(library.selected&&!result.items.some(item=>item.binding_id===library.selected.binding_id&&item.resource_id===library.selected.resource_id&&item.path===library.selected.path))closeDetail();
- element('my-shares').hidden=true;drawFiles(true);element('load-more').hidden=true;
+ element('my-shares').hidden=true;drawFiles(true);drawPrivateFolders(result.folders);element('load-more').hidden=true;
  element('private-files-more').hidden=!result.cursor;
- element('collection-status').textContent='私有空间已加载 '+result.items.length+' 个文件';
- element('load-status').textContent=result.cursor?'可继续加载更多文件；搜索与分类仅针对已加载文件。':'当前私有空间的文件已加载完成。';
- element('private-files-status').textContent=result.items.length?'仅显示当前私有空间中的已收录文件。':'当前私有空间还没有已收录文件。';
+ element('collection-status').textContent='当前目录已加载 '+result.items.length+' 个文件';
+ element('load-status').textContent=result.cursor?'可继续加载。搜索与分类仅针对已加载文件。':'';
+ element('private-files-status').textContent=result.folders.length?'已收录 '+result.folders.length+' 个文件夹，打开后可查看文件。':result.items.length?'':'当前文件夹没有已收录的内容。';
 }
 async function refreshPrivateFiles(more=false){
  const model=state.privateFiles;if(!model||state.privateBusy||state.stopped)return;
@@ -28,18 +47,18 @@ async function refreshPrivateFiles(more=false){
 async function mountPrivateFiles(){
  if(state.stopped||typeof FileSurface==='undefined'||typeof CloudFileSurface==='undefined')return;
  if(state.privateFiles)state.privateFiles.clear();
- CloudFileSurface.clear();state.privateFiles=new FileSurface.PrivateFiles();
- element('download-files-scope').textContent='仅显示当前私有空间目录中的直接文件，不包含子文件夹内容；不会混入主文件库。';
- element('download-files').hidden=false;element('refresh').hidden=true;element('private-files-refresh').hidden=false;element('private-files-more').hidden=true;
+ CloudFileSurface.clear();state.privateFiles=new FileSurface.PrivateFiles();state.privateTrail=[];state.privateBusy=false;
+ element('download-files-scope').textContent='你的云下载文件由 IndexCore 收录后显示。点击文件夹查看其中的文件。';
+ element('download-files').hidden=false;element('refresh').hidden=true;element('private-folders').hidden=false;element('private-files-refresh').hidden=false;element('private-files-more').hidden=true;
  await refreshPrivateFiles();
 }
 function mountLegacyFiles(principal,info,onUnauthorized){
- if(state.privateFiles)state.privateFiles.clear();state.privateFiles=null;state.privateBusy=false;
+ if(state.privateFiles)state.privateFiles.clear();state.privateFiles=null;state.privateTrail=[];state.privateBusy=false;
  element('download-files-scope').textContent='云下载目录中已收录的文件在这里展示，包含子文件夹中的内容；不会混入主文件库。';
- element('refresh').hidden=false;element('private-files-refresh').hidden=true;element('private-files-more').hidden=true;element('private-files-status').textContent='';
+ element('refresh').hidden=false;element('private-folders').hidden=true;drawPrivateFolders([]);element('private-files-refresh').hidden=true;element('private-files-more').hidden=true;element('private-files-status').textContent='';
  if(typeof CloudFileSurface!=='undefined')return CloudFileSurface.mount(principal,info,onUnauthorized);
 }
-function stop(clearPending=false){if(typeof CloudSpace!=='undefined')CloudSpace.reset();if(state.privateFiles)state.privateFiles.clear();state.privateFiles=null;state.privateBusy=false;state.privateContent=false;if(typeof CloudFileSurface!=='undefined')CloudFileSurface.clear();element('private-files-refresh').hidden=true;element('private-files-more').hidden=true;element('private-files-status').textContent='';state.stopped=true;state.generation++;state.controller.abort();if(clearPending&&state.owner)CloudDownloadModel.clearPending(state.owner);state.intent.clear();state.preview=null;element('download-source').value='';element('download-name').value='';element('download-execution').textContent='';element('download-task-list').replaceChildren();element('download-workspace').hidden=true;element('download-gate').hidden=false;element('download-gate').textContent='请登录后再使用云下载。';element('download-login').hidden=false;element('download-logout').hidden=true;}
+function stop(clearPending=false){if(typeof CloudSpace!=='undefined')CloudSpace.reset();if(state.privateFiles)state.privateFiles.clear();state.privateFiles=null;state.privateTrail=[];state.privateBusy=false;state.privateContent=false;if(typeof CloudFileSurface!=='undefined')CloudFileSurface.clear();element('private-folders').hidden=true;drawPrivateFolders([]);element('private-files-refresh').hidden=true;element('private-files-more').hidden=true;element('private-files-status').textContent='';state.stopped=true;state.generation++;state.controller.abort();if(clearPending&&state.owner)CloudDownloadModel.clearPending(state.owner);state.intent.clear();state.preview=null;element('download-source').value='';element('download-name').value='';element('download-execution').textContent='';element('download-task-list').replaceChildren();element('download-workspace').hidden=true;element('download-gate').hidden=false;element('download-gate').textContent='请登录后再使用云下载。';element('download-login').hidden=false;element('download-logout').hidden=true;}
 async function api(path,method='GET',body){const response=await fetch(path,{method,credentials:'same-origin',cache:'no-store',signal:state.controller.signal,headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});if(response.status===204)return null;const data=await response.json();if(!response.ok){if(response.status===401)stop();const failure=new Error('REQUEST_FAILED');failure.code=data.code;throw failure;}return data;}
 function controls(){
  const authenticated=!state.sessionCheck||state.sessionView?.status==='AUTHENTICATED'&&Date.parse(state.sessionView.valid_until)>Date.now();
@@ -108,6 +127,7 @@ async function refresh(more=false){
 }
 element('download-refresh').addEventListener('click',()=>{state.paginated=false;refresh();});element('download-more').addEventListener('click',()=>{state.paginated=true;refresh(true);});
 element('private-files-refresh').addEventListener('click',()=>refreshPrivateFiles());element('private-files-more').addEventListener('click',()=>refreshPrivateFiles(true));
+element('private-folder-up').addEventListener('click',()=>openPrivateFolder(state.privateTrail.slice(0,-1)));
 element('download-logout').addEventListener('click',async()=>{try{await api('/api/v1/auth/logout','POST');stop(true);}catch(failure){error(failure.code);}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!state.paginated)refresh();});
 window.addEventListener('pagehide',()=>stop());

@@ -84,3 +84,20 @@ test('private file cursors fail closed and clear fences late pages',async()=>{
  let resolve;const pending=files.read(()=>new Promise(r=>{resolve=r;}));files.clear();resolve({items:[item('late')],next_cursor:''});
  assert.equal(await pending,null);assert.deepEqual(files.items,[]);assert.equal(files.cursor,'');
 });
+
+test('private downloads retain folders and read their indexed children',async()=>{
+ const surface=require('../internal/producthttp/web/file-surface.js');
+ const root='/云下载/_users/test-user';
+ const folder={binding_id:'binding',resource_id:'dir',path:root+'/结果 #1',name:'结果 #1',directory:true,size_bytes:null,presence:'PRESENT'};
+ const file={binding_id:'binding',resource_id:'file',path:folder.path+'/result.bin',name:'result.bin',directory:false,size_bytes:42,presence:'PRESENT'};
+ const rootFiles=new surface.PrivateFiles();
+ const page=await rootFiles.read(async()=>({items:[folder],next_cursor:''}));
+ assert.deepEqual(page.items,[]);assert.equal(page.folders[0].path,folder.path);
+ const children=new surface.PrivateFiles(page.folders[0].path);
+ const result=await children.read(async url=>{
+  assert.equal(url,'/api/v2/cloud-downloads/files?limit=50&folder='+encodeURIComponent(folder.path));
+  return {items:[file],next_cursor:''};
+ });
+ assert.equal(result.items[0].path,file.path);assert.equal(result.scope.path,folder.path);
+ await assert.rejects(children.read(async()=>({items:[{...file,path:root+'/other/result.bin'}],next_cursor:''})),/INVALID_PRIVATE_FILES/);
+});
