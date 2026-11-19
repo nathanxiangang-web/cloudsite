@@ -87,3 +87,8 @@ Binary SHA256 `38d8f0c5c75053b263c98c8cd0e0997f9c7be074b2eaa8584583d6e5f2eb951c`
 Query PID/generations0/1/1, original staging table hashes and unrelated services
 unchanged. No native115 share/download/login, scans/Hint, role changes or file
 deletion. Existing PDF/Office/video/content regressions pass. No full MVP claim.
+
+
+## 2026-11-19 superseding owner instruction — private UserSpace shares (D-069)
+
+The original sharing implementation was limited to non-private files. D-069 extends the product-share model to owner-owned private single files. Do not create native 115 shares. Bind each share to owner UUID, UserSpace ID and exact Canonical resource identity; every redemption and delivery rechecks the current share/grant, owner, UserSpace, file PRESENT state and immutable target. Guest access remains single-file only. All shared downloads, public or private, must resolve to HTTP 302 with zero CloudSite file body. No byte-proxy fallback is allowed. Revoke blocks future redirects but cannot revoke an already-issued upstream URL before its expiry; private shares require verified short-lived URLs.

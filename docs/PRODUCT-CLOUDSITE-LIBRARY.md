@@ -82,3 +82,8 @@ generations, original staging whole-table hashes and unrelated containers stayed
 unchanged during cutover. Preserve old14 config/receipt/launcher/binary for
 rollback; no DB restore needed. No source-file mutation/native115 call/login,
 new provider task, additional scan or Hint. Old Issue83 WIP untouched.
+
+
+## 2026-11-19 superseding owner instruction — seven public resource categories (D-069 / Issue #199)
+
+The historical consumer classification above is superseded for the public-library UI. The public landing page must be a category entry point, not a mixed all-files list. Use seven mutually exclusive categories: video, software, document, image, audio, archive and other. Existing extension sets remain the initial classification source; image/audio/archive move out of Other. Counts, search and pagination must be server-side over the complete published dataset. “All resources” remains an explicit secondary view. This is a presentation/read-model change, not an authorization boundary; private UserSpace files never enter the public library.
