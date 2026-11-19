@@ -1889,3 +1889,10 @@ Private UserSpace single-file sharing is permitted. It requires stable owner UUI
 Public resource library defaults to separate video/software/document/image/audio/archive/other category surfaces, with an explicit secondary all-resources view. Cloud download UI is one-click and reuses the existing server-side MagnetBTIHNameV1 PrepareSource and durable original/execution/policy/idempotency contract. Preserve private single-file deletion gates and no per-user storage-byte quota.
 
 This decision supersedes conflicting older optional-proxy and private-share-disabled wording in D-052, D-065 and historical product docs. It may only be superseded by a new explicit product-owner instruction and a new append-only decision; ordinary implementation PRs may strengthen, never weaken, this contract. This decision and the associated documentation do not claim code implementation, release, deployment or production acceptance.
+
+
+### D-069 implementation clarification — redirected media Range and share-token transport
+
+The CloudSite content endpoint authorizes the initial request and returns a 302. After the browser follows that redirect, subsequent video/audio Range, seek and resume requests go directly to the upstream CDN and are authorized by the short-lived upstream bearer URL; they do not pass through CloudSite for per-Range reauthorization. Revoke/owner disable/delete therefore blocks new CloudSite grants and redirects but cannot terminate an already-issued CDN URL or in-flight CDN transfer before upstream expiry/revocation. Tests and UI must reflect this boundary.
+
+Preserve the existing share URL fragment pattern (for example `/s/#<token>`) so the secret token is not sent in the HTTP request path/access log. The share page reads the fragment client-side and submits the token to the redeem endpoint in a request body; request-body logging must redact it. Do not move the token into a path segment or query string.
