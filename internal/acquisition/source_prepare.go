@@ -4,6 +4,7 @@ import (
 	"encoding/base32"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"net/url"
 	"sort"
 	"strings"
@@ -26,6 +27,8 @@ var (
 	ErrSourcePolicy      = errors.New("invalid acquisition source policy")
 	ErrMagnetAmbiguous   = errors.New("ambiguous magnet source")
 	ErrMagnetUnsupported = errors.New("unsupported magnet semantics")
+	ErrMagnetBTIHMissing = fmt.Errorf("missing valid BTIH: %w", ErrInvalidSource)
+	ErrMagnetMalformed   = fmt.Errorf("malformed magnet parameters: %w", ErrInvalidSource)
 )
 
 // PreparedSource is private admission input, not an HTTP/logging DTO. A future
@@ -65,7 +68,7 @@ func PrepareSource(value string, policy SourcePolicy) (PreparedSource, error) {
 	}
 	query, err := magnetQuery(value)
 	if err != nil {
-		return PreparedSource{}, ErrInvalidSource
+		return PreparedSource{}, err
 	}
 	hash, name := "", ""
 	nameSeen := false
@@ -93,9 +96,6 @@ func PrepareSource(value string, policy SourcePolicy) (PreparedSource, error) {
 			}
 		case "dn":
 			for _, next := range values {
-				if !utf8.ValidString(next) || strings.ContainsFunc(next, unicode.IsControl) {
-					return PreparedSource{}, ErrInvalidSource
-				}
 				if nameSeen {
 					if name != next {
 						return PreparedSource{}, ErrMagnetAmbiguous
@@ -114,7 +114,7 @@ func PrepareSource(value string, policy SourcePolicy) (PreparedSource, error) {
 		}
 	}
 	if hash == "" {
-		return PreparedSource{}, ErrInvalidSource
+		return PreparedSource{}, ErrMagnetBTIHMissing
 	}
 	execution := "magnet:?xt=urn:btih:" + hash
 	if name != "" {
@@ -131,14 +131,28 @@ func PrepareSource(value string, policy SourcePolicy) (PreparedSource, error) {
 
 func magnetQuery(value string) (url.Values, error) {
 	parsed, err := url.Parse(value)
-	if err != nil || parsed.Opaque != "" || parsed.Host != "" || parsed.Path != "" || parsed.Fragment != "" || strings.Contains(value, "#") || parsed.RawQuery == "" || strings.Count(parsed.RawQuery, "&") >= 512 {
-		return nil, ErrInvalidSource
+	if err != nil || parsed.Opaque != "" || parsed.Host != "" || parsed.Path != "" || parsed.Fragment != "" || strings.Contains(value, "#") || strings.Count(parsed.RawQuery, "&") >= 512 {
+		return nil, ErrMagnetMalformed
 	}
 	query, err := url.ParseQuery(parsed.RawQuery)
 	if err != nil {
-		return nil, ErrInvalidSource
+		return nil, ErrMagnetMalformed
+	}
+	for key, values := range query {
+		if !validMagnetParameter(key) {
+			return nil, ErrMagnetMalformed
+		}
+		for _, value := range values {
+			if !validMagnetParameter(value) {
+				return nil, ErrMagnetMalformed
+			}
+		}
 	}
 	return query, nil
+}
+
+func validMagnetParameter(value string) bool {
+	return utf8.ValidString(value) && !strings.ContainsFunc(value, unicode.IsControl)
 }
 
 // trimMagnetAMPTail handles copied HTML separators without decoding parameter
@@ -199,10 +213,10 @@ func magnetBTIH(topic string) (string, error) {
 	case 32:
 		data, err = base32.StdEncoding.WithPadding(base32.NoPadding).DecodeString(strings.ToUpper(hash))
 	default:
-		return "", ErrInvalidSource
+		return "", ErrMagnetBTIHMissing
 	}
 	if err != nil || len(data) != 20 {
-		return "", ErrInvalidSource
+		return "", ErrMagnetBTIHMissing
 	}
 	return hex.EncodeToString(data), nil
 }

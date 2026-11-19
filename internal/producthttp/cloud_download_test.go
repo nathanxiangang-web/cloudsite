@@ -77,6 +77,33 @@ func TestCloudDownloadExplicitCapabilityAndPrivateFixedTarget(t *testing.T) {
 	}
 }
 
+func TestCloudDownloadSourceErrorsAreActionableAndRedacted(t *testing.T) {
+	backend := &admissionFake{}
+	origin := "http://127.0.0.1:8180"
+	h, err := NewWorkspaceHandler(&fakeAccess{p: goodPrincipal()}, origin, &readAccessFake{}, []DisplayBinding{workspaceBinding}, 22, WithCloudDownload(cloudTarget(), backend, &operationFake{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		err  error
+		code string
+	}{
+		{acquisition.ErrInvalidSource, "SOURCE_INVALID"},
+		{acquisition.ErrMagnetBTIHMissing, "MAGNET_BTIH_MISSING"},
+		{acquisition.ErrMagnetAmbiguous, "MAGNET_AMBIGUOUS"},
+		{acquisition.ErrMagnetUnsupported, "MAGNET_UNSUPPORTED"},
+		{acquisition.ErrMagnetMalformed, "MAGNET_MALFORMED"},
+	} {
+		t.Run(tc.code, func(t *testing.T) {
+			backend.err = tc.err
+			response := request(h, "POST", "/api/v1/cloud-downloads", `{"source":"https://example.invalid/?PRIVATE=secret","operation_key":"once"}`, testToken, origin)
+			if response.Code != 400 || !strings.Contains(response.Body.String(), `"code":"`+tc.code+`"`) || strings.Contains(response.Body.String(), "PRIVATE") {
+				t.Fatalf("source rejection: HTTP %d, body %q", response.Code, response.Body.String())
+			}
+		})
+	}
+}
+
 func TestCloudDownloadPageServesReferencedScripts(t *testing.T) {
 	handler, err := NewWorkspaceHandler(&fakeAccess{}, "http://127.0.0.1:8180", &readAccessFake{}, []DisplayBinding{workspaceBinding}, 22)
 	if err != nil {

@@ -143,6 +143,16 @@ func admissionFailure(w http.ResponseWriter, err error) {
 		status, code = 503, "PROVIDER_SESSION_UNKNOWN"
 	case errors.Is(err, auth.ErrUnauthorized):
 		status, code = 401, "AUTH_REQUIRED"
+	case errors.Is(err, acquisition.ErrMagnetAmbiguous):
+		status, code = 400, "MAGNET_AMBIGUOUS"
+	case errors.Is(err, acquisition.ErrMagnetUnsupported):
+		status, code = 400, "MAGNET_UNSUPPORTED"
+	case errors.Is(err, acquisition.ErrMagnetBTIHMissing):
+		status, code = 400, "MAGNET_BTIH_MISSING"
+	case errors.Is(err, acquisition.ErrMagnetMalformed):
+		status, code = 400, "MAGNET_MALFORMED"
+	case errors.Is(err, acquisition.ErrInvalidSource):
+		status, code = 400, "SOURCE_INVALID"
 	case errors.Is(err, product.ErrInvalid):
 		status, code = 400, "INVALID_REQUEST"
 	case errors.Is(err, product.ErrNotFound):

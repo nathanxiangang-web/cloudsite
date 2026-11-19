@@ -89,7 +89,7 @@ func (r *ProductAdmissionRepository) reserve(ctx context.Context, p auth.Princip
 	// survive later policy changes, topology disablement, retries and claims.
 	prepared, err := acquisition.PrepareSource(input.Source, acquisition.MagnetBTIHNameV1)
 	if err != nil {
-		return product.Reservation{}, product.ErrInvalid
+		return product.Reservation{}, err
 	}
 	candidate.Source, candidate.Policy = prepared.Reference.Value, prepared.Policy
 	// Lock topology before delegating all acquisition-specific validation.

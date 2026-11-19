@@ -12,10 +12,9 @@
     <h2>新建下载</h2><p id="download-target" class="intro"></p>
     <section id="download-session" hidden aria-label="网盘账号状态"><p id="download-session-status" role="status" aria-live="polite">正在检查 115 账号登录状态…</p><button id="download-session-refresh" class="text-button" type="button">重新检查账号</button><p class="field-hint">这是服务器使用的网盘账号，与本网站登录独立。恢复凭据后请管理员重新加载服务；不会自动重提历史任务。</p></section>
     <label for="download-source">下载链接</label><textarea id="download-source" rows="5" maxlength="65536" required spellcheck="false" autocomplete="off" placeholder="magnet:?xt=urn:btih:… 或 HTTPS / HTTP / ed2k 链接"></textarea>
-    <p class="field-hint">磁力链接保留有效资源标识；遇到 <code>&amp;amp;</code> 时从此处截去后续内容，其余链接保留名称并移除多余 tracker。不支持的磁力格式会明确拒绝。</p>
+    <p class="field-hint">支持标准 BTIH 磁力链接。提交时会自动检查并清理多余的 tracker 等参数。</p>
     <label for="download-name">预期文件名（可选）</label><input id="download-name" maxlength="512" autocomplete="off" placeholder="仅在网盘未返回名称时作为后备，不改变磁力内容">
-    <div class="file-actions"><button id="download-prepare" class="secondary" type="button">检查链接</button><button id="download-submit" class="primary" type="submit" disabled>提交下载</button></div>
-    <section id="download-preview" hidden><h3>实际提交的链接</h3><pre id="download-execution"></pre><p id="download-policy" class="field-hint"></p></section>
+    <div class="file-actions"><button id="download-submit" class="primary" type="submit" disabled>开始下载</button></div>
     <p id="download-message" role="status" aria-live="polite"></p><p id="download-error" class="error" role="alert" hidden></p>
     <button id="download-reconcile" class="text-button" type="button" hidden>核实上次提交结果</button>
    </form><aside class="download-panel"><p class="eyebrow">YOUR DOWNLOADS</p><h2>下载与收录</h2><p class="intro">网盘下载完成后，还需要完成索引确认，文件才会出现在本页的已下载文件中。</p><p id="download-usage" role="status"></p><p class="field-hint">查询状态不重复扣次数。出现“需要处理”时，不要重复提交同一来源。</p><a class="download-link" href="#download-files">查看已下载文件 ↓</a></aside></div>

@@ -77,18 +77,19 @@ func consumerCloudHTTP(t *testing.T, f fixtureState, queryURL string, admission 
 	if code, _ := request("POST", "/api/v1/auth/login", map[string]string{"login": "admitted-runtime", "password": "synthetic-password"}); code != 200 || cookie == nil {
 		t.Fatal("login failed")
 	}
-	prepared, _ := acquisition.PrepareSource(intent.Source, acquisition.MagnetBTIHNameV1)
-	code, raw := request("POST", "/api/v1/cloud-downloads/prepare", map[string]string{"source": intent.Source})
-	var preview struct {
-		Execution string `json:"execution_source"`
+	code, raw := request("GET", "/downloads/", nil)
+	if code != 200 || !bytes.Contains(raw, []byte("开始下载")) || bytes.Contains(raw, []byte("download-prepare")) {
+		t.Fatal("one-click download page missing", code)
 	}
-	_ = json.Unmarshal(raw, &preview)
-	if code != 200 || preview.Execution != prepared.Reference.Value {
-		t.Fatal("preview contract", code)
+	code, raw = request("POST", "/api/v1/cloud-downloads", map[string]string{
+		"source": "magnet:?dn=private-test-source", "operation_key": "invalid-source",
+	})
+	if code != 400 || !bytes.Contains(raw, []byte(`"code":"MAGNET_BTIH_MISSING"`)) || bytes.Contains(raw, []byte("private-test-source")) {
+		t.Fatal("invalid source rejection or redaction failed", code)
 	}
 	var count int
 	if err := f.pool.QueryRow(f.ctx, `SELECT count(*) FROM product_operations`).Scan(&count); err != nil || count != 0 {
-		t.Fatal("preview reserved operation")
+		t.Fatal("invalid source reserved an operation")
 	}
 	// One explicit POST. Ignore its response IDs to model an acknowledgement lost
 	// after the committed operation; GET must recover those same durable IDs.

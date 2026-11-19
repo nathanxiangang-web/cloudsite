@@ -309,7 +309,9 @@ func (s *AdmissionService) Usage(ctx context.Context, p auth.Principal) (UsageDT
 	return result, nil
 }
 func admissionError(err error) error {
-	for _, known := range []error{context.Canceled, context.DeadlineExceeded, auth.ErrUnauthorized, ErrInvalid, ErrNotFound, ErrOperationConflict, ErrOperationLimit, ErrConcurrencyLimit, ErrAdmissionUncertain, ErrProviderLoginRequired, ErrProviderSessionUnknown} {
+	for _, known := range []error{context.Canceled, context.DeadlineExceeded, auth.ErrUnauthorized, ErrInvalid, ErrNotFound, ErrOperationConflict, ErrOperationLimit, ErrConcurrencyLimit, ErrAdmissionUncertain, ErrProviderLoginRequired, ErrProviderSessionUnknown,
+		acquisition.ErrMagnetAmbiguous, acquisition.ErrMagnetUnsupported, acquisition.ErrMagnetBTIHMissing,
+		acquisition.ErrMagnetMalformed, acquisition.ErrInvalidSource} {
 		if errors.Is(err, known) {
 			return known
 		}
