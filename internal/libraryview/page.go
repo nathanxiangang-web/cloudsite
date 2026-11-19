@@ -20,16 +20,17 @@ type Scope struct {
 	RootID    string
 }
 type Request struct {
-	Scopes       []Scope
-	Owner        string
-	CloudBinding storage.BindingID
-	CloudPath    string
-	Downloads    bool
-	Category     string
-	Search       string
-	Cursor       string
-	Limit        int
-	Page         int
+	Scopes             []Scope
+	Owner              string
+	CloudBinding       storage.BindingID
+	CloudPath          string
+	Downloads          bool
+	Category           string
+	DetailedCategories bool
+	Search             string
+	Cursor             string
+	Limit              int
+	Page               int
 }
 type Item struct {
 	BindingID storage.BindingID
@@ -40,6 +41,9 @@ type Counts struct {
 	Software int `json:"software"`
 	Video    int `json:"video"`
 	Document int `json:"document"`
+	Image    int `json:"image"`
+	Audio    int `json:"audio"`
+	Archive  int `json:"archive"`
 	Other    int `json:"other"`
 }
 type Page struct {
@@ -64,7 +68,7 @@ func (e *Engine) Page(q Request) (Page, error) {
 	if q.Limit < 1 || q.Limit > 50 || q.Page < 0 || q.Page >= MaxResources/50 || q.Cursor != "" && q.Page != 0 || len(q.Scopes) == 0 || len(q.Scopes) > 64 || len(q.Search) > 1024 || !utf8.ValidString(q.Search) || len(q.Cursor) > 2048 {
 		return Page{}, ErrInvalid
 	}
-	if q.Category != "all" && q.Category != "software" && q.Category != "video" && q.Category != "document" && q.Category != "other" {
+	if !ValidCategory(q.Category, q.DetailedCategories) {
 		return Page{}, ErrInvalid
 	}
 	snapshots := make([]*Snapshot, 0, len(q.Scopes))
@@ -120,6 +124,9 @@ func (e *Engine) Page(q Request) (Page, error) {
 				continue
 			}
 			kind := Category(r)
+			if !q.DetailedCategories && !ValidCategory(kind, false) {
+				kind = "other"
+			}
 			count.All++
 			switch kind {
 			case "software":
@@ -128,6 +135,12 @@ func (e *Engine) Page(q Request) (Page, error) {
 				count.Video++
 			case "document":
 				count.Document++
+			case "image":
+				count.Image++
+			case "audio":
+				count.Audio++
+			case "archive":
+				count.Archive++
 			default:
 				count.Other++
 			}
@@ -146,7 +159,11 @@ func (e *Engine) Page(q Request) (Page, error) {
 	fmt.Fprintf(&visibleRevision, "%s:%s:%t", q.CloudBinding, q.CloudPath, q.Downloads)
 	sum := sha256.Sum256([]byte(visibleRevision.String()))
 	result.Revision = hex.EncodeToString(sum[:])
-	filterSum := sha256.Sum256([]byte(q.Owner + "\x00" + q.Category + "\x00" + q.Search))
+	filterInput := q.Owner + "\x00" + q.Category + "\x00" + q.Search
+	if q.DetailedCategories {
+		filterInput = "taxonomy-v2\x00" + filterInput
+	}
+	filterSum := sha256.Sum256([]byte(filterInput))
 	filter := hex.EncodeToString(filterSum[:])
 	offset := 0
 	if ready && q.Page > 0 && len(items) > 0 {
@@ -180,7 +197,36 @@ func (e *Engine) Page(q Request) (Page, error) {
 	return result, nil
 }
 
-// Category mirrors the existing consumer ResourceDisplay classification.
+// ValidCategory retains the original groups for unversioned snapshot clients.
+func ValidCategory(category string, detailed bool) bool {
+	switch category {
+	case "all", "software", "video", "document", "other":
+		return true
+	case "image", "audio", "archive":
+		return detailed
+	default:
+		return false
+	}
+}
+
+var categoryByExtension = func() map[string]string {
+	lookup := make(map[string]string)
+	for category, extensions := range map[string]string{
+		"software": "exe msi msix msixbundle appx appxbundle apk aab dmg pkg deb rpm appimage",
+		"video":    "mp4 mkv webm mov avi m4v mpeg mpg wmv ts m2ts flv 3gp ogv",
+		"document": "pdf doc docx odt rtf md markdown txt ppt pptx odp xls xlsx ods csv epub",
+		"image":    "jpg jpeg png gif webp avif bmp tif tiff svg heic",
+		"audio":    "mp3 m4a aac flac wav ogg opus wma",
+		"archive":  "zip 7z rar tar gz bz2 xz zst iso",
+	} {
+		for _, extension := range strings.Fields(extensions) {
+			lookup[extension] = category
+		}
+	}
+	return lookup
+}()
+
+// Category classifies display metadata by the final extension, like ResourceDisplay.
 func Category(r indexcore.ResourceContext) string {
 	name := ""
 	if r.Name != nil {
@@ -189,25 +235,13 @@ func Category(r indexcore.ResourceContext) string {
 	if name == "" && r.CanonicalPath != nil {
 		name = *r.CanonicalPath
 	}
-	parts := strings.Split(name, "/")
-	name = parts[len(parts)-1]
-	dot := strings.LastIndex(name, ".")
-	if dot <= 0 || dot == len(name)-1 {
+	name = name[strings.LastIndexByte(name, '/')+1:]
+	dot := strings.LastIndexByte(name, '.')
+	if dot <= 0 || dot == len(name)-1 || strings.ContainsRune(name[dot+1:], 'İ') {
 		return "other"
 	}
-	// JavaScript lowercasing expands U+0130; it cannot form an ASCII extension.
-	if strings.ContainsRune(name[dot+1:], 'İ') {
-		return "other"
-	}
-	ext := strings.ToLower(name[dot+1:])
-	for kind, extensions := range map[string]string{
-		"software": " exe msi msix msixbundle appx appxbundle apk aab dmg pkg deb rpm appimage ",
-		"video":    " mp4 mkv webm mov avi m4v mpeg mpg wmv ts m2ts flv 3gp ogv ",
-		"document": " pdf doc docx odt rtf md markdown txt ppt pptx odp xls xlsx ods csv epub ",
-	} {
-		if strings.Contains(extensions, " "+ext+" ") {
-			return kind
-		}
+	if category, ok := categoryByExtension[strings.ToLower(name[dot+1:])]; ok {
+		return category
 	}
 	return "other"
 }

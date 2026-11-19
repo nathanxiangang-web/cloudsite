@@ -11,6 +11,7 @@ import (
 
 	"github.com/nathanxiangang-web/panta/internal/adminread"
 	"github.com/nathanxiangang-web/panta/internal/auth"
+	"github.com/nathanxiangang-web/panta/internal/libraryview"
 	"github.com/nathanxiangang-web/panta/internal/product"
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
@@ -216,6 +217,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		{"GET /assets/cloud-space.js", "web/cloud-space.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/downloads.css", "web/downloads.css", "text/css; charset=utf-8"},
 		{"GET /{$}", "web/library.html", "text/html; charset=utf-8"},
+		{"GET /library/{category}", "web/library.html", "text/html; charset=utf-8"},
 		{"GET /admin/{$}", "web/index.html", "text/html; charset=utf-8"},
 		{"GET /assets/library.css", "web/library.css", "text/css; charset=utf-8"},
 		{"GET /assets/library-page.js", "web/library-page.js", "text/javascript; charset=utf-8"},
@@ -250,6 +252,10 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 			content = []byte(strings.ReplaceAll(string(content), "<!--FILE_BROWSER-->", string(fragment)))
 		}
 		h.mux.HandleFunc(asset.route, func(w http.ResponseWriter, r *http.Request) {
+			if asset.route == "GET /library/{category}" && !libraryview.ValidCategory(r.PathValue("category"), true) {
+				http.NotFound(w, r)
+				return
+			}
 			w.Header().Set("Content-Type", asset.mime)
 			_, _ = w.Write(content)
 		})

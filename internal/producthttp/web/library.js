@@ -2,7 +2,11 @@
 const node=id=>document.getElementById(id);
 const library={session:0,request:0,detail:0,pdfRequest:0,content:false,player:null,catalog:null,bindings:[],category:'all',layout:'cards',busy:false,failed:false,opener:null,controller:new AbortController()};
 const cloudFilePage=document.body?.dataset.fileSurface==='downloads';
-const categories=['all','software','video','document','other'];
+const categories=cloudFilePage?['all','software','video','document','other']:ResourceDisplay.categoryNames;
+const libraryPath=!cloudFilePage&&typeof location!=='undefined'?location.pathname:'';
+const categoryLanding=libraryPath==='/';
+const categoryRoute=libraryPath.startsWith('/library/')?libraryPath.slice('/library/'.length):'';
+const categoryTitle={all:'全部资源',video:'视频',software:'软件',document:'文档',image:'图片',audio:'音频',archive:'压缩包',other:'其他'};
 function failureText(error){return ({ACCOUNT_EXISTS:'此账号已注册，请登录或更换账号。',AUTH_REQUIRED:'登录已失效，请重新登录。',AUTH_BUSY:'登录或注册请求过多，请一分钟后再试。',READ_UNAVAILABLE:'暂时无法获取更多文件，已展示的结果可能不完整。',INVALID_REQUEST:'请检查输入后重试。',ORIGIN_REJECTED:'当前入口不可用。'})[error.code]||'连接暂时不可用，请刷新重试。';}
 function errorAt(id,error){node(id).textContent=failureText(error);node(id).hidden=false;}
 function clearError(id){node(id).textContent='';node(id).hidden=true;}
@@ -40,6 +44,13 @@ function signOut(clearPending=false){
 async function signIn(principal){
  const generation=++library.session;
  const info=await request('/api/v1/workspace');if(generation!==library.session)return;
+ if(categoryLanding){
+  node('category-landing').hidden=false;node('file-browser').hidden=true;
+  node('library-title').textContent='资源分类';
+ }else if(categoryRoute){
+  library.category=categories.includes(categoryRoute)?categoryRoute:'all';
+  node('library-title').textContent=categoryTitle[library.category];node('category-home').hidden=false;
+ }
 	library.userID=principal.user_id;node('cloud-download-link').hidden=info.cloud_download_enabled!==true&&info.cloud_download_preview_enabled!==true;
  library.remote=info.library_snapshot_enabled===true;node('file-search-label').textContent=library.remote?'搜索已收录的文件名':'搜索已加载的文件名';library.cloudScope=info.cloud_download_files||null;library.bindings=info.bindings;library.wholeRoot=info.whole_root_library===true;node('library-scope').textContent=library.wholeRoot?'展示已接入目录中完成索引的文件，不代表整个网盘。':'当前展示已接入的真实文件，不代表整个网盘。';library.content=info.content_access_enabled===true;library.sharing=info.sharing_enabled===true;node('my-shares').hidden=!library.sharing;node('login-name').textContent=principal.login;node('account').hidden=false;node('session-error').hidden=true;node('session-error').textContent='';node('login-view').hidden=true;node('library-view').hidden=false;clearError('login-error');
  await refreshFiles();
@@ -47,13 +58,13 @@ async function signIn(principal){
 function surfaceFiles(){return FileSurface.partition(library.catalog?library.catalog.files:[],library.cloudScope,cloudFilePage?'downloads':'library');}
 function visibleFiles(){
  const needle=node('file-search').value.trim().toLocaleLowerCase('zh-CN');
- return surfaceFiles().filter(item=>(library.category==='all'||ResourceDisplay.category(item)===library.category)&&(!needle||ResourceDisplay.name(item).toLocaleLowerCase('zh-CN').includes(needle)));
+ return surfaceFiles().filter(item=>(library.category==='all'||ResourceDisplay.category(item,!cloudFilePage)===library.category)&&(!needle||ResourceDisplay.name(item).toLocaleLowerCase('zh-CN').includes(needle)));
 }
 function fileDetail(item,opener){
  closeDetail();
  library.selected=item;node('file-share').hidden=!library.sharing;
  const kind=ResourceDisplay.classify(item);library.opener=opener;
- node('detail-title').textContent=ResourceDisplay.name(item);node('detail-format').textContent=kind.extension.toUpperCase()||'FILE';node('detail-type').textContent=ResourceDisplay.category(item)==='other'?'其他':kind.label;node('detail-size').textContent=ResourceDisplay.size(item.size_bytes);
+ node('detail-title').textContent=ResourceDisplay.name(item);node('detail-format').textContent=kind.extension.toUpperCase()||'FILE';node('detail-type').textContent=ResourceDisplay.category(item,!cloudFilePage)==='other'?'其他':kind.label;node('detail-size').textContent=ResourceDisplay.size(item.size_bytes);
  node('detail-note').textContent=({software:'安装包不在网页内运行，请下载后自行核实来源与安全性。',video:'播放取决于浏览器对该文件编码的支持；可以拖动进度条跳转。',document:'文档预览只用于阅读，不修改网盘原文件。'})[kind.key]||'文件保留在网盘中，不进行修改。';
  node('file-detail').hidden=false;node('file-detail').focus();node('file-detail').scrollIntoView({block:'nearest'});
  previewFile(item,kind);
@@ -109,19 +120,25 @@ async function previewPDF(item,generation,session,page){
 }
 function drawFiles(preserveDetail=false,preserveRows=false){
  const catalog=library.catalog;if(!catalog)return;
- const remote=library.remote&&library.remotePage;const files=remote?surfaceFiles():visibleFiles();const counts=remote?remote.counts:ResourceDisplay.counts(surfaceFiles());
+ const remote=library.remote&&library.remotePage;const files=remote?surfaceFiles():visibleFiles();const counts=remote?remote.counts:ResourceDisplay.counts(surfaceFiles(),!cloudFilePage);
+ if(categoryLanding){
+  const published=remote?remote.counts:catalog.complete?counts:null;
+  for(const kind of categories)node('landing-count-'+kind).textContent=published?published[kind]+' 个文件':'—';
+  node('category-status').textContent=remote?.stale?'更新暂时不可用，显示最近一次同步的统计。':published?'':'正在读取分类统计…';
+  return;
+ }
  for(const kind of categories){node('count-'+kind).textContent=counts?String(counts[kind]):'—';node('category-'+kind).setAttribute('aria-pressed',String(kind===library.category));}
  if(!preserveDetail)closeDetail();if(!preserveRows){node('file-grid').replaceChildren();node('file-rows').replaceChildren();}
  const pageSize=remote?50:120;const total=remote?remote.filtered:files.length;const pages=Math.max(1,Math.ceil(total/pageSize));library.filePage=remote?library.remoteIndex:Math.min(library.filePage||0,pages-1);const offset=remote?remote.offset:library.filePage*pageSize;
  node('file-page-prev').disabled=remote?!remote.ready||library.remoteIndex===0:library.filePage===0;node('file-page-next').disabled=remote?!remote.ready||!remote.next_cursor:library.filePage>=pages-1;node('file-page-status').textContent=remote&&!remote.ready?'目录同步中':files.length?'第 '+(library.filePage+1)+' / '+pages+' 页 · 文件 '+(offset+1)+'–'+Math.min(offset+pageSize,total):'';
  if(!preserveRows)for(const item of (remote?files:files.slice(offset,offset+120))){
   const kind=ResourceDisplay.classify(item);
-  if(library.layout==='cards'){const button=document.createElement('button');button.type='button';button.className='file-card '+ResourceDisplay.category(item);
+  if(library.layout==='cards'){const button=document.createElement('button');button.type='button';button.className='file-card '+ResourceDisplay.category(item,!cloudFilePage);
   const format=document.createElement('span');format.className='format';format.textContent=kind.extension.toUpperCase()||'FILE';
-  const name=document.createElement('strong');name.textContent=ResourceDisplay.name(item);const meta=document.createElement('small');meta.textContent=(ResourceDisplay.category(item)==='other'?'其他':kind.label)+' · '+ResourceDisplay.size(item.size_bytes);
+  const name=document.createElement('strong');name.textContent=ResourceDisplay.name(item);const meta=document.createElement('small');meta.textContent=(ResourceDisplay.category(item,!cloudFilePage)==='other'?'其他':kind.label)+' · '+ResourceDisplay.size(item.size_bytes);
   button.append(format,name,meta);button.addEventListener('click',()=>fileDetail(item,button));node('file-grid').append(button);}
   else {const row=document.createElement('tr');const title=document.createElement('td');const link=document.createElement('button');link.type='button';link.textContent=ResourceDisplay.name(item);link.addEventListener('click',()=>fileDetail(item,link));title.append(link);row.append(title);
-  for(const text of [ResourceDisplay.category(item)==='other'?'其他':kind.label,ResourceDisplay.size(item.size_bytes)]){const cell=document.createElement('td');cell.textContent=text;row.append(cell);}node('file-rows').append(row);}
+  for(const text of [ResourceDisplay.category(item,!cloudFilePage)==='other'?'其他':kind.label,ResourceDisplay.size(item.size_bytes)]){const cell=document.createElement('td');cell.textContent=text;row.append(cell);}node('file-rows').append(row);}
  }
  node('file-grid').hidden=library.layout!=='cards';node('file-list').hidden=library.layout!=='list';
  for(const layout of ['cards','list'])node('view-'+layout).setAttribute('aria-pressed',String(layout===library.layout));
@@ -171,7 +188,7 @@ node('login-form').addEventListener('submit',async event=>{
 node('logout').addEventListener('click',async()=>{node('logout').disabled=true;try{await request('/api/v1/auth/logout','POST');signOut(true);}catch(error){errorAt('library-error',error);}finally{node('logout').disabled=false;}});
 }
 node('refresh').addEventListener('click',refreshFiles);node('load-more').addEventListener('click',()=>library.wholeRoot?loadWholeLibrary():loadRound());node('load-pause').addEventListener('click',()=>{library.autoLoad=false;node('load-pause').hidden=true;});
-for(const category of categories)node('category-'+category).addEventListener('click',()=>{library.category=category;library.filePage=0;if(library.remote){loadRemotePage(0,true,true);return;}drawFiles();});
+for(const category of categories)node('category-'+category).addEventListener('click',()=>{if(categoryRoute){location.assign('/library/'+category);return;}library.category=category;library.filePage=0;if(library.remote){loadRemotePage(0,true,true);return;}drawFiles();});
 for(const layout of ['cards','list'])node('view-'+layout).addEventListener('click',()=>{library.layout=layout;drawFiles();});
 let searchTimer;node('file-search').addEventListener('input',()=>{if(library.remote){clearTimeout(searchTimer);searchTimer=setTimeout(()=>loadRemotePage(0,true,true),250);return;}library.filePage=0;drawFiles();});node('detail-close').addEventListener('click',()=>closeDetail(true));
 node('file-page-prev').addEventListener('click',()=>{if(library.remote){loadRemotePage(Math.max(0,library.remoteIndex-1));return;}library.filePage=Math.max(0,(library.filePage||0)-1);drawFiles();});node('file-page-next').addEventListener('click',()=>{if(library.remote){loadRemotePage(library.remoteIndex+1);return;}library.filePage=(library.filePage||0)+1;drawFiles();});
@@ -233,6 +250,7 @@ async function loadRemotePage(index=0,fresh=false,reset=false){
  if(reset||library.remoteFilter&&library.remoteFilter!==filter)index=0;
  const cursors=library.remoteCursors||[''];const cursor=cursors[index]||'';
  const query={surface:cloudFilePage?'downloads':'library',category:library.category,q:node('file-search').value.trim(),cursor:index===0&&reset?'':cursor};
+ if(!cloudFilePage)query.taxonomy='2';
  if(!query.cursor&&index>0)query.page=String(index);
  library.busy=true;node('refresh').disabled=true;clearError('library-error');
  const current=()=>session===library.session&&generation===library.request&&library.remote;
@@ -252,6 +270,6 @@ async function loadRemotePage(index=0,fresh=false,reset=false){
   library.remoteCursors[index+1]=result.page.next_cursor;
   library.failed=false;
   if(changed){preserveRows=!!library.remotePage&&JSON.stringify(library.remotePage.items)===JSON.stringify(result.page.items);library.remotePage=result.page;library.catalog={files:result.page.items,complete:result.page.ready,limited:false,unknown:result.page.unknown||0};redraw=true;}
- }catch(error){if(current()&&error.name!=='AbortError'){if(error.code==='AUTH_REQUIRED'){signOut();return;}if(error.code==='LIBRARY_SCOPE_CHANGED'){clearFiles();library.failed=true;node('library-error').hidden=false;node('library-error').textContent='文件库范围已变更，请重新加载页面。';return;}library.failed=true;errorAt('library-error',error);node('load-status').textContent='更新失败，保留已显示的文件。';}}
+ }catch(error){if(current()&&error.name!=='AbortError'){if(error.code==='AUTH_REQUIRED'){signOut();return;}if(error.code==='LIBRARY_SCOPE_CHANGED'){clearFiles();library.failed=true;node('library-error').hidden=false;node('library-error').textContent='文件库范围已变更，请重新加载页面。';return;}library.failed=true;errorAt('library-error',error);node('load-status').textContent='更新失败，保留已显示的文件。';if(categoryLanding)node('category-status').textContent='暂时无法更新分类统计。';}}
  finally{if(current()){library.busy=false;node('refresh').disabled=false;if(redraw)drawFiles(true,preserveRows);else if(!library.failed&&library.remotePage)node('load-status').textContent=library.remotePage.stale?'后台更新暂时不可用，保留最近成功的目录。':library.remotePage.ready?'分类与搜索覆盖已收录文件，目录在后台更新。':'正在后台建立文件目录，统计尚未完成。';}}
 }

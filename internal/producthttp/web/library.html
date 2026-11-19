@@ -7,6 +7,20 @@
  <main id="login-view" class="login-view" hidden><p class="eyebrow">YOUR PERSONAL LIBRARY</p><h1>你的文件，<br>不止于存放。</h1><p class="intro">软件、视频、文档，在这里找到。</p><form id="login-form" class="login-form"><h2 id="auth-title">登录文件库</h2><label for="account-name">账号</label><input id="account-name" autocomplete="username" required minlength="3" maxlength="64" pattern="[a-zA-Z0-9][a-zA-Z0-9._-]{2,63}"><label for="account-password">密码</label><input id="account-password" type="password" autocomplete="current-password" required minlength="6" maxlength="72"><div id="confirm-field" hidden><label for="account-confirm">确认密码</label><input id="account-confirm" type="password" autocomplete="new-password" minlength="6" maxlength="72"></div><p id="auth-help" hidden>账号为 3–64 位英文字母、数字或 . _ -，密码至少 6 个字符（最多 72 字节）。注册后即可浏览、预览和下载文件。</p><p id="login-error" role="alert" class="error" hidden></p><p id="auth-notice" role="status" hidden></p><button id="login-submit" class="primary" type="submit">进入文件库</button><button id="auth-toggle" class="text-button" type="button" hidden>没有账号？立即注册</button></form></main>
  <main id="library-view" class="library" hidden>
   <section class="library-heading"><div><p class="eyebrow">COLLECTED. CONNECTED. YOURS.</p><h1 id="library-title">我的文件库</h1><p class="intro">少一点翻找，多一点发现。</p></div><button id="refresh" class="text-button" type="button">刷新文件</button></section>
+  <section id="category-landing" class="category-landing" aria-label="资源分类" hidden>
+   <p id="category-status" class="category-status" role="status">正在读取分类统计…</p>
+   <nav class="category-grid" aria-label="资源分类入口">
+    <a href="/library/video"><strong>视频</strong><span id="landing-count-video">—</span></a>
+    <a href="/library/software"><strong>软件</strong><span id="landing-count-software">—</span></a>
+    <a href="/library/document"><strong>文档</strong><span id="landing-count-document">—</span></a>
+    <a href="/library/image"><strong>图片</strong><span id="landing-count-image">—</span></a>
+    <a href="/library/audio"><strong>音频</strong><span id="landing-count-audio">—</span></a>
+    <a href="/library/archive"><strong>压缩包</strong><span id="landing-count-archive">—</span></a>
+    <a href="/library/other"><strong>其他</strong><span id="landing-count-other">—</span></a>
+   </nav>
+   <a class="all-resources" href="/library/all">全部资源 <span id="landing-count-all">—</span></a>
+  </section>
+  <p id="category-home" hidden><a href="/">返回资源分类</a></p>
   <!--FILE_BROWSER-->
  </main>
  <footer class="site-footer"><a class="wordmark small" href="/">cloudsite<span>.</span></a><p>文件留在你的网盘，好内容汇集于此。</p><small id="library-scope">当前展示已接入的真实文件，不代表整个网盘。</small><small class="release-version">CloudSite 1.0.3</small></footer>

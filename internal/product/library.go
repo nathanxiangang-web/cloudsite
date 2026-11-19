@@ -12,6 +12,7 @@ import (
 )
 
 type LibraryRequest struct {
+	DetailedCategories                bool
 	Surface, Category, Search, Cursor string
 	Page                              int
 }
@@ -93,7 +94,7 @@ func (s *LibraryService) Library(ctx context.Context, p auth.Principal, q Librar
 		bindings[id] = b
 		scopes = append(scopes, libraryview.Scope{BindingID: id, RootID: b.IndexCoreRootID})
 	}
-	page, err := s.engine.Page(libraryview.Request{Scopes: scopes, Owner: string(p.UserID), CloudBinding: s.cloud, CloudPath: s.cloudPath, Downloads: q.Surface == "downloads", Category: q.Category, Search: q.Search, Cursor: q.Cursor, Limit: 50, Page: q.Page})
+	page, err := s.engine.Page(libraryview.Request{Scopes: scopes, Owner: string(p.UserID), CloudBinding: s.cloud, CloudPath: s.cloudPath, Downloads: q.Surface == "downloads", Category: q.Category, DetailedCategories: q.DetailedCategories, Search: q.Search, Cursor: q.Cursor, Limit: 50, Page: q.Page})
 	if err != nil {
 		return LibraryPage{}, err
 	}
