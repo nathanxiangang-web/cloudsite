@@ -21,6 +21,8 @@ type CopyLeaseStore interface {
 	CreateCopyOperationWithLease(context.Context, CopyOperation, string, int) error
 }
 
+const copyOutcomeWriteTimeout = 5 * time.Second
+
 type CopyExecutionResult struct {
 	Operation        CopyOperation
 	Reconciliation   CopyReconciliation
@@ -101,22 +103,27 @@ func (executor *CopyExecutor) Execute(ctx context.Context, plan CopyPlan, reques
 	stored = plan.Operation
 	result := CopyExecutionResult{Operation: stored, CopyAttempted: true}
 	previous := stored.UpdatedAt
-	if err := executor.provider.CopyObject(ctx, plan.Source, *requester.TargetProviderScope); err != nil {
+	copyErr := executor.provider.CopyObject(ctx, plan.Source, *requester.TargetProviderScope)
+	// A provider mutation can complete during shutdown. Give the outcome write
+	// its own bounded lifetime so recovery retains evidence of the attempt.
+	writeCtx, cancelWrite := context.WithTimeout(context.WithoutCancel(ctx), copyOutcomeWriteTimeout)
+	defer cancelWrite()
+	if copyErr != nil {
 		changedAt := time.Now().UTC()
 		stored.UpdatedAt = changedAt
 		kind := ProviderErrorInternal
 		stored.LastErrorKind = &kind
-		if errors.Is(err, contracts.ErrInvalidStorageObject) || errors.Is(err, contracts.ErrUnsupportedCapability) {
+		if errors.Is(copyErr, contracts.ErrInvalidStorageObject) || errors.Is(copyErr, contracts.ErrUnsupportedCapability) {
 			stored.Status = CopyProviderFailed
-			updateErr := executor.store.UpdateCopyOperation(ctx, stored, previous)
+			updateErr := executor.store.UpdateCopyOperation(writeCtx, stored, previous)
 			result.Operation = stored
 			result.RequiresRecovery = updateErr != nil
-			return result, errors.Join(err, updateErr)
+			return result, errors.Join(copyErr, updateErr)
 		}
 		kind = ProviderErrorTransient
 		stored.Status = CopyProviderUnknown
 		stored.LastErrorKind = &kind
-		updateErr := executor.store.UpdateCopyOperation(ctx, stored, previous)
+		updateErr := executor.store.UpdateCopyOperation(writeCtx, stored, previous)
 		result.Operation = stored
 		result.RequiresRecovery = true
 		return result, errors.Join(ErrCopyProviderOutcomeUnknown, updateErr)
@@ -125,7 +132,7 @@ func (executor *CopyExecutor) Execute(ctx context.Context, plan CopyPlan, reques
 	stored.Status = CopyProviderAccepted
 	stored.ProviderAcceptedAt = &acceptedAt
 	stored.UpdatedAt = acceptedAt
-	if err := executor.store.UpdateCopyOperation(ctx, stored, previous); err != nil {
+	if err := executor.store.UpdateCopyOperation(writeCtx, stored, previous); err != nil {
 		result.Operation = stored
 		result.RequiresRecovery = true
 		return result, err
