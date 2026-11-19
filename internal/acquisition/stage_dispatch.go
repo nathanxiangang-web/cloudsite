@@ -258,8 +258,9 @@ func (dispatcher *StageDispatcher) Dispatch(ctx context.Context, request StageDi
 		if err != nil {
 			return StageDispatchResult{}, err
 		}
+		waitingForDirectory := manifest.UserSpaceID != nil && result.Manifest.State == StateAwaitingVisibility
 		if result.Manifest.ID != manifest.ID || result.Job.ID != job.ID ||
-			result.Manifest.State != StateAwaitingCanonical || result.Job.State != jobs.StateRetryWait {
+			result.Manifest.State != StateAwaitingCanonical && !waitingForDirectory || result.Job.State != jobs.StateRetryWait {
 			return StageDispatchResult{}, fmt.Errorf("%w: visibility handoff result", ErrStageDispatchState)
 		}
 		return StageDispatchResult{Stage: StageVisibility, Manifest: result.Manifest, Job: result.Job,

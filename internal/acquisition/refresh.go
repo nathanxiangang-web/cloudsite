@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path"
 	"strings"
 	"time"
 
@@ -113,17 +114,21 @@ type RefreshStore interface {
 	CommitRefresh(context.Context, RefreshPlan) (RefreshResult, error)
 }
 
+// RefreshDirectoryLookup checks exact canonical directory presence in IndexCore.
+type RefreshDirectoryLookup func(context.Context, string, string) (bool, error)
+
 // RefreshStep hands one exact root/scope to the IndexCore-owned observation
 // pipeline and then atomically advances Panta's own state.
 //
-// It performs no OpenList call, no IndexCore read, and no provider call. It sends at
-// most one Hint per invocation.
+// It performs no OpenList or provider calls. For a private destination, it can
+// first observe the nearest indexed parent. It sends at most one Hint per invocation.
 type RefreshStep struct {
 	manifests ManifestReader
 	jobs      JobReader
 	bindings  RefreshBindingReader
 	hints     MutationHintPort
 	store     RefreshStore
+	directory RefreshDirectoryLookup
 }
 
 func NewRefreshStep(
@@ -132,11 +137,16 @@ func NewRefreshStep(
 	bindings RefreshBindingReader,
 	hints MutationHintPort,
 	store RefreshStore,
+	directory ...RefreshDirectoryLookup,
 ) (*RefreshStep, error) {
-	if manifests == nil || jobs == nil || bindings == nil || hints == nil || store == nil {
+	if manifests == nil || jobs == nil || bindings == nil || hints == nil || store == nil || len(directory) > 1 {
 		return nil, ErrInvalidRefreshRequest
 	}
-	return &RefreshStep{manifests: manifests, jobs: jobs, bindings: bindings, hints: hints, store: store}, nil
+	step := &RefreshStep{manifests: manifests, jobs: jobs, bindings: bindings, hints: hints, store: store}
+	if len(directory) == 1 {
+		step.directory = directory[0]
+	}
+	return step, nil
 }
 
 // Submit validates one refresh step, submits exactly one trusted Hint, and commits
@@ -169,16 +179,28 @@ func (step *RefreshStep) Submit(ctx context.Context, request RefreshRequest) (Re
 	if manifest.State != StateAwaitingVisibility {
 		return RefreshResult{}, fmt.Errorf("%w: %s", ErrRefreshManifestState, manifest.State)
 	}
-	// D-032 keeps Gate 3.8 scoped only by indexcore_root_id + target_path: the
-	// Mutation Hint tells IndexCore to refresh this directory scope, and the
-	// acquired-result locator is not an input to that handoff. No identity guard
-	// belongs here.
+	// The acquired-result locator is not an input to the IndexCore handoff.
 	if err := validateRefreshJob(manifest, job, plan); err != nil {
 		return RefreshResult{}, err
 	}
 	hint, err := buildMutationHint(binding, manifest)
 	if err != nil {
 		return RefreshResult{}, err
+	}
+	if manifest.UserSpaceID != nil && step.directory != nil {
+		// A scoped collector may only list an indexed directory. Discover one
+		// missing level from its parent, then retry this stage on the same Job.
+		for hint.ScopeKey != "/" {
+			present, err := step.directory(ctx, hint.RootID, hint.ScopeKey)
+			if err != nil {
+				return RefreshResult{}, err
+			}
+			if present {
+				break
+			}
+			hint.ScopeKey = path.Dir(hint.ScopeKey)
+			plan.ManifestState = StateAwaitingVisibility
+		}
 	}
 
 	// Exactly one Hint per invocation. IndexCore Mutation Hints are at-least-once and
