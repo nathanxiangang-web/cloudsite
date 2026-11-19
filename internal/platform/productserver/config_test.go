@@ -153,8 +153,8 @@ func TestServeGracefulCancellation(t *testing.T) {
 }
  
 func TestFileAccessConfigRequiresAndUnifiesOneDirectAllowlist(t *testing.T) {
-	if _, err := (fileAccessConfig{VideoDirectLinkHosts: []string{"video.example.test"}}).unifiedDirectHosts(); err == nil {
-		t.Fatal("legacy video-only allowlist must not enable general file delivery")
+	if hosts, err := (fileAccessConfig{VideoDirectLinkHosts: []string{"video.example.test"}}).unifiedDirectHosts(); err != nil || len(hosts) != 0 {
+		t.Fatal("legacy video-only allowlist must not enable general file delivery", hosts, err)
 	}
 	cfg := fileAccessConfig{
 		DirectLinkHosts:       []string{"cdn.example.test", "files.example.test"},

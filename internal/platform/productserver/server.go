@@ -45,7 +45,7 @@ type fileAccessConfig struct {
 
 func (c fileAccessConfig) unifiedDirectHosts() ([]string, error) {
 	if len(c.DirectLinkHosts) == 0 {
-		return nil, ErrConfig
+		return nil, nil
 	}
 	hosts := append([]string(nil), c.DirectLinkHosts...)
 	seen := make(map[string]bool, len(hosts))
@@ -324,7 +324,15 @@ func Run(ctx context.Context, action, configFile, userFile string, policies ...c
 			return ErrStartup
 		}
 		directHosts, hostErr := accessConfig.unifiedDirectHosts()
-		if hostErr != nil || files.EnableDirectLinks(directHosts) != nil {
+		if hostErr != nil {
+			cancel()
+			return ErrConfig
+		}
+		if len(directHosts) > 0 && files.EnableDirectLinks(directHosts) != nil {
+			cancel()
+			return ErrConfig
+		}
+		if cfg.SharingEnabled && len(directHosts) == 0 {
 			cancel()
 			return ErrConfig
 		}
