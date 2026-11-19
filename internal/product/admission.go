@@ -38,11 +38,14 @@ const (
 var operationKeyPattern = regexp.MustCompile(`^[A-Za-z0-9._-]{1,64}$`)
 
 type AdmissionRequest struct {
-	OperationKey string            `json:"operation_key"`
-	Source       string            `json:"source"`
-	BindingID    storage.BindingID `json:"binding_id"`
-	TargetPath   string            `json:"target_path"`
-	ExpectedName *string           `json:"expected_name,omitempty"`
+	OperationKey               string                `json:"operation_key"`
+	Source                     string                `json:"source"`
+	BindingID                  storage.BindingID     `json:"binding_id"`
+	TargetPath                 string                `json:"target_path"`
+	ExpectedName               *string               `json:"expected_name,omitempty"`
+	UserSpaceID                *string               `json:"-"`
+	TargetProviderConnectionID *storage.ConnectionID `json:"-"`
+	TargetProviderScope        *string               `json:"-"`
 }
 
 func (AdmissionRequest) String() string { return "product admission (redacted)" }
@@ -164,6 +167,13 @@ func ValidateAdmissionRequest(r AdmissionRequest) error {
 	if r.ExpectedName != nil && (len(*r.ExpectedName) > acquisition.MaxExpectedNameLength || strings.TrimSpace(*r.ExpectedName) == "" || !utf8.ValidString(*r.ExpectedName) || strings.ContainsRune(*r.ExpectedName, 0)) {
 		return ErrInvalid
 	}
+	if r.UserSpaceID == nil && r.TargetProviderConnectionID == nil && r.TargetProviderScope == nil {
+		return nil
+	}
+	if r.UserSpaceID == nil || r.TargetProviderConnectionID == nil || r.TargetProviderScope == nil ||
+		*r.UserSpaceID == "" || *r.TargetProviderConnectionID == "" || storage.ValidateProviderScope(r.TargetProviderScope) != nil {
+		return ErrInvalid
+	}
 	return nil
 }
 
@@ -175,7 +185,12 @@ func AdmissionDigest(r AdmissionRequest) ([32]byte, error) {
 	}
 	path, _ := acquisition.NormalizeTargetPath(r.TargetPath)
 	h := sha256.New()
-	values := []string{"panta-admission-v2", r.Source, string(r.BindingID), path, "absent"}
+	domain := "panta-admission-v2"
+	values := []string{domain, r.Source, string(r.BindingID), path, "absent"}
+	if r.UserSpaceID != nil {
+		values[0] = "panta-admission-private-v1"
+		values = append(values, *r.UserSpaceID, string(*r.TargetProviderConnectionID), *r.TargetProviderScope)
+	}
 	if r.ExpectedName != nil {
 		values[4] = "present"
 		values = append(values, *r.ExpectedName)
@@ -235,7 +250,13 @@ func (s *AdmissionService) Admit(ctx context.Context, p auth.Principal, r Admiss
 		return AdmissionDTO{}, err
 	}
 	owner := acquisition.UserID(p.UserID)
-	activated, err := s.submitter.Submit(ctx, acquisition.SubmitRequest{ManifestID: reserved.ManifestID, JobID: reserved.JobID, MaxAttempts: reserved.MaxAttempts, Source: reserved.Source, UserID: &owner, ExpectedName: r.ExpectedName, TargetStorageBindingID: r.BindingID, TargetPath: r.TargetPath})
+	activated, err := s.submitter.Submit(ctx, acquisition.SubmitRequest{
+		ManifestID: reserved.ManifestID, JobID: reserved.JobID, MaxAttempts: reserved.MaxAttempts,
+		Source: reserved.Source, UserID: &owner, ExpectedName: r.ExpectedName,
+		TargetStorageBindingID: r.BindingID, TargetPath: r.TargetPath,
+		UserSpaceID: r.UserSpaceID, TargetProviderConnectionID: r.TargetProviderConnectionID,
+		TargetProviderScope: r.TargetProviderScope,
+	})
 	if activated.ManifestID != reserved.ManifestID || activated.JobID != reserved.JobID {
 		return AdmissionDTO{}, ErrAdmissionUncertain
 	}

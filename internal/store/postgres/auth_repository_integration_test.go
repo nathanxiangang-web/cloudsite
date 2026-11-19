@@ -260,7 +260,11 @@ func TestPostgresAuthAppendUpgradePreservesLegacyAttribution(t *testing.T) {
 		{ID: "94000000-0000-4000-8000-000000000011", UserID: &legacyID, SourceType: "http", SourceRef: "https://example.invalid/legacy-owner", TargetStorageBindingID: bindingID, TargetPath: "/", State: acquisition.StatePending, CreatedAt: now, UpdatedAt: now},
 	}
 	for _, manifest := range before {
-		if err := manifests.CreateManifest(ctx, manifest); err != nil {
+		if _, err := pool.Exec(ctx, `INSERT INTO acquisition_manifests(
+manifest_id, user_id, source_type, source_ref, target_storage_binding_id, target_path, state, created_at, updated_at
+) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, string(manifest.ID), optionalID(manifest.UserID), manifest.SourceType,
+			manifest.SourceRef, string(manifest.TargetStorageBindingID), manifest.TargetPath, string(manifest.State),
+			manifest.CreatedAt, manifest.UpdatedAt); err != nil {
 			t.Fatal(err)
 		}
 	}

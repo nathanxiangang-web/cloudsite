@@ -118,10 +118,17 @@ func (r *ProductAdmissionRepository) reserve(ctx context.Context, p auth.Princip
 	if err = tx.QueryRow(ctx, `SELECT clock_timestamp()`).Scan(&dbNow); err != nil {
 		return product.Reservation{}, admissionPersistenceError(ctx, err)
 	}
-	creator, _ := acquisition.NewService(topology, identities, manifests, acquisition.WithClock(func() time.Time { return dbNow }))
+	privateSpaces, _ := NewCloudUserSpaceRepository(tx)
+	creator, _ := acquisition.NewService(topology, identities, manifests,
+		acquisition.WithClock(func() time.Time { return dbNow }), acquisition.WithPrivateTargetSpaces(privateSpaces))
 	source := prepared.Reference
 	owner := acquisition.UserID(p.UserID)
-	_, err = creator.CreateManifest(ctx, acquisition.CreateManifestRequest{ID: candidate.ManifestID, UserID: &owner, SourceType: source.Scheme, SourceRef: source.Value, ExpectedName: input.ExpectedName, TargetStorageBindingID: input.BindingID, TargetPath: input.TargetPath})
+	_, err = creator.CreateManifest(ctx, acquisition.CreateManifestRequest{
+		ID: candidate.ManifestID, UserID: &owner, SourceType: source.Scheme, SourceRef: source.Value,
+		ExpectedName: input.ExpectedName, TargetStorageBindingID: input.BindingID, TargetPath: input.TargetPath,
+		UserSpaceID: input.UserSpaceID, TargetProviderConnectionID: input.TargetProviderConnectionID,
+		TargetProviderScope: input.TargetProviderScope,
+	})
 	if err != nil {
 		for _, invalid := range []error{acquisition.ErrStorageBindingDisabled, acquisition.ErrStorageBindingNotAcquisitionCapable, acquisition.ErrStorageConnectionDisabled, acquisition.ErrInvalidProviderIdentity, acquisition.ErrStorageTopologyMismatch} {
 			if errors.Is(err, invalid) {

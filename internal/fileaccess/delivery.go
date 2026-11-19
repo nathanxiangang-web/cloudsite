@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/nathanxiangang-web/panta/internal/auth"
+	"github.com/nathanxiangang-web/panta/internal/cloudpath"
 )
 
 // LinkSource resolves a known file without opening its byte stream.
@@ -60,7 +61,7 @@ func (s *Service) MediaSources() []string {
 // Deliver preserves canonical authorization for each redirect. Open remains the
 // byte-only port used by the private document preview cache.
 func (s *Service) Deliver(ctx context.Context, p auth.Principal, r Request) (File, error) {
-	if len(s.directHosts) == 0 {
+	if len(s.directHosts) == 0 || cloudpath.IsPrivate(r.Path) {
 		return s.Open(ctx, p, r)
 	}
 	file, source, err := s.describe(ctx, p, r)

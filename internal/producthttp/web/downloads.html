@@ -1,13 +1,14 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>cloudsite · 云下载</title><link rel="stylesheet" href="/assets/library.css"><link rel="stylesheet" href="/assets/downloads.css"><script src="/assets/download-model.js" defer></script><script src="/assets/resource-display.js" defer></script><script src="/assets/file-catalog.js" defer></script><script src="/assets/file-surface.js" defer></script><script src="/assets/library-page.js" defer></script><script src="/assets/library.js" defer></script><script src="/assets/library-sharing.js" defer></script><script src="/assets/downloads.js" defer></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>cloudsite · 云下载</title><link rel="stylesheet" href="/assets/library.css"><link rel="stylesheet" href="/assets/downloads.css"><script src="/assets/download-model.js" defer></script><script src="/assets/resource-display.js" defer></script><script src="/assets/file-catalog.js" defer></script><script src="/assets/file-surface.js" defer></script><script src="/assets/library-page.js" defer></script><script src="/assets/library.js" defer></script><script src="/assets/library-sharing.js" defer></script><script src="/assets/cloud-space.js" defer></script><script src="/assets/downloads.js" defer></script></head>
 <body data-file-surface="downloads">
  <header class="site-header"><a class="wordmark" href="/">cloudsite<span>.</span></a><span class="header-caption">把链接，变成你的收藏</span><div class="account"><a href="/">文件库</a><span id="download-user"></span><button id="download-logout" class="text-button" type="button" hidden>退出</button></div></header>
  <main class="library downloads">
   <section class="library-heading"><div><p class="eyebrow">SAVE IT. KEEP IT. FIND IT.</p><h1>云下载</h1><p class="intro">粘贴链接，保存到网盘；收录后就在这里查看与使用。</p></div></section>
   <p id="download-gate" role="status">正在检查登录与下载服务…</p><a id="download-login" class="primary download-link" href="/" hidden>返回首页登录</a>
   <section id="download-workspace" hidden>
-   <div class="download-layout"><form id="download-form" class="download-panel">
+    <section id="cloud-space-panel" hidden aria-label="私有下载空间"><p id="cloud-space-status" role="status" aria-live="polite">正在检查私有空间状态…</p><button id="cloud-space-provision" class="secondary" type="button">创建私有空间</button></section>
+    <div class="download-layout"><form id="download-form" class="download-panel">
     <h2>新建下载</h2><p id="download-target" class="intro"></p>
     <section id="download-session" hidden aria-label="网盘账号状态"><p id="download-session-status" role="status" aria-live="polite">正在检查 115 账号登录状态…</p><button id="download-session-refresh" class="text-button" type="button">重新检查账号</button><p class="field-hint">这是服务器使用的网盘账号，与本网站登录独立。恢复凭据后请管理员重新加载服务；不会自动重提历史任务。</p></section>
     <label for="download-source">下载链接</label><textarea id="download-source" rows="5" maxlength="65536" required spellcheck="false" autocomplete="off" placeholder="magnet:?xt=urn:btih:… 或 HTTPS / HTTP / ed2k 链接"></textarea>
@@ -18,7 +19,7 @@
     <p id="download-message" role="status" aria-live="polite"></p><p id="download-error" class="error" role="alert" hidden></p>
     <button id="download-reconcile" class="text-button" type="button" hidden>核实上次提交结果</button>
    </form><aside class="download-panel"><p class="eyebrow">YOUR DOWNLOADS</p><h2>下载与收录</h2><p class="intro">网盘下载完成后，还需要完成索引确认，文件才会出现在本页的已下载文件中。</p><p id="download-usage" role="status"></p><p class="field-hint">查询状态不重复扣次数。出现“需要处理”时，不要重复提交同一来源。</p><a class="download-link" href="#download-files">查看已下载文件 ↓</a></aside></div>
-   <section id="download-files" class="download-files" hidden><div class="collection-bar"><h2>已下载的文件</h2><button id="refresh" class="text-button" type="button">刷新文件</button></div><p class="field-hint">云下载目录中已收录的文件在这里展示，包含子文件夹中的内容；不会混入主文件库。</p><!--FILE_BROWSER--></section>
+   <section id="download-files" class="download-files" hidden><div class="collection-bar"><h2>已下载的文件</h2><div><button id="private-files-refresh" class="text-button" type="button" hidden>刷新私有文件</button><button id="refresh" class="text-button" type="button">刷新文件</button></div></div><p id="download-files-scope" class="field-hint">云下载目录中已收录的文件在这里展示，包含子文件夹中的内容；不会混入主文件库。</p><p id="private-files-status" role="status" aria-live="polite"></p><!--FILE_BROWSER--><button id="private-files-more" class="secondary" type="button" hidden>加载更多私有文件</button></section>
    <section class="download-tasks"><div class="collection-bar"><h2>我的任务</h2><button id="download-refresh" class="text-button" type="button">刷新状态</button></div><p id="download-tasks-status" role="status"></p><div id="download-task-list"></div><button id="download-more" class="secondary" type="button" hidden>加载更多任务</button></section>
   </section>
  </main><footer class="site-footer"><span class="wordmark small">cloudsite.</span><p>文件仍在你的网盘中。</p><small>CloudSite 1.0.3</small></footer>

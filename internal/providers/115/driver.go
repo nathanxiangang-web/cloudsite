@@ -31,6 +31,7 @@ var _ OfflineClient = (*driver.Pan115Client)(nil)
 // same immutable objects. Errors and diagnostics never render secret values.
 type CookiedBackend struct {
 	client     OfflineClient
+	copyClient CopyClient
 	healthHTTP *http.Client
 	accountID  string
 	trace      *startHTTPTrace
@@ -173,11 +174,13 @@ func newAdapterFromCookie(cookie []byte, options Options, transport http.RoundTr
 	if err != nil {
 		return nil, err
 	}
+	backend.copyClient = &nativeCopyClient{client: client}
 	backend.trace = trace
 	backend.accountID = accountID
 	backend.healthHTTP = &http.Client{Timeout: timeout, Jar: client.Client.GetClient().Jar, Transport: healthCookieTransport{next: transport, cookies: client.Client.Cookies},
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	options.Backend = backend
+	options.CopyBackend = backend
 	return New(options)
 }
 

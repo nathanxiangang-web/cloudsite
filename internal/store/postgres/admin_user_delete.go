@@ -20,6 +20,7 @@ func deleteAccount(ctx context.Context, tx pgx.Tx, c adminops.Command, u adminop
 	}
 	defer save.Rollback(context.Background())
 	for _, statement := range []string{
+		`UPDATE cloud_user_spaces SET owner_state='OWNER_DELETED',status='UNAVAILABLE',version=version+1,updated_at=clock_timestamp() WHERE owner_user_id=$1`,
 		`DELETE FROM product_sessions WHERE user_id=$1`,
 		`DELETE FROM product_file_share_grants WHERE share_id IN (SELECT share_id FROM product_file_shares WHERE owner_id=$1)`,
 		`DELETE FROM product_file_shares WHERE owner_id=$1`,

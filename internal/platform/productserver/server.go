@@ -153,7 +153,13 @@ func Run(ctx context.Context, action, configFile, userFile string, policies ...c
 		cancel()
 		return ErrStartup
 	}
-	reads, err := product.NewReadService(tasks, topology, index, physical, catalog, bindings)
+	cloudUserSpaces, err := postgres.NewCloudUserSpaceRepository(pool)
+	if err != nil {
+		cancel()
+		return ErrStartup
+	}
+	reads, err := product.NewReadService(tasks, topology, index, physical, catalog, bindings,
+		product.WithPrivateResourceAuthorizer(product.CloudSpaceResourceAuthorizer{Spaces: cloudUserSpaces}))
 	if err != nil {
 		cancel()
 		return ErrStartup
@@ -250,7 +256,7 @@ func Run(ctx context.Context, action, configFile, userFile string, policies ...c
 			cancel()
 			return nil
 		}
-		options = append(options, option)
+		options = append(options, producthttp.CombineWorkspaceOptions(option, producthttp.WithCloudSpaceFiles(reads)))
 	}
 	options = append(options, producthttp.WithRegistration(cfg.RegistrationEnabled))
 	options = append(options, producthttp.WithLibraryScope(cfg.LibraryBindingIDs, cfg.WholeRootLibrary))

@@ -23,19 +23,21 @@ import (
 
 type WorkspaceOption func(*workspaceOptions)
 type workspaceOptions struct {
-	library       product.LibraryReads
-	audit         adminaudit.Reads
-	operations    adminops.Operations
-	observation   adminobserve.Reads
-	adminReads    adminread.Reads
-	sourcePreview *SourcePreviewConfig
-	cloud         *cloudDownloadOptions
-	registration  bool
-	libraryIDs    []storage.BindingID
-	wholeRoot     bool
-	shares        *fileshare.Service
-	files         *fileaccess.Service
-	previews      *fileaccess.PreviewService
+	library          product.LibraryReads
+	audit            adminaudit.Reads
+	operations       adminops.Operations
+	observation      adminobserve.Reads
+	adminReads       adminread.Reads
+	sourcePreview    *SourcePreviewConfig
+	cloud            *cloudDownloadOptions
+	cloudSpace       *cloudSpaceOptions
+	privateCloudOnly bool
+	registration     bool
+	libraryIDs       []storage.BindingID
+	wholeRoot        bool
+	shares           *fileshare.Service
+	files            *fileaccess.Service
+	previews         *fileaccess.PreviewService
 }
 
 func WithRegistration(enabled bool) WorkspaceOption {

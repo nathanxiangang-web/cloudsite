@@ -25,17 +25,20 @@ const (
 )
 
 type SubmitRequest struct {
-	ManifestID             ManifestID
-	JobID                  jobs.JobID
-	MaxAttempts            int
-	Source                 string
-	UserID                 *UserID
-	ExpectedName           *string
-	TargetStorageBindingID storage.BindingID
-	TargetPath             string
-	AssetID                *catalog.AssetID
-	ReleaseID              *catalog.ReleaseID
-	VariantID              *catalog.VariantID
+	ManifestID                 ManifestID
+	JobID                      jobs.JobID
+	MaxAttempts                int
+	Source                     string
+	UserID                     *UserID
+	ExpectedName               *string
+	TargetStorageBindingID     storage.BindingID
+	TargetPath                 string
+	UserSpaceID                *string
+	TargetProviderConnectionID *storage.ConnectionID
+	TargetProviderScope        *string
+	AssetID                    *catalog.AssetID
+	ReleaseID                  *catalog.ReleaseID
+	VariantID                  *catalog.VariantID
 }
 
 type SubmitResult struct {
@@ -90,7 +93,9 @@ func (service *SubmissionService) Submit(ctx context.Context, request SubmitRequ
 		ID: request.ManifestID, UserID: request.UserID,
 		SourceType: source.Scheme, SourceRef: source.Value, ExpectedName: request.ExpectedName,
 		TargetStorageBindingID: request.TargetStorageBindingID, TargetPath: request.TargetPath,
-		AssetID: request.AssetID, ReleaseID: request.ReleaseID, VariantID: request.VariantID,
+		UserSpaceID: request.UserSpaceID, TargetProviderConnectionID: request.TargetProviderConnectionID,
+		TargetProviderScope: request.TargetProviderScope,
+		AssetID:             request.AssetID, ReleaseID: request.ReleaseID, VariantID: request.VariantID,
 	}
 	result := SubmitResult{ManifestID: request.ManifestID, JobID: request.JobID}
 	created, err := service.lookup.GetManifest(ctx, request.ManifestID)
@@ -188,6 +193,9 @@ func sameSubmissionIntent(stored Manifest, request CreateManifestRequest) bool {
 		stored.SourceRef == request.SourceRef && stored.TargetStorageBindingID == request.TargetStorageBindingID &&
 		stored.TargetPath == targetPath && equalOptional(stored.UserID, request.UserID) &&
 		equalOptional(stored.ExpectedName, request.ExpectedName) &&
+		equalOptional(stored.UserSpaceID, request.UserSpaceID) &&
+		equalOptional(stored.TargetProviderConnectionID, request.TargetProviderConnectionID) &&
+		equalOptional(stored.TargetProviderScope, request.TargetProviderScope) &&
 		equalOptional(stored.AssetID, request.AssetID) && equalOptional(stored.ReleaseID, request.ReleaseID) &&
 		equalOptional(stored.VariantID, request.VariantID)
 }

@@ -111,16 +111,23 @@ type Reads interface {
 	Resolve(context.Context, auth.Principal, storage.BindingID, string) (Resource, error)
 }
 type ReadService struct {
-	tasks    TaskReader
-	topology TopologyReader
-	index    indexcore.ReadPort
-	physical PhysicalReader
-	copies   catalog.PhysicalIdentityReader
-	allowed  []storage.BindingID
-	bindings map[storage.BindingID]bool
+	tasks            TaskReader
+	topology         TopologyReader
+	index            indexcore.ReadPort
+	physical         PhysicalReader
+	copies           catalog.PhysicalIdentityReader
+	allowed          []storage.BindingID
+	bindings         map[storage.BindingID]bool
+	privateResources PrivateResourceAuthorizer
 }
 
-func NewReadService(tasks TaskReader, topology TopologyReader, index indexcore.ReadPort, physical PhysicalReader, copies catalog.PhysicalIdentityReader, allowed []storage.BindingID) (*ReadService, error) {
+type ReadOption func(*ReadService)
+
+func WithPrivateResourceAuthorizer(authorizer PrivateResourceAuthorizer) ReadOption {
+	return func(service *ReadService) { service.privateResources = authorizer }
+}
+
+func NewReadService(tasks TaskReader, topology TopologyReader, index indexcore.ReadPort, physical PhysicalReader, copies catalog.PhysicalIdentityReader, allowed []storage.BindingID, options ...ReadOption) (*ReadService, error) {
 	if missing(tasks) || missing(topology) || missing(index) || missing(physical) || missing(copies) || len(allowed) == 0 {
 		return nil, ErrInvalid
 	}
@@ -131,7 +138,11 @@ func NewReadService(tasks TaskReader, topology TopologyReader, index indexcore.R
 		}
 		bindings[id] = true
 	}
-	return &ReadService{tasks: tasks, topology: topology, index: index, physical: physical, copies: copies, allowed: append([]storage.BindingID(nil), allowed...), bindings: bindings}, nil
+	service := &ReadService{tasks: tasks, topology: topology, index: index, physical: physical, copies: copies, allowed: append([]storage.BindingID(nil), allowed...), bindings: bindings}
+	for _, option := range options {
+		option(service)
+	}
+	return service, nil
 }
 func principalValid(p auth.Principal) error {
 	if !p.Valid() {
@@ -298,16 +309,22 @@ func (s *ReadService) Browse(ctx context.Context, p auth.Principal, request Brow
 	if err != nil {
 		return ResourcePage{}, safeReadError(err)
 	}
-	if len(page.Items) > request.Limit || !ValidOpaque(page.NextCursor) || page.NextCursor != "" && page.NextCursor == request.Cursor {
+	if len(page.Items) > request.Limit || len(page.Items) == 0 && page.NextCursor != "" || !ValidOpaque(page.NextCursor) || page.NextCursor != "" && page.NextCursor == request.Cursor {
 		return ResourcePage{}, ErrUnavailable
 	}
-	items, err := s.resources(ctx, binding, page.Items)
-	return ResourcePage{Items: items, NextCursor: page.NextCursor}, err
+	items, err := s.resources(ctx, p, binding, page.Items)
+	if err != nil {
+		return ResourcePage{}, err
+	}
+	if len(items) != len(page.Items) {
+		return ResourcePage{}, ErrNotFound
+	}
+	return ResourcePage{Items: items, NextCursor: page.NextCursor}, nil
 }
 
 // resources is shared by live reads and cached physical pages. Both revalidate
 // exact identities; cached metadata never bypasses the optional Copy fence.
-func (s *ReadService) resources(ctx context.Context, binding storage.Binding, physicalItems []indexcore.ResourceContext) ([]Resource, error) {
+func (s *ReadService) resources(ctx context.Context, principal auth.Principal, binding storage.Binding, physicalItems []indexcore.ResourceContext) ([]Resource, error) {
 	if len(physicalItems) > 50 {
 		return nil, ErrUnavailable
 	}
@@ -335,6 +352,15 @@ func (s *ReadService) resources(ctx context.Context, binding storage.Binding, ph
 	result := ResourcePage{Items: make([]Resource, 0, len(physicalItems))}
 	seen := map[string]bool{}
 	for _, physical := range physicalItems {
+		if s.privateResources != nil && physical.CanonicalPath != nil {
+			allowed, err := s.privateResources.Allowed(ctx, principal, binding.ID, binding.IndexCoreRootID, *physical.CanonicalPath)
+			if err != nil {
+				return nil, safeReadError(err)
+			}
+			if !allowed {
+				continue
+			}
+		}
 		if seen[physical.ResourceID] {
 			return nil, ErrUnavailable
 		}
@@ -375,6 +401,15 @@ func (s *ReadService) Resolve(ctx context.Context, p auth.Principal, id storage.
 	binding, err := s.binding(ctx, p, id)
 	if err != nil {
 		return Resource{}, err
+	}
+	if s.privateResources != nil {
+		allowed, err := s.privateResources.Allowed(ctx, p, binding.ID, binding.IndexCoreRootID, normalized)
+		if err != nil {
+			return Resource{}, safeReadError(err)
+		}
+		if !allowed {
+			return Resource{}, ErrNotFound
+		}
 	}
 	detail, err := s.physical.Resolve(ctx, resourceview.PhysicalRequest{RootID: binding.IndexCoreRootID, Path: normalized})
 	if err != nil {

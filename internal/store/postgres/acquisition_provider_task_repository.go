@@ -92,6 +92,13 @@ func (repository *AcquisitionProviderTaskRepository) ClaimProviderTask(
 		providerTaskFenceLockClass, string(request.ManifestID)); err != nil {
 		return acquisition.ProviderTaskClaimResult{}, providerTaskWriteError("lock provider task fence", err)
 	}
+	var copyOperations int
+	if err := tx.QueryRow(ctx, `SELECT count(*) FROM acquisition_copy_operations WHERE manifest_id=$1`, string(request.ManifestID)).Scan(&copyOperations); err != nil {
+		return acquisition.ProviderTaskClaimResult{}, providerTaskPersistenceError("check copy operation fence", err)
+	}
+	if copyOperations != 0 {
+		return acquisition.ProviderTaskClaimResult{}, acquisition.ErrProviderTaskConflict
+	}
 
 	existing, err := scanAcquisitionProviderTask(tx.QueryRow(ctx, `SELECT `+acquisitionProviderTaskColumns+`
 FROM acquisition_provider_tasks

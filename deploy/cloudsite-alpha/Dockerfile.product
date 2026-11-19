@@ -1,0 +1,11 @@
+# Product-only image: the context holds just the reviewed `cloudsite` binary.
+# IndexCore reader/catalog sources are intentionally absent (C-CANDIDATE-PACKAGE@1).
+FROM debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates poppler-utils util-linux curl python3 && rm -rf /var/lib/apt/lists/* && useradd --system --uid 10001 --create-home cloudsite
+COPY cloudsite /usr/local/bin/cloudsite
+RUN chmod 755 /usr/local/bin/cloudsite
+USER 10001:10001
+WORKDIR /home/cloudsite
+ENV PANTA_ACQUISITION_WORKER_ENABLED=false
+ENTRYPOINT ["/usr/local/bin/cloudsite"]
+CMD ["serve-product-readonly"]

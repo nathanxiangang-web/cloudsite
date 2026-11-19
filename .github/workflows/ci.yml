@@ -69,7 +69,7 @@ jobs:
       - name: PostgreSQL integration tests
         run: go test ./internal/store/postgres -run 'Test(Postgres|GateZero)' -count=1 -v
       - name: Gate 3.15-3.18 controlled acquisition integration
-        run: go test ./test/e2e/acquisitionruntime -run 'TestPostgres(AcquisitionRuntime|Operator)' -count=1 -v
+        run: go test ./test/e2e/acquisitionruntime -run 'TestPostgres(AcquisitionRuntime|Operator|PrivateCopy)' -count=1 -v
       - name: Apply migrations
         run: go run ./cmd/panta-db migrate
       - name: Create isolated operator mapping database

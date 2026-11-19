@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/nathanxiangang-web/panta/internal/auth"
+	"github.com/nathanxiangang-web/panta/internal/cloudpath"
 	"github.com/nathanxiangang-web/panta/internal/fileaccess"
 	"github.com/nathanxiangang-web/panta/internal/product"
 	"golang.org/x/crypto/bcrypt"
@@ -107,6 +108,9 @@ func (s *Service) Create(ctx context.Context, p auth.Principal, target fileacces
 	if ttl == 0 || code != "" && !ValidCode(code) {
 		return Record{}, "", ErrInvalid
 	}
+	if cloudpath.IsPrivate(target.Path) {
+		return Record{}, "", ErrDenied
+	}
 	target.Range = ""
 	target.Head = false
 	file, err := s.files.Describe(ctx, p, target)
@@ -168,6 +172,9 @@ func (s *Service) Redeem(ctx context.Context, token, code string) (Grant, error)
 	if record.Protected && !match {
 		return Grant{}, ErrDenied
 	}
+	if cloudpath.IsPrivate(record.Target.Path) {
+		return Grant{}, ErrDenied
+	}
 	grant, err := secret()
 	if err != nil {
 		return Grant{}, err
@@ -184,6 +191,9 @@ func (s *Service) Open(ctx context.Context, id, token, byteRange string, head bo
 	record, principal, err := s.store.Granted(ctx, id, SecretHash(token))
 	if err != nil {
 		return fileaccess.File{}, err
+	}
+	if cloudpath.IsPrivate(record.Target.Path) {
+		return fileaccess.File{}, ErrDenied
 	}
 	target := record.Target
 	target.Range = byteRange

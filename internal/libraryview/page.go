@@ -10,6 +10,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/nathanxiangang-web/panta/internal/cloudpath"
 	"github.com/nathanxiangang-web/panta/internal/integrations/indexcore"
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
@@ -89,7 +90,8 @@ func (e *Engine) Page(q Request) (Page, error) {
 	result := Page{Items: []Item{}, Ready: ready}
 	count := Counts{}
 	items := []Item{}
-	var revision strings.Builder
+
+	var visibleRevision strings.Builder
 	e.mu.RLock()
 	for _, scope := range q.Scopes {
 		result.Stale = result.Stale || e.failed[scope.BindingID]
@@ -97,14 +99,18 @@ func (e *Engine) Page(q Request) (Page, error) {
 	e.mu.RUnlock()
 	needle := strings.ToLower(strings.TrimSpace(q.Search))
 	for _, s := range snapshots {
-		fmt.Fprintf(&revision, "%s:%s:%s;", s.BindingID, s.RootID, s.Revision)
-		if result.UpdatedAt.IsZero() || s.UpdatedAt.Before(result.UpdatedAt) {
-			result.UpdatedAt = s.UpdatedAt
-		}
+		visible := make([]indexcore.ResourceContext, 0, len(s.Resources))
 		for _, r := range s.Resources {
+			if r.CanonicalPath != nil && cloudpath.IsPrivate(*r.CanonicalPath) {
+				continue
+			}
 			within := s.BindingID == q.CloudBinding && q.CloudPath != "" && r.CanonicalPath != nil && strings.HasPrefix(*r.CanonicalPath, q.CloudPath+"/")
 			if q.Downloads != within {
 				continue
+			}
+			visible = append(visible, r)
+			if r.ModifiedAt != nil && r.ModifiedAt.After(result.UpdatedAt) {
+				result.UpdatedAt = *r.ModifiedAt
 			}
 			if r.Directory == nil {
 				result.Unknown++
@@ -135,9 +141,10 @@ func (e *Engine) Page(q Request) (Page, error) {
 				items = append(items, Item{s.BindingID, r})
 			}
 		}
+		fmt.Fprintf(&visibleRevision, "%s:%s:%s;", s.BindingID, s.RootID, contentRevision(visible))
 	}
-	fmt.Fprintf(&revision, "%s:%s:%t", q.CloudBinding, q.CloudPath, q.Downloads)
-	sum := sha256.Sum256([]byte(revision.String()))
+	fmt.Fprintf(&visibleRevision, "%s:%s:%t", q.CloudBinding, q.CloudPath, q.Downloads)
+	sum := sha256.Sum256([]byte(visibleRevision.String()))
 	result.Revision = hex.EncodeToString(sum[:])
 	filterSum := sha256.Sum256([]byte(q.Owner + "\x00" + q.Category + "\x00" + q.Search))
 	filter := hex.EncodeToString(filterSum[:])

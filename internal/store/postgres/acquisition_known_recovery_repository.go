@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -43,9 +44,26 @@ func (repository *KnownRecoveryRepository) ResumeKnownAcquisition(ctx context.Co
 	if err != nil {
 		return acquisition.ProviderOutcomeResult{}, acquisition.ErrKnownRecoveryConflict
 	}
-	task, err := scanAcquisitionProviderTask(tx.QueryRow(ctx, `SELECT `+acquisitionProviderTaskColumns+` FROM acquisition_provider_tasks WHERE manifest_id=$1 FOR UPDATE`, string(request.Scope.ManifestID)))
-	if err != nil || !request.Scope.Matches(manifest, task) || manifest.ResultCopyID != nil ||
-		acquisition.ValidateLinkedAcquisitionJob(manifest.ID, job) != nil || job.ClaimAttempts != request.ExpectedClaim {
+	if manifest.TargetStorageBindingID != request.Scope.BindingID ||
+		acquisition.EvidenceSHA256(manifest.SourceRef) != request.Scope.SourceSHA256 {
+		return acquisition.ProviderOutcomeResult{}, acquisition.ErrKnownRecoveryConflict
+	}
+	task, taskErr := scanAcquisitionProviderTask(tx.QueryRow(ctx, `SELECT `+acquisitionProviderTaskColumns+` FROM acquisition_provider_tasks WHERE manifest_id=$1 FOR UPDATE`, string(request.Scope.ManifestID)))
+	if taskErr != nil && !errors.Is(taskErr, pgx.ErrNoRows) {
+		return acquisition.ProviderOutcomeResult{}, acquisition.ErrKnownRecoveryConflict
+	}
+	if taskErr == nil && !request.Scope.Matches(manifest, task) {
+		return acquisition.ProviderOutcomeResult{}, acquisition.ErrKnownRecoveryConflict
+	}
+	if errors.Is(taskErr, pgx.ErrNoRows) {
+		var jobID, connectionID, status string
+		err := tx.QueryRow(ctx, `SELECT job_id::text,provider_connection_id::text,status FROM acquisition_copy_operations WHERE manifest_id=$1 FOR UPDATE`, string(request.Scope.ManifestID)).Scan(&jobID, &connectionID, &status)
+		if err != nil || jobID != string(request.Scope.JobID) || connectionID != string(request.Scope.ConnectionID) ||
+			(status != string(acquisition.CopyReserved) && status != string(acquisition.CopyProviderAccepted) && status != string(acquisition.CopyProviderUnknown)) {
+			return acquisition.ProviderOutcomeResult{}, acquisition.ErrKnownRecoveryConflict
+		}
+	}
+	if manifest.ResultCopyID != nil || acquisition.ValidateLinkedAcquisitionJob(manifest.ID, job) != nil || job.ClaimAttempts != request.ExpectedClaim {
 		return acquisition.ProviderOutcomeResult{}, acquisition.ErrKnownRecoveryConflict
 	}
 	// Lock mapping identities too; a concurrent administrator cannot swap the

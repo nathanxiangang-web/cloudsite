@@ -13,6 +13,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/app"
 	"github.com/nathanxiangang-web/panta/internal/platform/bootstrap"
 	"github.com/nathanxiangang-web/panta/internal/platform/config"
+	"github.com/nathanxiangang-web/panta/internal/platform/userdirectory"
 	"github.com/nathanxiangang-web/panta/internal/product"
 	"github.com/nathanxiangang-web/panta/internal/producthttp"
 	"github.com/nathanxiangang-web/panta/internal/runtime"
@@ -26,6 +27,7 @@ const CloudPreflightAction = "preflight-product-acquisition"
 type CloudDownloadConfig struct {
 	Target        producthttp.CloudDownloadTarget `json:"target"`
 	BootstrapFile string                          `json:"bootstrap_file"`
+	PrivateOnly   bool                            `json:"private_only,omitempty"`
 }
 
 func (c CloudDownloadConfig) Valid() bool {
@@ -81,7 +83,31 @@ func buildCloud(ctx context.Context, cfg Config, policy config.AcquisitionWorker
 		worker.Close()
 		return nil, nil, ErrStartup
 	}
-	return worker, producthttp.WithCloudDownload(cfg.CloudDownload.Target, service, store, health), nil
+	directoryProvider, err := worker.DirectoryProvider(ctx, binding.ConnectionID)
+	if err != nil {
+		worker.Close()
+		return nil, nil, ErrStartup
+	}
+	spaces, err := postgres.NewCloudUserSpaceRepository(pool)
+	if err != nil {
+		worker.Close()
+		return nil, nil, ErrStartup
+	}
+	spaceService, err := product.NewCloudSpaceService(spaces, userdirectory.Provider{Directory: directoryProvider})
+	if err != nil {
+		worker.Close()
+		return nil, nil, ErrStartup
+	}
+	spaceTarget := product.CloudSpaceTarget{
+		BindingID: binding.ID, ProviderConnectionID: binding.ConnectionID,
+		IndexCoreRootID: binding.IndexCoreRootID, NativeParentID: *binding.ProviderScope,
+		CanonicalBase: cfg.CloudDownload.Target.TargetPath,
+	}
+	return worker, producthttp.CombineWorkspaceOptions(
+		producthttp.WithCloudDownload(cfg.CloudDownload.Target, service, store, health),
+		producthttp.WithCloudSpace(spaceService, spaceTarget, service),
+		producthttp.WithPrivateCloudDownloads(cfg.CloudDownload.PrivateOnly),
+	), nil
 }
 
 type managedWorker interface{ Run(context.Context) error }
