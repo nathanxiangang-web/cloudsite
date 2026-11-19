@@ -186,7 +186,7 @@ CloudSite 撤销分享、删除文件或用户退出，无法自动撤销已经�
 
 ### 3.2 私人空间文件管理
 
-私人空间页面包括：
+私人空间只呈现当前用户通过云下载收录并归属其 UserSpace 的文件与目录；它不是整个 115 账号的通用文件浏览器，也不混入公共资源库。\n\n私人空间页面包括：
 
 - 标题、空间状态、面包屑；
 - 文件夹浏览；
@@ -372,7 +372,7 @@ REQUESTED → AUTHORIZED → PROVIDER_UNKNOWN / PROVIDER_CONFIRMED → AWAITING_
 | 错误码建议 | 用户提示 |
 |---|---|
 | SOURCE_INVALID | 链接格式无法识别，请检查是否为完整有效的下载链接 |
-| MAGNET_BT​​IH_MISSING | 磁力链接缺少有效的 BTIH 资源标识 |
+| MAGNET_BTIH_MISSING | 磁力链接缺少有效的 BTIH 资源标识 |
 | MAGNET_AMBIGUOUS | 磁力链接包含冲突的资源标识或文件名，无法安全判断 |
 | MAGNET_UNSUPPORTED | 当前不支持该磁力链接类型或选择性下载参数，请使用标准 BTIH 链接 |
 | MAGNET_MALFORMED | 磁力链接参数编码或格式有误 |
