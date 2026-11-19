@@ -20,9 +20,13 @@ func registerLibrary(h *Handler, reads product.LibraryReads) {
 		return
 	}
 	h.mux.Handle("GET /api/v1/library", h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		q, err := strictQuery(r, "surface", "category", "q", "cursor", "page")
+		q, err := strictQuery(r, "surface", "category", "q", "cursor", "page", "taxonomy")
 		if err != nil {
 			readFailure(w, err)
+			return
+		}
+		if q.Has("taxonomy") && q.Get("taxonomy") != "2" {
+			failure(w, 400, "INVALID_REQUEST")
 			return
 		}
 		surface := q.Get("surface")
@@ -42,7 +46,7 @@ func registerLibrary(h *Handler, reads product.LibraryReads) {
 				return
 			}
 		}
-		page, err := reads.Library(r.Context(), p, product.LibraryRequest{Surface: surface, Category: category, Search: q.Get("q"), Cursor: q.Get("cursor"), Page: number})
+		page, err := reads.Library(r.Context(), p, product.LibraryRequest{Surface: surface, Category: category, DetailedCategories: q.Get("taxonomy") == "2", Search: q.Get("q"), Cursor: q.Get("cursor"), Page: number})
 		if err != nil {
 			switch {
 			case errors.Is(err, product.ErrLibraryScopeChanged):

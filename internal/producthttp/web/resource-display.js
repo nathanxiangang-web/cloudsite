@@ -30,10 +30,15 @@ const ResourceDisplay = (() => {
   const key=Object.keys(formats).find(kind=>formats[kind].includes(extension)) || 'other';
   return {key,extension,...kinds[key]};
  }
- function category(item){const key=classify(item).key;return ['software','video','document'].includes(key)?key:'other';}
- function counts(items){
+ const categoryNames=Object.freeze(['all','video','software','document','image','audio','archive','other']);
+ function category(item,detailed=false){
+  const key=classify(item).key;
+  return (detailed?categoryNames:['software','video','document']).includes(key)?key:'other';
+ }
+ function counts(items,detailed=false){
   const result={all:items.length,software:0,video:0,document:0,other:0};
-  for(const item of items)result[category(item)]++;
+  if(detailed)Object.assign(result,{image:0,audio:0,archive:0});
+  for(const item of items)result[category(item,detailed)]++;
   return result;
  }
  function filter(items,kind,query){
@@ -53,5 +58,5 @@ const ResourceDisplay = (() => {
   const note={software:'安装包只按后缀识别，不推断版本、厂商或安全性，不自动执行。',video:'视频后缀不代表可播放；播放器、字节范围读取和编码验证尚未接入。',document:'文档正文尚未读取；安全正文预览与下载入口尚未接入。',image:'图片内容尚未读取，不使用虚构缩略图。',archive:'归档内容未检查，压缩包不会被自动当作软件。',audio:'音频内容尚未读取，播放与编码验证尚未接入。'}[kind] || '当前只展示规范元数据，文件内容访问尚未接入。';
   return copy+' '+note;
  }
- return Object.freeze({name,classify,category,counts,filter,size,accessNote});
+ return Object.freeze({name,classify,category,categoryNames,counts,filter,size,accessNote});
 })();

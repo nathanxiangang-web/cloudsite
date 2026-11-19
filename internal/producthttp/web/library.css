@@ -3,3 +3,12 @@
 .pdf-controls{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:15px 0}.pdf-controls span{font-size:12px;color:var(--muted)}.file-preview img.pdf-page{width:100%;max-height:none;background:white;border:1px solid var(--line)}
 .file-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap}.share-form{max-width:620px;margin:20px 0;padding:22px;background:var(--soft);border-radius:8px}.share-form label{display:block;margin:14px 0 6px}.share-form input,.share-form select{width:100%;padding:11px;border:1px solid var(--line);border-radius:5px;background:white;font:inherit}.share-form button{margin-top:16px}.owned-share{display:flex;justify-content:space-between;align-items:center;gap:18px;border-bottom:1px solid var(--line);padding:18px 0}.owned-share span{overflow-wrap:anywhere;min-width:0}.owned-share button{flex-shrink:0}#download-status,#share-status,#shares-status{font-size:12px;color:var(--muted)}
 .session-error{margin:80px auto;max-width:1140px;padding:0 28px;font-size:14px}
+
+.category-landing{margin:1.75rem 0}
+.category-status:empty{display:none}
+.category-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr));gap:.8rem}
+.category-grid a{display:flex;justify-content:space-between;align-items:center;gap:.75rem;padding:1rem 1.15rem;background:white;color:var(--ink);border:1px solid var(--line);border-radius:.85rem;text-decoration:none}
+.category-grid a:hover,.category-grid a:focus-visible{border-color:var(--accent);background:var(--soft)}
+.category-grid span,.all-resources span{color:var(--muted);font-size:.85rem}
+.all-resources{display:inline-block;margin-top:1.25rem;color:var(--accent)}
+[data-file-surface="downloads"] :is(#category-image,#category-audio,#category-archive){display:none}

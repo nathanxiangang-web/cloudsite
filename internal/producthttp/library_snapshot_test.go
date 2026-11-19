@@ -15,10 +15,12 @@ import (
 type libraryFake struct {
 	calls int
 	err   error
+	query product.LibraryRequest
 }
 
-func (f *libraryFake) Library(context.Context, auth.Principal, product.LibraryRequest) (product.LibraryPage, error) {
+func (f *libraryFake) Library(_ context.Context, _ auth.Principal, query product.LibraryRequest) (product.LibraryPage, error) {
 	f.calls++
+	f.query = query
 	return product.LibraryPage{Items: []product.Resource{}, Counts: &libraryview.Counts{}, Ready: true, Revision: strings.Repeat("a", 64), Limit: 50}, f.err
 }
 func TestLibraryHTTPAuthenticationBeforeConditionalRead(t *testing.T) {
@@ -76,5 +78,28 @@ func TestLibraryHTTPStrictScopesErrorsAndCapability(t *testing.T) {
 		if w := request(h, "GET", "/api/v1/library", "", testToken, ""); w.Code != tc.status || w.Header().Get("ETag") != "" {
 			t.Fatal(w.Code)
 		}
+	}
+}
+
+func TestPublicCategoryPagesAndVersionedRead(t *testing.T) {
+	backend := &libraryFake{}
+	h, err := NewWorkspaceHandler(&fakeAccess{p: goodPrincipal()}, "http://127.0.0.1:8180", &readAccessFake{}, []DisplayBinding{workspaceBinding}, 22, WithLibraryReads(backend))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, category := range []string{"all", "video", "software", "document", "image", "audio", "archive", "other"} {
+		page := request(h, "GET", "/library/"+category, "", "", "")
+		if page.Code != http.StatusOK || !strings.Contains(page.Body.String(), "id=\"category-landing\"") {
+			t.Fatalf("category %s: HTTP %d", category, page.Code)
+		}
+	}
+	if page := request(h, "GET", "/library/unknown", "", "", ""); page.Code != http.StatusNotFound {
+		t.Fatalf("unknown category: HTTP %d", page.Code)
+	}
+	if response := request(h, "GET", "/api/v1/library?taxonomy=2&category=archive", "", testToken, ""); response.Code != http.StatusOK || !backend.query.DetailedCategories || backend.query.Category != "archive" {
+		t.Fatalf("category request: HTTP %d, query %+v", response.Code, backend.query)
+	}
+	if response := request(h, "GET", "/api/v1/library?taxonomy=unknown", "", testToken, ""); response.Code != http.StatusBadRequest {
+		t.Fatalf("invalid taxonomy: HTTP %d", response.Code)
 	}
 }

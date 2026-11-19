@@ -76,7 +76,7 @@ test('session page and queue caps disclose incomplete results',async()=>{
  for(let round=0;round<2;round++)await d.round(async()=>page(Array.from({length:50},()=>file('dir-'+(++id),{directory:true}))));
  assert.equal(d.limited,true);assert.equal(d.complete,false);assert.ok(d.scopes.size<=256);
 });
-function workspace(surface='library'){
+function workspace(surface='library',pathname=''){
 
  const html=fs.readFileSync(path.join(web,surface==='downloads'?'downloads.html':'library.html'),'utf8').replace('<!--FILE_BROWSER-->',fs.readFileSync(path.join(web,'file-browser.html'),'utf8'));const ids=new Set(Array.from(html.matchAll(/id="([^"]+)"/g),m=>m[1]));
  class Element{
@@ -86,12 +86,12 @@ function workspace(surface='library'){
   addEventListener(type,fn){(this.listeners[type]||=[]).push(fn);}setAttribute(k,v){this.attrs[k]=v;}removeAttribute(k){delete this.attrs[k];delete this[k];}scrollIntoView(){}focus(){this.focused=true;}async play(){this.paused=false;this.played=true;}pause(){this.paused=true;}load(){this.loaded=true;}click(){this.clicked=true;}select(){this.selected=true;}
  }
  const elements=new Map(Array.from(ids,id=>[id,new Element()]));const requests=[],created=[],copied=[],timers=[];
- const ctx=vm.createContext({AbortController,URLSearchParams,TextEncoder,setTimeout,clearTimeout,setInterval(callback,ms){timers.push({callback,ms});return timers.length;},crypto:require('node:crypto').webcrypto,navigator:{clipboard:{async writeText(value){copied.push(value);}}},document:{body:{dataset:{fileSurface:surface}},getElementById(id){assert.ok(elements.has(id),'Unknown id '+id);return elements.get(id);},createElement(){const e=new Element();created.push(e);return e;}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
+ const ctx=vm.createContext({location:pathname?{pathname,assign(url){this.destination=url;}}:undefined,AbortController,URLSearchParams,TextEncoder,setTimeout,clearTimeout,setInterval(callback,ms){timers.push({callback,ms});return timers.length;},crypto:require('node:crypto').webcrypto,navigator:{clipboard:{async writeText(value){copied.push(value);}}},document:{body:{dataset:{fileSurface:surface}},getElementById(id){assert.ok(elements.has(id),'Unknown id '+id);return elements.get(id);},createElement(){const e=new Element();created.push(e);return e;}},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});
  for(const script of ['resource-display.js','file-catalog.js','file-surface.js','library-page.js','library.js','library-sharing.js'])vm.runInContext(fs.readFileSync(path.join(web,script),'utf8'),ctx);
  return {ctx,elements,requests,created,copied,timers,run:s=>vm.runInContext(s,ctx)};
 }
 
-function remotePage(items,next='',offset=0){return {items:items.map(item=>({...item,path:item.path??null})),counts:{all:343,software:42,video:235,document:6,other:60},ready:true,stale:false,revision:'a'.repeat(64),updated_at:'2026-11-15T00:00:00Z',next_cursor:next,offset,filtered:343,limit:50};}
+function remotePage(items,next='',offset=0){return {items:items.map(item=>({...item,path:item.path??null})),counts:{all:343,software:42,video:235,document:6,image:0,audio:0,archive:0,other:60},ready:true,stale:false,revision:'a'.repeat(64),updated_at:'2026-11-15T00:00:00Z',next_cursor:next,offset,filtered:343,limit:50};}
 function remoteStart(app){app.run("library.remote=true;library.userID='owner';library.bindings=[{binding_id:'one'}];library.wholeRoot=true;");return app.run('refreshFiles()');}
 function remoteRespond(app,payload,status=200,etag='"one"'){
  const req=app.requests.filter(r=>r.url.startsWith('/api/v1/library?')&&!r.done).at(-1);assert.ok(req);req.done=true;req.resolve({ok:status>=200&&status<300,status,headers:{get(){return etag;}},json:async()=>payload});return req;
@@ -106,6 +106,30 @@ test('snapshot surface obtains full counts in one page request and conditionally
  assert.equal(app.requests.filter(r=>r.url.startsWith('/api/v1/resources?')).length,0);assert.equal(app.elements.get('count-all').textContent,'343');assert.equal(app.elements.get('file-grid').children.length,50);
  const first=app.elements.get('file-grid').children[0];const next=app.run('refreshCanonicalQuietly()');const req=remoteRespond(app,null,304);assert.equal(req.options.headers['If-None-Match'],'"one"');await next;
  assert.equal(app.elements.get('file-grid').children[0],first,'304 must not rebuild the cards');assert.equal(app.elements.get('count-all').textContent,'343');
+});
+test('category home shows complete counts without rendering an all-files grid',async()=>{
+ const app=workspace('library','/');const pending=app.run("signIn({user_id:'owner',login:'fixture'})");
+ app.requests.find(r=>r.url==='/api/v1/workspace').resolve({ok:true,status:200,json:async()=>({bindings:[{binding_id:'one'}],library_snapshot_enabled:true})});
+ await new Promise(resolve=>setImmediate(resolve));
+ const response=remotePage([file('a')]);response.counts.image=12;response.counts.other-=12;
+ const req=remoteRespond(app,response);await pending;
+ assert.match(req.url,/taxonomy=2/);
+ assert.equal(app.elements.get('file-browser').hidden,true);
+ assert.equal(app.elements.get('category-landing').hidden,false);
+ assert.equal(app.elements.get('landing-count-image').textContent,'12 个文件');
+ assert.equal(app.elements.get('file-grid').children.length,0);
+});
+test('category route requests the selected server category and switches by URL',async()=>{
+ const app=workspace('library','/library/image');const pending=app.run("signIn({user_id:'owner',login:'fixture'})");
+ app.requests.find(r=>r.url==='/api/v1/workspace').resolve({ok:true,status:200,json:async()=>({bindings:[{binding_id:'one'}],library_snapshot_enabled:true})});
+ await new Promise(resolve=>setImmediate(resolve));
+ const response=remotePage([file('photo',{name:'photo.jpg'})]);response.counts.image=1;response.counts.other--;response.filtered=1;
+ const req=remoteRespond(app,response);await pending;
+ assert.match(req.url,/category=image/);assert.match(req.url,/taxonomy=2/);
+ assert.equal(app.elements.get('library-title').textContent,'图片');
+ assert.equal(app.elements.get('file-grid').children.length,1);
+ app.elements.get('category-audio').listeners.click[0]();
+ assert.equal(app.run('location.destination'),'/library/audio');
 });
 test('snapshot errors and unknown cold counts preserve honest presentation',async()=>{
  const app=workspace();let pending=remoteStart(app);remoteRespond(app,{...remotePage([file('preview')]),ready:false,counts:null,filtered:1});await pending;
@@ -268,12 +292,12 @@ test('four-character code is random on open, clearing stays empty and copying pr
  app.run("library.createdShareCode='aB39';");app.elements.get('share-code').value='xxxx';await app.elements.get('share-copy').listeners.click[0]();assert.ok(app.copied[1].endsWith('提取码：aB39'));
 });
 
-test('all files remain reachable with120-card pages; non-core extensions are Other',()=>{
+test('all files remain reachable with 120-card pages and new category labels',()=>{
  const app=workspace();app.ctx.items=Array.from({length:241},(_,n)=>file(String(n)));
  app.run("library.catalog=new FileCatalog.Catalog([{binding_id:'one'}],true);library.catalog.files=items;library.catalog.pending=[];drawFiles();");
  assert.equal(app.elements.get('file-grid').children.length,120);assert.equal(app.elements.get('count-all').textContent,'241');
  app.elements.get('file-page-next').listeners.click[0]();app.elements.get('file-page-next').listeners.click[0]();assert.equal(app.elements.get('file-grid').children.length,1);assert.ok(app.elements.get('file-page-status').textContent.includes('3 / 3'));
- for(const name of ['image.png','archive.zip','music.mp3','no-extension','file.xyz']){app.ctx.item=file('other',{name});assert.equal(app.run('ResourceDisplay.category(item)'),'other');app.run('fileDetail(item,null);');assert.equal(app.elements.get('detail-type').textContent,'其他');}
+ for(const [name,label] of [['image.png','图片'],['archive.zip','归档文件'],['music.mp3','音频'],['no-extension','其他'],['file.xyz','其他']]){app.ctx.item=file('test',{name});app.run('fileDetail(item,null);');assert.equal(app.elements.get('detail-type').textContent,label);}
 });
 
 test('both real controllers partition before search/count/pagination and retain all file actions',()=>{

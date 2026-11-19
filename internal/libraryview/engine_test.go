@@ -414,3 +414,40 @@ func TestLibraryEmptyNonterminalPageCannotPublishDeletion(t *testing.T) {
 		t.Fatal(p)
 	}
 }
+
+func TestDetailedCategoriesUsePublishedCountsAndBindSearchCursors(t *testing.T) {
+	e, f := setup(t, 0, 0)
+	for i, name := range []string{"report-a.jpg", "REPORT-b.PNG", "music.flac", "bundle.tar.gz", "notes.pdf", "movie.mp4", "setup.exe", "README", "private.jpg"} {
+		resource := row(i, false)
+		path := "/" + name
+		if name == "private.jpg" {
+			path = "/downloads/_users/alice/private.jpg"
+		}
+		resource.Name, resource.CanonicalPath = &name, &path
+		f.inventory = append(f.inventory, resource)
+	}
+	if err := e.Sync(context.Background(), "one"); err != nil {
+		t.Fatal(err)
+	}
+	legacy, err := e.Page(query())
+	if err != nil || !legacy.Ready || legacy.Counts.All != 8 || legacy.Counts.Other != 5 {
+		t.Fatalf("legacy totals = %+v, error = %v", legacy.Counts, err)
+	}
+	q := query()
+	q.DetailedCategories = true
+	q.Category, q.Search, q.Limit = "image", "report", 1
+	first, err := e.Page(q)
+	want := Counts{All: 8, Software: 1, Video: 1, Document: 1, Image: 2, Audio: 1, Archive: 1, Other: 1}
+	if err != nil || !first.Ready || *first.Counts != want || first.Filtered != 2 || len(first.Items) != 1 || first.NextCursor == "" {
+		t.Fatalf("first page = %+v, error = %v", first, err)
+	}
+	q.Cursor = first.NextCursor
+	next, err := e.Page(q)
+	if err != nil || len(next.Items) != 1 || next.Items[0].Resource.ResourceID == first.Items[0].Resource.ResourceID || next.NextCursor != "" {
+		t.Fatalf("next page = %+v, error = %v", next, err)
+	}
+	q.Category = "audio"
+	if _, err := e.Page(q); !errors.Is(err, ErrInvalid) {
+		t.Fatalf("image cursor accepted for audio: %v", err)
+	}
+}
