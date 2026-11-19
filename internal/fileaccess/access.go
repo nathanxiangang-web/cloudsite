@@ -22,6 +22,7 @@ type Request struct {
 	BindingID               storage.BindingID
 	ResourceID, Path, Range string
 	Head                    bool
+	Inline                  bool
 	UserAgent               string
 }
 type SourceRequest struct {
@@ -46,10 +47,11 @@ type File struct {
 	DirectURL       string
 }
 type Service struct {
-	reads       product.Reads
-	topology    product.TopologyReader
-	source      Source
-	directHosts []string
+	reads            product.Reads
+	topology         product.TopologyReader
+	source           Source
+	directHosts      []string
+	videoDirectHosts []string
 }
 
 func New(reads product.Reads, topology product.TopologyReader, source Source) (*Service, error) {
@@ -116,5 +118,9 @@ func (s *Service) describe(ctx context.Context, p auth.Principal, r Request) (Fi
 		}
 		return c
 	}, name)
-	return File{Name: name, Extension: strings.ToLower(strings.TrimPrefix(path.Ext(name), ".")), Size: *item.SizeBytes}, SourceRequest{Mount: mount, Path: r.Path, Size: *item.SizeBytes}, nil
+	return File{Name: name, Extension: fileExtension(name), Size: *item.SizeBytes}, SourceRequest{Mount: mount, Path: r.Path, Size: *item.SizeBytes}, nil
+}
+
+func fileExtension(name string) string {
+	return strings.ToLower(strings.TrimPrefix(path.Ext(name), "."))
 }

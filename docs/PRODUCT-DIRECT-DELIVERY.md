@@ -42,6 +42,11 @@ userinfo/fragment, matching an approved host on443. Missing/wrong metadata,
 unapproved/private/internal URLs, malformed UA, canonical mismatch or invalid
 Range fail closed: no silent server-proxy fallback and no secret errors.
 
+`video_direct_link_hosts` enables the same exact-host HTTPS policy for signed-in
+inline video playback, including an owner's private downloads. This option
+does not change attachment, document preview, or guest delivery. A missing or
+unapproved video URL returns an error without opening a server byte stream.
+
 Forward only caller UA to metadata resolution, never product cookies/grants or
 OpenList Authorization to the CDN. Direct mode issues a temporary upstream bearer
 URL to an authorized client. Product revoke denies NEW redirects; it cannot
