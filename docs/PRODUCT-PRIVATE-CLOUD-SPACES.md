@@ -134,3 +134,8 @@ CloudSite verified session (user_id)
 - `docs/FILE-SURFACES.md`、`docs/PRODUCT-DIRECT-DELIVERY.md`、`docs/PRODUCT-FILE-SHARING.md`
 - `PROJECT-CONTEXT.md`（provider vs IndexCore 权威边界）
 - `docs/DECISIONS.md` 的 D-058/D-059/D-060/D-064 与拟议 D-065
+
+
+## 2026-11-19 superseding owner instruction — private single-file sharing is allowed (D-069)
+
+The older blanket rule in section 4 that forbids private-cloud shares is superseded by D-069 and docs/PRODUCT-SPACE-LIBRARY-DIRECT-DELIVERY-REDESIGN.md. Private UserSpace files may be shared as single-file product shares, with stable owner UUID, ACTIVE UserSpace, exact Canonical/Binding/ResourceID/PRESENT proof, expiring share token, optional four-character code, separate grant, owner-only listing/revoke and per-request reauthorization. Guest access never grants directory browse or arbitrary path access. Every private share download is 302-only; proxy delivery is forbidden. Already-issued upstream URLs remain valid until their verifiable short expiry; private share activation is blocked until this is proven. All other D-065 ownership, no-capacity-quota, UNKNOWN, provider and IndexCore safety constraints remain.

@@ -72,3 +72,8 @@ binary/config hashes and old config before cutover. No DB/index changes, scans,
 Hint/Worker/native115 StartDownload or historical acquisition mutation. Verify
 real302->CDN206/byte hash, document preview, ordinary and redeemed guest downloads,
 video playback and seek. Rollback is prior product image/config, no data restore.
+
+
+## 2026-11-19 owner-locked superseding contract — D-069
+
+The earlier optional direct-link configuration and proxy rollback language above is historical. It is superseded by D-069 and docs/PRODUCT-SPACE-LIBRARY-DIRECT-DELIVERY-REDESIGN.md: public/private downloads, video/audio playback and public/private share downloads are always HTTP 302 to exact allowlisted HTTPS upstream URLs. CloudSite must never proxy/stream/buffer file bytes for these flows. Missing/empty allowlist or any link/host validation failure returns a safe error; no Open/io.Copy/io.CopyN/200/206 fallback. Private single-file shares are allowed with owner/UserSpace/share-grant reauthorization. Already-issued upstream bearer URLs remain usable until their upstream expiry; private share launch requires verifiable short URL TTL. Server-side document preview remains a separate path.

@@ -1876,3 +1876,25 @@ can produce a safe no-start FAILED marker. Every actual StartDownload error, los
 reference, existing unknown reservation and crash window keeps its existing fence.
 No historical inference, implicit retry, migration, second writer or READY shortcut.
 See [module and rollout contract](CLOUD-DOWNLOAD-SESSION-HEALTH.md).
+
+
+## D-069 — Owner-locked 302-only delivery, private shares and separated resource surfaces (2026-11-19)
+
+**Status: Accepted owner directive; immutable implementation constraint.** See [Issue #199](https://github.com/nathanxiangang-web/cloudsite/issues/199) and [the full design/developer contract](PRODUCT-SPACE-LIBRARY-DIRECT-DELIVERY-REDESIGN.md).
+
+CloudSite public/private file downloads, video/audio playback and public/private share downloads must always use authenticated/authorized HTTP 302 redirects to exact allowlisted HTTPS upstream URLs. CloudSite may validate identity, owner/UserSpace, canonical resource identity, share/grant and link metadata, but must never stream, proxy, relay, buffer or return file bytes for these delivery flows. This applies to GET, HEAD, Range, seek, resume and retry. Empty/missing allowlist, LinkSource failure, expired/unsafe URL or host mismatch fails closed; there is no proxy fallback to Open, io.Copy, io.CopyN, 200 or 206. Explicit server-side document preview/conversion remains a separate capability and cannot be called by download/play/share handlers.
+
+Private UserSpace single-file sharing is permitted. It requires stable owner UUID, ACTIVE UserSpace, exact Binding/Root/ResourceID/Canonical Path/PRESENT proof, owner-scoped share/grant, one-file-only guest access and per-request reauthorization. Share revoke blocks new grants/302 immediately; already issued upstream bearer URLs may remain valid until their verifiable upstream expiry. Private sharing must not be enabled until the upstream URL lifetime is verifiable and short (design target <=60 seconds); never replace this requirement with a CloudSite proxy.
+
+Public resource library defaults to separate video/software/document/image/audio/archive/other category surfaces, with an explicit secondary all-resources view. Cloud download UI is one-click and reuses the existing server-side MagnetBTIHNameV1 PrepareSource and durable original/execution/policy/idempotency contract. Preserve private single-file deletion gates and no per-user storage-byte quota.
+
+This decision supersedes conflicting older optional-proxy and private-share-disabled wording in D-052, D-065 and historical product docs. It may only be superseded by a new explicit product-owner instruction and a new append-only decision; ordinary implementation PRs may strengthen, never weaken, this contract. This decision and the associated documentation do not claim code implementation, release, deployment or production acceptance.
+
+
+### D-069 implementation clarification — redirected media Range and share-token transport
+
+The CloudSite content endpoint authorizes the initial request and returns a 302. After the browser follows that redirect, subsequent video/audio Range, seek and resume requests go directly to the upstream CDN and are authorized by the short-lived upstream bearer URL; they do not pass through CloudSite for per-Range reauthorization. Revoke/owner disable/delete therefore blocks new CloudSite grants and redirects but cannot terminate an already-issued CDN URL or in-flight CDN transfer before upstream expiry/revocation. Tests and UI must reflect this boundary.
+
+Preserve the existing share URL fragment pattern (for example `/s/#<token>`) so the secret token is not sent in the HTTP request path/access log. The share page reads the fragment client-side and submits the token to the redeem endpoint in a request body; request-body logging must redact it. Do not move the token into a path segment or query string.
+
+D-069 TTL scope clarification: a verifiable upstream `ExpiresAt` and the <=60-second design target are mandatory before private-share redirects are enabled, because those links are bearer credentials and share revocation must have a bounded residual window. Ordinary authenticated direct downloads/playback still follow the upstream provider's URL semantics; if their TTL is not exposed, do not claim instant revocation, but do not invent an expiry or silently proxy the bytes. All such responses remain no-store 302-only.

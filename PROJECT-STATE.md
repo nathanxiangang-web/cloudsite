@@ -1,5 +1,14 @@
 # cloudsite — Project State
 
+## Owner-locked product architecture — Issue #199 (2026-11-19)
+
+Before changing consumer file access, private spaces, shares, download admission or library UI, read [the redesign and implementation contract](docs/PRODUCT-SPACE-LIBRARY-DIRECT-DELIVERY-REDESIGN.md) and D-069 in docs/DECISIONS.md.
+
+D-069 is an owner-locked invariant: public/private downloads, video/audio playback and public/private share downloads MUST use an authorized HTTP 302 to an exact allowlisted HTTPS upstream URL. CloudSite MUST NOT stream, proxy, relay or buffer file bytes for these flows. Missing config, LinkSource failure, invalid/expired URL or host mismatch fails closed; no fallback to Open/io.Copy/io.CopyN/200/206. Private single-file sharing is allowed only with owner UUID + active UserSpace + per-request ACL and a verifiable short-lived upstream URL. Existing signed CDN URLs may remain valid until upstream expiry; never promise instant revocation. Keep explicit server-side document preview separate from download/play/share delivery.
+
+Public library defaults to category landing (video/software/document/image/audio/archive/other), not mixed all-files. Cloud download is one-click; server-side PrepareSource is authoritative; preserve original/execution/policy, operation idempotency, session-health and no-auto-POST-replay. Carry forward single-file private deletion safety from Issue #199. No per-user storage-byte quota. This is design authorization only, not code acceptance or production deployment.
+
+
 ## Current maintenance — Issue189 native session health (2026-11-16)
 
 Owner requests visible115 login failures and pre-admission blocking instead of
