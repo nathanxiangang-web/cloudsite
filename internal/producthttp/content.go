@@ -3,8 +3,6 @@ package producthttp
 import (
 	"errors"
 	"fmt"
-	"io"
-	"mime"
 	"net/http"
 	"strconv"
 	"sync"
@@ -165,34 +163,20 @@ func registerContent(h *Handler, service *fileaccess.Service, previews *fileacce
 		h.mux.Handle("GET /api/v1/files/"+mode, handler)
 	}
 }
-func writeFile(w http.ResponseWriter, r *http.Request, file fileaccess.File, disposition string) {
-	if file.DirectURL != "" {
-		w.Header().Set("Cache-Control", "no-store")
-		w.Header().Set("Referrer-Policy", "no-referrer")
-		w.Header().Set("Location", file.DirectURL)
-		w.WriteHeader(http.StatusFound)
+func writeFile(w http.ResponseWriter, _ *http.Request, file fileaccess.File, _ string) {
+	if file.Content.Body != nil {
+		_ = file.Content.Body.Close()
+		failure(w, http.StatusServiceUnavailable, "CONTENT_UNAVAILABLE")
 		return
 	}
-	defer file.Content.Body.Close()
-	media := inlineType(file.Extension)
-	if disposition != "inline" || media == "" {
-		disposition = "attachment"
-		media = "application/octet-stream"
+	if file.DirectURL == "" {
+		failure(w, http.StatusServiceUnavailable, "CONTENT_UNAVAILABLE")
+		return
 	}
-	w.Header().Set("Content-Type", media)
-	w.Header().Set("Content-Disposition", mime.FormatMediaType(disposition, map[string]string{"filename": file.Name}))
-	w.Header().Set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'")
-	w.Header().Set("X-Frame-Options", "SAMEORIGIN")
-	w.Header().Set("Accept-Ranges", "bytes")
-	w.Header().Set("Content-Length", fmt.Sprint(file.Content.Length))
-	if file.Content.ContentRange != "" {
-		w.Header().Set("Content-Range", file.Content.ContentRange)
-	}
-	_ = http.NewResponseController(w).SetWriteDeadline(time.Now().Add(30 * time.Minute))
-	w.WriteHeader(file.Content.Status)
-	if r.Method != http.MethodHead {
-		_, _ = io.CopyN(w, file.Content.Body, file.Content.Length)
-	}
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Referrer-Policy", "no-referrer")
+	w.Header().Set("Location", file.DirectURL)
+	w.WriteHeader(http.StatusFound)
 }
 func contentFailure(w http.ResponseWriter, err error) {
 	switch {

@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -148,5 +149,37 @@ func TestServeGracefulCancellation(t *testing.T) {
 	if conn, err := net.DialTimeout("tcp", listener.Addr().String(), 100*time.Millisecond); err == nil {
 		conn.Close()
 		t.Fatal("listener survived shutdown")
+	}
+}
+
+func TestFileAccessConfigRequiresAndUnifiesOneDirectAllowlist(t *testing.T) {
+	if hosts, err := (fileAccessConfig{VideoDirectLinkHosts: []string{"video.example.test"}}).unifiedDirectHosts(); err != nil || len(hosts) != 0 {
+		t.Fatal("legacy video-only allowlist must not enable general file delivery", hosts, err)
+	}
+	cfg := fileAccessConfig{
+		DirectLinkHosts:       []string{"cdn.example.test", "files.example.test"},
+		VideoDirectLinkHosts:  []string{"video.example.test", "cdn.example.test"},
+		SharedDirectLinkHosts: []string{"share.example.test", "video.example.test"},
+	}
+	hosts, err := cfg.unifiedDirectHosts()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"cdn.example.test", "files.example.test", "video.example.test", "share.example.test"}
+	if len(hosts) != len(want) {
+		t.Fatalf("unified hosts = %#v", hosts)
+	}
+	for i := range want {
+		if hosts[i] != want[i] {
+			t.Fatalf("unified hosts = %#v, want %#v", hosts, want)
+		}
+	}
+	cfg.DirectLinkHosts = []string{"cdn.example.test"}
+	cfg.VideoDirectLinkHosts = make([]string, 16)
+	for i := range cfg.VideoDirectLinkHosts {
+		cfg.VideoDirectLinkHosts[i] = "legacy" + strconv.Itoa(i) + ".example.test"
+	}
+	if _, err := cfg.unifiedDirectHosts(); err == nil {
+		t.Fatal("more than 16 unified hosts accepted")
 	}
 }

@@ -51,8 +51,9 @@ func (f *fakeStore) Granted(_ context.Context, id string, hash []byte) (Record, 
 }
 
 type fakeFiles struct {
-	err    error
-	opened int
+	err      error
+	opened   int
+	bodyOnly bool
 }
 
 func (f *fakeFiles) Describe(context.Context, auth.Principal, fileaccess.Request) (fileaccess.File, error) {
@@ -95,10 +96,14 @@ func TestShareCodeGrantIsolationAndCanonicalRevalidation(t *testing.T) {
 		t.Fatal("grant issuance", err)
 	}
 	file, err := s.Open(ctx, record.ID, grant.Token, "", false)
-	if err != nil || files.opened != 1 {
-		t.Fatal("canonical byte authorization", err)
+	if err != nil || file.DirectURL == "" || file.Content.Body != nil || files.opened != 0 {
+		t.Fatal("canonical redirect authorization", err)
 	}
-	file.Content.Body.Close()
+	files.bodyOnly = true
+	if _, err = s.Open(ctx, record.ID, grant.Token, "", false); !errors.Is(err, ErrUnavailable) || files.opened != 1 {
+		t.Fatal("share service accepted byte-body fallback", err)
+	}
+	files.bodyOnly = false
 	files.err = fileaccess.ErrUnavailable
 	if _, err = s.Open(ctx, record.ID, grant.Token, "", false); err == nil {
 		t.Fatal("stale canonical bypass")

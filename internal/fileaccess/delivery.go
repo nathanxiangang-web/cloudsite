@@ -16,8 +16,8 @@ type LinkSource interface {
 	ResolveLink(context.Context, SourceRequest) (string, error)
 }
 
-// EnableDirectLinks is composition-only. An empty list preserves legacy proxy
-// delivery. Exact HTTPS DNS hosts also define the browser media CSP sources.
+// EnableDirectLinks is composition-only. One required allowlist governs every
+// public/private download, media playback and shared download.
 func (s *Service) EnableDirectLinks(hosts []string) error {
 	if err := s.validateLinkHosts(hosts); err != nil {
 		return err
@@ -26,33 +26,13 @@ func (s *Service) EnableDirectLinks(hosts []string) error {
 	return nil
 }
 
-// EnableVideoDirectLinks restricts the playback opt-in to explicit inline video
-// requests. Each redirected file still goes through the normal ownership check.
-func (s *Service) EnableVideoDirectLinks(hosts []string) error {
-	if err := s.validateLinkHosts(hosts); err != nil {
-		return err
-	}
-	s.videoDirectHosts = append([]string(nil), hosts...)
-	return nil
-}
-
-// EnableSharedDirectLinks opts redeemed guest downloads into exact-host HTTPS
-// redirects after the sharing service has validated the current grant.
-func (s *Service) EnableSharedDirectLinks(hosts []string) error {
-	if err := s.validateLinkHosts(hosts); err != nil {
-		return err
-	}
-	s.sharedDirectHosts = append([]string(nil), hosts...)
-	return nil
-}
-
 func (s *Service) validateLinkHosts(hosts []string) error {
-	if len(hosts) > 16 {
+	if len(hosts) == 0 || len(hosts) > 16 {
 		return ErrUnavailable
 	}
 	seen := map[string]bool{}
 	for _, host := range hosts {
-		if host == "" || len(host) > 253 || host != strings.ToLower(host) || !strings.Contains(host, ".") || net.ParseIP(host) != nil || strings.HasSuffix(host, ".local") || strings.HasSuffix(host, ".localhost") {
+		if host == "" || len(host) > 253 || host != strings.ToLower(host) || !strings.Contains(host, ".") || net.ParseIP(host) != nil || strings.HasSuffix(host, ".local") || strings.HasSuffix(host, ".localhost") || strings.HasSuffix(host, ".internal") || hasNumericFinalLabel(host) {
 			return ErrUnavailable
 		}
 		for _, label := range strings.Split(host, ".") {
@@ -70,59 +50,44 @@ func (s *Service) validateLinkHosts(hosts []string) error {
 		}
 		seen[host] = true
 	}
-	if len(hosts) > 0 {
-		if _, ok := s.source.(LinkSource); !ok {
-			return ErrUnavailable
-		}
+	if _, ok := s.source.(LinkSource); !ok {
+		return ErrUnavailable
 	}
 	return nil
 }
 
+// Browsers interpret hostnames ending in an IPv4 number differently from
+// net.ParseIP, including abbreviated, octal and hexadecimal IP spellings.
+func hasNumericFinalLabel(host string) bool {
+	label := host[strings.LastIndexByte(host, '.')+1:]
+	if label == "" {
+		return false
+	}
+	if strings.HasPrefix(label, "0x") {
+		return strings.Trim(label[2:], "0123456789abcdef") == ""
+	}
+	return strings.Trim(label, "0123456789") == ""
+}
+
+// MediaSources exposes only the exact allowlisted HTTPS hosts to browser media CSP.
 func (s *Service) MediaSources() []string {
-	result := make([]string, 0, len(s.directHosts)+len(s.videoDirectHosts))
-	seen := make(map[string]bool, cap(result))
-	for _, hosts := range [][]string{s.directHosts, s.videoDirectHosts} {
-		for _, host := range hosts {
-			if !seen[host] {
-				result = append(result, "https://"+host)
-				seen[host] = true
-			}
-		}
+	result := make([]string, 0, len(s.directHosts))
+	for _, host := range s.directHosts {
+		result = append(result, "https://"+host)
 	}
 	return result
 }
 
-func isVideo(ext string) bool {
-	switch ext {
-	case "mp4", "mkv", "webm", "mov", "avi", "m4v", "mpeg", "mpg", "wmv", "ts", "m2ts", "flv", "3gp", "ogv":
-		return true
-	default:
-		return false
-	}
-}
-
-// Deliver preserves canonical authorization for each redirect. Open remains the
-// byte-only port used by the private document preview cache.
+// Deliver always authorizes the canonical file and resolves an upstream URL.
+// It never opens, streams, proxies or buffers file bytes. PreviewSource is
+// reachable only through PreviewService.
 func (s *Service) Deliver(ctx context.Context, p auth.Principal, r Request) (File, error) {
-	hosts := s.directHosts
-	private := cloudpath.IsPrivate(r.Path)
-	if r.Shared && private {
+	if r.Shared && cloudpath.IsPrivate(r.Path) {
 		return File{}, product.ErrNotFound
-	}
-	video := !r.Shared && len(s.videoDirectHosts) > 0 && r.Inline && isVideo(fileExtension(r.Path))
-	if r.Shared && len(s.sharedDirectHosts) > 0 {
-		hosts = s.sharedDirectHosts
-	} else if video {
-		hosts = s.videoDirectHosts
-	} else if len(hosts) == 0 || private {
-		return s.Open(ctx, p, r)
 	}
 	file, source, err := s.describe(ctx, p, r)
 	if err != nil {
 		return file, err
-	}
-	if video && !isVideo(file.Extension) {
-		return File{}, ErrUnavailable
 	}
 	if _, _, _, err = ByteRange(r.Range, file.Size); err != nil {
 		return File{Size: file.Size}, err
@@ -130,19 +95,27 @@ func (s *Service) Deliver(ctx context.Context, p auth.Principal, r Request) (Fil
 	if len(r.UserAgent) > 2048 || strings.ContainsAny(r.UserAgent, "\x00\r\n") {
 		return File{}, ErrUnavailable
 	}
+	if len(s.directHosts) == 0 {
+		return File{}, ErrUnavailable
+	}
+	linkSource, ok := s.source.(LinkSource)
+	if !ok {
+		return File{}, ErrUnavailable
+	}
 	source.UserAgent = r.UserAgent
-	target, err := s.source.(LinkSource).ResolveLink(ctx, source)
+	target, err := linkSource.ResolveLink(ctx, source)
 	if err != nil {
 		return File{}, ErrUnavailable
 	}
 	u, err := url.Parse(target)
-	if err != nil || len(target) > 16384 || u.Scheme != "https" || u.User != nil || u.Opaque != "" || u.Fragment != "" || u.Host == "" || strings.ContainsAny(target, "\x00\r\n") {
+	if err != nil || len(target) > 16384 || u.Scheme != "https" || u.User != nil || u.Opaque != "" || u.Host == "" || strings.ContainsAny(target, "#\x00\r\n") {
 		return File{}, ErrUnavailable
 	}
 	allowed := false
-	for _, host := range hosts {
+	for _, host := range s.directHosts {
 		if u.Host == host || u.Host == host+":443" {
 			allowed = true
+			break
 		}
 	}
 	if !allowed {

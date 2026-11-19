@@ -3,10 +3,11 @@ package fileaccess
 import (
 	"context"
 	"errors"
-	"github.com/nathanxiangang-web/panta/internal/auth"
-	"github.com/nathanxiangang-web/panta/internal/product"
 	"strings"
 	"testing"
+
+	"github.com/nathanxiangang-web/panta/internal/auth"
+	"github.com/nathanxiangang-web/panta/internal/product"
 )
 
 type linkFake struct {
@@ -66,7 +67,7 @@ func TestDirectDeliveryKeepsCanonicalAuthorizationAndNeverOpensBytes(t *testing.
 		t.Fatal("header injection")
 	}
 	request.UserAgent = "Browser/1"
-	for _, target := range []string{"http://cdn.example.test/a", "https://evil.example/a", "https://cdn.example.test.evil/a", "https://user@cdn.example.test/a", "https://cdn.example.test/a#x", "https://127.0.0.1/a", "https://cdn.example.test:444/a", "https://cdn.example.test/a\r\nX: yes", ""} {
+	for _, target := range []string{"http://cdn.example.test/a", "https://evil.example/a", "https://cdn.example.test.evil/a", "https://user@cdn.example.test/a", "https://cdn.example.test/a#x", "https://cdn.example.test/a#", "https://127.0.0.1/a", "https://cdn.example.test:444/a", "https://cdn.example.test/a\r\nX: yes", ""} {
 		source.target = target
 		if _, err := s.Deliver(context.Background(), principal(), request); err == nil || source.calls != 0 {
 			t.Fatal("unsafe direct target accepted")
@@ -80,33 +81,26 @@ func TestDirectDeliveryKeepsCanonicalAuthorizationAndNeverOpensBytes(t *testing.
 	if _, err := s.Deliver(context.Background(), principal(), request); err != ErrUnavailable || source.calls != 0 {
 		t.Fatal("unsafe fallback or error leak")
 	}
-	source.linkErr = nil
-	file, err := s.Open(context.Background(), principal(), request)
-	if err != nil || file.DirectURL != "" || source.calls != 1 {
-		t.Fatal("preview stream port changed", err)
-	}
-	file.Content.Body.Close()
 	if len(s.MediaSources()) != 1 || s.MediaSources()[0] != "https://cdn.example.test" {
 		t.Fatal("unbounded media CSP")
 	}
 }
 
-func TestDirectHostConfigurationFailsClosedAndDefaultsToProxy(t *testing.T) {
+func TestDirectHostConfigurationFailsClosedWithoutProxyFallback(t *testing.T) {
 	source := &linkFake{}
 	s, _ := New(&readsFake{item: resource()}, topologyFake{"/docs"}, source)
-	for _, hosts := range [][]string{{"*"}, {"https://cdn.example.test"}, {"cdn.example.test; script-src *"}, {"127.0.0.1"}, {"localhost"}, {"cdn.example.test", "cdn.example.test"}, {"cdn.local"}, {"cdn.localhost"}, {"CDN.example.test"}, {"-a.example.test"}, {strings.Repeat("a", 64) + ".test"}} {
+	for _, hosts := range [][]string{{"*"}, {"https://cdn.example.test"}, {"cdn.example.test; script-src *"}, {"127.0.0.1"}, {"127.1"}, {"0177.0.0.01"}, {"0x7f.0x1"}, {"cdn.internal"}, {"localhost"}, {"cdn.example.test", "cdn.example.test"}, {"cdn.local"}, {"cdn.localhost"}, {"CDN.example.test"}, {"-a.example.test"}, {strings.Repeat("a", 64) + ".test"}} {
 		if s.EnableDirectLinks(hosts) == nil {
 			t.Fatal("invalid host configuration")
 		}
 	}
-	if s.EnableDirectLinks(nil) != nil {
-		t.Fatal("legacy proxy rejected")
+	if s.EnableDirectLinks(nil) == nil {
+		t.Fatal("empty direct allowlist accepted")
 	}
 	file, err := s.Deliver(context.Background(), principal(), Request{BindingID: bindingID, ResourceID: "resource-one", Path: "/docs/file.md"})
-	if err != nil || file.DirectURL != "" || source.calls != 1 || source.links != 0 {
-		t.Fatal("default changed", err)
+	if !errors.Is(err, ErrUnavailable) || file.DirectURL != "" || file.Content.Body != nil || source.calls != 0 || source.links != 0 {
+		t.Fatal("missing direct config did not fail closed", err)
 	}
-	file.Content.Body.Close()
 	plain, _ := New(&readsFake{item: resource()}, topologyFake{"/docs"}, &sourceFake{})
 	if plain.EnableDirectLinks([]string{"cdn.example.test"}) == nil {
 		t.Fatal("missing source port")

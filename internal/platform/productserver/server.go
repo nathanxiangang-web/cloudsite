@@ -34,6 +34,38 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/store/postgres"
 )
 
+type fileAccessConfig struct {
+	BaseURL               string   `json:"base_url"`
+	TokenFile             string   `json:"token_file"`
+	CacheDirectory        string   `json:"cache_directory"`
+	DirectLinkHosts       []string `json:"direct_link_hosts,omitempty"`
+	VideoDirectLinkHosts  []string `json:"video_direct_link_hosts,omitempty"`
+	SharedDirectLinkHosts []string `json:"shared_direct_link_hosts,omitempty"`
+}
+
+func (c fileAccessConfig) unifiedDirectHosts() ([]string, error) {
+	if len(c.DirectLinkHosts) == 0 {
+		return nil, nil
+	}
+	hosts := append([]string(nil), c.DirectLinkHosts...)
+	seen := make(map[string]bool, len(hosts))
+	for _, host := range hosts {
+		seen[host] = true
+	}
+	for _, legacy := range [][]string{c.VideoDirectLinkHosts, c.SharedDirectLinkHosts} {
+		for _, host := range legacy {
+			if !seen[host] {
+				hosts = append(hosts, host)
+				seen[host] = true
+			}
+		}
+	}
+	if len(hosts) > 16 {
+		return nil, ErrConfig
+	}
+	return hosts, nil
+}
+
 func startupError(err error) error {
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 		return err
@@ -265,14 +297,7 @@ func Run(ctx context.Context, action, configFile, userFile string, policies ...c
 		return ErrConfig
 	}
 	if cfg.FileAccessConfigFile != "" {
-		var accessConfig struct {
-			BaseURL               string   `json:"base_url"`
-			TokenFile             string   `json:"token_file"`
-			CacheDirectory        string   `json:"cache_directory"`
-			DirectLinkHosts       []string `json:"direct_link_hosts,omitempty"`
-			VideoDirectLinkHosts  []string `json:"video_direct_link_hosts,omitempty"`
-			SharedDirectLinkHosts []string `json:"shared_direct_link_hosts,omitempty"`
-		}
+		var accessConfig fileAccessConfig
 		if load(startupCtx, cfg.FileAccessConfigFile, &accessConfig, 4096) != nil {
 			cancel()
 			return ErrConfig
@@ -298,9 +323,16 @@ func Run(ctx context.Context, action, configFile, userFile string, policies ...c
 			cancel()
 			return ErrStartup
 		}
-		if files.EnableDirectLinks(accessConfig.DirectLinkHosts) != nil ||
-			files.EnableVideoDirectLinks(accessConfig.VideoDirectLinkHosts) != nil ||
-			files.EnableSharedDirectLinks(accessConfig.SharedDirectLinkHosts) != nil {
+		directHosts, hostErr := accessConfig.unifiedDirectHosts()
+		if hostErr != nil {
+			cancel()
+			return ErrConfig
+		}
+		if len(directHosts) > 0 && files.EnableDirectLinks(directHosts) != nil {
+			cancel()
+			return ErrConfig
+		}
+		if cfg.SharingEnabled && len(directHosts) == 0 {
 			cancel()
 			return ErrConfig
 		}

@@ -50,7 +50,7 @@ func (s *PreviewService) Preview(ctx context.Context, p auth.Principal, r Reques
 	}
 	hash := sha256.Sum256([]byte(fmt.Sprintf("%s\x00%s\x00%s\x00%s\x00%d", r.BindingID, r.ResourceID, r.Path, file.Name, file.Size)))
 	cached, err := s.cache.Open(ctx, hex.EncodeToString(hash[:]), file.Size, func(ctx context.Context) (io.ReadCloser, error) {
-		content, err := s.files.source.Open(ctx, source)
+		content, err := s.files.source.OpenPreview(ctx, source)
 		if err != nil {
 			return nil, err
 		}

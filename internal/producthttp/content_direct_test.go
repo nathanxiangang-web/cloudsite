@@ -2,13 +2,15 @@ package producthttp
 
 import (
 	"context"
-	"github.com/nathanxiangang-web/panta/internal/fileaccess"
-	"github.com/nathanxiangang-web/panta/internal/product"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/nathanxiangang-web/panta/internal/fileaccess"
+	"github.com/nathanxiangang-web/panta/internal/product"
 )
 
 type directContentSource struct {
@@ -70,7 +72,7 @@ func TestInlineVideoHTTP302OnlyWithAuthenticatedPlayback(t *testing.T) {
 	reads := contentReads{resource: product.Resource{BindingID: workspaceBinding.ID, ResourceID: "file-one", Path: &path, Directory: &directory, SizeBytes: &size, Presence: "PRESENT"}}
 	source := &directContentSource{}
 	files, _ := fileaccess.New(reads, contentTopology{}, source)
-	if err := files.EnableVideoDirectLinks([]string{"cdn.example.test"}); err != nil {
+	if err := files.EnableDirectLinks([]string{"cdn.example.test"}); err != nil {
 		t.Fatal(err)
 	}
 	h, err := NewWorkspaceHandler(&fakeAccess{p: goodPrincipal()}, "http://127.0.0.1:8180", reads, []DisplayBinding{workspaceBinding}, 22, WithFileAccess(files, nil))
@@ -100,5 +102,16 @@ func TestInlineVideoHTTP302OnlyWithAuthenticatedPlayback(t *testing.T) {
 	}
 	if source.calls != 0 || source.links != 1 {
 		t.Fatalf("metadata lookups = %d, byte opens = %d", source.links, source.calls)
+	}
+}
+
+func TestWriteFileNeverStreamsByteBody(t *testing.T) {
+	w := httptest.NewRecorder()
+	body := io.NopCloser(strings.NewReader("secret-file-bytes"))
+	writeFile(w, httptest.NewRequest("GET", "http://127.0.0.1:8180/content", nil), fileaccess.File{
+		Content: fileaccess.Content{Body: body, Status: http.StatusOK, Length: 17},
+	}, "attachment")
+	if w.Code != http.StatusServiceUnavailable || strings.Contains(w.Body.String(), "secret-file-bytes") || w.Header().Get("Location") != "" {
+		t.Fatal("content writer streamed bytes instead of failing closed", w.Code, w.Body.String())
 	}
 }
