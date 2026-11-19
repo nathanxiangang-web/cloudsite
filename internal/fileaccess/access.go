@@ -51,9 +51,7 @@ type Service struct {
 	reads             product.Reads
 	topology          product.TopologyReader
 	source            PreviewSource
-	directHosts       []string
-	videoDirectHosts  []string
-	sharedDirectHosts []string
+	directHosts []string
 }
 
 func New(reads product.Reads, topology product.TopologyReader, source PreviewSource) (*Service, error) {

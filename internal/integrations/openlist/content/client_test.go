@@ -48,7 +48,7 @@ func TestProtectedTokenSourceRotationAndFailureRemainClosed(t *testing.T) {
 		body.Body.Close()
 	}
 	token = "bad\r\ntoken"
-	if _, err := client.Open(context.Background(), fileaccess.SourceRequest{Path: "/file", Size: 1}); err == nil || calls != 2 {
+	if _, err := client.OpenPreview(context.Background(), fileaccess.SourceRequest{Path: "/file", Size: 1}); err == nil || calls != 2 {
 		t.Fatal("invalid rotated token sent upstream")
 	}
 	if _, err := NewContentClientWithTokenSource(base, nil); err == nil {
@@ -94,7 +94,7 @@ func TestContentProtocolHeadersRangesAndRedaction(t *testing.T) {
 	target = base + "/p/file?sign=test-only-value"
 	client, _ := NewContentClient(base, "test-only-SECRET")
 	for _, r := range []fileaccess.SourceRequest{{Path: "/file", Size: 10}, {Path: "/file", Size: 10, Range: "bytes=2-4"}, {Path: "/file", Size: 10, Head: true}} {
-		content, err := client.Open(context.Background(), r)
+		content, err := client.OpenPreview(context.Background(), r)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -107,7 +107,7 @@ func TestContentProtocolHeadersRangesAndRedaction(t *testing.T) {
 	before := contentCalls
 	for _, bad := range []string{"http://127.0.0.1:1/p/x", "http://169.254.169.254/latest/meta-data", "file:///secret", "http://user:pass@public.example/x", base + "/api/admin/secret"} {
 		target = bad
-		if _, err := client.Open(context.Background(), fileaccess.SourceRequest{Path: "/file", Size: 10}); err == nil || strings.Contains(err.Error(), "SECRET") {
+		if _, err := client.OpenPreview(context.Background(), fileaccess.SourceRequest{Path: "/file", Size: 10}); err == nil || strings.Contains(err.Error(), "SECRET") {
 			t.Fatal("unsafe source", bad, err)
 		}
 	}
@@ -116,12 +116,12 @@ func TestContentProtocolHeadersRangesAndRedaction(t *testing.T) {
 	}
 	target = base + "/p/file"
 	badRange = true
-	if _, err := client.Open(context.Background(), fileaccess.SourceRequest{Path: "/file", Size: 10, Range: "bytes=2-4"}); err == nil {
+	if _, err := client.OpenPreview(context.Background(), fileaccess.SourceRequest{Path: "/file", Size: 10, Range: "bytes=2-4"}); err == nil {
 		t.Fatal("bad upstream partial body")
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if _, err := client.Open(ctx, fileaccess.SourceRequest{Path: "/file", Size: 10}); err == nil {
+	if _, err := client.OpenPreview(ctx, fileaccess.SourceRequest{Path: "/file", Size: 10}); err == nil {
 		t.Fatal("cancelled access")
 	}
 }
