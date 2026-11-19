@@ -15,7 +15,7 @@ import (
 	"github.com/nathanxiangang-web/panta/internal/storage"
 )
 
-//go:embed web/index.html web/app.css web/resource-display.js web/admin-lists.js web/admin-observe.js web/admin-operations.js web/admin-shares.js web/admin-overview.js web/admin-download-detail.js web/admin-pending-cancel.js web/admin-audit.js web/admin-resource-editor.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js web/library-page.js web/library-sharing.js web/share.html web/share.js web/downloads.html web/downloads.css web/downloads.js web/download-model.js web/file-browser.html web/file-surface.js
+//go:embed web/index.html web/app.css web/resource-display.js web/admin-lists.js web/admin-observe.js web/admin-operations.js web/admin-shares.js web/admin-overview.js web/admin-download-detail.js web/admin-pending-cancel.js web/admin-audit.js web/admin-resource-editor.js web/app.js web/library.html web/library.css web/file-catalog.js web/library.js web/library-page.js web/library-sharing.js web/share.html web/share.js web/downloads.html web/downloads.css web/downloads.js web/download-model.js web/cloud-space.js web/file-browser.html web/file-surface.js
 var workspaceFiles embed.FS
 
 type DisplayBinding struct {
@@ -213,6 +213,7 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		{"GET /downloads/{$}", "web/downloads.html", "text/html; charset=utf-8"},
 		{"GET /assets/downloads.js", "web/downloads.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/download-model.js", "web/download-model.js", "text/javascript; charset=utf-8"},
+		{"GET /assets/cloud-space.js", "web/cloud-space.js", "text/javascript; charset=utf-8"},
 		{"GET /assets/downloads.css", "web/downloads.css", "text/css; charset=utf-8"},
 		{"GET /{$}", "web/library.html", "text/html; charset=utf-8"},
 		{"GET /admin/{$}", "web/index.html", "text/html; charset=utf-8"},
