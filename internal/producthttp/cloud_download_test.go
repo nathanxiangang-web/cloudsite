@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"regexp"
+	"strings"
+	"testing"
+
 	"github.com/nathanxiangang-web/panta/internal/acquisition"
 	"github.com/nathanxiangang-web/panta/internal/auth"
 	"github.com/nathanxiangang-web/panta/internal/product"
-	"strings"
-	"testing"
 )
 
 type operationFake struct {
@@ -70,13 +72,30 @@ func TestCloudDownloadExplicitCapabilityAndPrivateFixedTarget(t *testing.T) {
 	if strings.Contains(submitted.Body.String(), "PRIVATE") || strings.Contains(submitted.Body.String(), "source") {
 		t.Fatal("source leak")
 	}
-	for _, asset := range []string{"/downloads/", "/assets/downloads.js", "/assets/download-model.js", "/assets/downloads.css"} {
-		if w := request(writable, "GET", asset, "", "", ""); w.Code != 200 {
-			t.Fatal(asset, w.Code)
-		}
-	}
 	if w := request(writable, "POST", "/api/v1/acquisitions", body, testToken, "http://127.0.0.1:8180"); w.Code != 404 {
 		t.Fatal("operator admission route exposed")
+	}
+}
+
+func TestCloudDownloadPageServesReferencedScripts(t *testing.T) {
+	handler, err := NewWorkspaceHandler(&fakeAccess{}, "http://127.0.0.1:8180", &readAccessFake{}, []DisplayBinding{workspaceBinding}, 22)
+	if err != nil {
+		t.Fatal(err)
+	}
+	page := request(handler, "GET", "/downloads/", "", "", "")
+	if page.Code != 200 || !strings.Contains(page.Body.String(), `<script src="/assets/cloud-space.js" defer>`) {
+		t.Fatalf("downloads page status %d or private-space script missing", page.Code)
+	}
+	script := regexp.MustCompile(`<script\b[^>]*\bsrc="(/assets/[^"]+\.js)"`)
+	for _, match := range script.FindAllStringSubmatch(page.Body.String(), -1) {
+		asset := request(handler, "GET", match[1], "", "", "")
+		if asset.Code != 200 || asset.Header().Get("Content-Type") != "text/javascript; charset=utf-8" || asset.Body.Len() == 0 {
+			t.Errorf("%s: HTTP %d, Content-Type %q, bytes %d", match[1], asset.Code, asset.Header().Get("Content-Type"), asset.Body.Len())
+		}
+	}
+	css := request(handler, "GET", "/assets/downloads.css", "", "", "")
+	if css.Code != 200 {
+		t.Errorf("downloads stylesheet: HTTP %d", css.Code)
 	}
 }
 func TestCloudDownloadPreviewIsOwnInputOnlyAndNeverAdmits(t *testing.T) {
