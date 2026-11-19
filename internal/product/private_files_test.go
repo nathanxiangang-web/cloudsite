@@ -56,6 +56,12 @@ func (physical privateFilesPhysical) Resolve(context.Context, resourceview.Physi
 	}}}}, nil
 }
 
+type privateFilesResolverFunc func(resourceview.PhysicalRequest) (resourceview.PhysicalDetail, error)
+
+func (resolve privateFilesResolverFunc) Resolve(_ context.Context, request resourceview.PhysicalRequest) (resourceview.PhysicalDetail, error) {
+	return resolve(request)
+}
+
 func privateFilesService(t *testing.T, store *cloudSpaceStoreFake, index *privateFilesIndex) *ReadService {
 	t.Helper()
 	scope := "native-parent"
@@ -93,7 +99,7 @@ func privateFilesFixture() (auth.Principal, *cloudSpaceStoreFake, *privateFilesI
 func TestPrivateFilesUsesOwnerScopeAndBoundCursor(t *testing.T) {
 	principal, store, index, prefix := privateFilesFixture()
 	service := privateFilesService(t, store, index)
-	page, err := service.PrivateFiles(context.Background(), principal, privateFilesBindingID, "", 50)
+	page, err := service.PrivateFiles(context.Background(), principal, PrivateFilesRequest{BindingID: privateFilesBindingID, Limit: 50})
 	if err != nil || len(page.Items) != 1 || page.NextCursor == "" {
 		t.Fatalf("page = %#v, error = %v", page, err)
 	}
@@ -105,7 +111,7 @@ func TestPrivateFilesUsesOwnerScopeAndBoundCursor(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := service.PrivateFiles(context.Background(), principal, privateFilesBindingID, other, 50); !errors.Is(err, ErrInvalid) {
+	if _, err := service.PrivateFiles(context.Background(), principal, PrivateFilesRequest{BindingID: privateFilesBindingID, Cursor: other, Limit: 50}); !errors.Is(err, ErrInvalid) {
 		t.Fatalf("foreign cursor error = %v, want ErrInvalid", err)
 	}
 }
@@ -114,7 +120,7 @@ func TestPrivateFilesRejectsMissingSpaceAndRootMismatch(t *testing.T) {
 	principal, store, index, _ := privateFilesFixture()
 	store.space = CloudUserSpace{}
 	service := privateFilesService(t, store, index)
-	if _, err := service.PrivateFiles(context.Background(), principal, privateFilesBindingID, "", 50); !errors.Is(err, ErrNotFound) {
+	if _, err := service.PrivateFiles(context.Background(), principal, PrivateFilesRequest{BindingID: privateFilesBindingID, Limit: 50}); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("missing space error = %v, want ErrNotFound", err)
 	}
 	if index.browseCalls != 0 {
@@ -123,7 +129,7 @@ func TestPrivateFilesRejectsMissingSpaceAndRootMismatch(t *testing.T) {
 	_, store, index, _ = privateFilesFixture()
 	store.space.IndexCoreRootID = "root-b"
 	service = privateFilesService(t, store, index)
-	if _, err := service.PrivateFiles(context.Background(), principal, privateFilesBindingID, "", 50); !errors.Is(err, ErrNotFound) {
+	if _, err := service.PrivateFiles(context.Background(), principal, PrivateFilesRequest{BindingID: privateFilesBindingID, Limit: 50}); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("root mismatch error = %v, want ErrNotFound", err)
 	}
 }
@@ -133,7 +139,7 @@ func TestPrivateFilesRejectsParentMismatch(t *testing.T) {
 	wrong := "other-parent"
 	index.page.Items[0].ParentResourceID = &wrong
 	service := privateFilesService(t, store, index)
-	if _, err := service.PrivateFiles(context.Background(), principal, privateFilesBindingID, "", 50); !errors.Is(err, ErrUnavailable) {
+	if _, err := service.PrivateFiles(context.Background(), principal, PrivateFilesRequest{BindingID: privateFilesBindingID, Limit: 50}); !errors.Is(err, ErrUnavailable) {
 		t.Fatalf("parent mismatch error = %v, want ErrUnavailable", err)
 	}
 }
@@ -143,8 +149,73 @@ func TestPrivateFilesRejectsNonDirectChild(t *testing.T) {
 	nestedPath := prefix + "/nested/result.bin"
 	index.page.Items[0].CanonicalPath = &nestedPath
 	service := privateFilesService(t, store, index)
-	if _, err := service.PrivateFiles(context.Background(), principal, privateFilesBindingID, "", 50); !errors.Is(err, ErrUnavailable) {
+	if _, err := service.PrivateFiles(context.Background(), principal, PrivateFilesRequest{BindingID: privateFilesBindingID, Limit: 50}); !errors.Is(err, ErrUnavailable) {
 		t.Fatalf("nested child error = %v, want ErrUnavailable", err)
+	}
+}
+
+func TestPrivateFilesNavigatesOnlyWithinOwnSpace(t *testing.T) {
+	principal, store, index, prefix := privateFilesFixture()
+	service := privateFilesService(t, store, index)
+	rootRequest := PrivateFilesRequest{BindingID: privateFilesBindingID, Limit: 50}
+	rootPage, err := service.PrivateFiles(context.Background(), principal, rootRequest)
+	if err != nil || rootPage.NextCursor == "" {
+		t.Fatalf("root page = %#v, error = %v", rootPage, err)
+	}
+	folder := prefix + "/downloaded-folder"
+	file := folder + "/result.bin"
+	index.page.Items[0].CanonicalPath = &file
+	childParent := "private-child"
+	index.page.Items[0].ParentResourceID = &childParent
+	resolveCalls := 0
+	service.physical = privateFilesResolverFunc(func(request resourceview.PhysicalRequest) (resourceview.PhysicalDetail, error) {
+		resolveCalls++
+		if request.Path != folder || request.RootID != "root-a" {
+			t.Fatalf("unexpected Q5 request = %#v", request)
+		}
+		detail, _ := (privateFilesPhysical{prefix: folder}).Resolve(context.Background(), request)
+		detail.Matches[0].Physical.ResourceID = childParent
+		return detail, nil
+	})
+	for _, candidate := range []struct {
+		path string
+		err  error
+	}{
+		{"/云下载/_users/b/folder", ErrNotFound},
+		{prefix + "-other/folder", ErrNotFound},
+		{prefix + "/../b/folder", ErrInvalid},
+		{prefix + "//folder", ErrInvalid},
+	} {
+		request := rootRequest
+		request.Folder = candidate.path
+		if _, err := service.PrivateFiles(context.Background(), principal, request); !errors.Is(err, candidate.err) {
+			t.Fatalf("folder %q => %v, want %v", candidate.path, err, candidate.err)
+		}
+	}
+	if resolveCalls != 0 || index.browseCalls != 1 {
+		t.Fatal("rejected folders touched IndexCore")
+	}
+	request := rootRequest
+	request.Folder, request.Cursor = folder, rootPage.NextCursor
+	if _, err := service.PrivateFiles(context.Background(), principal, request); !errors.Is(err, ErrInvalid) || index.browseCalls != 1 {
+		t.Fatalf("root cursor accepted in child, error = %v", err)
+	}
+	request.Cursor = ""
+	page, err := service.PrivateFiles(context.Background(), principal, request)
+	if err != nil || len(page.Items) != 1 || page.Items[0].Path == nil || *page.Items[0].Path != file || index.browseCalls != 2 {
+		t.Fatalf("child page = %#v, error = %v", page, err)
+	}
+}
+
+func TestPrivateFilesNewSpaceBeforeFirstIndexUpdate(t *testing.T) {
+	principal, store, index, _ := privateFilesFixture()
+	service := privateFilesService(t, store, index)
+	service.physical = privateFilesResolverFunc(func(resourceview.PhysicalRequest) (resourceview.PhysicalDetail, error) {
+		return resourceview.PhysicalDetail{}, nil
+	})
+	page, err := service.PrivateFiles(context.Background(), principal, PrivateFilesRequest{BindingID: privateFilesBindingID, Limit: 50})
+	if err != nil || page.Items == nil || len(page.Items) != 0 || index.browseCalls != 0 {
+		t.Fatalf("new space page = %#v, error = %v", page, err)
 	}
 }
 

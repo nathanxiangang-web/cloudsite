@@ -15,7 +15,14 @@ import (
 )
 
 type PrivateFileReader interface {
-	PrivateFiles(context.Context, auth.Principal, storage.BindingID, string, int) (ResourcePage, error)
+	PrivateFiles(context.Context, auth.Principal, PrivateFilesRequest) (ResourcePage, error)
+}
+
+type PrivateFilesRequest struct {
+	BindingID storage.BindingID
+	Folder    string
+	Cursor    string
+	Limit     int
 }
 
 type privateFileCursor struct {
@@ -25,16 +32,16 @@ type privateFileCursor struct {
 	Inner  string `json:"inner"`
 }
 
-func (s *ReadService) PrivateFiles(ctx context.Context, principal auth.Principal, bindingID storage.BindingID, rawCursor string, limit int) (ResourcePage, error) {
+func (s *ReadService) PrivateFiles(ctx context.Context, principal auth.Principal, request PrivateFilesRequest) (ResourcePage, error) {
 	if s == nil || missing(s.privateResources) {
 		return ResourcePage{}, ErrUnavailable
 	}
-	if limit < 1 || limit > 50 || len(rawCursor) > 2048 {
+	if request.Limit < 1 || request.Limit > 50 || !ValidOpaque(request.Cursor) || !ValidOpaque(request.Folder) {
 		return ResourcePage{}, ErrInvalid
 	}
 	ctx, cancel := context.WithTimeout(ctx, ReadTimeout)
 	defer cancel()
-	binding, err := s.binding(ctx, principal, bindingID)
+	binding, err := s.binding(ctx, principal, request.BindingID)
 	if err != nil {
 		return ResourcePage{}, err
 	}
@@ -45,7 +52,18 @@ func (s *ReadService) PrivateFiles(ctx context.Context, principal auth.Principal
 		}
 		return ResourcePage{}, safeReadError(err)
 	}
-	detail, err := s.physical.Resolve(ctx, resourceview.PhysicalRequest{RootID: binding.IndexCoreRootID, Path: prefix})
+	folder := prefix
+	if request.Folder != "" {
+		clean, err := storage.NormalizeMountPath(request.Folder)
+		if err != nil || clean != request.Folder {
+			return ResourcePage{}, ErrInvalid
+		}
+		if clean != prefix && !strings.HasPrefix(clean, prefix+"/") {
+			return ResourcePage{}, ErrNotFound
+		}
+		folder = clean
+	}
+	detail, err := s.physical.Resolve(ctx, resourceview.PhysicalRequest{RootID: binding.IndexCoreRootID, Path: folder})
 	if err != nil {
 		return ResourcePage{}, safeReadError(err)
 	}
@@ -53,29 +71,36 @@ func (s *ReadService) PrivateFiles(ctx context.Context, principal auth.Principal
 		return ResourcePage{}, ErrUnavailable
 	}
 	if len(detail.Matches) == 0 {
+		// A provisioned, empty space may not have received its first IndexCore update.
+		if folder == prefix && request.Cursor == "" {
+			return ResourcePage{Items: []Resource{}}, nil
+		}
 		return ResourcePage{}, ErrNotFound
 	}
 	parent := detail.Matches[0].Physical
 	if parent.ResourceID == "" || !ValidOpaque(parent.ResourceID) || parent.RootID != binding.IndexCoreRootID || parent.Presence != indexcore.ResourcePresent ||
-		parent.CanonicalPath == nil || *parent.CanonicalPath != prefix || parent.Directory == nil || !*parent.Directory {
+		parent.CanonicalPath == nil || *parent.CanonicalPath != folder || parent.Directory == nil {
 		return ResourcePage{}, ErrUnavailable
 	}
-	inner, err := decodePrivateFileCursor(rawCursor, principal.UserID, prefix, parent.ResourceID)
+	if !*parent.Directory {
+		return ResourcePage{}, ErrNotFound
+	}
+	inner, err := decodePrivateFileCursor(request.Cursor, principal.UserID, folder, parent.ResourceID)
 	if err != nil {
 		return ResourcePage{}, err
 	}
-	page, err := s.index.Browse(ctx, indexcore.BrowseRequest{RootID: binding.IndexCoreRootID, ParentResourceID: &parent.ResourceID, Cursor: inner, Limit: limit})
+	page, err := s.index.Browse(ctx, indexcore.BrowseRequest{RootID: binding.IndexCoreRootID, ParentResourceID: &parent.ResourceID, Cursor: inner, Limit: request.Limit})
 	if err != nil {
 		return ResourcePage{}, safeReadError(err)
 	}
-	if len(page.Items) > limit || len(page.Items) == 0 && page.NextCursor != "" || !ValidOpaque(page.NextCursor) || page.NextCursor != "" && page.NextCursor == inner {
+	if len(page.Items) > request.Limit || len(page.Items) == 0 && page.NextCursor != "" || !ValidOpaque(page.NextCursor) || page.NextCursor != "" && page.NextCursor == inner {
 		return ResourcePage{}, ErrUnavailable
 	}
 	for _, item := range page.Items {
 		if item.ParentResourceID == nil || *item.ParentResourceID != parent.ResourceID || item.CanonicalPath == nil {
 			return ResourcePage{}, ErrUnavailable
 		}
-		relative := strings.TrimPrefix(*item.CanonicalPath, prefix+"/")
+		relative := strings.TrimPrefix(*item.CanonicalPath, folder+"/")
 		if relative == *item.CanonicalPath || relative == "" || strings.Contains(relative, "/") {
 			return ResourcePage{}, ErrUnavailable
 		}
@@ -89,7 +114,7 @@ func (s *ReadService) PrivateFiles(ctx context.Context, principal auth.Principal
 	}
 	result := ResourcePage{Items: items}
 	if page.NextCursor != "" {
-		result.NextCursor, err = encodePrivateFileCursor(privateFileCursor{Owner: string(principal.UserID), Prefix: prefix, Parent: parent.ResourceID, Inner: page.NextCursor})
+		result.NextCursor, err = encodePrivateFileCursor(privateFileCursor{Owner: string(principal.UserID), Prefix: folder, Parent: parent.ResourceID, Inner: page.NextCursor})
 		if err != nil {
 			return ResourcePage{}, err
 		}
