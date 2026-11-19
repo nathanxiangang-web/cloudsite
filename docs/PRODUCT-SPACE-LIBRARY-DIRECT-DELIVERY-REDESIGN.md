@@ -119,7 +119,7 @@ IndexCore 继续负责 Canonical/PRESENT/资源身份真相；CloudSite 负责�
 
 建议将两个能力在接口/类型层明确分离：
 
-- LinkSource / ResolveLink：只返回已知文件的临时 URL 与必要的有效期元数据；不得读取文件 body。
+- LinkSource / ResolveLink：只返回已知文件的上游 URL，以及 provider 实际提供的有效期元数据（若有）；不得读取文件 body。私人分享必须取得可验证的 ExpiresAt，普通已授权下载不伪造有效期。
 - PreviewSource / OpenPreview：仅供明确的服务端文档预览/转换使用。
 
 fileaccess.Deliver 应只走 LinkSource，且无论 public/private/shared/video 都不能调用 Open。可以保留 OpenPreview 给 PDF 页面渲染、文本提取等明确预览路径，但必须确保下载、播放和分享 handler 没有调用路径。
