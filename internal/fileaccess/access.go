@@ -23,6 +23,7 @@ type Request struct {
 	ResourceID, Path, Range string
 	Head                    bool
 	Inline                  bool
+	Shared                  bool
 	UserAgent               string
 }
 type SourceRequest struct {
@@ -47,11 +48,12 @@ type File struct {
 	DirectURL       string
 }
 type Service struct {
-	reads            product.Reads
-	topology         product.TopologyReader
-	source           Source
-	directHosts      []string
-	videoDirectHosts []string
+	reads             product.Reads
+	topology          product.TopologyReader
+	source            Source
+	directHosts       []string
+	videoDirectHosts  []string
+	sharedDirectHosts []string
 }
 
 func New(reads product.Reads, topology product.TopologyReader, source Source) (*Service, error) {

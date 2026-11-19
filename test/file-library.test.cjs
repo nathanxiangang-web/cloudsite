@@ -240,10 +240,10 @@ test('native download retains library in its own tab and owner revoke uses prote
 test('guest share page uses fragment token and verified single-file route, never markup',async()=>{
  const ids=Array.from(fs.readFileSync(path.join(web,'share.html'),'utf8').matchAll(/id="([^"]+)"/g),m=>m[1]);
  const elements=new Map(ids.map(id=>[id,{value:'',listeners:{},textContent:'',addEventListener(k,v){this.listeners[k]=v;},removeAttribute(k){delete this[k];}}]));const requests=[];
- const ctx=vm.createContext({location:{hash:'#'+'A'.repeat(43)},document:{getElementById:id=>elements.get(id)},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});vm.runInContext(fs.readFileSync(path.join(web,'share.js'),'utf8'),ctx);
+ const ctx=vm.createContext({location:{hash:'#'+'A'.repeat(43)},document:{getElementById:id=>elements.get(id)},fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}});vm.runInContext(fs.readFileSync(path.join(web,'resource-display.js'),'utf8'),ctx);vm.runInContext(fs.readFileSync(path.join(web,'share.js'),'utf8'),ctx);
  const pending=elements.get('redeem-form').listeners.submit({preventDefault(){}});assert.equal(requests[0].url,'/api/v1/shares/redeem');assert.equal(JSON.parse(requests[0].options.body).token,'A'.repeat(43));
- requests[0].resolve({ok:true,json:async()=>({name:'<script>file</script>',size_bytes:4,expires_at:'2026-10-16T00:00:00Z',download_url:'/api/v1/shared/95000000-0000-4000-8000-000000000001/content'})});await pending;
- assert.equal(elements.get('shared-name').textContent,'<script>file</script>');assert.equal(elements.get('shared-file').hidden,false);
+ requests[0].resolve({ok:true,json:async()=>({name:'<script>file</script>',size_bytes:64609858,expires_at:'2026-10-16T00:00:00Z',download_url:'/api/v1/shared/95000000-0000-4000-8000-000000000001/content'})});await pending;
+ assert.equal(elements.get('shared-name').textContent,'<script>file</script>');assert.equal(elements.get('shared-file').hidden,false);assert.match(elements.get('shared-info').textContent,/^61\.6 MB · /);
  let prevented=false;elements.get('shared-download').listeners.click({preventDefault(){prevented=true;}});assert.equal(prevented,false);assert.equal(requests.length,1);assert.equal(elements.get('shared-download').target,'_blank');assert.equal(elements.get('shared-download').rel,'noopener');
 });
 
