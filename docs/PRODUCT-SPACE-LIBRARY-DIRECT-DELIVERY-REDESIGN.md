@@ -64,7 +64,7 @@
 | 公共文件分享下载 | HTTP 302 |
 | 私人文件分享下载 | HTTP 302 |
 | 浏览器 GET / HEAD | CloudSite 授权后 HTTP 302 |
-| 视频 Range / seek / 续播 | CloudSite 对每次请求授权后 HTTP 302；浏览器随后向 CDN 请求 Range/206 |
+| 视频 Range / seek / 续播 | 初次 CloudSite 内容请求 302；浏览器跟随后，Range/seek/续传直接请求 CDN，由 CDN 返回 206 |
 | 直链不可用/配置错误 | fail closed，返回安全错误；不允许代理回退 |
 
 成功的 CloudSite 文件交付响应必须满足：
@@ -147,7 +147,7 @@ CloudSite 撤销分享、删除文件或用户退出，无法自动撤销已经�
 |---|---|
 | 普通文件下载 GET/HEAD | 302、空 body、Location host 合法 |
 | 私人文件下载 GET/HEAD | 302、空 body、owner ACL 通过 |
-| 视频 GET/Range/seek | 302、零源字节读取，CDN 端返回 206 |
+| 视频 GET/Range/seek | 初次内容请求 302、CloudSite 零源字节读取；浏览器后续对 CDN 的 Range/seek 由 CDN 返回 206 |
 | 公共分享 GET/HEAD/Range | grant 有效后 302 |
 | 私人分享 GET/HEAD/Range | owner/UserSpace/share grant 全部有效后 302 |
 | 匿名/错误 owner/跨用户 | 不返回 Location，不解析上游 URL |
@@ -180,13 +180,15 @@ CloudSite 撤销分享、删除文件或用户退出，无法自动撤销已经�
 | 私人空间 | /space/ | 当前用户独立 UserSpace 的文件管理 |
 | 视频播放 | /player/ | 独立视频/音频播放页面 |
 | 云下载 | /downloads/ | 新建下载、任务状态与原操作核实 |
-| 分享访问 | /s/{share-token} | 单文件访客分享兑换与访问 |
+| 分享访问 | /s/#<share-token> | token 保留在 URL fragment，由页面脚本提交兑换；避免 token 出现在 HTTP request path/access log |
 
 前端页面路由不是授权边界。无论从哪个 URL、旧页面、直接 API、书签、Range 请求进入，后端都必须重新验证 owner/share。
 
 ### 3.2 私人空间文件管理
 
-私人空间只呈现当前用户通过云下载收录并归属其 UserSpace 的文件与目录；它不是整个 115 账号的通用文件浏览器，也不混入公共资源库。\n\n私人空间页面包括：
+私人空间只呈现当前用户通过云下载收录并归属其 UserSpace 的文件与目录；它不是整个 115 账号的通用文件浏览器，也不混入公共资源库。
+
+私人空间页面包括：
 
 - 标题、空间状态、面包屑；
 - 文件夹浏览；
@@ -228,7 +230,7 @@ CloudSite 撤销分享、删除文件或用户退出，无法自动撤销已经�
 4. 访客不能通过修改 URL 参数更换 Binding/ResourceID/Path。
 
 下载：
-1. 每次 guest GET/HEAD/Range 都重新读取当前 share/grant 状态。
+1. 每次到达 CloudSite 分享 content endpoint 的 guest GET/HEAD/Range 都重新读取当前 share/grant 状态。
 2. 以分享记录的 owner principal 进行私人空间正向授权。
 3. 重新验证精确资源身份和文件 size/name 快照。
 4. 获取上游临时 URL，验证 allowlist/HTTPS/ExpiresAt。
