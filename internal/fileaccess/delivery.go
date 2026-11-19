@@ -32,7 +32,7 @@ func (s *Service) validateLinkHosts(hosts []string) error {
 	}
 	seen := map[string]bool{}
 	for _, host := range hosts {
-		if host == "" || len(host) > 253 || host != strings.ToLower(host) || !strings.Contains(host, ".") || net.ParseIP(host) != nil || strings.HasSuffix(host, ".local") || strings.HasSuffix(host, ".localhost") {
+		if host == "" || len(host) > 253 || host != strings.ToLower(host) || !strings.Contains(host, ".") || net.ParseIP(host) != nil || strings.HasSuffix(host, ".local") || strings.HasSuffix(host, ".localhost") || strings.HasSuffix(host, ".internal") || hasNumericFinalLabel(host) {
 			return ErrUnavailable
 		}
 		for _, label := range strings.Split(host, ".") {
@@ -54,6 +54,19 @@ func (s *Service) validateLinkHosts(hosts []string) error {
 		return ErrUnavailable
 	}
 	return nil
+}
+
+// Browsers interpret hostnames ending in an IPv4 number differently from
+// net.ParseIP, including abbreviated, octal and hexadecimal IP spellings.
+func hasNumericFinalLabel(host string) bool {
+	label := host[strings.LastIndexByte(host, '.')+1:]
+	if label == "" {
+		return false
+	}
+	if strings.HasPrefix(label, "0x") {
+		return strings.Trim(label[2:], "0123456789abcdef") == ""
+	}
+	return strings.Trim(label, "0123456789") == ""
 }
 
 // MediaSources exposes only the exact allowlisted HTTPS hosts to browser media CSP.
@@ -95,7 +108,7 @@ func (s *Service) Deliver(ctx context.Context, p auth.Principal, r Request) (Fil
 		return File{}, ErrUnavailable
 	}
 	u, err := url.Parse(target)
-	if err != nil || len(target) > 16384 || u.Scheme != "https" || u.User != nil || u.Opaque != "" || u.Fragment != "" || u.Host == "" || strings.ContainsAny(target, "\x00\r\n") {
+	if err != nil || len(target) > 16384 || u.Scheme != "https" || u.User != nil || u.Opaque != "" || u.Host == "" || strings.ContainsAny(target, "#\x00\r\n") {
 		return File{}, ErrUnavailable
 	}
 	allowed := false

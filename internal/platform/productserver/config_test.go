@@ -151,7 +151,7 @@ func TestServeGracefulCancellation(t *testing.T) {
 		t.Fatal("listener survived shutdown")
 	}
 }
- 
+
 func TestFileAccessConfigRequiresAndUnifiesOneDirectAllowlist(t *testing.T) {
 	if hosts, err := (fileAccessConfig{VideoDirectLinkHosts: []string{"video.example.test"}}).unifiedDirectHosts(); err != nil || len(hosts) != 0 {
 		t.Fatal("legacy video-only allowlist must not enable general file delivery", hosts, err)
