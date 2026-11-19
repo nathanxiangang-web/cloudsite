@@ -272,7 +272,25 @@ func NewRuntime(ctx context.Context, cfg config.Config, deps RuntimeDependencies
 	if err != nil {
 		return nil, err
 	}
-	visibility, err := acquisition.NewRefreshStep(manifests, jobs, storageStore, hint, refreshStore)
+	lookupDirectory := func(ctx context.Context, rootID, folder string) (bool, error) {
+		result, err := readClient.Resolve(ctx, indexcore.ResolveRequest{RootID: rootID, Path: folder})
+		if err != nil {
+			return false, err
+		}
+		if result.Ambiguous || len(result.Matches) > 1 {
+			return false, acquisition.ErrRefreshScopeKey
+		}
+		if len(result.Matches) == 0 {
+			return false, nil
+		}
+		match := result.Matches[0]
+		if match.ResourceID == "" || match.RootID != rootID || match.CanonicalPath == nil ||
+			*match.CanonicalPath != folder || match.Directory == nil || !*match.Directory {
+			return false, acquisition.ErrRefreshScopeKey
+		}
+		return match.Presence == indexcore.ResourcePresent, nil
+	}
+	visibility, err := acquisition.NewRefreshStep(manifests, jobs, storageStore, hint, refreshStore, lookupDirectory)
 	if err != nil {
 		return nil, err
 	}

@@ -2,10 +2,12 @@ package acquisitionruntime
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -162,25 +164,44 @@ manifest_id,job_id,provider_id,provider_task_ref,state,created_at,updated_at
 
 func stringPointer(value string) *string { return &value }
 
-func runPrivateCopyRuntime(t *testing.T, fixture fixtureState, manifestID acquisition.ManifestID, jobID jobs.JobID, provider *runtimeCopyProvider, stopOnCanonical bool) (int, int, int) {
+func runPrivateCopyRuntime(t *testing.T, fixture fixtureState, manifestID acquisition.ManifestID, jobID jobs.JobID, provider *runtimeCopyProvider, stopOnCanonical, discoverSpace bool) (int, int, int) {
 	t.Helper()
-	visible := false
-	hintCalls, resolveCalls, journalCalls := 0, 0, 0
+	var parentVisible, directoryVisible, resultVisible atomic.Bool
+	parentVisible.Store(!discoverSpace)
+	directoryVisible.Store(!discoverSpace)
+	var hintCalls, resolveCalls, journalCalls atomic.Int32
 	read := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
 		case "/v1/roots/canonical-root/resolve":
-			resolveCalls++
-			if r.URL.Query().Get("path") != "/downloads/_users/b/movie.mkv" {
-				t.Errorf("unexpected private resolve path %q", r.URL.Query().Get("path"))
+			switch r.URL.Query().Get("path") {
+			case "/downloads":
+				fmt.Fprint(w, `{"matches":[{"resource_id":"downloads-root","root_id":"canonical-root","canonical_path":"/downloads","is_dir":true,"resource_presence":"PRESENT","introduced_at_generation":1,"last_confirmed_generation":1}],"ambiguous":false}`)
+			case "/downloads/_users":
+				if !parentVisible.Load() {
+					fmt.Fprint(w, `{"matches":[],"ambiguous":false}`)
+					return
+				}
+				fmt.Fprint(w, `{"matches":[{"resource_id":"spaces-root","root_id":"canonical-root","canonical_path":"/downloads/_users","is_dir":true,"resource_presence":"PRESENT","introduced_at_generation":1,"last_confirmed_generation":1}],"ambiguous":false}`)
+			case "/downloads/_users/b":
+				if !directoryVisible.Load() {
+					fmt.Fprint(w, `{"matches":[],"ambiguous":false}`)
+					return
+				}
+				fmt.Fprint(w, `{"matches":[{"resource_id":"requester-dir","root_id":"canonical-root","canonical_path":"/downloads/_users/b","is_dir":true,"resource_presence":"PRESENT","introduced_at_generation":1,"last_confirmed_generation":1}],"ambiguous":false}`)
+			case "/downloads/_users/b/movie.mkv":
+				resolveCalls.Add(1)
+				if !resultVisible.Load() {
+					fmt.Fprint(w, `{"matches":[],"ambiguous":false}`)
+					return
+				}
+				fmt.Fprint(w, `{"matches":[{"resource_id":"requester-resource","root_id":"canonical-root","canonical_path":"/downloads/_users/b/movie.mkv","parent_resource_id":"requester-dir","name":"movie.mkv","is_dir":false,"size":42,"resource_presence":"PRESENT","introduced_at_generation":1,"last_confirmed_generation":1}],"ambiguous":false}`)
+			default:
+				t.Error("unexpected private resolve path")
+				http.NotFound(w, r)
 			}
-			if !visible {
-				fmt.Fprint(w, `{"matches":[],"ambiguous":false}`)
-				return
-			}
-			fmt.Fprint(w, `{"matches":[{"resource_id":"requester-resource","root_id":"canonical-root","canonical_path":"/downloads/_users/b/movie.mkv","parent_resource_id":null,"name":"movie.mkv","is_dir":false,"size":42,"resource_presence":"PRESENT","introduced_at_generation":1,"last_confirmed_generation":1}],"ambiguous":false}`)
 		case "/v1/roots/canonical-root/journal":
-			journalCalls++
+			journalCalls.Add(1)
 			fmt.Fprint(w, `{"items":[{"event_seq":1,"generation_number":1,"intra_generation_seq":1,"event_type":"resource-added","resource_id":"requester-resource","payload":"{}","committed_at":"2026-09-28T01:02:03Z"}]}`)
 		default:
 			t.Errorf("unexpected read path %s", r.URL.Path)
@@ -189,11 +210,37 @@ func runPrivateCopyRuntime(t *testing.T, fixture fixtureState, manifestID acquis
 	}))
 	defer read.Close()
 	hint := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hintCalls++
-		visible = true
+		var request struct {
+			Scope string `json:"scope_key"`
+		}
+		if json.NewDecoder(r.Body).Decode(&request) != nil {
+			t.Error("incomplete Hint request")
+			http.Error(w, "invalid hint", http.StatusBadRequest)
+			return
+		}
+		switch request.Scope {
+		case "/downloads":
+			if !discoverSpace || parentVisible.Swap(true) {
+				t.Error("unexpected base Hint")
+			}
+		case "/downloads/_users":
+			if !discoverSpace || !parentVisible.Load() || directoryVisible.Swap(true) {
+				t.Error("unexpected parent Hint")
+			}
+		case "/downloads/_users/b":
+			if !directoryVisible.Load() {
+				t.Error("target Hint preceded parent discovery")
+			}
+			resultVisible.Store(true)
+		default:
+			t.Error("unexpected Hint scope")
+			http.Error(w, "invalid scope", http.StatusBadRequest)
+			return
+		}
+		seq := hintCalls.Add(1)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusAccepted)
-		fmt.Fprint(w, `{"status":"accepted","root_id":"canonical-root","scope_key":"/downloads/_users/b","work_state":"PENDING","signal_seq":1}`)
+		fmt.Fprintf(w, `{"status":"accepted","root_id":"canonical-root","scope_key":%q,"work_state":"PENDING","signal_seq":%d}`, request.Scope, seq)
 	}))
 	defer hint.Close()
 	cfg := runtimeConfig(read.URL)
@@ -223,17 +270,17 @@ func runPrivateCopyRuntime(t *testing.T, fixture fixtureState, manifestID acquis
 	if err := application.Run(runCtx); err != nil {
 		t.Fatal(err)
 	}
-	return hintCalls, resolveCalls, journalCalls
+	return int(hintCalls.Load()), int(resolveCalls.Load()), int(journalCalls.Load())
 }
 
 func TestPostgresPrivateCopyRuntimeReady(t *testing.T) {
 	fixture, manifestID, jobID, provider := seedPrivateCopyRuntime(t)
 	provider.copyApplied = true
-	hintCalls, resolveCalls, journalCalls := runPrivateCopyRuntime(t, fixture, manifestID, jobID, provider, true)
+	hintCalls, resolveCalls, journalCalls := runPrivateCopyRuntime(t, fixture, manifestID, jobID, provider, true, true)
 	manifest := readManifest(t, fixture.ctx, fixture.pool, manifestID)
 	job := readJob(t, fixture.ctx, fixture.pool, jobID)
-	if manifest.State != acquisition.StateReady || manifest.ResultCopyID == nil || job.State != jobs.StateSucceeded ||
-		provider.copyCalls != 1 || provider.starts != 0 || hintCalls != 1 || resolveCalls != 1 || journalCalls != 1 {
+	if manifest.State != acquisition.StateReady || manifest.ResultCopyID == nil || job.State != jobs.StateSucceeded || job.FailureCount != 0 ||
+		provider.copyCalls != 1 || provider.starts != 0 || hintCalls != 3 || resolveCalls != 1 || journalCalls != 1 {
 		t.Fatalf("state=%s copy=%v job=%s copyCalls=%d starts=%d hint/Q5/Q8=%d/%d/%d", manifest.State, manifest.ResultCopyID, job.State, provider.copyCalls, provider.starts, hintCalls, resolveCalls, journalCalls)
 	}
 	var status, resultRef string
@@ -254,7 +301,7 @@ func TestPostgresPrivateCopyUnknownRecoversWithoutSecondCopy(t *testing.T) {
 	provider.copyApplied = true
 	provider.copyErr = errors.New("response lost")
 	provider.stop = func() {}
-	_, _, _ = runPrivateCopyRuntime(t, fixture, manifestID, jobID, provider, false)
+	_, _, _ = runPrivateCopyRuntime(t, fixture, manifestID, jobID, provider, false, false)
 	var status string
 	if err := fixture.pool.QueryRow(fixture.ctx, `SELECT status FROM acquisition_copy_operations WHERE manifest_id=$1`, string(manifestID)).Scan(&status); err != nil || status != string(acquisition.CopyProviderUnknown) {
 		t.Fatalf("copy operation status = %s, error = %v", status, err)
@@ -293,7 +340,7 @@ func TestPostgresPrivateCopyUnknownRecoversWithoutSecondCopy(t *testing.T) {
 	provider.donor = contracts.StorageObject{}
 	provider.copyErr = nil
 	provider.stop = nil
-	hintCalls, resolveCalls, journalCalls := runPrivateCopyRuntime(t, fixture, manifestID, jobID, provider, true)
+	hintCalls, resolveCalls, journalCalls := runPrivateCopyRuntime(t, fixture, manifestID, jobID, provider, true, false)
 	manifest = readManifest(t, fixture.ctx, fixture.pool, manifestID)
 	job = readJob(t, fixture.ctx, fixture.pool, jobID)
 	if manifest.State != acquisition.StateReady || job.State != jobs.StateSucceeded || provider.copyCalls != 1 || hintCalls != 1 || resolveCalls != 1 || journalCalls != 1 {

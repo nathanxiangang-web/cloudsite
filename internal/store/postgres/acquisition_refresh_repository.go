@@ -89,6 +89,9 @@ FOR UPDATE`, string(plan.ManifestID)))
 	if err := verifyRefreshManifestLinkage(manifest, plan); err != nil {
 		return acquisition.RefreshResult{}, err
 	}
+	if plan.ManifestState == acquisition.StateAwaitingVisibility && manifest.UserSpaceID == nil {
+		return acquisition.RefreshResult{}, acquisition.ErrInvalidRefreshRequest
+	}
 	expired, err := leaseExpiredByDatabaseTime(ctx, tx, job)
 	if err != nil {
 		return acquisition.RefreshResult{}, err
@@ -97,32 +100,34 @@ FOR UPDATE`, string(plan.ManifestID)))
 		return acquisition.RefreshResult{}, err
 	}
 
-	// Mutation 1: advance the Manifest milestone only while it still holds the
-	// accepted pre-handoff state.
-	updatedManifest, err := scanAcquisitionManifest(tx.QueryRow(ctx, `
+	// A parent Hint can discover a private destination. Leave the Manifest
+	// awaiting visibility until the target itself can be refreshed.
+	updatedManifest := manifest
+	if plan.ManifestState == acquisition.StateAwaitingCanonical {
+		updatedManifest, err = scanAcquisitionManifest(tx.QueryRow(ctx, `
 UPDATE acquisition_manifests
 SET state = $3,
     updated_at = $4
 WHERE manifest_id = $1 AND state = $2
 RETURNING `+acquisitionManifestColumns,
-		string(plan.ManifestID), string(acquisition.StateAwaitingVisibility),
-		string(plan.ManifestState), plan.Now))
-	if errors.Is(err, pgx.ErrNoRows) {
-		return acquisition.RefreshResult{}, fmt.Errorf("%w: Manifest %s changed during handoff",
-			acquisition.ErrRefreshConflict, plan.ManifestID)
-	}
-	if err != nil {
-		return acquisition.RefreshResult{}, refreshPersistenceError("advance Manifest milestone", err)
-	}
-	if repository.afterManifestUpdate != nil {
-		if err := repository.afterManifestUpdate(ctx, tx); err != nil {
-			return acquisition.RefreshResult{}, refreshPersistenceError("after Manifest update", err)
+			string(plan.ManifestID), string(acquisition.StateAwaitingVisibility),
+			string(plan.ManifestState), plan.Now))
+		if errors.Is(err, pgx.ErrNoRows) {
+			return acquisition.RefreshResult{}, fmt.Errorf("%w: Manifest %s changed during handoff",
+				acquisition.ErrRefreshConflict, plan.ManifestID)
+		}
+		if err != nil {
+			return acquisition.RefreshResult{}, refreshPersistenceError("advance Manifest milestone", err)
+		}
+		if repository.afterManifestUpdate != nil {
+			if err := repository.afterManifestUpdate(ctx, tx); err != nil {
+				return acquisition.RefreshResult{}, refreshPersistenceError("after Manifest update", err)
+			}
 		}
 	}
 
-	// Mutation 2: queue the same Job for the later canonical-confirmation stage under
-	// the same claim-generation fence. The claim generation and the failure budget are
-	// deliberately not modified: this queues a new stage, it is not a same-stage retry.
+	// Queue the next observation or canonical-confirmation check under the same
+	// claim-generation fence. Waiting on IndexCore does not consume a failure attempt.
 	updatedJob, err := scanJob(tx.QueryRow(ctx, `
 UPDATE jobs AS job
 SET state = 'RETRY_WAIT',
@@ -162,6 +167,10 @@ func isCommittedRefreshHandoff(
 	plan acquisition.RefreshPlan,
 ) (bool, error) {
 	if manifest.ID != plan.ManifestID || manifest.State != plan.ManifestState {
+		return false, nil
+	}
+	if plan.ManifestState == acquisition.StateAwaitingVisibility &&
+		(manifest.UserSpaceID == nil || job.ClaimAttempts != plan.ExpectedClaim) {
 		return false, nil
 	}
 	if job.ID != plan.JobID {
@@ -223,7 +232,7 @@ func validateRefreshPlan(plan acquisition.RefreshPlan) error {
 		plan.ExpectedClaim < 1 || plan.Now.IsZero() || plan.RetryAt.IsZero() {
 		return acquisition.ErrInvalidRefreshRequest
 	}
-	if plan.ManifestState != acquisition.StateAwaitingCanonical || plan.JobState != jobs.StateRetryWait {
+	if (plan.ManifestState != acquisition.StateAwaitingCanonical && plan.ManifestState != acquisition.StateAwaitingVisibility) || plan.JobState != jobs.StateRetryWait {
 		return fmt.Errorf("%w: unsupported handoff %s/%s",
 			acquisition.ErrInvalidRefreshRequest, plan.ManifestState, plan.JobState)
 	}
