@@ -500,7 +500,7 @@ func TestPostgresRefreshRejectsTamperedPlansBeforeWriting(t *testing.T) {
 	}
 
 	unsupportedManifest := valid
-	unsupportedManifest.ManifestState = acquisition.StateAwaitingVisibility
+	unsupportedManifest.ManifestState = acquisition.StateReady
 	if err := validateRefreshPlan(unsupportedManifest); !errors.Is(err, acquisition.ErrInvalidRefreshRequest) {
 		t.Fatalf("validateRefreshPlan(unsupported Manifest state) error = %v, want ErrInvalidRefreshRequest", err)
 	}
@@ -526,6 +526,13 @@ func TestPostgresRefreshRejectsTamperedPlansBeforeWriting(t *testing.T) {
 	beforeManifest, beforeJob := refreshDurableState(t, ctx, manifests, jobRepository, fixture)
 	if _, err := repository.CommitRefresh(ctx, unsupportedManifest); !errors.Is(err, acquisition.ErrInvalidRefreshRequest) {
 		t.Fatalf("CommitRefresh(tampered plan) error = %v, want ErrInvalidRefreshRequest", err)
+	}
+	assertRefreshNotMutated(t, ctx, manifests, jobRepository, fixture, beforeManifest, beforeJob)
+
+	privatePending := valid
+	privatePending.ManifestState = acquisition.StateAwaitingVisibility
+	if _, err := repository.CommitRefresh(ctx, privatePending); !errors.Is(err, acquisition.ErrInvalidRefreshRequest) {
+		t.Fatalf("CommitRefresh(legacy Manifest waiting for a private directory) error = %v, want ErrInvalidRefreshRequest", err)
 	}
 	assertRefreshNotMutated(t, ctx, manifests, jobRepository, fixture, beforeManifest, beforeJob)
 }
