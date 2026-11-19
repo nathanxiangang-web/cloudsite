@@ -387,11 +387,22 @@ func TestPostgresProductAdmissionUnknownCommitAndPendingActivation(t *testing.T)
 }
 func TestPostgresProductAdmissionRejectsInvalidPolicyInputAndTopology(t *testing.T) {
 	f := newAdmissionFixture(t)
-	for _, source := range []string{"magnet:?xt=urn:btih:bad", f.input.Source + "&so=1", "file:///etc/passwd", strings.Repeat("x", 65537)} {
+	for _, tc := range []struct {
+		source string
+		want   error
+	}{
+		{"magnet:?xt=urn:btih:bad", acquisition.ErrMagnetBTIHMissing},
+		{f.input.Source + "&amp;so=1", acquisition.ErrMagnetUnsupported},
+		{f.input.Source + "&dn=conflict", acquisition.ErrMagnetAmbiguous},
+		{f.input.Source + "&amp;tr=%GG", acquisition.ErrMagnetMalformed},
+		{f.input.Source + "&tr=%00", acquisition.ErrMagnetMalformed},
+		{"file:///etc/passwd", acquisition.ErrInvalidSource},
+		{strings.Repeat("x", 65537), product.ErrInvalid},
+	} {
 		r := f.input
-		r.Source = source
-		if _, err := f.service.Admit(f.ctx, f.p, r); !errors.Is(err, product.ErrInvalid) {
-			t.Fatal("invalid source admitted", err)
+		r.Source = tc.source
+		if _, err := f.service.Admit(f.ctx, f.p, r); !errors.Is(err, tc.want) {
+			t.Fatalf("invalid source: got %v want %v", err, tc.want)
 		}
 		assertAdmissionCounts(t, f, 0, 0, 0)
 	}

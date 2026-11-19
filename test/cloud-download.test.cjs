@@ -7,7 +7,7 @@ test('reloaded pending key is never replaced by source preparation or retry',()=
 test('source-free persistence is user-bound and clears only its own key',()=>{const data=new Map();const storage={getItem:key=>data.get(key)||null,setItem:(key,value)=>data.set(key,value),removeItem:key=>data.delete(key)};model.savePending(id,'web-stable',storage);model.savePending(result.job_id,'web-other',storage);assert.equal(model.pending(id,storage),'web-stable');assert.equal([...data.values()].some(v=>v.includes('source')||v.includes('SECRET')),false);model.clearPending(id,storage);assert.equal(model.pending(id,storage),null);assert.equal(model.pending(result.job_id,storage),'web-other');assert.throws(()=>model.savePending(id,'bad/key',storage));});
 test('pending activation and malformed acknowledgement cannot erase uncertainty',()=>{const intent=new model.Intent('web-stable');intent.begin('raw','',()=>{throw Error('new')});assert.throws(()=>intent.accepted({...result,manifest_id:'bad'}));assert.equal(intent.key,'web-stable');assert.equal(intent.accepted({...result,status:'PENDING_ACTIVATION'}),false);assert.equal(intent.source,'raw');assert.equal(intent.key,'web-stable');});
 test('READY needs same Job success and stable Copy, not merely provider success',()=>{assert.equal(model.taskLabel({manifest_state:'READY',job_state:'RUNNING',result_copy_id:id}),'正在核实结果');assert.equal(model.taskLabel({manifest_state:'READY',job_state:'SUCCEEDED'}),'正在核实结果');assert.match(model.taskLabel({manifest_state:'READY',job_state:'SUCCEEDED',result_copy_id:id}),/已收录/);assert.match(model.taskLabel({manifest_state:'AWAITING_CANONICAL'}),/确认/);assert.match(model.taskLabel({manifest_state:'RECOVERY_REQUIRED'}),/勿重复/);});
-test('consumer page has no target controls or source persistence; only explicit form submits',()=>{const root=path.join(__dirname,'../internal/producthttp/web');const html=fs.readFileSync(path.join(root,'downloads.html'),'utf8');const js=fs.readFileSync(path.join(root,'downloads.js'),'utf8');const surface=fs.readFileSync(path.join(root,'file-surface.js'),'utf8');for(const forbidden of ['provider_scope','binding-select','directory-back','删除文件','Cookie','Token'])assert.equal(html.includes(forbidden),false);for(const forbidden of ['innerHTML','localStorage','sessionStorage','document.cookie','http://','https://'])assert.equal(js.includes(forbidden),false);assert.match(js,/download-form.*addEventListener\('submit'/);assert.match(js,/CloudSpace\.endpoint\(\)/);assert.match(js,/CloudSpace\.state\.active/);assert.match(js,/state\.privateFiles\)state\.privateFiles\.clear/);assert.match(surface,/api\/v2\/cloud-downloads\/files\?limit=50/);assert.match(html,/private-files-more/);assert.match(js,/refresh\(\);/);assert.match(js,/state\.intent\.key/);assert.match(js,/pagehide/);assert.match(js,/generation!==state\.generation/);assert.match(js,/textContent=prepared\.execution_source/);});
+test('consumer page has no target controls or source persistence; only explicit form submits',()=>{const root=path.join(__dirname,'../internal/producthttp/web');const html=fs.readFileSync(path.join(root,'downloads.html'),'utf8');const js=fs.readFileSync(path.join(root,'downloads.js'),'utf8');const surface=fs.readFileSync(path.join(root,'file-surface.js'),'utf8');for(const forbidden of ['provider_scope','binding-select','directory-back','删除文件','Cookie','Token'])assert.equal(html.includes(forbidden),false);for(const forbidden of ['innerHTML','localStorage','sessionStorage','document.cookie','http://','https://'])assert.equal(js.includes(forbidden),false);assert.match(js,/download-form.*addEventListener\('submit'/);assert.match(js,/CloudSpace\.endpoint\(\)/);assert.match(js,/CloudSpace\.state\.active/);assert.match(js,/state\.privateFiles\)state\.privateFiles\.clear/);assert.match(surface,/api\/v2\/cloud-downloads\/files\?limit=50/);assert.match(html,/private-files-more/);assert.match(js,/refresh\(\);/);assert.match(js,/state\.intent\.key/);assert.match(js,/pagehide/);assert.equal(html.match(/type="submit"/g).length,1);assert.match(html,/开始下载/);assert.doesNotMatch(js,/cloud-downloads\/prepare|execution_source/);});
 test('session expiry clears private DOM but retains reconciliation key; explicit logout clears it',()=>{const js=fs.readFileSync(path.join(__dirname,'../internal/producthttp/web/downloads.js'),'utf8');assert.match(js,/function stop\(clearPending=false\)/);assert.match(js,/if\(clearPending&&state\.owner\)CloudDownloadModel\.clearPending/);assert.match(js,/response\.status===401\)stop\(\)/);assert.match(js,/auth\/logout','POST'\);stop\(true\)/);assert.match(js,/pagehide',\(\)=>stop\(\)/);assert.match(js,/!document\.hidden&&!state\.paginated/);});
 
 function pageApp(key=null,fileController=null){
@@ -23,10 +23,56 @@ function pageApp(key=null,fileController=null){
  return{elements,requests,data,events,timers,run,respond,ready};
 }
 test('page reload reconciles only GET and preserves pending key after not-found',async()=>{const app=pageApp('web-old');await app.ready();await app.respond('/api/v1/cloud-downloads/operations/web-old',{code:'OPERATION_NOT_FOUND'},404);assert.equal(app.requests.some(r=>r.options.method==='POST'),false);assert.equal([...app.data.values()][0],'web-old');assert.match(app.elements.get('download-error').textContent,/不能证明/);});
-test('real form double click sends one POST; response loss does not create another key',async()=>{const app=pageApp();await app.ready();const raw='magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567&amp;dn=discarded&amp;tr=udp://tracker.invalid';app.elements.get('download-source').value=raw;const prepare=app.elements.get('download-prepare').listeners.click();await app.respond('/api/v1/cloud-downloads/prepare',{execution_source:'magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567',changed:true});await prepare;assert.equal(JSON.parse(app.requests.find(r=>r.url==='/api/v1/cloud-downloads/prepare').options.body).source,raw);assert.equal(app.elements.get('download-source').value,raw);const submit=app.elements.get('download-form').listeners.submit;const first=submit({preventDefault(){}});await submit({preventDefault(){}});const post=app.requests.filter(r=>r.url==='/api/v1/cloud-downloads');assert.equal(post.length,1);const submitted=JSON.parse(post[0].options.body);assert.equal(submitted.source,raw);assert.deepEqual([...app.data.values()],[submitted.operation_key]);await app.respond('/api/v1/cloud-downloads',{code:'ADMISSION_UNCERTAIN'},503);await first;assert.equal(app.run('state.intent.key'),submitted.operation_key);assert.equal(app.requests.filter(r=>r.url==='/api/v1/cloud-downloads').length,1);});
-test('401 and page hide clear source DOM, retain key and ignore late preview',async()=>{const app=pageApp('web-old');await app.ready();app.elements.get('download-source').value='PRIVATE';await app.respond('/api/v1/cloud-downloads/operations/web-old',{code:'AUTH_REQUIRED'},401);assert.equal(app.elements.get('download-source').value,'');assert.deepEqual([...app.data.values()],['web-old']);const other=pageApp();await other.ready();other.elements.get('download-source').value='PRIVATE';const pending=other.elements.get('download-prepare').listeners.click();other.events.pagehide();await other.respond('/api/v1/cloud-downloads/prepare',{execution_source:'PRIVATE'});await pending;assert.equal(other.elements.get('download-source').value,'');assert.equal(other.elements.get('download-execution').textContent,'');});
-test('login-unavailable UI allows pure preview, never submits or probes absent mutation routes',async()=>{const app=pageApp('web-preserved');await app.ready({cloud_download_enabled:false,cloud_download_preview_enabled:true,cloud_download_label:'云下载',cloud_download_unavailable_reason:'LOGIN_REQUIRED'});assert.equal(app.elements.get('download-workspace').hidden,false);assert.match(app.elements.get('download-gate').textContent,/登录已失效/);assert.equal(app.elements.get('download-prepare').disabled,false);assert.equal(app.elements.get('download-submit').disabled,true);app.elements.get('download-source').value='PRIVATE magnet';const checked=app.elements.get('download-prepare').listeners.click();await app.respond('/api/v1/cloud-downloads/prepare',{execution_source:'prepared magnet',changed:true});await checked;await app.elements.get('download-form').listeners.submit({preventDefault(){}});assert.equal(app.elements.get('download-execution').textContent,'prepared magnet');assert.match(app.elements.get('download-message').textContent,/未启动/);assert.equal(app.elements.get('download-submit').disabled,true);assert.equal(app.requests.some(r=>r.url==='/api/v1/usage'||r.url.includes('/operations/')||r.url==='/api/v1/cloud-downloads'),false);assert.deepEqual([...app.data.values()],['web-preserved']);});
-
+test('one click sends the raw source once and uncertain results keep the key for GET',async()=>{
+ const app=pageApp();await app.ready();
+ const raw='magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567&amp;dn=discarded&amp;tr=udp://tracker.invalid';
+ app.elements.get('download-source').value=raw;
+ const submit=app.elements.get('download-form').listeners.submit;
+ const first=submit({preventDefault(){}});await submit({preventDefault(){}});
+ const posts=app.requests.filter(r=>r.options.method==='POST');
+ assert.equal(posts.length,1);assert.equal(posts[0].url,'/api/v1/cloud-downloads');
+ const submitted=JSON.parse(posts[0].options.body);
+ assert.equal(submitted.source,raw);
+ assert.deepEqual([...app.data.values()],[submitted.operation_key]);
+ await app.respond('/api/v1/cloud-downloads',{code:'ADMISSION_UNCERTAIN'},503);await first;
+ assert.equal(app.run('state.intent.key'),submitted.operation_key);
+ const verify=app.elements.get('download-reconcile').listeners.click();
+ await submit({preventDefault(){}});
+ await app.respond('/api/v1/cloud-downloads/operations/'+submitted.operation_key,{code:'OPERATION_NOT_FOUND'},404);await verify;
+ assert.equal(app.requests.filter(r=>r.options.method==='POST').length,1);
+ assert.deepEqual([...app.data.values()],[submitted.operation_key]);
+});
+test('definitive source rejection permits editing and never persists the raw input',async()=>{
+ const app=pageApp();await app.ready();
+ const source=app.elements.get('download-source');source.value='magnet:?xt=invalid';
+ const pending=app.elements.get('download-form').listeners.submit({preventDefault(){}});
+ assert.equal(source.disabled,true);
+ await app.respond('/api/v1/cloud-downloads',{code:'MAGNET_BTIH_MISSING'},400);await pending;
+ assert.equal(source.disabled,false);assert.equal(source.value,'magnet:?xt=invalid');
+ assert.match(app.elements.get('download-error').textContent,/BTIH/);
+ assert.equal(app.data.size,0);assert.equal(app.run('state.intent.key'),null);
+});
+test('401 and page hide clear source DOM, retain key and ignore late admission',async()=>{
+ const app=pageApp('web-old');await app.ready();app.elements.get('download-source').value='PRIVATE';
+ await app.respond('/api/v1/cloud-downloads/operations/web-old',{code:'AUTH_REQUIRED'},401);
+ assert.equal(app.elements.get('download-source').value,'');assert.deepEqual([...app.data.values()],['web-old']);
+ const other=pageApp();await other.ready();other.elements.get('download-source').value='PRIVATE';
+ const pending=other.elements.get('download-form').listeners.submit({preventDefault(){}});
+ other.events.pagehide();
+ await other.respond('/api/v1/cloud-downloads',{status:'CREATED'},201);await pending;
+ assert.equal(other.elements.get('download-source').value,'');assert.equal(other.data.size,1);
+});
+test('login-unavailable UI can show files and never sends a submission',async()=>{
+ const app=pageApp('web-preserved');
+ await app.ready({cloud_download_enabled:false,cloud_download_preview_enabled:true,cloud_download_label:'云下载',cloud_download_unavailable_reason:'LOGIN_REQUIRED'});
+ assert.equal(app.elements.get('download-workspace').hidden,false);
+ assert.match(app.elements.get('download-gate').textContent,/登录已失效/);
+ app.elements.get('download-source').value='PRIVATE magnet';
+ await app.elements.get('download-form').listeners.submit({preventDefault(){}});
+ assert.equal(app.elements.get('download-submit').disabled,true);
+ assert.equal(app.requests.some(r=>r.url==='/api/v1/usage'||r.url.includes('/operations/')||r.options.method==='POST'),false);
+ assert.deepEqual([...app.data.values()],['web-preserved']);
+});
 test('unchanged READY still checks delayed file indexing through GET-only quiet refresh',async()=>{
  let mounts=0,refreshes=0,clears=0;const app=pageApp(null,{async mount(){mounts++;},async refresh(){refreshes++;},clear(){clears++;}});await app.ready();assert.equal(mounts,1);
  const task={manifest_state:'READY',job_state:'SUCCEEDED',result_copy_id:id,created_at:'2026-10-17T00:00:00Z'};
@@ -56,7 +102,6 @@ test('live native session failure blocks new tasks, preserves input and allows o
  await app.respond('/api/v1/cloud-downloads/session',{status:'LOGIN_REQUIRED',valid_until:new Date(Date.now()+15000).toISOString()});
  assert.match(app.elements.get('download-session-status').textContent,/登录已失效/);
  assert.equal(app.elements.get('download-source').value,'PRIVATE input');
- assert.equal(app.elements.get('download-prepare').disabled,false);
  assert.equal(app.elements.get('download-submit').disabled,true);
  assert.equal(app.elements.get('download-reconcile').hidden,false);
  await app.respond('/api/v1/cloud-downloads/operations/web-previous',{code:'OPERATION_NOT_FOUND'},404);
@@ -79,11 +124,10 @@ test('expired or malformed health never enables submit or clears already display
  await app.respond('/api/v1/cloud-downloads/session',{status:'AUTHENTICATED',valid_until:'bad'});await check;
  assert.equal(app.run('state.canSubmit'),false);assert.equal(mounts,1);assert.equal(clears,0);
 });
-test('authoritative pre-admission auth rejection retains same key and preview without new POST',async()=>{
+test('authoritative pre-admission auth rejection retains raw input and key without a new POST',async()=>{
  const app=pageApp();await app.ready({cloud_download_enabled:true,cloud_download_session_check:true});
  await app.respond('/api/v1/cloud-downloads/session',{status:'AUTHENTICATED',valid_until:new Date(Date.now()+15000).toISOString()});
- app.elements.get('download-source').value='https://example.invalid/private';const prep=app.elements.get('download-prepare').listeners.click();
- await app.respond('/api/v1/cloud-downloads/prepare',{execution_source:'https://example.invalid/private'});await prep;
+ app.elements.get('download-source').value='https://example.invalid/private';
  const submit=app.elements.get('download-form').listeners.submit({preventDefault(){}});
  await app.respond('/api/v1/cloud-downloads',{code:'PROVIDER_LOGIN_REQUIRED'},503);await submit;
  assert.equal(app.elements.get('download-source').value,'https://example.invalid/private');
