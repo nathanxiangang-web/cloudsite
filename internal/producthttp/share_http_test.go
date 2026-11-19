@@ -63,8 +63,11 @@ func TestShareHTTPAnonymousGrantRangeHeadAndRevoke(t *testing.T) {
 	directory := false
 	size := int64(4)
 	reads := contentReads{resource: product.Resource{BindingID: workspaceBinding.ID, ResourceID: "file-one", Path: &path, Directory: &directory, SizeBytes: &size, Presence: "PRESENT"}}
-	source := &contentSource{}
+	source := &contentSource{target: "https://cdn.example.test/file?signature=opaque"}
 	files, _ := fileaccess.New(reads, contentTopology{}, source)
+	if err := files.EnableDirectLinks([]string{"cdn.example.test"}); err != nil {
+		t.Fatal(err)
+	}
 	store := &shareMemory{}
 	shares, _ := fileshare.New(store, files)
 	h, _ := NewWorkspaceHandler(&fakeAccess{p: goodPrincipal()}, "http://127.0.0.1:8180", reads, []DisplayBinding{workspaceBinding}, 14, WithFileAccess(files), WithSharing(shares))
@@ -133,26 +136,26 @@ func TestShareHTTPAnonymousGrantRangeHeadAndRevoke(t *testing.T) {
 		t.Fatal("link token forged code grant")
 	}
 	w = call("GET", info.Download, "", false, cookie, "")
-	if w.Code != 200 || w.Body.String() != "text" || !strings.Contains(w.Header().Get("Content-Disposition"), "attachment") {
-		t.Fatal("guest download", w.Code)
+	if w.Code != http.StatusFound || w.Body.Len() != 0 || w.Header().Get("Location") != source.target || w.Header().Get("Cache-Control") != "no-store" || w.Header().Get("Referrer-Policy") != "no-referrer" {
+		t.Fatal("guest download must be an empty-body 302", w.Code, w.Header())
 	}
 	w = call("HEAD", info.Download, "", false, cookie, "")
-	if w.Code != 200 || w.Body.Len() != 0 {
-		t.Fatal("HEAD")
+	if w.Code != http.StatusFound || w.Body.Len() != 0 || w.Header().Get("Location") != source.target {
+		t.Fatal("HEAD must be an empty-body 302")
 	}
 	r := httptest.NewRequest("GET", origin+info.Download, nil)
 	r.AddCookie(cookie)
 	r.Header.Set("Range", "bytes=1-2")
 	w = httptest.NewRecorder()
 	h.ServeHTTP(w, r)
-	if w.Code != 206 || w.Body.String() != "ex" {
-		t.Fatal("guest range", w.Code)
+	if w.Code != http.StatusFound || w.Body.Len() != 0 || w.Header().Get("Location") != source.target {
+		t.Fatal("guest Range must redirect without file bytes", w.Code)
 	}
 	if w = call("POST", "/api/v1/shares/"+created.ID+"/revoke", `{}`, true, nil, origin); w.Code != 204 {
 		t.Fatal("revoke", w.Code)
 	}
-	before := source.calls
-	if w = call("GET", info.Download, "", false, cookie, ""); w.Code != 404 || source.calls != before {
+	before := source.links
+	if w = call("GET", info.Download, "", false, cookie, ""); w.Code != 404 || source.links != before {
 		t.Fatal("revoked grant reached bytes")
 	}
 }

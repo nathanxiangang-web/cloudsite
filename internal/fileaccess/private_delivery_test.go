@@ -54,7 +54,7 @@ func TestPrivateVideoAndAttachmentRedirectAfterCanonicalAuthorization(t *testing
 	source.target = "https://cdn.example.test/video?signature=temporary"
 	request.Inline = false
 	file, err = service.Deliver(context.Background(), principal(), request)
-	if err != nil || file.DirectURL != source.target || source.calls != 0 || source.links != 2 || file.Content.Body != nil {
+	if err != nil || file.DirectURL != source.target || source.calls != 0 || source.links != 3 || file.Content.Body != nil {
 		t.Fatalf("attachment delivery must also redirect, error = %v", err)
 	}
 }

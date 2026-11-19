@@ -30,7 +30,12 @@ func (contentTopology) GetBinding(context.Context, storage.BindingID) (storage.B
 	return storage.Binding{ID: workspaceBinding.ID, OpenListMountPath: "/docs"}, nil
 }
 
-type contentSource struct{ calls int }
+type contentSource struct {
+	calls   int
+	links   int
+	target  string
+	linkErr error
+}
 type memoryPreview struct{ *strings.Reader }
 
 func (m memoryPreview) Close() error { return nil }
@@ -52,6 +57,11 @@ type pdfFake struct{}
 func (pdfFake) PDF(context.Context, io.ReadSeeker, int) ([]byte, int, error) {
 	return []byte{137, 80, 78, 71, 13, 10, 26, 10}, 1, nil
 }
+func (s *contentSource) ResolveLink(_ context.Context, _ fileaccess.SourceRequest) (string, error) {
+	s.links++
+	return s.target, s.linkErr
+}
+
 func (s *contentSource) OpenPreview(_ context.Context, r fileaccess.SourceRequest) (fileaccess.Content, error) {
 	s.calls++
 	start, end, partial, _ := fileaccess.ByteRange(r.Range, 4)
