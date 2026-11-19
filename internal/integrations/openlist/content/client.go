@@ -222,3 +222,4 @@ func (c *ContentClient) OpenPreview(ctx context.Context, r fileaccess.SourceRequ
 }
 
 var _ fileaccess.PreviewSource = (*ContentClient)(nil)
+var _ fileaccess.LinkSource = (*ContentClient)(nil)

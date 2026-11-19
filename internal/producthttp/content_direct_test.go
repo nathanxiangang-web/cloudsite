@@ -3,13 +3,14 @@ package producthttp
 import (
 	"context"
 	"io"
-	"github.com/nathanxiangang-web/panta/internal/fileaccess"
-	"github.com/nathanxiangang-web/panta/internal/product"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/nathanxiangang-web/panta/internal/fileaccess"
+	"github.com/nathanxiangang-web/panta/internal/product"
 )
 
 type directContentSource struct {
