@@ -52,7 +52,7 @@ type pdfFake struct{}
 func (pdfFake) PDF(context.Context, io.ReadSeeker, int) ([]byte, int, error) {
 	return []byte{137, 80, 78, 71, 13, 10, 26, 10}, 1, nil
 }
-func (s *contentSource) Open(_ context.Context, r fileaccess.SourceRequest) (fileaccess.Content, error) {
+func (s *contentSource) OpenPreview(_ context.Context, r fileaccess.SourceRequest) (fileaccess.Content, error) {
 	s.calls++
 	start, end, partial, _ := fileaccess.ByteRange(r.Range, 4)
 	body := "text"
@@ -65,7 +65,7 @@ func (s *contentSource) Open(_ context.Context, r fileaccess.SourceRequest) (fil
 	}
 	return fileaccess.Content{Body: io.NopCloser(strings.NewReader(body)), Status: status, Length: int64(len(body)), ContentRange: cr}, nil
 }
-func TestAuthenticatedContentDownloadPreviewAndHead(t *testing.T) {
+func TestContentFailsClosedWithoutDirectLinkConfigAndPreviewRemainsAvailable(t *testing.T) {
 	path := "/docs/name.md"
 	directory := false
 	size := int64(4)
@@ -79,7 +79,7 @@ func TestAuthenticatedContentDownloadPreviewAndHead(t *testing.T) {
 		method, mode, token, extra, byteRange string
 		status                                int
 		body                                  string
-	}{{"GET", "content", "", "", "", 401, ""}, {"GET", "content", testToken, "", "", 200, "text"}, {"GET", "content", testToken, "", "bytes=1-2", 206, "ex"}, {"HEAD", "content", testToken, "", "", 200, ""}, {"GET", "content", testToken, "", "bytes=4-5", 416, ""}, {"GET", "preview", testToken, "", "", 200, `"text":"text"`}, {"GET", "content", testToken, "&url=http://127.0.0.1", "", 400, ""}, {"GET", "content", testToken, "&disposition=unsafe", "", 400, ""}, {"GET", "content", testToken, "&resource_id=wrong", "", 400, ""}} {
+	}{{"GET", "content", "", "", "", 401, ""}, {"GET", "content", testToken, "", "", 503, "CONTENT_UNAVAILABLE"}, {"GET", "content", testToken, "", "bytes=1-2", 503, "CONTENT_UNAVAILABLE"}, {"HEAD", "content", testToken, "", "", 503, ""}, {"GET", "content", testToken, "", "bytes=4-5", 416, "RANGE_NOT_SATISFIABLE"}, {"GET", "preview", testToken, "", "", 200, `"text":"text"`}, {"GET", "content", testToken, "&url=http://127.0.0.1", "", 400, ""}, {"GET", "content", testToken, "&disposition=unsafe", "", 400, ""}, {"GET", "content", testToken, "&resource_id=wrong", "", 400, ""}} {
 		r := httptest.NewRequest(c.method, "http://127.0.0.1:8180/api/v1/files/"+c.mode+"?"+query.Encode()+c.extra, nil)
 		if c.token != "" {
 			r.AddCookie(&http.Cookie{Name: SessionCookieName, Value: c.token})
@@ -92,18 +92,12 @@ func TestAuthenticatedContentDownloadPreviewAndHead(t *testing.T) {
 		if w.Code != c.status || c.body != "" && !strings.Contains(w.Body.String(), c.body) {
 			t.Fatal(c, w.Code, w.Body.String())
 		}
-		if c.method == "HEAD" && w.Body.Len() != 0 {
-			t.Fatal("HEAD wrote body")
+		if c.mode == "content" && source.calls != 0 {
+			t.Fatal("content request opened source bytes")
 		}
-		if c.status == 206 && (w.Header().Get("Content-Range") != "bytes 1-2/4" || w.Header().Get("Content-Length") != "2") {
-			t.Fatal("partial headers")
-		}
-		if c.status == 416 && w.Header().Get("Content-Range") != "bytes */4" {
-			t.Fatal("range unsatisfied size")
-		}
-		if c.status == 200 && c.mode == "content" && (!strings.Contains(w.Header().Get("Content-Disposition"), "attachment") || w.Header().Get("Content-Type") != "application/octet-stream") {
-			t.Fatal("unsafe active inline")
-		}
+	}
+	if source.calls != 1 {
+		t.Fatal("explicit preview did not use its preview-only source", source.calls)
 	}
 	w := request(h, "GET", "/api/v1/workspace", "", testToken, "")
 	if !strings.Contains(w.Body.String(), `"content_access_enabled":true`) {

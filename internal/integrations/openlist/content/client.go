@@ -172,7 +172,7 @@ func (c *ContentClient) ResolveLink(ctx context.Context, r fileaccess.SourceRequ
 	return target.String(), nil
 }
 
-func (c *ContentClient) Open(ctx context.Context, r fileaccess.SourceRequest) (fileaccess.Content, error) {
+func (c *ContentClient) OpenPreview(ctx context.Context, r fileaccess.SourceRequest) (fileaccess.Content, error) {
 	target, err := c.resolveURL(ctx, r, contentUA)
 	if err != nil {
 		return fileaccess.Content{}, err
@@ -221,4 +221,4 @@ func (c *ContentClient) Open(ctx context.Context, r fileaccess.SourceRequest) (f
 	return fileaccess.Content{Body: response.Body, Status: status, Length: length, ContentRange: expectedRange}, nil
 }
 
-var _ fileaccess.Source = (*ContentClient)(nil)
+var _ fileaccess.PreviewSource = (*ContentClient)(nil)

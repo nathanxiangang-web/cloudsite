@@ -17,7 +17,7 @@ func TestGuestHTTPRedirectRevalidatesGrantAndCanonicalIdentity(t *testing.T) {
 	reads := contentReads{resource: product.Resource{BindingID: workspaceBinding.ID, ResourceID: "file-one", Path: &path, Directory: &dir, SizeBytes: &size, Presence: "PRESENT"}}
 	source := &directContentSource{}
 	files, _ := fileaccess.New(reads, contentTopology{}, source)
-	if err := files.EnableSharedDirectLinks([]string{"cdn.example.test"}); err != nil {
+	if err := files.EnableDirectLinks([]string{"cdn.example.test"}); err != nil {
 		t.Fatal(err)
 	}
 	store := &shareMemory{}
@@ -43,10 +43,9 @@ func TestGuestHTTPRedirectRevalidatesGrantAndCanonicalIdentity(t *testing.T) {
 		}
 	}
 	ordinary, err := files.Deliver(context.Background(), goodPrincipal(), fileaccess.Request{BindingID: workspaceBinding.ID, ResourceID: "file-one", Path: path})
-	if err != nil || ordinary.DirectURL != "" || source.calls != 1 {
-		t.Fatalf("share redirect config unexpectedly changed ordinary delivery: %v", err)
+	if err != nil || ordinary.DirectURL == "" || ordinary.Content.Body != nil || source.calls != 0 {
+		t.Fatalf("ordinary delivery did not use the unified redirect policy: %v", err)
 	}
-	ordinary.Content.Body.Close()
 	before := source.links
 	store.revoked = true
 	r := httptest.NewRequest("GET", "http://127.0.0.1:8180/api/v1/shared/"+record.ID+"/content", nil)

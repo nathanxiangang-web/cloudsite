@@ -80,18 +80,12 @@ func TestDirectDeliveryKeepsCanonicalAuthorizationAndNeverOpensBytes(t *testing.
 	if _, err := s.Deliver(context.Background(), principal(), request); err != ErrUnavailable || source.calls != 0 {
 		t.Fatal("unsafe fallback or error leak")
 	}
-	source.linkErr = nil
-	file, err := s.Open(context.Background(), principal(), request)
-	if err != nil || file.DirectURL != "" || source.calls != 1 {
-		t.Fatal("preview stream port changed", err)
-	}
-	file.Content.Body.Close()
 	if len(s.MediaSources()) != 1 || s.MediaSources()[0] != "https://cdn.example.test" {
 		t.Fatal("unbounded media CSP")
 	}
 }
 
-func TestDirectHostConfigurationFailsClosedAndDefaultsToProxy(t *testing.T) {
+func TestDirectHostConfigurationFailsClosedWithoutProxyFallback(t *testing.T) {
 	source := &linkFake{}
 	s, _ := New(&readsFake{item: resource()}, topologyFake{"/docs"}, source)
 	for _, hosts := range [][]string{{"*"}, {"https://cdn.example.test"}, {"cdn.example.test; script-src *"}, {"127.0.0.1"}, {"localhost"}, {"cdn.example.test", "cdn.example.test"}, {"cdn.local"}, {"cdn.localhost"}, {"CDN.example.test"}, {"-a.example.test"}, {strings.Repeat("a", 64) + ".test"}} {
@@ -99,14 +93,13 @@ func TestDirectHostConfigurationFailsClosedAndDefaultsToProxy(t *testing.T) {
 			t.Fatal("invalid host configuration")
 		}
 	}
-	if s.EnableDirectLinks(nil) != nil {
-		t.Fatal("legacy proxy rejected")
+	if s.EnableDirectLinks(nil) == nil {
+		t.Fatal("empty direct allowlist accepted")
 	}
 	file, err := s.Deliver(context.Background(), principal(), Request{BindingID: bindingID, ResourceID: "resource-one", Path: "/docs/file.md"})
-	if err != nil || file.DirectURL != "" || source.calls != 1 || source.links != 0 {
-		t.Fatal("default changed", err)
+	if !errors.Is(err, ErrUnavailable) || file.DirectURL != "" || file.Content.Body != nil || source.calls != 0 || source.links != 0 {
+		t.Fatal("missing direct config did not fail closed", err)
 	}
-	file.Content.Body.Close()
 	plain, _ := New(&readsFake{item: resource()}, topologyFake{"/docs"}, &sourceFake{})
 	if plain.EnableDirectLinks([]string{"cdn.example.test"}) == nil {
 		t.Fatal("missing source port")

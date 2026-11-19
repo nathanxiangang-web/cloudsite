@@ -70,7 +70,7 @@ func TestInlineVideoHTTP302OnlyWithAuthenticatedPlayback(t *testing.T) {
 	reads := contentReads{resource: product.Resource{BindingID: workspaceBinding.ID, ResourceID: "file-one", Path: &path, Directory: &directory, SizeBytes: &size, Presence: "PRESENT"}}
 	source := &directContentSource{}
 	files, _ := fileaccess.New(reads, contentTopology{}, source)
-	if err := files.EnableVideoDirectLinks([]string{"cdn.example.test"}); err != nil {
+	if err := files.EnableDirectLinks([]string{"cdn.example.test"}); err != nil {
 		t.Fatal(err)
 	}
 	h, err := NewWorkspaceHandler(&fakeAccess{p: goodPrincipal()}, "http://127.0.0.1:8180", reads, []DisplayBinding{workspaceBinding}, 22, WithFileAccess(files, nil))

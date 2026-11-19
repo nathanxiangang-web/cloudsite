@@ -38,8 +38,8 @@ type Content struct {
 	Length       int64
 	ContentRange string
 }
-type Source interface {
-	Open(context.Context, SourceRequest) (Content, error)
+type PreviewSource interface {
+	OpenPreview(context.Context, SourceRequest) (Content, error)
 }
 type File struct {
 	Name, Extension string
@@ -50,40 +50,19 @@ type File struct {
 type Service struct {
 	reads             product.Reads
 	topology          product.TopologyReader
-	source            Source
+	source            PreviewSource
 	directHosts       []string
 	videoDirectHosts  []string
 	sharedDirectHosts []string
 }
 
-func New(reads product.Reads, topology product.TopologyReader, source Source) (*Service, error) {
+func New(reads product.Reads, topology product.TopologyReader, source PreviewSource) (*Service, error) {
 	if reads == nil || topology == nil || source == nil {
 		return nil, product.ErrInvalid
 	}
 	return &Service{reads: reads, topology: topology, source: source}, nil
 }
-func (s *Service) Open(ctx context.Context, p auth.Principal, r Request) (File, error) {
-	file, source, err := s.describe(ctx, p, r)
-	if err != nil {
-		return file, err
-	}
-	start, end, partial, err := ByteRange(r.Range, file.Size)
-	if err != nil {
-		return File{Size: file.Size}, err
-	}
-	if partial {
-		source.Range = FormatRange(start, end)
-	}
-	source.Head = r.Head
-	body, err := s.source.Open(ctx, source)
-	if err != nil {
-		return File{Size: file.Size}, err
-	}
-	file.Content = body
-	return file, nil
-}
-
-// Describe validates the same canonical identity as Open without fetching bytes.
+// Describe validates canonical identity without fetching bytes.
 func (s *Service) Describe(ctx context.Context, p auth.Principal, r Request) (File, error) {
 	file, _, err := s.describe(ctx, p, r)
 	return file, err

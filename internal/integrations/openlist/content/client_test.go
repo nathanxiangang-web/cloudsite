@@ -41,7 +41,7 @@ func TestProtectedTokenSourceRotationAndFailureRemainClosed(t *testing.T) {
 	}
 	for _, next := range []string{"first-test-token", "rotated-test-token"} {
 		token = next
-		body, err := client.Open(context.Background(), fileaccess.SourceRequest{Path: "/file", Size: 1})
+		body, err := client.OpenPreview(context.Background(), fileaccess.SourceRequest{Path: "/file", Size: 1})
 		if err != nil {
 			t.Fatal(err)
 		}

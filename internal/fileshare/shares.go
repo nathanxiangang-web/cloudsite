@@ -206,10 +206,13 @@ func (s *Service) Open(ctx context.Context, id, token, byteRange string, head bo
 	if err != nil {
 		return file, err
 	}
-	if file.Size != record.Size || file.Name != record.Name {
+	if file.DirectURL == "" || file.Content.Body != nil {
 		if file.Content.Body != nil {
-			file.Content.Body.Close()
+			_ = file.Content.Body.Close()
 		}
+		return fileaccess.File{}, ErrUnavailable
+	}
+	if file.Size != record.Size || file.Name != record.Name {
 		return fileaccess.File{}, ErrDenied
 	}
 	return file, nil
