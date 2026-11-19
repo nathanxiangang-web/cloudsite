@@ -236,6 +236,8 @@ CloudSite 撤销分享、删除文件或用户退出，无法自动撤销已经�
 4. 获取上游临时 URL，验证 allowlist/HTTPS/ExpiresAt。
 5. 返回 302 空 body；不经 CloudSite proxy。
 
+播放器跟随 302 后发往 CDN 的后续 Range/seek 请求直接由 CDN 处理，不再经过 CloudSite；访问能力由短时上游 bearer URL 承载。撤销分享、禁用 owner 或删除文件无法中断已经签发的 CDN URL，必须等待上游 URL 到期或由上游撤销。
+
 撤销：
 - Owner 只能列出和撤销自己的分享；
 - 撤销立即阻止新的 redeem 和新的 302；
