@@ -1,15 +1,15 @@
 (function(root){
  'use strict';
- const state={available:false,active:false,status:'UNAVAILABLE',mounted:false,generation:0,onActive:null};
+ const state={available:false,active:false,required:false,status:'UNAVAILABLE',mounted:false,generation:0,onActive:null};
  function element(id){return document.getElementById(id);}
- function endpoint(){return state.active?'/api/v2/cloud-downloads':'/api/v1/cloud-downloads';}
+ function endpoint(){if(state.active)return '/api/v2/cloud-downloads';return state.required?null:'/api/v1/cloud-downloads';}
  function render(){
   const panel=element('cloud-space-panel');if(!panel)return;
-  panel.hidden=!state.available;
-  element('cloud-space-status').textContent=state.active?'私有空间已启用。新下载使用您的独立目录；相同内容经核验后复制。':state.available?'可选择创建私有空间；未启用前仍使用原下载方式。':'暂时无法确认私有空间状态，原下载方式不受影响。';
+  panel.hidden=!state.available&&!state.required;
+  element('cloud-space-status').textContent=state.active?'私有空间已启用。新下载使用您的独立目录。':state.available?(state.required?'开通私有空间后即可提交下载。':'可选择创建私有空间；未启用前仍使用原下载方式。'):(state.required?'暂时无法确认私有空间状态，请刷新后重试。':'暂时无法确认私有空间状态，原下载方式不受影响。');
   element('cloud-space-provision').hidden=state.active||!state.available;
  }
- function reset(){state.generation++;state.available=false;state.active=false;state.status='UNAVAILABLE';state.mounted=false;state.onActive=null;render();}
+ function reset(){state.generation++;state.available=false;state.active=false;state.required=false;state.status='UNAVAILABLE';state.mounted=false;state.onActive=null;render();}
  async function init(){
   const generation=++state.generation;
   try{
@@ -36,7 +36,7 @@
   finally{button.disabled=false;}
   if(notify&&generation===state.generation)await state.onActive();
  }
- function mount(onActive){state.onActive=typeof onActive==='function'?onActive:null;if(state.mounted||!element('cloud-space-panel'))return Promise.resolve();state.mounted=true;element('cloud-space-provision').addEventListener('click',provision);return init();}
+ function mount(onActive,required=false){state.required=required;state.onActive=typeof onActive==='function'?onActive:null;if(state.mounted||!element('cloud-space-panel'))return Promise.resolve();state.mounted=true;element('cloud-space-provision').addEventListener('click',provision);return init();}
  const api={mount,init,provision,reset,endpoint,state};
  if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.CloudSpace=api;
 })(typeof window!=='undefined'?window:globalThis);

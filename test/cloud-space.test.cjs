@@ -48,6 +48,17 @@ test('missing private API falls back without creating directories',async()=>{
  await space.init();
  assert.equal(calls.length,1);assert.equal(space.endpoint(),'/api/v1/cloud-downloads');
 });
+test('private-only space has no submit endpoint until active',async()=>{
+ const{listeners}=setup();
+ global.fetch=async()=>({status:200,ok:true,json:async()=>({status:'NOT_PROVISIONED'})});
+ await space.mount(null,true);
+ assert.equal(space.endpoint(),null);
+ global.fetch=async()=>({status:200,ok:true,json:async()=>({status:'ACTIVE'})});
+ await listeners.click();
+ assert.equal(space.endpoint(),'/api/v2/cloud-downloads');
+ space.reset();
+});
+
 test('private files use the dedicated cursor API and sanitize presentation fields',async()=>{
  const surface=require('../internal/producthttp/web/file-surface.js');
  const files=new surface.PrivateFiles(),calls=[];

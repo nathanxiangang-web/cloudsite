@@ -2,7 +2,7 @@ package producthttp
 
 import (
 	"context"
-
+	"strings"
 	"testing"
 
 	"github.com/nathanxiangang-web/panta/internal/acquisition"
@@ -166,5 +166,31 @@ func TestCloudSpaceV2SubmitRejectsNonActiveSpace(t *testing.T) {
 	response := request(handler, "POST", "/api/v2/cloud-downloads", body, testToken, "http://127.0.0.1:8180")
 	if response.Code == 201 || admissions.calls != 0 {
 		t.Fatalf("non-active submit status = %d, calls = %d", response.Code, admissions.calls)
+	}
+}
+
+func TestPrivateCloudDownloadRequiresActiveSpace(t *testing.T) {
+	service, err := product.NewCloudSpaceService(&cloudSpaceHTTPStore{}, &cloudSpaceHTTPProvider{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	target := product.CloudSpaceTarget{BindingID: workspaceBinding.ID, ProviderConnectionID: "connection-a",
+		IndexCoreRootID: "root-a", NativeParentID: "native-parent", CanonicalBase: "/operator-target"}
+	admissions := &admissionFake{}
+	const origin = "http://127.0.0.1:8180"
+	handler, err := NewWorkspaceHandler(&fakeAccess{p: goodPrincipal()}, origin, &readAccessFake{},
+		[]DisplayBinding{workspaceBinding}, 22, WithCloudDownload(cloudTarget(), admissions, &operationFake{}),
+		WithCloudSpace(service, target, admissions), WithPrivateCloudDownloads(true))
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := `{"operation_key":"x","source":"https://example.invalid/private"}`
+	legacy := request(handler, "POST", "/api/v1/cloud-downloads", body, testToken, origin)
+	if legacy.Code != 409 || !strings.Contains(legacy.Body.String(), "PRIVATE_SPACE_REQUIRED") {
+		t.Fatalf("legacy submit status = %d, body = %s", legacy.Code, legacy.Body.String())
+	}
+	private := request(handler, "POST", "/api/v2/cloud-downloads", body, testToken, origin)
+	if private.Code < 400 || admissions.calls != 0 {
+		t.Fatalf("unprovisioned submit status = %d, admission calls = %d", private.Code, admissions.calls)
 	}
 }

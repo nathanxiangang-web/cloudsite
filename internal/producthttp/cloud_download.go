@@ -43,6 +43,10 @@ type cloudDownloadOptions struct {
 	health     sessionhealth.Reader
 }
 
+func WithPrivateCloudDownloads(required bool) WorkspaceOption {
+	return func(options *workspaceOptions) { options.privateCloudOnly = required }
+}
+
 func nilCloudPort(value any) bool {
 	if value == nil {
 		return true
@@ -54,7 +58,7 @@ func nilCloudPort(value any) bool {
 	}
 	return false
 }
-func registerCloudDownload(h *Handler, options *cloudDownloadOptions) error {
+func registerCloudDownload(h *Handler, options *cloudDownloadOptions, privateOnly bool) error {
 	if options == nil || !options.target.Valid() || nilCloudPort(options.admissions) || nilCloudPort(options.operations) {
 		return product.ErrInvalid
 	}
@@ -69,6 +73,10 @@ func registerCloudDownload(h *Handler, options *cloudDownloadOptions) error {
 		})))
 	}
 	h.mux.Handle("POST /api/v1/cloud-downloads", h.Protect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if privateOnly {
+			failure(w, http.StatusConflict, "PRIVATE_SPACE_REQUIRED")
+			return
+		}
 		input, err := decodeCloudDownload(w, r, false)
 		if err != nil {
 			admissionFailure(w, err)

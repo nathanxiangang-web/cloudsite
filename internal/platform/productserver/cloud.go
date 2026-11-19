@@ -27,6 +27,7 @@ const CloudPreflightAction = "preflight-product-acquisition"
 type CloudDownloadConfig struct {
 	Target        producthttp.CloudDownloadTarget `json:"target"`
 	BootstrapFile string                          `json:"bootstrap_file"`
+	PrivateOnly   bool                            `json:"private_only,omitempty"`
 }
 
 func (c CloudDownloadConfig) Valid() bool {
@@ -105,6 +106,7 @@ func buildCloud(ctx context.Context, cfg Config, policy config.AcquisitionWorker
 	return worker, producthttp.CombineWorkspaceOptions(
 		producthttp.WithCloudDownload(cfg.CloudDownload.Target, service, store, health),
 		producthttp.WithCloudSpace(spaceService, spaceTarget, service),
+		producthttp.WithPrivateCloudDownloads(cfg.CloudDownload.PrivateOnly),
 	), nil
 }
 

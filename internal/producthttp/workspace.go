@@ -42,6 +42,7 @@ type workspaceInfo struct {
 	CloudDownloadPreviewEnabled     bool             `json:"cloud_download_preview_enabled"`
 	CloudDownloadUnavailableReason  string           `json:"cloud_download_unavailable_reason,omitempty"`
 	CloudDownloadEnabled            bool             `json:"cloud_download_enabled"`
+	CloudDownloadPrivateOnly        bool             `json:"cloud_download_private_only"`
 	CloudDownloadSessionCheck       bool             `json:"cloud_download_session_check"`
 	CloudDownloadLabel              string           `json:"cloud_download_label,omitempty"`
 	WholeRootLibrary                bool             `json:"whole_root_library"`
@@ -142,15 +143,21 @@ func NewWorkspaceHandler(access auth.Access, origin string, reads product.Reads,
 		info.CloudDownloadLabel = settings.sourcePreview.Label
 		info.CloudDownloadUnavailableReason = settings.sourcePreview.UnavailableReason
 	}
+	if settings.privateCloudOnly && (settings.cloud == nil || settings.cloudSpace == nil || nilCloudPort(settings.cloudSpace.admissions)) {
+		return nil, product.ErrInvalid
+	}
 	if settings.cloud != nil {
 		if !seen[settings.cloud.target.BindingID] {
 			return nil, product.ErrInvalid
 		}
-		if err := registerCloudDownload(h, settings.cloud); err != nil {
+		if err := registerCloudDownload(h, settings.cloud, settings.privateCloudOnly); err != nil {
 			return nil, err
 		}
 
-		info.CloudDownloadFiles = &cloudFileScope{BindingID: settings.cloud.target.BindingID, Path: settings.cloud.target.TargetPath}
+		if !settings.privateCloudOnly {
+			info.CloudDownloadFiles = &cloudFileScope{BindingID: settings.cloud.target.BindingID, Path: settings.cloud.target.TargetPath}
+		}
+		info.CloudDownloadPrivateOnly = settings.privateCloudOnly
 		info.CloudDownloadEnabled = true
 		info.CloudDownloadSessionCheck = settings.cloud.health != nil
 		info.CloudDownloadPreviewEnabled = true
