@@ -79,7 +79,7 @@ func (s *Service) Deliver(ctx context.Context, p auth.Principal, r Request) (Fil
 	if _, _, _, err = ByteRange(r.Range, file.Size); err != nil {
 		return File{Size: file.Size}, err
 	}
-	if len(r.UserAgent) > 2048 || strings.ContainsAny(r.UserAgent, "\x00\\r\\n") {
+	if len(r.UserAgent) > 2048 || strings.ContainsAny(r.UserAgent, "\x00\r\n") {
 		return File{}, ErrUnavailable
 	}
 	if len(s.directHosts) == 0 {
@@ -95,7 +95,7 @@ func (s *Service) Deliver(ctx context.Context, p auth.Principal, r Request) (Fil
 		return File{}, ErrUnavailable
 	}
 	u, err := url.Parse(target)
-	if err != nil || len(target) > 16384 || u.Scheme != "https" || u.User != nil || u.Opaque != "" || u.Fragment != "" || u.Host == "" || strings.ContainsAny(target, "\x00\\r\\n") {
+	if err != nil || len(target) > 16384 || u.Scheme != "https" || u.User != nil || u.Opaque != "" || u.Fragment != "" || u.Host == "" || strings.ContainsAny(target, "\x00\r\n") {
 		return File{}, ErrUnavailable
 	}
 	allowed := false

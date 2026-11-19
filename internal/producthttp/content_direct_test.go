@@ -2,6 +2,7 @@ package producthttp
 
 import (
 	"context"
+	"io"
 	"github.com/nathanxiangang-web/panta/internal/fileaccess"
 	"github.com/nathanxiangang-web/panta/internal/product"
 	"net/http"
@@ -100,5 +101,16 @@ func TestInlineVideoHTTP302OnlyWithAuthenticatedPlayback(t *testing.T) {
 	}
 	if source.calls != 0 || source.links != 1 {
 		t.Fatalf("metadata lookups = %d, byte opens = %d", source.links, source.calls)
+	}
+}
+
+func TestWriteFileNeverStreamsByteBody(t *testing.T) {
+	w := httptest.NewRecorder()
+	body := io.NopCloser(strings.NewReader("secret-file-bytes"))
+	writeFile(w, httptest.NewRequest("GET", "http://127.0.0.1:8180/content", nil), fileaccess.File{
+		Content: fileaccess.Content{Body: body, Status: http.StatusOK, Length: 17},
+	}, "attachment")
+	if w.Code != http.StatusServiceUnavailable || strings.Contains(w.Body.String(), "secret-file-bytes") || w.Header().Get("Location") != "" {
+		t.Fatal("content writer streamed bytes instead of failing closed", w.Code, w.Body.String())
 	}
 }

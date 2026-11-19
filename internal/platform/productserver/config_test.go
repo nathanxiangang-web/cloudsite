@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 

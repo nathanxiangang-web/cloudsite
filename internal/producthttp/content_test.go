@@ -87,12 +87,13 @@ func TestContentFailsClosedWithoutDirectLinkConfigAndPreviewRemainsAvailable(t *
 		if c.byteRange != "" {
 			r.Header.Set("Range", c.byteRange)
 		}
+		beforeCalls := source.calls
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, r)
 		if w.Code != c.status || c.body != "" && !strings.Contains(w.Body.String(), c.body) {
 			t.Fatal(c, w.Code, w.Body.String())
 		}
-		if c.mode == "content" && source.calls != 0 {
+		if c.mode == "content" && source.calls != beforeCalls {
 			t.Fatal("content request opened source bytes")
 		}
 	}
