@@ -8,6 +8,7 @@ import (
 
 	"github.com/nathanxiangang-web/panta/internal/auth"
 	"github.com/nathanxiangang-web/panta/internal/cloudpath"
+	"github.com/nathanxiangang-web/panta/internal/product"
 )
 
 // LinkSource resolves a known file without opening its byte stream.
@@ -32,6 +33,16 @@ func (s *Service) EnableVideoDirectLinks(hosts []string) error {
 		return err
 	}
 	s.videoDirectHosts = append([]string(nil), hosts...)
+	return nil
+}
+
+// EnableSharedDirectLinks opts redeemed guest downloads into exact-host HTTPS
+// redirects after the sharing service has validated the current grant.
+func (s *Service) EnableSharedDirectLinks(hosts []string) error {
+	if err := s.validateLinkHosts(hosts); err != nil {
+		return err
+	}
+	s.sharedDirectHosts = append([]string(nil), hosts...)
 	return nil
 }
 
@@ -94,10 +105,16 @@ func isVideo(ext string) bool {
 // byte-only port used by the private document preview cache.
 func (s *Service) Deliver(ctx context.Context, p auth.Principal, r Request) (File, error) {
 	hosts := s.directHosts
-	video := len(s.videoDirectHosts) > 0 && r.Inline && isVideo(fileExtension(r.Path))
-	if video {
+	private := cloudpath.IsPrivate(r.Path)
+	if r.Shared && private {
+		return File{}, product.ErrNotFound
+	}
+	video := !r.Shared && len(s.videoDirectHosts) > 0 && r.Inline && isVideo(fileExtension(r.Path))
+	if r.Shared && len(s.sharedDirectHosts) > 0 {
+		hosts = s.sharedDirectHosts
+	} else if video {
 		hosts = s.videoDirectHosts
-	} else if len(hosts) == 0 || cloudpath.IsPrivate(r.Path) {
+	} else if len(hosts) == 0 || private {
 		return s.Open(ctx, p, r)
 	}
 	file, source, err := s.describe(ctx, p, r)

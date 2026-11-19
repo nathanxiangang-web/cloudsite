@@ -198,6 +198,7 @@ func (s *Service) Open(ctx context.Context, id, token, byteRange string, head bo
 	target := record.Target
 	target.Range = byteRange
 	target.Head = head
+	target.Shared = true
 	if len(userAgent) > 0 {
 		target.UserAgent = userAgent[0]
 	}

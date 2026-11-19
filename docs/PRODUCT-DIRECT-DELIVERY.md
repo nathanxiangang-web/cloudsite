@@ -47,6 +47,10 @@ inline video playback, including an owner's private downloads. This option
 does not change attachment, document preview, or guest delivery. A missing or
 unapproved video URL returns an error without opening a server byte stream.
 
+`shared_direct_link_hosts` enables exact-host HTTPS `302` delivery for guest
+downloads after a successful redemption. It leaves ordinary attachment delivery
+on its existing policy. A missed allowlist match fails without proxying bytes.
+
 Forward only caller UA to metadata resolution, never product cookies/grants or
 OpenList Authorization to the CDN. Direct mode issues a temporary upstream bearer
 URL to an authorized client. Product revoke denies NEW redirects; it cannot
