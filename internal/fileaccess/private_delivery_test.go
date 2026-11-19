@@ -2,7 +2,10 @@ package fileaccess
 
 import (
 	"context"
+	"errors"
 	"testing"
+
+	"github.com/nathanxiangang-web/panta/internal/product"
 )
 
 func TestPrivateDeliveryNeverRedirectsToExternalURL(t *testing.T) {
@@ -29,4 +32,35 @@ func TestPrivateDeliveryNeverRedirectsToExternalURL(t *testing.T) {
 	if err != nil || public.DirectURL == "" || source.links != 1 {
 		t.Fatalf("public direct delivery changed: file=%#v links=%d error=%v", public, source.links, err)
 	}
+}
+
+func TestPrivateVideoRedirectRequiresInlineAndCanonicalAccess(t *testing.T) {
+	path := "/云下载/_users/a/result.mp4"
+	reader := &readsFake{item: resource()}
+	reader.item.Path = &path
+	source := &linkFake{target: "https://cdn.example.test/video?signature=temporary"}
+	service, _ := New(reader, topologyFake{"/"}, source)
+	if err := service.EnableVideoDirectLinks([]string{"cdn.example.test"}); err != nil {
+		t.Fatal(err)
+	}
+	request := Request{BindingID: bindingID, ResourceID: "resource-one", Path: path, Inline: true, Range: "bytes=0-0", UserAgent: "Browser/1"}
+	file, err := service.Deliver(context.Background(), principal(), request)
+	if err != nil || file.DirectURL != source.target || source.calls != 0 || source.links != 1 || source.ua != request.UserAgent {
+		t.Fatalf("inline video must redirect without opening bytes, error = %v", err)
+	}
+	reader.err = product.ErrNotFound
+	if _, err := service.Deliver(context.Background(), principal(), request); !errors.Is(err, product.ErrNotFound) || source.links != 1 || source.calls != 0 {
+		t.Fatalf("private owner check must precede link resolution, error = %v", err)
+	}
+	reader.err = nil
+	source.target = "https://other.example.test/video"
+	if _, err := service.Deliver(context.Background(), principal(), request); !errors.Is(err, ErrUnavailable) || source.calls != 0 {
+		t.Fatalf("invalid video link must fail without using proxy traffic, error = %v", err)
+	}
+	request.Inline = false
+	file, err = service.Deliver(context.Background(), principal(), request)
+	if err != nil || file.DirectURL != "" || source.calls != 1 || source.links != 2 {
+		t.Fatalf("attachment delivery unexpectedly changed, error = %v", err)
+	}
+	defer file.Content.Body.Close()
 }

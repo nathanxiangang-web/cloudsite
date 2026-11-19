@@ -18,6 +18,24 @@ type LinkSource interface {
 // EnableDirectLinks is composition-only. An empty list preserves legacy proxy
 // delivery. Exact HTTPS DNS hosts also define the browser media CSP sources.
 func (s *Service) EnableDirectLinks(hosts []string) error {
+	if err := s.validateLinkHosts(hosts); err != nil {
+		return err
+	}
+	s.directHosts = append([]string(nil), hosts...)
+	return nil
+}
+
+// EnableVideoDirectLinks restricts the playback opt-in to explicit inline video
+// requests. Each redirected file still goes through the normal ownership check.
+func (s *Service) EnableVideoDirectLinks(hosts []string) error {
+	if err := s.validateLinkHosts(hosts); err != nil {
+		return err
+	}
+	s.videoDirectHosts = append([]string(nil), hosts...)
+	return nil
+}
+
+func (s *Service) validateLinkHosts(hosts []string) error {
 	if len(hosts) > 16 {
 		return ErrUnavailable
 	}
@@ -46,27 +64,48 @@ func (s *Service) EnableDirectLinks(hosts []string) error {
 			return ErrUnavailable
 		}
 	}
-	s.directHosts = append([]string(nil), hosts...)
 	return nil
 }
 
 func (s *Service) MediaSources() []string {
-	result := make([]string, 0, len(s.directHosts))
-	for _, host := range s.directHosts {
-		result = append(result, "https://"+host)
+	result := make([]string, 0, len(s.directHosts)+len(s.videoDirectHosts))
+	seen := make(map[string]bool, cap(result))
+	for _, hosts := range [][]string{s.directHosts, s.videoDirectHosts} {
+		for _, host := range hosts {
+			if !seen[host] {
+				result = append(result, "https://"+host)
+				seen[host] = true
+			}
+		}
 	}
 	return result
+}
+
+func isVideo(ext string) bool {
+	switch ext {
+	case "mp4", "mkv", "webm", "mov", "avi", "m4v", "mpeg", "mpg", "wmv", "ts", "m2ts", "flv", "3gp", "ogv":
+		return true
+	default:
+		return false
+	}
 }
 
 // Deliver preserves canonical authorization for each redirect. Open remains the
 // byte-only port used by the private document preview cache.
 func (s *Service) Deliver(ctx context.Context, p auth.Principal, r Request) (File, error) {
-	if len(s.directHosts) == 0 || cloudpath.IsPrivate(r.Path) {
+	hosts := s.directHosts
+	video := len(s.videoDirectHosts) > 0 && r.Inline && isVideo(fileExtension(r.Path))
+	if video {
+		hosts = s.videoDirectHosts
+	} else if len(hosts) == 0 || cloudpath.IsPrivate(r.Path) {
 		return s.Open(ctx, p, r)
 	}
 	file, source, err := s.describe(ctx, p, r)
 	if err != nil {
 		return file, err
+	}
+	if video && !isVideo(file.Extension) {
+		return File{}, ErrUnavailable
 	}
 	if _, _, _, err = ByteRange(r.Range, file.Size); err != nil {
 		return File{Size: file.Size}, err
@@ -84,7 +123,7 @@ func (s *Service) Deliver(ctx context.Context, p auth.Principal, r Request) (Fil
 		return File{}, ErrUnavailable
 	}
 	allowed := false
-	for _, host := range s.directHosts {
+	for _, host := range hosts {
 		if u.Host == host || u.Host == host+":443" {
 			allowed = true
 		}

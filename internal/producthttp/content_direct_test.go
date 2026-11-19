@@ -63,3 +63,42 @@ func TestDirectContentHTTP302AndPreviewRemainSeparate(t *testing.T) {
 		t.Fatal("preview stopped using private stream", w.Code)
 	}
 }
+
+func TestInlineVideoHTTP302OnlyWithAuthenticatedPlayback(t *testing.T) {
+	path := "/docs/_users/a/video.mp4"
+	directory, size := false, int64(4)
+	reads := contentReads{resource: product.Resource{BindingID: workspaceBinding.ID, ResourceID: "file-one", Path: &path, Directory: &directory, SizeBytes: &size, Presence: "PRESENT"}}
+	source := &directContentSource{}
+	files, _ := fileaccess.New(reads, contentTopology{}, source)
+	if err := files.EnableVideoDirectLinks([]string{"cdn.example.test"}); err != nil {
+		t.Fatal(err)
+	}
+	h, err := NewWorkspaceHandler(&fakeAccess{p: goodPrincipal()}, "http://127.0.0.1:8180", reads, []DisplayBinding{workspaceBinding}, 22, WithFileAccess(files, nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	query := url.Values{"binding_id": {string(workspaceBinding.ID)}, "resource_id": {"file-one"}, "path": {path}, "disposition": {"inline"}}
+	for _, tc := range []struct {
+		token  string
+		status int
+	}{
+		{"", http.StatusUnauthorized},
+		{testToken, http.StatusFound},
+	} {
+		w := request(h, "GET", "/api/v1/files/content?"+query.Encode(), "", tc.token, "")
+		if w.Code != tc.status {
+			t.Fatalf("video response status = %d, want %d", w.Code, tc.status)
+		}
+		if tc.status == http.StatusFound {
+			if w.Body.Len() != 0 || w.Header().Get("Location") == "" || w.Header().Get("Cache-Control") != "no-store" ||
+				!strings.Contains(w.Header().Get("Content-Security-Policy"), "media-src 'self' https://cdn.example.test;") {
+				t.Fatal("incorrect video redirect")
+			}
+		} else if w.Header().Get("Location") != "" {
+			t.Fatal("anonymous redirect")
+		}
+	}
+	if source.calls != 0 || source.links != 1 {
+		t.Fatalf("metadata lookups = %d, byte opens = %d", source.links, source.calls)
+	}
+}

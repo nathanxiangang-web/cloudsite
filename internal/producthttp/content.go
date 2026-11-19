@@ -123,7 +123,7 @@ func registerContent(h *Handler, service *fileaccess.Service, previews *fileacce
 				failure(w, 400, "INVALID_REQUEST")
 				return
 			}
-			input := fileaccess.Request{BindingID: storage.BindingID(query.Get("binding_id")), ResourceID: query.Get("resource_id"), Path: query.Get("path"), Range: requestedRange, Head: r.Method == http.MethodHead, UserAgent: r.UserAgent()}
+			input := fileaccess.Request{BindingID: storage.BindingID(query.Get("binding_id")), ResourceID: query.Get("resource_id"), Path: query.Get("path"), Range: requestedRange, Head: r.Method == http.MethodHead, Inline: disposition == "inline", UserAgent: r.UserAgent()}
 			if mode == "preview" {
 				if previews == nil {
 					failure(w, 503, "CONTENT_UNAVAILABLE")
